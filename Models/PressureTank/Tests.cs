@@ -22,36 +22,78 @@
 
 namespace PressureTank
 {
-    using System;
-    using System.Diagnostics;
-    using NUnit.Framework;
-    using SafetySharp.Analysis;
+	using System;
+	using System.Diagnostics;
+	using FluentAssertions;
+	using NUnit.Framework;
+	using SafetySharp.Analysis;
+	using SharedComponents;
 
-    [TestFixture]
-    public class Tests
-    {
-        [SetUp]
-        public void Initialize()
-        {
-            _model = new PressureTankModel();
-        }
+	[TestFixture]
+	public class ModelCheckingTests
+	{
+		private static void Main()
+		{
+			var tests = new ModelCheckingTests();
+			tests.FirstTest();
+		}
 
-        private PressureTankModel _model;
+		[Test]
+		public void FirstTest()
+		{
+			var watch = new Stopwatch();
+			watch.Start();
+			var spin = new SpinModelChecker(new PressureTankModel());
+			Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
+		}
+	}
 
-        private static void Main()
-        {
-            var tests = new Tests();
-            tests.Initialize();
-            tests.FirstTest();
-        }
+	[TestFixture]
+	public class Tests
+	{
+		[Test]
+		public void TankDoesNotRuptureWhenNoFaultsOccur()
+		{
+			// Arrange
+			var model = new PressureTankModel();
+			var simulator = new Simulator(model);
 
-        [Test]
-        public void FirstTest()
-        {
-            var watch = new Stopwatch();
-            watch.Start();
-            var spin = new SpinModelChecker(_model);
-            Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
-        }
-    }
+			// Act
+			simulator.Simulate(TimeSpan.FromHours(1));
+
+			// Assert
+			model.Tank.IsRuptured().Should().BeFalse();
+		}
+
+		[Test]
+		public void TankDoesNotRuptureWhenSensorDoesNotReportTankFull()
+		{
+			// Arrange
+			var model = new PressureTankModel();
+			var simulator = new Simulator(model);
+			model.Sensor.EnableFault<Sensor.SuppressIsFull>();
+
+			// Act
+			simulator.Simulate(TimeSpan.FromHours(1));
+
+			// Assert
+			model.Tank.IsRuptured().Should().BeFalse();
+		}
+
+		[Test]
+		public void TankRupturesWhenSensorDoesNotReportTankFullAndTimerDoesNotTimeout()
+		{
+			// Arrange
+			var model = new PressureTankModel();
+			var simulator = new Simulator(model);
+			model.Sensor.EnableFault<Sensor.SuppressIsFull>();
+			model.Timer.EnableFault<Timer.SuppressTimeout>();
+
+			// Act
+			simulator.Simulate(TimeSpan.FromHours(1));
+
+			// Assert
+			model.Tank.IsRuptured().Should().BeTrue();
+		}
+	}
 }

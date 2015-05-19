@@ -22,47 +22,75 @@
 
 namespace SharedComponents
 {
-    using SafetySharp.Modeling;
+	using SafetySharp.Modeling;
 
-    public class Timer : Component
-    {
-        private readonly int _timeout;
-        // TODO: OverflowBehavior.Clamp
-        private int _remainingTime = -1;
+	/// <summary>
+	///   Represents a timer that signals a timeout.
+	/// </summary>
+	public class Timer : Component
+	{
+		/// <summary>
+		///   The timeout signaled by the timer.
+		/// </summary>
+		private readonly int _timeout;
 
-        public Timer(int timeout)
-        {
-            _timeout = timeout;
-        }
+		/// <summary>
+		///   The remaining time before the timeout is signaled. A value of -1 indicates that the timer is inactive.
+		/// </summary>
+		// TODO: OverflowBehavior.Clamp
+		private int _remainingTime = -1;
 
-        public bool HasElapsed()
-        {
-            return _remainingTime == 0;
-        }
+		/// <summary>
+		///   Initializes a new instance.
+		/// </summary>
+		/// <param name="timeout">The timeout interval of the timer.</param>
+		public Timer(int timeout)
+		{
+			_timeout = timeout;
+		}
 
-        public void Start()
-        {
-            _remainingTime = _timeout;
-        }
+		/// <summary>
+		///   Gets a value indicating whether the timeout has elapsed. This method returns true only for the single system step where
+		///   the timeout occurs.
+		/// </summary>
+		public bool HasElapsed() => _remainingTime == 0;
 
-        public void Stop()
-        {
-            _remainingTime = -1;
-        }
-       
-        public bool IsActive() => _remainingTime > 0;
-        public int GetRemainingTime() => _remainingTime;
+		/// <summary>
+		///   Starts or restarts the timer.
+		/// </summary>
+		public void Start() => _remainingTime = _timeout;
 
-        public override void Update()
-        {
-            // TODO: Support different system step times
-            --_remainingTime;
-        }
+		/// <summary>
+		///   Stops the timer.
+		/// </summary>
+		public void Stop() => _remainingTime = -1;
 
-        [Transient]
-        public class SuppressTimeout : Fault
-        {
-            public bool HasElapsed() => false;
-        }
-    }
+		/// <summary>
+		///   Gets a value indicating whether the timer is currently active, eventually signalling the timeout.
+		/// </summary>
+		public bool IsActive() => _remainingTime > 0;
+
+		/// <summary>
+		///   Gets the remaining time before the timeout occurs.
+		/// </summary>
+		public int GetRemainingTime() => _remainingTime;
+
+		/// <summary>
+		///   Updates the timer's internal state.
+		/// </summary>
+		public override void Update()
+		{
+			// TODO: Support different system step times
+			--_remainingTime;
+		}
+
+		/// <summary>
+		///   Represents a failure mode that prevents the timer from reporting a timeout.
+		/// </summary>
+		[Transient]
+		public class SuppressTimeout : Fault
+		{
+			public bool HasElapsed() => false;
+		}
+	}
 }

@@ -22,69 +22,65 @@
 
 namespace PressureTank
 {
-    using SafetySharp.Modeling;
-    using SharedComponents;
+	using SafetySharp.Modeling;
+	using SharedComponents;
 
-    /// <summary>
-    ///   Represents a model of the pressure tank case study.
-    /// </summary>
-    public class PressureTankModel : Model
-    {
-        /// <summary>
-        ///   The maximum allowed pressure level within the tank.
-        /// </summary>
-        public const int MaxPressure = 60;
+	/// <summary>
+	///   Represents a model of the pressure tank case study.
+	/// </summary>
+	public class PressureTankModel : Model
+	{
+		/// <summary>
+		///   The maximum allowed pressure level within the tank.
+		/// </summary>
+		public const int MaxPressure = 60;
 
-        /// <summary>
-        ///   The pressure level that triggers the sensor.
-        /// </summary>
-        public const int SensorPressure = 58;
+		/// <summary>
+		///   The pressure level that triggers the sensor.
+		/// </summary>
+		public const int SensorPressure = 58;
 
-        /// <summary>
-        ///   The controller's timeout in seconds.
-        /// </summary>
-        public const int Timeout = 59;
+		/// <summary>
+		///   The controller's timeout in seconds.
+		/// </summary>
+		public const int Timeout = 59;
 
-        /// <summary>
-        ///   Initializes a new instance.
-        /// </summary>
-        public PressureTankModel()
-        {
-            Sensor = new Sensor(SensorPressure);
-            Pump = new Pump();
-            Timer = new Timer(Timeout);
-            Controller = new Controller(Sensor, Pump, Timer);
-            Tank = new Tank(MaxPressure);
+		/// <summary>
+		///   Initializes a new instance.
+		/// </summary>
+		public PressureTankModel()
+		{
+			Controller = new Controller(Sensor, Pump, Timer);
 
-            SetRootComponents(Tank, Controller);
+			SetRootComponents(Tank, Controller);
 
-            Bind(Sensor.RequiredPorts.CheckPhysicalPressure = Tank.ProvidedPorts.PressureLevel);
-            Bind(Tank.RequiredPorts.IsBeingFilled = Pump.ProvidedPorts.IsEnabled);
-        }
+			Bind(Sensor.RequiredPorts.CheckPhysicalPressure = Tank.ProvidedPorts.PressureLevel);
+			Bind(Tank.RequiredPorts.IsBeingFilled = Pump.ProvidedPorts.IsEnabled);
+		}
 
-        /// <summary>
-        ///   Gets the sensor that is used to determine the pressure level within the tank.
-        /// </summary>
-        public Sensor Sensor { get; }
+		/// <summary>
+		///   Gets the sensor that is used to determine the pressure level within the tank.
+		/// </summary>
+		public Sensor Sensor { get; } = new Sensor(SensorPressure);
 
-        /// <summary>
-        ///   Gets the pump that fills the tank.
-        /// </summary>
-        public Pump Pump { get; }
+		/// <summary>
+		///   Gets the pump that fills the tank.
+		/// </summary>
+		public Pump Pump { get; } = new Pump();
 
-        /// <summary>
-        ///   Gets the tank that is being filled.
-        /// </summary>
-        public Tank Tank { get; }
+		/// <summary>
+		///   Gets the tank that is being filled.
+		/// </summary>
+		public Tank Tank { get; } = new Tank(MaxPressure);
 
-        /// <summary>
-        ///   The timer that is used to determine whether the pump should be disabled.
-        /// </summary>
-        public Timer Timer { get; }
+		/// <summary>
+		///   The timer that is used to determine whether the pump should be disabled.
+		/// </summary>
+		public Timer Timer { get; } = new Timer(Timeout);
 
-        /// <summary>
-        ///   Gets the controller that stops filling the tank when it is full.
-        /// </summary>
-        public Controller Controller { get; }
-    }
+		/// <summary>
+		///   Gets the controller that stops filling the tank when it is full.
+		/// </summary>
+		public Controller Controller { get; }
+	}
 }

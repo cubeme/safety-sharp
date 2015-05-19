@@ -22,47 +22,41 @@
 
 namespace PressureTank
 {
-    using SafetySharp.Modeling;
+	using SafetySharp.Modeling;
 
-    /// <summary>
-    ///   Represents the pump that fills the pressure tank.
-    /// </summary>
-    public class Pump : Component
-    {
-        /// <summary>
-        ///   Indicates whether the pump is currently filling the pressure tank.
-        /// </summary>
-        private bool _enabled;
+	/// <summary>
+	///   Represents the pump that fills the pressure tank.
+	/// </summary>
+	public class Pump : Component
+	{
+		/// <summary>
+		///   Indicates whether the pump is currently filling the pressure tank.
+		/// </summary>
+		private bool _enabled;
 
-        /// <summary>
-        ///   Disables the pump.
-        /// </summary>
-        public void Disable()
-        {
-            _enabled = false;
-        }
+		/// <summary>
+		///   Disables the pump.
+		/// </summary>
+		public void Disable() => _enabled = false;
 
-        /// <summary>
-        ///   Enables the pump.
-        /// </summary>
-        public void Enable()
-        {
-            _enabled = true;
-        }
+		/// <summary>
+		///   Enables the pump.
+		/// </summary>
+		public void Enable() => _enabled = true;
 
-        /// <summary>
-        ///   Gets a value indicating whether the pump is currently enabled.
-        /// </summary>
-        // TODO: Consider using a property once supported by S#.
-        public bool IsEnabled() => _enabled;
+		/// <summary>
+		///   Gets a value indicating whether the pump is currently enabled.
+		/// </summary>
+		// TODO: Consider using a property once supported by S#.
+		public bool IsEnabled() => _enabled;
 
-        /// <summary>
-        ///   Represents a persistent failure mode that prevents the pump from pumping.
-        /// </summary>
-        [Persistent]
-        public class SuppressPumping : Fault
-        {
-            public bool IsEnabled() => false;
-        }
-    }
+		/// <summary>
+		///   Represents a persistent failure mode that prevents the pump from pumping.
+		/// </summary>
+		[Persistent]
+		public class SuppressPumping : Fault
+		{
+			public bool IsEnabled() => false;
+		}
+	}
 }

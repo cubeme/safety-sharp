@@ -437,6 +437,28 @@ type Component internal (components : Component list, bindings : List<PortBindin
             requiresIsSealed ()
             parentField
 
+    /// Gets the fault of the given type.
+    member private this.GetFault<'a when 'a :> Fault> () =
+        match this.Faults |> List.tryFind (function :? 'a -> true | _ -> false) with
+        | None   -> invalidOp "The component does not declare a fault of type '%s'." typeof<'a>.FullName
+        | Some f -> f
+
+    /// Gets a value indicating whether the given fault is currently occurring.
+    member this.IsFaultEnabled<'a when 'a :> Fault> () =
+        this.GetFault<'a>().Occurring
+
+    /// Enables or disables the given fault for the component.
+    member this.SetFaultEnabled<'a when 'a :> Fault> enabled =
+        this.GetFault<'a>().Occurring <- enabled
+
+    /// Enables the given fault for the component.
+    member this.EnableFault<'a when 'a :> Fault> () =
+        this.SetFaultEnabled<'a> true
+
+    /// Disables the given fault for the component.
+    member this.DisableFault<'a when 'a :> Fault> () =
+        this.SetFaultEnabled<'a> false
+
 /// Represents the synthesized root of the component hierarchy created by a model.
 type internal SynthesizedRootComponent (components, bindings) as this =
     inherit Component (components, bindings)

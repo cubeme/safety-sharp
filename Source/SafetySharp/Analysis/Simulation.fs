@@ -36,8 +36,28 @@ type SimulationState =
     /// Indicates that the simulation is currently running.
     | Running = 2
 
-/// Simulates a S# model.
-type Simulator (model : Model, stepDelay : int) =
+/// Simulates a S# model for debugging or testing purposes.
+type Simulator (model : Model) =
+    do nullArg model "model"
+    do model.FinalizeMetadata ()
+
+    /// Runs the simulation for the given time span.
+    member this.Simulate (timeSpan : TimeSpan) =
+        for _ in 0 .. (int timeSpan.TotalSeconds) do
+            this.ExecuteStep ()
+
+    /// Executes the next step of the simulation.
+    member private this.ExecuteStep () =
+        // TODO: Respect explicit component scheduling
+        let rec update (c : Component) =
+            c.Subcomponents |> List.iter update
+            //c.UpdateFaults ()
+            c.Update ()
+
+        update model.SynthesizedRoot
+
+/// Simulates a S# model for visualization purposes or hardware-in-the-loop tests.
+type RealTimeSimulator (model : Model, stepDelay : int) =
     do nullArg model "model"
     do invalidCall (SynchronizationContext.Current = null) "The simulator requires a valid synchronization context to be set."
     do model.FinalizeMetadata ()
@@ -76,7 +96,7 @@ type Simulator (model : Model, stepDelay : int) =
         this.ChangeState SimulationState.Paused
         this.ExecuteStep ()
 
-    /// Runs the simulation. This method can only be called if the simulation is not already running.
+    /// Runs the simulation in real-time mode. This method can only be called if the simulation is not already running.
     member this.Run () =
         invalidCall (state = SimulationState.Running) "The simulation is already running."
         invalidCall (SynchronizationContext.Current = null) "The simulation cannot be run without a valid SynchronizationContext."
@@ -101,20 +121,12 @@ type Simulator (model : Model, stepDelay : int) =
         invalidCall (state <> SimulationState.Running) "Only running simulations can be stopped."
         this.ChangeState SimulationState.Paused
 
-    /// Gets the fault of the given type for the given component.
-    member private this.GetFault<'a when 'a :> Fault> (c : Component) =
-        nullArg c "c"
-        match c.Faults |> List.tryFind (function :? 'a -> true | _ -> false) with
-        | None   -> invalidOp "A component of type '%s' does not declare a fault of type '%s'." (c.GetType().FullName) (typeof<'a>.FullName)
-        | Some f -> f
+    /// Runs the simulation in non-real-time mode for the given time span.
+    member this.Simulate (timeSpan : TimeSpan) =
+        invalidCall (state <> SimulationState.Stopped) "Expected the simulation to be stopped."
 
-    /// Gets a value indicating whether the given fault is currently occurring for the given component.
-    member this.IsFaultOccurring<'a when 'a :> Fault> (c : Component) =
-        this.GetFault<'a>(c).Occurring
-
-    /// Sets a value indicating whether the given fault is currently occurring for the given component.
-    member this.SetFaultOccurrence<'a when 'a :> Fault> (c : Component) occurring =
-        this.GetFault<'a>(c).Occurring <- occurring
+        for _ in 0 .. (int timeSpan.TotalSeconds) do
+            this.ExecuteStep ()
 
     /// Executes the next step of the simulation.
     member private this.ExecuteStep () =

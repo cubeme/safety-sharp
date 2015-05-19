@@ -22,103 +22,103 @@
 
 namespace PressureTank
 {
-    using SafetySharp.Modeling;
-    using SharedComponents;
+	using SafetySharp.Modeling;
+	using SharedComponents;
 
-    /// <summary>
-    ///   The software controller that enables and disables the pump.
-    /// </summary>
-    public class Controller : Component
-    {
-        /// <summary>
-        ///   Describes the state of the controller.
-        /// </summary>
-        public enum State
-        {
-            /// <summary>
-            ///   Indicates that the controller is inactive.
-            /// </summary>
-            Inactive,
+	/// <summary>
+	///   The software controller that enables and disables the pump.
+	/// </summary>
+	public class Controller : Component
+	{
+		/// <summary>
+		///   Describes the state of the controller.
+		/// </summary>
+		public enum State
+		{
+			/// <summary>
+			///   Indicates that the controller is inactive.
+			/// </summary>
+			Inactive,
 
-            /// <summary>
-            ///   Indicates that the tank is currently being filled.
-            /// </summary>
-            Filling,
+			/// <summary>
+			///   Indicates that the tank is currently being filled.
+			/// </summary>
+			Filling,
 
-            /// <summary>
-            ///   Indicates that the last fill cycle was stopped because of the pressure sensor.
-            /// </summary>
-            StoppedBySensor,
+			/// <summary>
+			///   Indicates that the last fill cycle was stopped because of the pressure sensor.
+			/// </summary>
+			StoppedBySensor,
 
-            /// <summary>
-            ///   Indicates that the last fill cycle was stopped because of a timeout.
-            /// </summary>
-            StoppedByTimer
-        }
+			/// <summary>
+			///   Indicates that the last fill cycle was stopped because of a timeout.
+			/// </summary>
+			StoppedByTimer
+		}
 
-        /// <summary>
-        ///   The pump that is used to fill the tank.
-        /// </summary>
-        private readonly Pump _pump;
+		/// <summary>
+		///   The pump that is used to fill the tank.
+		/// </summary>
+		private readonly Pump _pump;
 
-        /// <summary>
-        ///   The sensor that is used to sense the pressure level within the tank.
-        /// </summary>
-        private readonly Sensor _sensor;
+		/// <summary>
+		///   The sensor that is used to sense the pressure level within the tank.
+		/// </summary>
+		private readonly Sensor _sensor;
 
-        /// <summary>
-        ///   The timer that is used to determine whether the pump should be disabled to prevent tank ruptures.
-        /// </summary>
-        private readonly Timer _timer;
+		/// <summary>
+		///   The timer that is used to determine whether the pump should be disabled to prevent tank ruptures.
+		/// </summary>
+		private readonly Timer _timer;
 
-        /// <summary>
-        ///   The current state of the controller.
-        /// </summary>
-        private State _state = State.Inactive;
+		/// <summary>
+		///   The current state of the controller.
+		/// </summary>
+		private State _state = State.Inactive;
 
-        /// <summary>
-        ///   Initializes a new instance.
-        /// </summary>
-        /// <param name="sensor">The sensor that is used to sense the pressure level within the tank.</param>
-        /// <param name="pump">The pump that is used to fill the tank.</param>
-        /// <param name="timer">The timer that is used to determine whether the pump should be disabled.</param>
-        public Controller(Sensor sensor, Pump pump, Timer timer)
-        {
-            _pump = pump;
-            _sensor = sensor;
-            _timer = timer;
-        }
+		/// <summary>
+		///   Initializes a new instance.
+		/// </summary>
+		/// <param name="sensor">The sensor that is used to sense the pressure level within the tank.</param>
+		/// <param name="pump">The pump that is used to fill the tank.</param>
+		/// <param name="timer">The timer that is used to determine whether the pump should be disabled.</param>
+		public Controller(Sensor sensor, Pump pump, Timer timer)
+		{
+			_pump = pump;
+			_sensor = sensor;
+			_timer = timer;
+		}
 
-        /// <summary>
-        ///   Gets the state of the controller.
-        /// </summary>
-        public State GetState() => _state;
+		/// <summary>
+		///   Gets the state of the controller.
+		/// </summary>
+		public State GetState() => _state;
 
-        /// <summary>
-        ///   Updates the controller's internal state.
-        /// </summary>
-        public override void Update()
-        {
-            if (_state == State.Filling)
-            {
-                if (_timer.HasElapsed())
-                {
-                    _pump.Disable();
-                    _state = State.StoppedByTimer;
-                }
-                else if (_sensor.IsFull())
-                {
-                    _pump.Disable();
-                    _timer.Stop();
-                    _state = State.StoppedBySensor;
-                }
-            }
-            else if (_sensor.IsEmpty())
-            {
-                _timer.Start();
-                _pump.Enable();
-                _state = State.Filling;
-            }
-        }
-    }
+		/// <summary>
+		///   Updates the controller's internal state.
+		/// </summary>
+		public override void Update()
+		{
+			if (_state == State.Filling)
+			{
+				if (_timer.HasElapsed())
+				{
+					_pump.Disable();
+					_state = State.StoppedByTimer;
+				}
+				else if (_sensor.IsFull())
+				{
+					_pump.Disable();
+					_timer.Stop();
+					_state = State.StoppedBySensor;
+				}
+			}
+			else if (_sensor.IsEmpty())
+			{
+				_timer.Start();
+				_pump.Enable();
+				_state = State.Filling;
+			}
+		}
+	}
 }
