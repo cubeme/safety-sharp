@@ -45,7 +45,7 @@ module internal PanInterpretResult =
 
     let templateOfVerificationLog = 
         let pattern =
-              """(?<preamble>(([\w\W]?!\(Spin)*))""" // atomic group. everything before "Spin" == ?!\(
+              """(?<preamble>[\w\W]*?)""" // atomic group. everything before next token. Tried """(?<preamble>(([\w\W]?!\(Spin)*))""", worked, but didn't capture.
             + """\(Spin Version (?<version>.*) --(\w|\s)+\)"""
             + """(?<nl>(\r\n)|\n)""" //Give newline a name
             + """((\r\n)|\n|.)*?""" // not important. Lazy
@@ -53,29 +53,44 @@ module internal PanInterpretResult =
             + """((\r\n)|\n|.)*?""" // not important. Lazy
             + """pan: elapsed time (?<timeMC>.*) seconds"""
         new System.Text.RegularExpressions.Regex(pattern)
-
+        
     let parseVerificationLog (str:string) : PanVerificationLog =
         let regexMatch = templateOfVerificationLog.Match(str)
-        let preamble = (regexMatch.Groups.Item "preamble").Value
-        printfn "%s" preamble
-        let version = (regexMatch.Groups.Item "version").Value
-        let stateVector = (regexMatch.Groups.Item "stateVector").Value
-        let depthReached = (regexMatch.Groups.Item "depthReached").Value
-        let errors = (regexMatch.Groups.Item "errors").Value
-        //let yes =
-        //    let value = (regexMatch.Groups.Item "yes").Value
-        //    Int32.Parse value
-        let timeMC = (regexMatch.Groups.Item "timeMC").Value
-        let result =
-            if errors.Equals "0" then
-                PanVerificationResult.True
-            else
-                PanVerificationResult.Maybe
-        {
-            PanVerificationLog.SpinVersion = version;
-            PanVerificationLog.StateVectorSize = stateVector;
-            PanVerificationLog.DepthReached = depthReached;
-            PanVerificationLog.Errors = errors;
-            PanVerificationLog.CheckingTime = timeMC;
-            PanVerificationLog.Result = result;
-        }
+        if regexMatch.Groups.Count <= 1 then
+            {
+                PanVerificationLog.SpinVersion = "unknown";
+                PanVerificationLog.StateVectorSize = "0 byte";
+                PanVerificationLog.DepthReached = "0";
+                PanVerificationLog.Errors = "1";
+                PanVerificationLog.CheckingTime = "0 seconds";
+                PanVerificationLog.Result = PanVerificationResult.Maybe;
+            }
+        else
+            let preamble = (regexMatch.Groups.Item "preamble").Value
+            let version = (regexMatch.Groups.Item "version").Value
+            let stateVector = (regexMatch.Groups.Item "stateVector").Value
+            let depthReached = (regexMatch.Groups.Item "depthReached").Value
+            let errors = (regexMatch.Groups.Item "errors").Value
+            //let yes =
+            //    let value = (regexMatch.Groups.Item "yes").Value
+            //    Int32.Parse value
+            let timeMC = (regexMatch.Groups.Item "timeMC").Value
+            let result =
+                if errors.Equals "0" then
+                    if preamble.Contains "error: max search depth too small" then
+                        PanVerificationResult.Maybe
+                    else
+                        PanVerificationResult.True
+                else                
+                    if preamble.Contains "end state in claim reached" then
+                        PanVerificationResult.False
+                    else
+                        PanVerificationResult.Maybe
+            {
+                PanVerificationLog.SpinVersion = version;
+                PanVerificationLog.StateVectorSize = stateVector;
+                PanVerificationLog.DepthReached = depthReached;
+                PanVerificationLog.Errors = errors;
+                PanVerificationLog.CheckingTime = timeMC;
+                PanVerificationLog.Result = result;
+            }

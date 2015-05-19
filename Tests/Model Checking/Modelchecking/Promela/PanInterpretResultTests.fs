@@ -171,6 +171,27 @@ pan: rate 1314770.5 states/second""" //example smokeTest16.sam
     let ``Regex returns correct result when assertion is violated`` () =
         let result = PanInterpretResult.parseVerificationLog verificationResultErrorAssertionViolated
         result.Errors =? "1"
-        result.Result =? PanInterpretResult.PanVerificationResult.True
+        result.Result =? PanInterpretResult.PanVerificationResult.False
+        ()
+        
+    [<Test>]
+    let ``Regex returns correct result when search depth is too small`` () =
+        let result = PanInterpretResult.parseVerificationLog verificationResultMaybe
+        result.Errors =? "0"
+        result.Result =? PanInterpretResult.PanVerificationResult.Maybe
+        ()
+        
+    [<Test>]
+    let ``Regex returns correct result when model could not be read`` () =
+        let result = PanInterpretResult.parseVerificationLog verificationResultErrorSelfLoop
+        result.Errors =? "1"
+        result.Result =? PanInterpretResult.PanVerificationResult.Maybe
+        ()
+                
+    [<Test>]
+    let ``Regex returns correct result when stuck`` () =
+        let result = PanInterpretResult.parseVerificationLog verificationResultErrorStuck
+        result.Errors =? "1"
+        result.Result =? PanInterpretResult.PanVerificationResult.Maybe
         ()
         
