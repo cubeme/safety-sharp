@@ -78,6 +78,7 @@
     <Compile Include="Modelchecking\Boogie\BoogieTransformSamTests.fs" />
     <Compile Include="Modelchecking\Boogie\BoogieCheckSmokeTests.fs" />
     <Compile Include="Modelchecking\Techniques\AtLtlFormulaTests.fs" />
+    <Compile Include="Modelchecking\Techniques\AtDccaLtlTests.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserInputTests.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserSExprTests.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserLexiconTests.fs" />

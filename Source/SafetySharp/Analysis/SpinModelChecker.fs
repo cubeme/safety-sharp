@@ -61,7 +61,7 @@ type SpinModelChecker (model : Model) =
     do printf "%s" spincode
     *)
     let hazard = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.BoolVal(true))
-    let ltlDcca = SafetySharp.Analysis.Techniques.AtDccaLtl.AnalyseLtlFormulas(scm,hazard)
+    let ltlDcca = SafetySharp.Analysis.Techniques.AtDccaLtl.PerformDccaWithLtlFormulas(scm,hazard)
     let minimalCutSets = ltlDcca.checkWithPromela ()
     do printfn "%A" minimalCutSets
 

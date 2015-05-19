@@ -35,7 +35,7 @@ module internal AtDccaLtl =
         CorrespondingFormula : ScmVerificationElements.LtlExpr;
     }
 
-    type AnalyseLtlFormulas (untransformedModel:Scm.ScmModel,hazard:ScmVerificationElements.PropositionalExpr) =
+    type PerformDccaWithLtlFormulas (untransformedModel:Scm.ScmModel,hazard:ScmVerificationElements.PropositionalExpr) =
         
 
         /////////////////////////////////////////////////
