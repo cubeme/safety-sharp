@@ -167,9 +167,15 @@ module internal SsmToScm =
     }
 
     /// Transforms the given method to a SCM step declaration.
-    let private transformSteps (m : Ssm.Method) : Scm.StepDecl = {
+    let private transformStep (faults : Ssm.Fault list) (m : Ssm.Method) : Scm.StepDecl = {
         FaultExpr = None
-        Behavior = transformBehavior m
+        Behavior = 
+            let behavior = transformBehavior m
+            if faults |> List.isEmpty then
+                behavior
+            else
+                let faultSteps = faults |> List.map (fun fault -> Scm.Fault fault.Name |> Scm.StepFault)
+                { behavior with Body = faultSteps @ [behavior.Body] |> Scm.Block }
         Contract = Scm.Contract.None
     }
 
@@ -222,6 +228,6 @@ module internal SsmToScm =
             noFaults @ faults
         Bindings = c.Bindings |> List.map (transformBinding c)
         // TODO: Support fault injections in step methods
-        Steps = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.Step) |> Seq.map transformSteps |> Seq.toList
+        Steps = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.Step) |> Seq.map (transformStep c.Faults) |> Seq.toList
     }
         
