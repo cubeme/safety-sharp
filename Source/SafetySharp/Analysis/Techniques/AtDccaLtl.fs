@@ -48,7 +48,7 @@ module internal AtDccaLtl =
         let numberOfAllFaults = allFaultsAsSet.Count
         // assert (List.Length allFaultsAsList = Set.count allFaultsAsSet)
 
-        let ``even when these faults appear, system is safe``(faultsWhichMayAppear:Set<FaultPath>) : ElementToCheck =
+        member this.``even when these faults appear, system is safe``(faultsWhichMayAppear:Set<FaultPath>) : ElementToCheck =
             let faultsWhichMustNotAppear = Set.difference allFaultsAsSet faultsWhichMayAppear
             let faultsWhichMustNotAppearLtl =
                 faultsWhichMustNotAppear
@@ -62,13 +62,13 @@ module internal AtDccaLtl =
                 CorrespondingFormula = correspondingFormula;
             }
 
-        let isAlreadyKnownThatUnsafe (knownUnsafe:Set<FaultPath> list) (toCheck:Set<FaultPath>) : bool =
+        member this.isAlreadyKnownThatUnsafe (knownUnsafe:Set<FaultPath> list) (toCheck:Set<FaultPath>) : bool =
             let doesSetShowThatUnsafe (unsafeSet:Set<FaultPath>) =
                 Set.isSubset unsafeSet toCheck
             knownUnsafe |> List.exists doesSetShowThatUnsafe
 
         
-        let formulasToVerify_CheckIfNumberOfFaultsIsSafe (exactNumberOfFaults:int) (knownUnsafe:Set<FaultPath> list) : ElementToCheck list =
+        member this.formulasToVerify_CheckIfNumberOfFaultsIsSafe (exactNumberOfFaults:int) (knownUnsafe:Set<FaultPath> list) : ElementToCheck list =
             // we assume, that we increase the number of faults each step (the other direction is also possible and may be advantageous in several cases)
             // formulasToVerify_CheckIfNumberOfFaultsIsSafe (0) ...
             // formulasToVerify_CheckIfNumberOfFaultsIsSafe (...) ...
@@ -85,8 +85,8 @@ module internal AtDccaLtl =
                     let notSelectedBranch = createCandidates (selectionsLeft,     decisionsLeft - 1) (alreadyInSet)                     (toDecide.Tail)
                     selectedBranch@notSelectedBranch
             let allCandidates = createCandidates (exactNumberOfFaults,numberOfAllFaults) (Set.empty<FaultPath>) (allFaultsAsList)
-            let filteredCandidates = allCandidates |> List.filter (fun candidate -> not (isAlreadyKnownThatUnsafe knownUnsafe candidate))
-            let ltlOfFilteredCandidates = filteredCandidates |> List.map ``even when these faults appear, system is safe``
+            let filteredCandidates = allCandidates |> List.filter (fun candidate -> not (this.isAlreadyKnownThatUnsafe knownUnsafe candidate))
+            let ltlOfFilteredCandidates = filteredCandidates |> List.map this.``even when these faults appear, system is safe``
             ltlOfFilteredCandidates
 
 
@@ -121,7 +121,7 @@ module internal AtDccaLtl =
             }
 
             let checkIfSizeIsSafe (knownUnsafe:Set<FaultPath> list) (size:int) : Set<FaultPath> list = //returns new knownUnsafe
-                let formulasToCheck = formulasToVerify_CheckIfNumberOfFaultsIsSafe size knownUnsafe
+                let formulasToCheck = this.formulasToVerify_CheckIfNumberOfFaultsIsSafe size knownUnsafe
                 let checkedFormulas =
                     formulasToCheck |> List.map (fun formula -> runWorkflowState_getResult (checkFormulaElement formula) wfStateWithPromelaModel)
                 let calculateNewKnownUnsafe (acc:Set<FaultPath> list) (toProcess:(Set<FaultPath>*SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationLog)) =
