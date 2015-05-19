@@ -70,7 +70,7 @@ Stats on memory usage (in Megabytes):
 
 pan: elapsed time 0 seconds""" //example smokeTest18.sam
 
-    let verificationResultErrorAssertionViolated = """warning: never claim + accept labels requires -a flag to fully verify
+    let verificationResultErrorAssertionViolated1 = """warning: never claim + accept labels requires -a flag to fully verify
 warning: for p.o. reduction to be valid the never claim must be stutter-invariant
 (never claims generated from LTL formulae are stutter-invariant)
 pan:1: end state in claim reached (at depth 3502)
@@ -91,6 +91,37 @@ State-vector 112 byte, depth reached 3502, ••• errors: 1 •••
 hash conflicts:         0 (resolved)
     5.247	memory usage (Mbyte)
 pan: elapsed time 0.01 seconds"""
+
+    let verificationResultErrorAssertionViolated2 = """pan:1: assertion violated  !((vTank0_0__maxPressure__>=60)) (at depth 13)
+pan: wrote verification.pml.trail
+
+(Spin Version 6.2.7 -- 2 March 2014)
+Warning: Search not completed
+	+ Partial Order Reduction
+
+Full statespace search for:
+	never claim         	+ (ltl_0)
+	assertion violations	+ (if within scope of claim)
+	acceptance   cycles 	- (not selected)
+	invalid end states	- (disabled by never claim)
+
+State-vector 52 byte, depth reached 13, errors: 1
+        2 states, stored
+        0 states, matched
+        2 transitions (= stored+matched)
+       11 atomic steps
+hash conflicts:         0 (resolved)
+
+Stats on memory usage (in Megabytes):
+    0.000	equivalent memory usage for states (stored*(State-vector + overhead))
+    0.138	actual memory usage for states
+   64.000	memory used for hash table (-w24)
+    0.069	memory used for DFS stack (-m2000)
+   64.195	total actual memory usage
+
+
+
+pan: elapsed time 0 seconds"""
 
     let verificationResultSuccess = """
 (Spin Version 6.2.7 -- 2 March 2014)
@@ -168,8 +199,15 @@ pan: rate 1314770.5 states/second""" //example smokeTest16.sam
         ()
         
     [<Test>]
-    let ``Regex returns correct result when assertion is violated`` () =
-        let result = PanInterpretResult.parseVerificationLog verificationResultErrorAssertionViolated
+    let ``Regex returns correct result when assertion is violated (Test 1)`` () =
+        let result = PanInterpretResult.parseVerificationLog verificationResultErrorAssertionViolated1
+        result.Errors =? "1"
+        result.Result =? PanInterpretResult.PanVerificationResult.False
+        ()
+        
+    [<Test>]
+    let ``Regex returns correct result when assertion is violated (Test 2)`` () =
+        let result = PanInterpretResult.parseVerificationLog verificationResultErrorAssertionViolated2
         result.Errors =? "1"
         result.Result =? PanInterpretResult.PanVerificationResult.False
         ()

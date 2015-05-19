@@ -85,7 +85,7 @@ module internal AtDccaLtl =
                     let notSelectedBranch = createCandidates (selectionsLeft,     decisionsLeft - 1) (alreadyInSet)                     (toDecide.Tail)
                     selectedBranch@notSelectedBranch
             let allCandidates = createCandidates (exactNumberOfFaults,numberOfAllFaults) (Set.empty<FaultPath>) (allFaultsAsList)
-            let filteredCandidates = allCandidates |> List.filter (isAlreadyKnownThatUnsafe knownUnsafe)
+            let filteredCandidates = allCandidates |> List.filter (fun candidate -> not (isAlreadyKnownThatUnsafe knownUnsafe candidate))
             let ltlOfFilteredCandidates = filteredCandidates |> List.map ``even when these faults appear, system is safe``
             ltlOfFilteredCandidates
 

@@ -79,12 +79,12 @@ module internal PanInterpretResult =
             let timeMC = (regexMatch.Groups.Item "timeMC").Value
             let result =
                 if errors.Equals "0" then
-                    if preamble.Contains "error: max search depth too small" then
+                    if preamble.Contains "error: max search depth too small"then
                         PanVerificationResult.Maybe
                     else
                         PanVerificationResult.True
                 else                
-                    if preamble.Contains "end state in claim reached" then
+                    if preamble.Contains "end state in claim reached" || preamble.Contains "assertion violated"  then
                         PanVerificationResult.False
                     else
                         PanVerificationResult.Maybe

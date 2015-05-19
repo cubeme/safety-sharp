@@ -279,13 +279,13 @@ type internal PromelaToString () =
                 
     member this.ExportBinaryLtlOperator (binarop : BinaryLtlOperator) : string =
         match binarop with
-            | BinaryLtlOperator.Equals     -> "<->"
-            | BinaryLtlOperator.Until      -> "U"
-            | BinaryLtlOperator.WeakUntil  -> "W"
-            | BinaryLtlOperator.Release    -> "V"
-            | BinaryLtlOperator.And        -> "/\\"
-            | BinaryLtlOperator.Or         -> "\\/"
-            | BinaryLtlOperator.Implies    -> "->"
+            | BinaryLtlOperator.Equals     -> " <-> "
+            | BinaryLtlOperator.Until      -> " U "
+            | BinaryLtlOperator.WeakUntil  -> " W "
+            | BinaryLtlOperator.Release    -> " V "
+            | BinaryLtlOperator.And        -> " /\\ "
+            | BinaryLtlOperator.Or         -> " \\/ "
+            | BinaryLtlOperator.Implies    -> " -> "
     
     member this.ExportLtlExpr (formula : LtlExpr) : string =
         match formula with

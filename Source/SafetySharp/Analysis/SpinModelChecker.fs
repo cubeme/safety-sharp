@@ -60,7 +60,12 @@ type SpinModelChecker (model : Model) =
     let spincode = spinWriter.Export (spin.PrSpec)
     do printf "%s" spincode
     *)
-    let hazard = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.BoolVal(true))
+
+    let tankComp = [Scm.Comp("Tank0@0");Scm.Comp("R")]
+    let tankPressure = tankComp,Scm.Field("_pressureLevel$$")
+    let value60 = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.IntVal(60))
+    let hazard = ScmVerificationElements.PropositionalExpr.BExpr( ScmVerificationElements.PropositionalExpr.ReadField(tankPressure),Scm.BOp.GreaterEqual, value60)
+
     let ltlDcca = SafetySharp.Analysis.Techniques.AtDccaLtl.PerformDccaWithLtlFormulas(scm,hazard)
     let minimalCutSets = ltlDcca.checkWithPromela ()
     do printfn "%A" minimalCutSets
