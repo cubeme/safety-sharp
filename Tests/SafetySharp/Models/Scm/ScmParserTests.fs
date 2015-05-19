@@ -533,6 +533,13 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()
+        
+    [<Test>]
+    member this.``Example dcca1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/dcca1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
                 
     // ## Contract-Tests
     [<Test>]

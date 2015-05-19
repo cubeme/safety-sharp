@@ -88,6 +88,7 @@
 * callInstFromProvWithFaults1.scm: like callInstFromProv1 but with several faults and affected ports and steps
 * callInstHierarchyWithFaults1.scm: like callInstHierarchy2 but with several faults and affected ports and steps
 * callDelayedSimpleWithFaults1.scm: like callDelayedSimple1 but with one fault and an affected port
+* dcca1.scm: example with minimal cut set {{δ1,δ2},{δ1,δ4},{δ2,δ3,δ4}}
 
 ## Contract-Tests
 * callInstFromBehWithContracts1.scm: like callInstFromBeh5, but with provPortContract
