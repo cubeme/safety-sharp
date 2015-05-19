@@ -41,6 +41,7 @@ module internal PanInterpretResult =
         Errors : string;
         CheckingTime : string;
         Result : PanVerificationResult;
+        FullLog : string;
     }
 
     let templateOfVerificationLog = 
@@ -64,6 +65,7 @@ module internal PanInterpretResult =
                 PanVerificationLog.Errors = "1";
                 PanVerificationLog.CheckingTime = "0 seconds";
                 PanVerificationLog.Result = PanVerificationResult.Maybe;
+                PanVerificationLog.FullLog = str;
             }
         else
             let preamble = (regexMatch.Groups.Item "preamble").Value
@@ -93,4 +95,14 @@ module internal PanInterpretResult =
                 PanVerificationLog.Errors = errors;
                 PanVerificationLog.CheckingTime = timeMC;
                 PanVerificationLog.Result = result;
+                PanVerificationLog.FullLog = str;
             }
+            
+    open SafetySharp.Workflow
+
+    let interpretWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<string,PanVerificationLog> = workflow {
+        let! state = getState ()
+        let interpretation = parseVerificationLog state
+        do! updateState interpretation
+    }

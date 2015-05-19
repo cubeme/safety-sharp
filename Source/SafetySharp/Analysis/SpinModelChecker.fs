@@ -46,6 +46,7 @@ type SpinModelChecker (model : Model) =
     let scm = scmRootComp |> Scm.ScmModel
    // do printf "======================================="
    
+   (*
     let workflowToExecute : WorkflowFunction<_,_,unit> = workflow {
             do! ScmMutable.setInitialPlainModelState scm
             do! ScmToPromela.transformConfiguration ()
@@ -58,6 +59,11 @@ type SpinModelChecker (model : Model) =
     let spinWriter = SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString()
     let spincode = spinWriter.Export (spin.PrSpec)
     do printf "%s" spincode
+    *)
+    let hazard = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.BoolVal(true))
+    let ltlDcca = SafetySharp.Analysis.Techniques.AtDccaLtl.AnalyseLtlFormulas(scm,hazard)
+    let minimalCutSets = ltlDcca.checkWithPromela ()
+    do printfn "%A" minimalCutSets
 
 //    member this.Check (formula : LtlFormula) =
 //        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)

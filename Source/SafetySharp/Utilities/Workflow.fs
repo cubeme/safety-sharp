@@ -282,6 +282,13 @@ module internal Workflow =
                         : WorkflowState<'newState> =
         let result,newWfState = s (initialState)
         newWfState
+          
+    let runWorkflowState_getResult<'oldState,'newState,'returnType>
+                    (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'returnType>))
+                    (initialState:WorkflowState<'oldState>) 
+                        : 'returnType =
+        let result,newWfState = s (initialState)
+        result
         
     let ignoreResult<'oldState,'newState,'oldTraceableOfOrigin,'newTraceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType>
                     (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'returnType>))
