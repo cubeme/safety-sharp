@@ -251,6 +251,13 @@ type ExampleFiles() =
         ()
 
     [<Test>]
+    member this.``Example smokeTest21 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest21.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
     member this.``Example reservedNames parses successfully`` () =
         let inputFile = """../../Examples/SAM/reservedNames.sam"""
         let input = System.IO.File.ReadAllText inputFile

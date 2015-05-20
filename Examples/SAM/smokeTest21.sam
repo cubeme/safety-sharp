@@ -1,0 +1,202 @@
+
+globals {
+  vfault1 : bool = false;
+  vfault2 : bool = false;
+  vgvar1 : int = 0;
+  vgvar2 : bool = false;
+  vgvar3 : int = 58;
+  vgvar4 : int = 59;
+  vgvar5 : int = 1;
+  vgvar6 : int = 0;
+  vgvar7 : int = 60;
+  vgvar8 : int = 1;
+}
+
+locals {
+  vlvar1 : bool;
+  vlvar2 : bool;
+  vlvar3 : int;
+  vlvar4 : int;
+  vlvar5 : bool;
+  vlvar6 : bool;
+  vlvar7 : bool;
+  vlvar8 : int;
+  vlvar9 : int;
+}
+
+{
+  {
+    {
+      vlvar1 := ((vgvar6)<(60))==(false);
+    }
+    choice {
+      !(vlvar1) => {        
+        {
+          {
+            vlvar2 := vgvar2;
+          }
+          choice {
+            !(vlvar2) =>{              
+              {
+              }
+            }
+            !(!(vlvar2)) => {              
+              vgvar6 := (vgvar6)+(2);
+            }
+          }
+          vgvar6 := (vgvar6)-(1);
+          choice {
+            (vgvar6)>(60) => {              
+              vlvar3 := 60;
+            }
+            !((vgvar6)>(60)) =>{              
+              vlvar3 := vgvar6;
+            }
+          }
+          vgvar6 := vlvar3;
+          choice {
+            (vgvar6)<(0) => {              
+              vlvar4 := 0;
+            }
+            !((vgvar6)<(0)) => {              
+              vlvar4 := vgvar6;
+            }
+          }
+          vgvar6 := vlvar4;
+          {
+          }
+        }
+      }
+      !(!(vlvar1)) =>{        
+        {
+        }
+      }
+    }
+  }
+  {
+    {
+    }
+    {
+      choice {
+        true => {          
+          vfault2 := true;
+        }
+        true => {
+          vfault2 := false;
+        }
+      }
+      {
+      }
+    }
+    {
+      choice {
+        true => {
+          vfault1 := true;
+        }
+        true =>{
+          vfault1 := false;
+        }
+      }
+      {
+        vgvar5 := (vgvar5)-(1);
+      }
+    }
+    choice {
+      ((vgvar1) != (1)) => {        
+        {
+          {
+            {
+              vlvar8 := vgvar6;
+            }
+            vlvar5 := (vlvar8)==(0);
+          }
+          choice {
+            !(vlvar5) => {              
+              {
+              }
+            }
+            !(!(vlvar5)) => {              
+              {
+                {
+                  vgvar5 := 59;
+                }
+                {
+                  vgvar2 := true;
+                }
+                vgvar1 := 1;
+              }
+            }
+          }
+          {
+          }
+        }
+      }
+      !((vgvar1)!=(1)) => {        
+        {
+          choice {
+            !(vfault1) => {              
+              {
+                vlvar6 := (vgvar5)==(0);
+              }
+            }
+            vfault1 => {              
+              {
+                vlvar6 := false;
+              }
+            }
+          }
+          choice {
+            !(vlvar6) => {              
+              {
+                choice {
+                  !(vfault2) => {                    
+                    {
+                      {
+                        vlvar9 := vgvar6;
+                      }
+                      vlvar7 := ((vlvar9)<(58))==(false);
+                    }
+                  }
+                  vfault2 => {                    
+                    {
+                      vlvar7 := false;
+                    }
+                  }
+                }
+                choice {
+                  !(vlvar7) => {                    
+                    {
+                    }
+                  }
+                  !(!(vlvar7)) => {                    
+                    {
+                      {
+                        vgvar2 := false;
+                      }
+                      {
+                        vgvar5 := 1;
+                      }
+                      vgvar1 := 2;
+                      {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            !(!(vlvar6)) => {              
+              {
+                {
+                  vgvar2 := false;
+                }
+                vgvar1 := 3;
+                {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

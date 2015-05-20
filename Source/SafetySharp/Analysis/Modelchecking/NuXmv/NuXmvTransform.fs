@@ -272,6 +272,9 @@ module internal ScmToNuXmv =
         *)
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+        let! tsamModel = getState ()
+        let tsamModel = tsamModel.Pgm
+        do printfn "%s" (SafetySharp.Models.TsamToString.exportModel tsamModel)
         do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
         do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
         do! VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
