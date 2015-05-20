@@ -142,3 +142,52 @@ module internal AtDccaLtl =
 
             
         /////////////////////////////////////////////////
+        //              NuXmv-Code
+        /////////////////////////////////////////////////
+        member this.checkWithNuXmv () =            
+            let nuxmvExecutor = new SafetySharp.Analysis.Modelchecking.NuXmv.ExecuteNuXmv()
+            
+            let transformModelToNuXmv = workflow {
+                    do! SafetySharp.Models.ScmMutable.setInitialPlainModelState untransformedModel
+                    do! SafetySharp.Analysis.Modelchecking.NuXmv.ScmToNuXmv.transformConfiguration ()
+                    do! logForwardTracesOfOrigins ()
+                    let! forwardTracer = getForwardTracer ()
+                    let! nuxmvModel = getState ()
+                    do! SafetySharp.ITracing.removeTracing ()
+                    do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
+                    let filename = "verification.smv" |> SafetySharp.FileSystem.FileName
+                    do! saveToFile filename
+                    do nuxmvExecutor.StartNuXmvInteractive (0) ("verification.smv.log") |> ignore
+                    let readmodel = nuxmvExecutor.ExecuteAndIntepretCommandSequence(SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd "verification.smv")
+                    assert readmodel.HasSucceeded
+                    return (nuxmvModel,forwardTracer)
+            }
+            let ((nuxmvModel,forwardTracer),wfStateWithNuxmvModel) = runWorkflow_getResultAndWfState transformModelToNuXmv            
+            
+
+            let checkFormulaElement (formulaElement:ElementToCheck) =
+                    let nuxmvLtl = SafetySharp.Analysis.Modelchecking.NuXmv.ScmVeToNuXmv.transformLtlExpression forwardTracer formulaElement.CorrespondingFormula
+                    let nuXmvResult = nuxmvExecutor.ExecuteCommand(SafetySharp.Analysis.Modelchecking.NuXmv.NuSMVCommand.CheckLtlSpec nuxmvLtl)
+                    let nuXmvInterpretation = SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec nuXmvResult
+                    (formulaElement.FaultsWhichMayAppear,nuXmvInterpretation)
+
+            let checkIfSizeIsSafe (knownUnsafe:Set<FaultPath> list) (size:int) : Set<FaultPath> list = //returns new knownUnsafe
+                let formulasToCheck = this.formulasToVerify_CheckIfNumberOfFaultsIsSafe size knownUnsafe
+                let checkedFormulas =
+                    formulasToCheck |> List.map (fun formula -> checkFormulaElement formula)
+                let calculateNewKnownUnsafe (acc:Set<FaultPath> list) (toProcess:(Set<FaultPath>*SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvCommandResultInterpretedCheckOfSpecification)) =
+                    let faultyComponents,result = toProcess
+                    match result.Result with
+                        | SafetySharp.Analysis.Modelchecking.NuXmv.CheckOfSpecificationDetailedResult.Invalid (trace)->
+                            faultyComponents::acc // model checker finds counterexample. Formula is false. Combination is unsafe.
+                        | SafetySharp.Analysis.Modelchecking.NuXmv.CheckOfSpecificationDetailedResult.Valid ->
+                            acc // model checker finds no counterexample. Formula is true. Combination is safe.
+                        | SafetySharp.Analysis.Modelchecking.NuXmv.CheckOfSpecificationDetailedResult.Undetermined ->
+                            printfn "stdout: %s\n stderr: %s" (result.Basic.Stdout) (result.Basic.Stderr)
+                            failwith "Could not be checked with Spin. Possible reason: Search depth too small. Consult full log"
+                checkedFormulas |> List.fold calculateNewKnownUnsafe knownUnsafe
+            
+            let fullDcca : Set<FaultPath> list =
+                {0..numberOfAllFaults} |> Seq.toList |> List.fold checkIfSizeIsSafe ([]:Set<FaultPath> list)
+            do nuxmvExecutor.ForceShutdownNuXmv () 
+            fullDcca

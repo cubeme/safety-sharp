@@ -68,7 +68,7 @@ type SpinModelChecker (model : Model) =
 
     let ltlDcca = SafetySharp.Analysis.Techniques.AtDccaLtl.PerformDccaWithLtlFormulas(scm,hazard)
     let minimalCutSets = ltlDcca.checkWithPromela ()
-    do printfn "%A" minimalCutSets
+    do printfn "%+A" minimalCutSets
 
 //    member this.Check (formula : LtlFormula) =
 //        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
