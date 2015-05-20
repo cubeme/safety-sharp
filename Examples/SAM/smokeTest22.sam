@@ -1,0 +1,20 @@
+globals {
+  vgvar6 : int = 0;
+}
+
+locals {
+  vlvar4 : int;
+}
+
+{
+	choice {
+	  true => { 
+		  vlvar4 := 0;
+		  vgvar6 := vlvar4;       
+	  }
+	  false =>{        
+		{
+		}
+	  }
+	}
+}

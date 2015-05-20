@@ -370,6 +370,7 @@ module internal TsamPassiveFormGCFK09 =
                 let newChoices = choices |> List.map (addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar)                
                 let readOfNextNode = statementInfos.MaxLastWrite.Item sid.Value
                 //Note: maxLastWrite of this statement is firstRead of next Statement. Thus we still check the formula int the paper.
+                do printfn "%+A" (sid.Value)
                 let addMissingAssignmentsToBranch (branch:Stm) : Stm =
                     let missingStatementsOfBranch =
                         let maxLastWriteOfBranch = statementInfos.MaxLastWrite.Item branch.GetStatementId.Value
