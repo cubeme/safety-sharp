@@ -195,6 +195,27 @@ module NuXmvGwamCheckSamSmokeTests =
         ()
 
     [<Test>]
+    let ``smokeTest21.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest21.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest22.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest22.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest23.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest23.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
     let ``reserved names do not make any problems`` () =        
         let inputFile = """../../Examples/SAM/reservedNames.sam"""
         let output = runSmokeTest inputFile
@@ -419,6 +440,27 @@ module NuXmvSpCheckSamSmokeTests =
     [<Test>]
     let ``smokeTest20.sam returns the expected results`` () =        
         let inputFile = """../../Examples/SAM/smokeTest20.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest21.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest21.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest22.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest22.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest23.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest23.sam"""
         let output = runSmokeTest inputFile
         printf "%s" output
         ()

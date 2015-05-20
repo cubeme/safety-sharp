@@ -176,6 +176,12 @@ module VcGuardWithAssignmentModelTests =
         ()
 
     [<Test>]
+    let ``smokeTest23 gets converted to Gwa Form`` () =
+        let inputFile = """../../Examples/SAM/smokeTest23.sam"""
+        let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToGwaForm inputFile)
+        ()
+
+    [<Test>]
     let ``nestedBlocks1 gets converted to Gwa Form`` () =
         let inputFile = """../../Examples/SAM/nestedBlocks1.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToGwaForm inputFile)
@@ -332,6 +338,12 @@ module VcGuardWithAssignmentModelTests =
     [<Test>]
     let ``smokeTest22 gets converted to Gwa Model`` () =
         let inputFile = """../../Examples/SAM/smokeTest22.sam"""
+        let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToGwaModel inputFile)
+        ()
+
+    [<Test>]
+    let ``smokeTest23 gets converted to Gwa Model`` () =
+        let inputFile = """../../Examples/SAM/smokeTest23.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToGwaModel inputFile)
         ()
 

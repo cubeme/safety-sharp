@@ -1,0 +1,14 @@
+globals {
+  globalInt: int<0..10> = 3;
+  globalBool: bool = true;
+}
+
+locals {
+  localIntWithInitialValue: int;
+  localBoolWithInitialValue: bool;
+}
+
+{
+	globalInt := localIntWithInitialValue + 3;
+	globalBool := !localBoolWithInitialValue;
+}

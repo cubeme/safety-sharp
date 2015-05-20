@@ -28,4 +28,5 @@
 * smokeTest19.sam: one branch allows a value, another does not
 * smokeTest20.sam: example, which demonstrates, that the definition of assignment in the sp predicate transformer actually needs an \exists
 * smokeTest21.sam: example, which exposed a bug in passification
-* smokeTest22.sam: minimalized example, which exposed a bug in passification
+* smokeTest22.sam: works with local variables, too
+* smokeTest23.sam: local variable has always the defined initial values
