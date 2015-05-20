@@ -219,7 +219,7 @@ module internal VcTransitionRelationToNuXmv =
         let tracing =
             nuXmvVariables.VarToNuXmvIdentifier
                 |> Map.toList
-                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),_nuxmv.Name) )
+                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),ComplexIdentifier.NameComplexIdentifier({Identifier.Name= _nuxmv.Name}) ))
                 |> Map.ofList
         (transformedConfiguration,tracing)
 
@@ -257,69 +257,216 @@ module internal VcTransitionRelationToNuXmv =
             }
         do! updateState transformed
     }   
+    
+module internal ScmToNuXmv =
 
-    (*
+    open SafetySharp.Workflow
+    open SafetySharp.Models.ScmMutable
+    open SafetySharp.Analysis.VerificationCondition
+                
+    let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state>> ()
+                        : ExogenousWorkflowFunction<'state,VcTransitionRelationToNuXmv.NuXmvTracer<'traceableOfOrigin>> = workflow {
+        (*
         let reservedNames = Set.empty<string>
         do! SafetySharp.Models.TsamChangeIdentifier.changeIdentifiers reservedNames
-    *)
+        *)
+        do! SafetySharp.Models.ScmToSam.transformIscmToSam
+        do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+        do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
+        do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
+        do! VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+    }
 
-    (*
+module internal ScmVeToNuXmv =
     
-    member this.transFormCtlFormula (formula:MMFormula) : CtlExpression =
-        match formula with
-                 | MMFormula.StateFormula (stateExpression : MMExpression) ->
-                    CtlExpression.CtlSimpleExpression(this.transformExpressionInsideAFormula stateExpression)
-                 | MMFormula.UnaryFormula (operand : MMFormula, operator : MMUnaryFormulaOperator) ->
-                    let transformedOperand = this.transFormCtlFormula operand
-                    match operator with
-                        | MMUnaryFormulaOperator.Not                -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.LogicalNot,transformedOperand)
-                        | MMUnaryFormulaOperator.AllPathsNext       -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ForallNext,transformedOperand)
-                        | MMUnaryFormulaOperator.AllPathsFinally    -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ForallFinally,transformedOperand)
-                        | MMUnaryFormulaOperator.AllPathsGlobally   -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ForallGlobally,transformedOperand)
-                        | MMUnaryFormulaOperator.ExistsPathNext     -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ExistsNextState,transformedOperand)
-                        | MMUnaryFormulaOperator.ExistsPathFinally  -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ExistsFinally,transformedOperand)
-                        | MMUnaryFormulaOperator.ExistsPathGlobally -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ExistsGlobally,transformedOperand)
-                        | _ -> failwith "Only CTL allowed in CTL-Mode"
-                 | MMFormula.BinaryFormula (leftFormula : MMFormula, operator : MMBinaryFormulaOperator, rightFormula : MMFormula) ->
-                    let transformedLeft = this.transFormCtlFormula leftFormula
-                    let transformedRight = this.transFormCtlFormula rightFormula
-                    match operator with
-                        | MMBinaryFormulaOperator.And             -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalAnd,transformedRight)
-                        | MMBinaryFormulaOperator.Or              -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalOr,transformedRight)
-                        | MMBinaryFormulaOperator.Implication     -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalImplies,transformedRight)
-                        | MMBinaryFormulaOperator.Equivalence     -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalEquivalence,transformedRight)
-                        | MMBinaryFormulaOperator.AllPathsUntil   -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.ForallUntil,transformedRight)
-                        | MMBinaryFormulaOperator.ExistsPathUntil -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.ExistsUntil,transformedRight)
-                        | _ -> failwith "Only CTL allowed in CTL-Mode"
+    open ScmVerificationElements
+        
+    let transformScmVal (literal:Scm.Val) : NuXmvBasicExpression =
+        match literal with
+            | Scm.Val.BoolVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.BooleanConstant(_val))
+            | Scm.Val.IntVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.IntegerConstant(bigint _val))
+            | Scm.Val.RealVal _ -> failwith "No support in SMV for real values, yet."
+            | Scm.Val.ProbVal _ -> failwith "No support in SMV for probabilities, yet."
+                                            
+    let transformBinaryOperator (operator:Scm.BOp) =
+        match operator with
+            | Scm.BOp.Add -> NuXmv.BinaryOperator.IntegerAddition
+            | Scm.BOp.Subtract -> NuXmv.BinaryOperator.IntegerSubtraction
+            | Scm.BOp.Multiply -> NuXmv.BinaryOperator.IntegerMultiplication
+            | Scm.BOp.Divide -> NuXmv.BinaryOperator.IntegerDivision
+            | Scm.BOp.Modulo -> NuXmv.BinaryOperator.IntegerRemainder
+            | Scm.BOp.And -> NuXmv.BinaryOperator.LogicalAnd
+            | Scm.BOp.Or -> NuXmv.BinaryOperator.LogicalOr
+            | Scm.BOp.Equals -> NuXmv.BinaryOperator.Equality //TODO: For Binary Left and Right NuXmv.BinaryOperator.LogicalEquivalence should be better
+            | Scm.BOp.NotEquals -> NuXmv.BinaryOperator.Inequality //TODO: For Binary Left and Right NuXmv.BinaryOperator.Xor should be better
+            | Scm.BOp.Less -> NuXmv.BinaryOperator.LessThan
+            | Scm.BOp.LessEqual -> NuXmv.BinaryOperator.LessEqual
+            | Scm.BOp.Greater -> NuXmv.BinaryOperator.GreaterThan
+            | Scm.BOp.GreaterEqual -> NuXmv.BinaryOperator.GreaterEqual
 
-    member this.transFormLtlFormula (formula:MMFormula) : LtlExpression =
-        match formula with
-                 | MMFormula.StateFormula (stateExpression : MMExpression) ->
-                    LtlExpression.LtlSimpleExpression(this.transformExpressionInsideAFormula stateExpression)
-                 | MMFormula.UnaryFormula (operand : MMFormula, operator : MMUnaryFormulaOperator) ->
-                    let transformedOperand = this.transFormLtlFormula operand
-                    match operator with
-                        | MMUnaryFormulaOperator.Not      -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.LogicalNot,transformedOperand)
-                        | MMUnaryFormulaOperator.Next     -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.FutureNext,transformedOperand)
-                        | MMUnaryFormulaOperator.Finally  -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.FutureFinally,transformedOperand)
-                        | MMUnaryFormulaOperator.Globally -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.FutureGlobally,transformedOperand)
-                        | _ -> failwith "Only LTL allowed in LTL-Mode"
-                 | MMFormula.BinaryFormula (leftFormula : MMFormula, operator : MMBinaryFormulaOperator, rightFormula : MMFormula) ->
-                    let transformedLeft = this.transFormLtlFormula leftFormula
-                    let transformedRight = this.transFormLtlFormula rightFormula
-                    match operator with
-                        | MMBinaryFormulaOperator.And         -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalAnd,transformedRight)
-                        | MMBinaryFormulaOperator.Or          -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalOr,transformedRight)
-                        | MMBinaryFormulaOperator.Implication -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalImplies,transformedRight)
-                        | MMBinaryFormulaOperator.Equivalence -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalEquivalence,transformedRight)
-                        | MMBinaryFormulaOperator.Until       -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.FutureUntil,transformedRight)
-                        | _ -> failwith "Only LTL allowed in LTL-Mode"
+    let transformUnaryOperator (operator:Scm.UOp) =
+        match operator with        
+            | Scm.UOp.Not      -> LtlUnaryOperator.LogicalNot
+            | Scm.UOp.Minus -> failwith "NotImplementedYet"               
+            
 
-    member this.transformFormula (formula:MMFormula) : Specification =
-        if formula.IsLtl() then
-            this.transFormLtlFormula formula |> Specification.LtlSpecification
-        else if formula.IsCtl() then
-            this.transFormCtlFormula formula |> Specification.CtlSpecification
-        else
-            failwith "NotImplementedYet"
-*)
+    let transformScmFieldToVarref (tracer:Scm.Traceable->Traceable) (compPath:Scm.CompPath,field:Scm.Field) : ComplexIdentifier =
+        let identifier = tracer (Scm.TraceableField(compPath,field))
+        identifier
+
+    let transformScmFaultToVarref (tracer:Scm.Traceable->Traceable) (compPath:Scm.CompPath,fault:Scm.Fault) : ComplexIdentifier =
+        let identifier = tracer (Scm.TraceableFault(compPath,fault))
+        identifier
+        
+
+    let transformBinaryLtlOperator (operator:LbOp) =
+        match operator with
+            | LbOp.Until -> LtlBinaryOperator.FutureUntil
+
+    let transformUnaryLtlOperator (operator:LuOp) =
+        match operator with
+            | LuOp.Next       -> LtlUnaryOperator.FutureNext
+            | LuOp.Eventually -> LtlUnaryOperator.FutureFinally
+            | LuOp.Globally   -> LtlUnaryOperator.FutureGlobally
+
+        
+    let rec transformBasicExpression_fromLtlSubExpression (tracer:Scm.Traceable->Traceable) (expression:LtlExpr) : BasicExpression =
+        // assume no temporal operators are in the expression
+        match expression with
+            | LtlExpr.Literal  (value) ->
+                transformScmVal value
+            | LtlExpr.ReadField (compPath,field) ->
+                NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field))
+            | LtlExpr.ReadFault (compPath,fault) ->
+                NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault))
+            | LtlExpr.UExpr (expr,op) ->
+                let transformedOperand = (transformBasicExpression_fromLtlSubExpression tracer) expr
+                match op with
+                    | Scm.UOp.Not -> BasicExpression.UnaryExpression(UnaryOperator.LogicalNot,transformedOperand)
+                    | _ -> failwith  "NotImplementedYet"
+            | LtlExpr.BExpr  (left,op,right) ->
+                let transformedLeft = (transformBasicExpression_fromLtlSubExpression tracer) left
+                let transformedRight = (transformBasicExpression_fromLtlSubExpression tracer) right
+                let transformedOperator = transformBinaryOperator op
+                BasicExpression.BinaryExpression(transformedLeft,transformedOperator,transformedRight)
+            | LtlExpr.LuExpr (_)
+            | LtlExpr.LbExpr (_) ->
+                failwith "no ltl operator should be in this sub expression"
+
+    let rec transformLtlExpression (tracer:Scm.Traceable->Traceable) (expression:LtlExpr) : LtlExpression =
+        match expression with
+            | LtlExpr.Literal  (value) ->
+                LtlExpression.LtlSimpleExpression(transformScmVal value)
+            | LtlExpr.ReadField (compPath,field) ->
+                LtlExpression.LtlSimpleExpression(NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field)))
+            | LtlExpr.ReadFault (compPath,fault) ->
+                LtlExpression.LtlSimpleExpression(NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault)))
+            | LtlExpr.UExpr (expr,op) ->
+                let transformedOperand = (transformLtlExpression tracer) expr
+                match op with
+                    | Scm.UOp.Not -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.LogicalNot,transformedOperand)
+                    | _ -> failwith  "NotImplementedYet"
+            | LtlExpr.BExpr  (left,op,right) ->
+                match op with
+                | Scm.BOp.And ->
+                    let transformedLeft = (transformLtlExpression tracer) left
+                    let transformedRight = (transformLtlExpression tracer) right
+                    LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalAnd,transformedRight)
+                | Scm.BOp.Or ->
+                    let transformedLeft = (transformLtlExpression tracer) left
+                    let transformedRight = (transformLtlExpression tracer) right
+                    LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalOr,transformedRight)
+                | Scm.BOp.Equals ->
+                    let transformedLeft = (transformLtlExpression tracer) left
+                    let transformedRight = (transformLtlExpression tracer) right
+                    LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalEquivalence,transformedRight)
+                | _ ->
+                    let transformedBasicExpression = transformBasicExpression_fromLtlSubExpression tracer expression
+                    LtlExpression.LtlSimpleExpression(transformedBasicExpression)
+            | LtlExpr.LuExpr (expr,op) ->
+                let transformedOperator = transformUnaryLtlOperator op
+                let transformedOperand = (transformLtlExpression tracer) expr
+                LtlExpression.LtlUnaryExpression(transformedOperator,transformedOperand)
+            | LtlExpr.LbExpr (left,op,right) ->
+                let transformedLeft = (transformLtlExpression tracer) left
+                let transformedRight = (transformLtlExpression tracer) right
+                let transformedOperator = transformBinaryLtlOperator op
+                LtlExpression.LtlBinaryExpression(transformedLeft,transformedOperator,transformedRight)
+                
+
+    let transformBinaryCtlOperator (operator:CbOp) =
+        match operator with
+            | CbOp.ExistsUntil -> CtlBinaryOperator.ExistsUntil
+            | CbOp.AlwaysUntil -> CtlBinaryOperator.ForallUntil
+
+    let transformUnaryCtlOperator (operator:CuOp) =
+        match operator with
+            | CuOp.ExistsNext       -> CtlUnaryOperator.ExistsNextState
+            | CuOp.ExistsGlobally   -> CtlUnaryOperator.ExistsGlobally
+            | CuOp.ExistsEventually -> CtlUnaryOperator.ExistsFinally
+            | CuOp.AlwaysNext       -> CtlUnaryOperator.ForallNext
+            | CuOp.AlwaysGlobally   -> CtlUnaryOperator.ForallGlobally
+            | CuOp.AlwaysEventually -> CtlUnaryOperator.ForallFinally
+                
+    let rec transformBasicExpression_fromCtlSubExpression (tracer:Scm.Traceable->Traceable) (expression:CtlExpr) : BasicExpression =
+        // assume no temporal operators are in the expression
+        match expression with
+            | CtlExpr.Literal  (value) ->
+                transformScmVal value
+            | CtlExpr.ReadField (compPath,field) ->
+                NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field))
+            | CtlExpr.ReadFault (compPath,fault) ->
+                NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault))
+            | CtlExpr.UExpr (expr,op) ->
+                let transformedOperand = (transformBasicExpression_fromCtlSubExpression tracer) expr
+                match op with
+                    | Scm.UOp.Not -> BasicExpression.UnaryExpression(UnaryOperator.LogicalNot,transformedOperand)
+                    | _ -> failwith  "NotImplementedYet"
+            | CtlExpr.BExpr  (left,op,right) ->
+                let transformedLeft = (transformBasicExpression_fromCtlSubExpression tracer) left
+                let transformedRight = (transformBasicExpression_fromCtlSubExpression tracer) right
+                let transformedOperator = transformBinaryOperator op
+                BasicExpression.BinaryExpression(transformedLeft,transformedOperator,transformedRight)
+            | CtlExpr.CuExpr (_)
+            | CtlExpr.CbExpr (_) ->
+                failwith "no ctl operator should be in this sub expression"
+                
+    let rec transformCtlExpression (tracer:Scm.Traceable->Traceable) (expression:CtlExpr) : CtlExpression =
+        match expression with
+            | CtlExpr.Literal  (value) ->
+                CtlExpression.CtlSimpleExpression(transformScmVal value)
+            | CtlExpr.ReadField (compPath,field) ->
+                CtlExpression.CtlSimpleExpression(NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field)))
+            | CtlExpr.ReadFault (compPath,fault) ->
+                CtlExpression.CtlSimpleExpression(NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault)))
+            | CtlExpr.UExpr (expr,op) ->
+                let transformedOperand = (transformCtlExpression tracer) expr
+                match op with
+                    | Scm.UOp.Not -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.LogicalNot,transformedOperand)
+                    | _ -> failwith  "NotImplementedYet"
+            | CtlExpr.BExpr  (left,op,right) ->
+                match op with
+                | Scm.BOp.And ->
+                    let transformedLeft = (transformCtlExpression tracer) left
+                    let transformedRight = (transformCtlExpression tracer) right
+                    CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalAnd,transformedRight)
+                | Scm.BOp.Or ->
+                    let transformedLeft = (transformCtlExpression tracer) left
+                    let transformedRight = (transformCtlExpression tracer) right
+                    CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalOr,transformedRight)
+                | Scm.BOp.Equals ->
+                    let transformedLeft = (transformCtlExpression tracer) left
+                    let transformedRight = (transformCtlExpression tracer) right
+                    CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalEquivalence,transformedRight)
+                | _ ->
+                    let transformedBasicExpression = transformBasicExpression_fromCtlSubExpression tracer expression
+                    CtlExpression.CtlSimpleExpression(transformedBasicExpression)
+            | CtlExpr.CuExpr (expr,op) ->
+                let transformedOperator = transformUnaryCtlOperator op
+                let transformedOperand = (transformCtlExpression tracer) expr
+                CtlExpression.CtlUnaryExpression(transformedOperator,transformedOperand)
+            | CtlExpr.CbExpr (left,op,right) ->
+                let transformedLeft = (transformCtlExpression tracer) left
+                let transformedRight = (transformCtlExpression tracer) right
+                let transformedOperator = transformBinaryCtlOperator op
+                CtlExpression.CtlBinaryExpression(transformedLeft,transformedOperator,transformedRight)

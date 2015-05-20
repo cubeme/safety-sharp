@@ -228,4 +228,4 @@ and internal Specification =
 
 // ADDED
 
-type internal Traceable = string
+type internal Traceable = ComplexIdentifier

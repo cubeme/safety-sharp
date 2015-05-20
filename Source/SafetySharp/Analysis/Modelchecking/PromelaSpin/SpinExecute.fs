@@ -225,7 +225,7 @@ type internal ExecuteSpin =
     member private this.ExecutePanAsync : System.Threading.Tasks.Task<bool> =
         let tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
         let argumentForPan : string =
-            "-m2000"        
+            "-m500000"        
         let panExe = "pan.exe"     
         let proc = new System.Diagnostics.Process()
         proc.StartInfo.Arguments <- argumentForPan

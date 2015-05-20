@@ -112,7 +112,7 @@ module AtDccaLtlTests =
 
     
     [<Test>]
-    let ``perform DCCA on callInstHierarchyWithFaults1`` () =
+    let ``perform DCCA on callInstHierarchyWithFaults1 with Spin`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaults1.scm"""
         let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
         let hazard = ScmVerificationElements.PropositionalExpr.Literal(Scm.BoolVal(false))
@@ -123,7 +123,7 @@ module AtDccaLtlTests =
         ()
     
     [<Test>]
-    let ``perform DCCA on dcca1`` () =
+    let ``perform DCCA on dcca1 with Spin`` () =
         let inputFile = """../../Examples/SCM/dcca1.scm"""
         let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
         let hazard = 
@@ -135,6 +135,24 @@ module AtDccaLtlTests =
         
 
         let dccaResult = analyzer.checkWithPromela ()
+        dccaResult.Length =? 3
+        (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo1;faultNo4] |> Set.ofList))) =? true
+        (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo2;faultNo3;faultNo4] |> Set.ofList))) =? true
+        (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo1;faultNo2] |> Set.ofList))) =? true
+    
+    [<Test>]
+    let ``perform DCCA on dcca1 with NuXmv`` () =
+        let inputFile = """../../Examples/SCM/dcca1.scm"""
+        let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
+        let hazard = 
+            let readField = ScmVerificationElements.PropositionalExpr.ReadField( ( [Scm.Comp("simple")], Scm.Field("isHazard") ) )
+            let trueValue = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.BoolVal(true))
+            ScmVerificationElements.PropositionalExpr.BExpr(readField,Scm.BOp.Equals,trueValue)
+        
+        let analyzer = AtDccaLtl.PerformDccaWithLtlFormulas (scmExample.Model,hazard)
+        
+
+        let dccaResult = analyzer.checkWithNuXmv ()
         dccaResult.Length =? 3
         (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo1;faultNo4] |> Set.ofList))) =? true
         (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo2;faultNo3;faultNo4] |> Set.ofList))) =? true
