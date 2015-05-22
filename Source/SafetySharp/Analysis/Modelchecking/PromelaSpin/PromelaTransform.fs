@@ -98,6 +98,13 @@ module internal SamToPromela =
                          |> PrOptions.Options
                          |> PrStatement.IfStmnt
         varDecls |> List.map generateInit
+
+    let generateResetLocalVarsStatements (varDecls:Sam.LocalVarDecl list) : PrStatement list =
+        let generateResetStatement (varDecl:Sam.LocalVarDecl) : PrStatement =
+            let assignVarref = transformSamVarToVarref varDecl.Var
+            let assignExpr = transformSamVal (varDecl.Type.getDefaultValue)
+            PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))
+        varDecls |> List.map generateResetStatement
                                         
     let rec transformSamExpr (expression:Sam.Expr) : PrExpression =
         match expression with
@@ -184,24 +191,27 @@ module internal SamToPromela =
                 []
             else
                 [(globalVarModule@localVarModule) |> PrDeclLst.DeclLst |> PrModule.GlobalVarsAndChans]
-
+                
+        let resetLocalVars =
+            generateResetLocalVarsStatements pgm.Locals
 
         // initialize globals
         let globalVarInitialisations =
             // cover initialization in atomic block. Example, why this is necessary.
             // If we have a formula "[] A==B" and the initialization ensures this property (by setting A to 1 and B to 1),
             // in a short moment, A is 1 and B is still 0. Atomic block ensures, that A and B are set in the same point of time.
-            let initializations =  (generateGlobalVarInitialisations pgm.Globals)
+            // TODO: Actually we need a variable "initialized", otherwise "[] A==B+1" would not work.
+            let globalVarsInitializations =  (generateGlobalVarInitialisations pgm.Globals)
+            let initializations = globalVarsInitializations @ resetLocalVars
             if initializations.IsEmpty then
                 []
             else 
-                [coverInAtomicBlockStatement (generateGlobalVarInitialisations pgm.Globals)]
-        
+                [coverInAtomicBlockStatement (initializations)]                        
 
         let codeOfMetamodelInAtomicLoop =
             let stmWithoutNestedBlocks = pgm.Body.simplifyBlocks
             let codeOfMetamodel = transformSamStm stmWithoutNestedBlocks
-            [coverStmInEndlessloop (coverInAtomicBlockStatement [codeOfMetamodel])]
+            [coverStmInEndlessloop (coverInAtomicBlockStatement ([codeOfMetamodel]@resetLocalVars))]
         
         let systemModule =
             let systemCode = globalVarInitialisations @  codeOfMetamodelInAtomicLoop

@@ -71,6 +71,7 @@ namespace PressureTank
             public bool IsFull() => false;
         }
 
+        /*
         /// <summary>
         ///   Represents a failure mode that prevents the sensor from triggering when the tank has become empty.
         /// </summary>
@@ -79,5 +80,6 @@ namespace PressureTank
         {
             public bool IsEmpty() => false;
         }
+        */
     }
 }

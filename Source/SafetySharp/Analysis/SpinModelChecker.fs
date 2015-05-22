@@ -67,7 +67,7 @@ type SpinModelChecker (model : Model) =
     let hazard = ScmVerificationElements.PropositionalExpr.BExpr( ScmVerificationElements.PropositionalExpr.ReadField(tankPressure),Scm.BOp.GreaterEqual, value60)
 
     let ltlDcca = SafetySharp.Analysis.Techniques.AtDccaLtl.PerformDccaWithLtlFormulas(scm,hazard)
-    let minimalCutSets = ltlDcca.checkWithPromela ()
+    let minimalCutSets = ltlDcca.checkWithNuXmv ()
     do printfn "%+A" minimalCutSets
 
 //    member this.Check (formula : LtlFormula) =

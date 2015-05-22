@@ -43,6 +43,7 @@ namespace SafetySharp.Models
 //  * [FS01] Cormac Flanagan, James Saxe. Avoiding Exponential Explosion: Generating Compact Verification Conditions. http://dx.doi.org/10.1145/360204.360220
 
 // NOTE: NOT TESTED!!!
+// TODO: Implement treatment of local vars
 
 // Advantage of this algorithm:
 //   * smaller formulas

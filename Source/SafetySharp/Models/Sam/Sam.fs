@@ -110,6 +110,15 @@ module internal Sam =
         | RealType // for local variables, which get inlined
         | RangedIntType of From:int * To:int * Overflow:OverflowBehavior
         | RangedRealType of From:double  * To:double * Overflow:OverflowBehavior
+            with
+                member this.getDefaultValue : Val =
+                    match this with
+                        | BoolType -> Val.BoolVal(false)
+                        | IntType  -> Val.NumbVal(bigint 0)
+                        | RealType  -> Val.RealVal(0.0)
+                        | RangedIntType (from:int,_,_) -> Val.NumbVal(bigint from)
+                        | RangedRealType (from:double,_,_) -> Val.RealVal(from)
+
 
     type internal GlobalVarDecl = {
         Var : Var
