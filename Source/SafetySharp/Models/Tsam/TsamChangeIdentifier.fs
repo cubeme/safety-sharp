@@ -85,7 +85,7 @@ module internal TsamChangeIdentifier =
             | Write (sid,variable:Var, expression:Expr) ->
                 Stm.Write(sid,state.OldToNew.Item variable,transformExpr state expression)
     
-    let changeNamesPgm (state:ChangeIdentifierState) (samPgm:Pgm) : Pgm =
+    let changeNamesPgm (state:ChangeIdentifierState) (samPgm:Pgm) : (Pgm*Map<Var,Var>) = // returns new program * forward tracing map
         let currentVars = seq {
             yield! samPgm.Globals |> List.map (fun var -> var.Var)
             yield! samPgm.Locals |> List.map (fun var -> var.Var)
@@ -117,24 +117,39 @@ module internal TsamChangeIdentifier =
             samPgm.NextGlobal |> Map.toList
                               |> List.map (fun (fromOldVar,toOldVar) -> (newState.OldToNew.Item fromOldVar,newState.OldToNew.Item toOldVar) )
                               |> Map.ofList
-        { samPgm with
-            Pgm.Globals = newGlobals;
-            Pgm.Locals = newLocals;
-            Pgm.Body = transformStm newState samPgm.Body;
-            Pgm.NextGlobal = newNextGlobal;
-        }
+        let samPgm =
+            { samPgm with
+                Pgm.Globals = newGlobals;
+                Pgm.Locals = newLocals;
+                Pgm.Body = transformStm newState samPgm.Body;
+                Pgm.NextGlobal = newNextGlobal;
+            }
+        (samPgm,newState.OldToNew)
 
     
     
     open SafetySharp.Workflow
     
-    let changeIdentifiers (forbiddenNames:Set<string>) : WorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
-        let! pgm = getState ()
+    let changeIdentifiers<'traceableOfOrigin> (forbiddenNames:Set<string>) : EndogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+        let! mutablePgm = getState ()
         
         let changeIdsState = ChangeIdentifierState.initial forbiddenNames SafetySharp.FreshNameGenerator.namegenerator_c_like
-        let newPgm = changeNamesPgm changeIdsState pgm
         
-        do! updateState newPgm
+        let (newPgm,forwardTrace) = changeNamesPgm changeIdsState (mutablePgm.Pgm)
+        //let forwardTrace = forwardTrace |> Map.toList |> List.map (fun (samVar,promelaVar) -> (Sam.Traceable(samVar),promelaVar.getName) ) |> Map.ofList
+        
+        let tracer (oldValue:'traceableOfOrigin) =
+            let beforeTransform = mutablePgm.ForwardTracer oldValue
+            match beforeTransform with
+                | Traceable(_var) ->
+                    Traceable.Traceable(forwardTrace.Item _var)
+
+        let newMutablePgm =
+            { mutablePgm with
+                TsamMutable.MutablePgm.Pgm=newPgm;
+                TsamMutable.MutablePgm.ForwardTracer=tracer;
+            }
+        do! updateState newMutablePgm
     }
 
 

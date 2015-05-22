@@ -181,7 +181,7 @@ module internal NuXmvToString =
                                 | BinaryOperator.LessEqual              -> "<="
                                 | BinaryOperator.GreaterEqual           -> ">="
                                 | BinaryOperator.IntegerAddition        -> "+"
-                                | BinaryOperator.IntegerSubtraction     -> "-|"
+                                | BinaryOperator.IntegerSubtraction     -> "-"
                                 | BinaryOperator.IntegerMultiplication  -> "*"
                                 | BinaryOperator.IntegerDivision        -> "/"
                                 | BinaryOperator.IntegerRemainder       -> "mod"

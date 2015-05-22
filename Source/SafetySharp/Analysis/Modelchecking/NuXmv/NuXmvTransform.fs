@@ -266,17 +266,24 @@ module internal ScmToNuXmv =
                 
     let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state>> ()
                         : ExogenousWorkflowFunction<'state,VcTransitionRelationToNuXmv.NuXmvTracer<'traceableOfOrigin>> = workflow {
-        (*
-        let reservedNames = Set.empty<string>
-        do! SafetySharp.Models.TsamChangeIdentifier.changeIdentifiers reservedNames
-        *)
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+        let reservedNames = Set.empty<string>
+        do! SafetySharp.Models.TsamChangeIdentifier.changeIdentifiers reservedNames
         let! tsamModel = getState ()
         let tsamModel = tsamModel.Pgm
         do printfn "%s" (SafetySharp.Models.TsamToString.exportModel tsamModel)
-        do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
-        do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
+
+        // Way 1: Use SP-Formula. Disadvantage: Generates a lot of IVARs (I think this could be avoided, by developing an SP-Algorithm, which depends on the SSA-Form (and during traversal, every local variable is replaced by the valuation))
+        //do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
+        //do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
+        
+        // Way 2: Use a) TsamToGwam or b) TsamToGwamFast
+        do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
+        do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow () // 2a
+        //do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow () //2b        
+        do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
+
         do! VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
     }
 

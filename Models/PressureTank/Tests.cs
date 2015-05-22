@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System.Threading;
+
 namespace PressureTank
 {
 	using System;
@@ -43,7 +45,12 @@ namespace PressureTank
 		{
 			var watch = new Stopwatch();
 			watch.Start();
-			var spin = new SpinModelChecker(new PressureTankModel());
+            SpinModelChecker spin;
+            var T = new Thread(
+                () => { spin = new SpinModelChecker(new PressureTankModel()); }, 1024*1024*8); //HACK: for a bigger stack
+            T.Start();
+		    T.Join();
+            
 			Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
 		}
 	}
