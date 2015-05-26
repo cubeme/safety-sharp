@@ -90,8 +90,9 @@
     <Compile Include="Models\Scm\ScmHelpersTests.fs" />
     <Compile Include="Models\Scm\ScmConsistencyCheckTests.fs" />
     <Compile Include="Models\Sam\SamParserTests.fs" />
-    <Compile Include="Models\Tsam\VcPassiveFormGCFK09Tests.fs" />
     <Compile Include="Models\Tsam\TsamHelpers.fs" />
+    <Compile Include="Models\Tsam\TsamPassiveFormFS01Tests.fs" />
+    <Compile Include="Models\Tsam\TsamPassiveFormGCFK09Tests.fs" />
     <Compile Include="Models\Transformations\SsmToScmTests.fs" />
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
     <Compile Include="Analysis\VcGuardWithAssignmentModelTests.fs" />
