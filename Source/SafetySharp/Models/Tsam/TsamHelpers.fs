@@ -112,18 +112,18 @@ module internal TsamHelpers =
                         let freshStmId = uniqueStatementIdGenerator ()
                         Stm.Block (freshStmId,stm::stmsToAppend)
 
-        member stm.normalizeBlocks (uniqueStatementIdGenerator : unit -> StatementId) =
+        member stm.unnestBlocks (uniqueStatementIdGenerator : unit -> StatementId) =
             // transform stm to be in a form, where no block contains a block directly 
-            let rec normalizeOutOfABlockStm (stm:Stm) : (Stm*bool) = //returns true, if change occurred
+            let rec unnestOutOfABlockStm (stm:Stm) : (Stm*bool) = //returns true, if change occurred
                 match stm with
                         | Stm.Block (sid,statements:Stm list) ->
-                            //normalizeInABlockStm
+                            // unnestInABlockStm
                             let getSubStatements (stm:Stm) : ((Stm list)*bool)=
                                 match stm with
                                     | Stm.Block(sid,statements:Stm list) ->
                                         (statements,true)
                                     | _ ->
-                                        let (normalizedOtherStatement,somethingChanged) = normalizeOutOfABlockStm stm
+                                        let (normalizedOtherStatement,somethingChanged) = unnestOutOfABlockStm stm
                                         ([normalizedOtherStatement],somethingChanged)
                             let (flatStatementss,somethingChanged) =
                                 statements |> List.map getSubStatements
@@ -133,7 +133,7 @@ module internal TsamHelpers =
                             (Stm.Block(sid,flatStatements),somethingChanged)
                         | Stm.Choice (sid,choices: Stm list) ->
                             let (newChoices,somethingChanged) =
-                                choices |> List.map normalizeOutOfABlockStm
+                                choices |> List.map unnestOutOfABlockStm
                                         |> List.unzip
                             let somethingChanged = somethingChanged |> List.exists id
                             if somethingChanged then
@@ -143,7 +143,7 @@ module internal TsamHelpers =
                         | Stm.Stochastic (sid,stochasticChoices: (Expr*Stm) list) ->
                             let (newChoices,somethingChanged) =
                                 stochasticChoices |> List.map (fun (choiceProb,choiceStm) ->
-                                                                   let (newChoiceStm,somethingChanged) = normalizeOutOfABlockStm choiceStm
+                                                                   let (newChoiceStm,somethingChanged) = unnestOutOfABlockStm choiceStm
                                                                    ((choiceProb,newChoiceStm),somethingChanged)
                                                                )
                                                   |> List.unzip
@@ -154,13 +154,13 @@ module internal TsamHelpers =
                                 (stm,false)
                         | _ ->
                             (stm,false)
-            let rec normalizeStmUntilFixpoint (stm:Stm) =
-                let (newStm,wasChanged) = normalizeOutOfABlockStm stm
+            let rec unnestStmUntilFixpoint (stm:Stm) =
+                let (newStm,wasChanged) = unnestOutOfABlockStm stm
                 if wasChanged then
-                    normalizeStmUntilFixpoint newStm
+                    unnestStmUntilFixpoint newStm
                 else
                     stm
-            normalizeStmUntilFixpoint stm
+            unnestStmUntilFixpoint stm
 
         member stm.recursiveRenumberStatements (uniqueStatementIdGenerator : unit -> StatementId) =
             let freshId = uniqueStatementIdGenerator ()
@@ -291,8 +291,8 @@ module internal TsamHelpers =
                     treeifyStmUntilFixpoint newStm
                 else
                     stm                    
-            let normalizedStm =
-                // Note: Normalized stm is necessary. It may otherwise happen, that an outer block hides an assignment which should be added.
+            let unnestedStm =
+                // Note: stm without nested blocks is necessary. It may otherwise happen, that an outer block hides an assignment which should be added.
                 // Our algorithm assumes in this example, that the choice is the last statement (it actually is in the inner block).
                 // But still we require the outer assignment to be added.
                 // Example:
@@ -303,19 +303,19 @@ module internal TsamHelpers =
                 //         }
                 //      }
                 //      i := i+3;
-                // The normalization is even necessary, if we have a "Stm_A;Stm_B" instead of a "StmBlock.
+                // The unnesting is even necessary, if we have a "Stm_A;Stm_B" instead of a "StmBlock.
                 // Example:
                 //     Stm := ((StmChoice;Stm1);Stm2)
-                //     normalized(Stm) := (StmChoice;(Stm1;Stm2))
+                //     unnested(Stm) := (StmChoice;(Stm1;Stm2))
                 //     Now the rule for "Stm_A;Stm_B" when Stm_A is a choice is simply to append Stm_B after each choice.
 
-                stm.normalizeBlocks uniqueStatementIdGenerator
+                stm.unnestBlocks uniqueStatementIdGenerator
             let treeifiedStm =
                 // the main part of the algorithm
-                treeifyStmUntilFixpoint normalizedStm
-            let treeifiedAndNormalizedStm =
+                treeifyStmUntilFixpoint unnestedStm
+            let treeifiedAndUnnestedStm =
                 // just to make sure everything is normalized afterwards
-                treeifiedStm.normalizeBlocks uniqueStatementIdGenerator
-            treeifiedAndNormalizedStm
+                treeifiedStm.unnestBlocks uniqueStatementIdGenerator
+            treeifiedAndUnnestedStm
 
                     

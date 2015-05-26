@@ -268,10 +268,20 @@ module internal TsamToBoogie =
                     
         let transformPgm (stm:Tsam.Stm) : BoogieSimplifiedAst.CodeBlock list =
             let hybridCodeBlocks = createTransformationContext (BoogieSimplifiedAst.Transfer.Return(None)) TransformationContext.initial stm
-            let transformedCodeBlocks = hybridCodeBlocks.getHybridCodeBlocks |> List.map transformHybridCodeBlock
-            transformedCodeBlocks
+            hybridCodeBlocks.getHybridCodeBlocks |> List.map transformHybridCodeBlock
+
+        let createInitializeLocalVariablesCodeBlock (localVars:Tsam.LocalVarDecl list) (initialActualCodeBlockId:BoogieSimplifiedAst.BlockId) =
+            let initializations = localVars |> List.map (fun l -> BoogieSimplifiedAst.Stm.Write(l.Var,BoogieSimplifiedAst.Expr.Literal(l.Type.getDefaultValue) ))
+            {
+                BoogieSimplifiedAst.CodeBlock.BlockId = BoogieSimplifiedAst.BlockId("InitializeLocals");
+                BoogieSimplifiedAst.CodeBlock.Statements = initializations;
+                BoogieSimplifiedAst.CodeBlock.Transfer = BoogieSimplifiedAst.Transfer.Goto([initialActualCodeBlockId]);
+            }
 
         let loopProcedure =
+            let transformedPgmCodeBlocks = transformPgm model.Body
+            let initializeLocalVariablesCodeBlock = createInitializeLocalVariablesCodeBlock (model.Locals) (transformedPgmCodeBlocks.Head.BlockId)
+            let pgmWithInitializationCodeBlocks = initializeLocalVariablesCodeBlock::transformedPgmCodeBlocks
             {
                 BoogieSimplifiedAst.Procedure.ProcedureName = loopProcedureName ;
                 BoogieSimplifiedAst.Procedure.Modifies = globalVars;
@@ -279,7 +289,7 @@ module internal TsamToBoogie =
                 BoogieSimplifiedAst.Procedure.InParameters = [];
                 BoogieSimplifiedAst.Procedure.OutParameters = [];
                 BoogieSimplifiedAst.Procedure.LocalVars = pgmLocalVars;
-                BoogieSimplifiedAst.Procedure.Blocks = transformPgm model.Body;
+                BoogieSimplifiedAst.Procedure.Blocks = pgmWithInitializationCodeBlocks;
             }
 
         ////////////////////

@@ -61,11 +61,11 @@ module internal VcGuardWithAssignmentModel =
         // 1 ─ 2 ─ 3 ┤     ├ 6    ===>  1 ─ 2 ─ 3 ┤   
         //           └─ 5 ─┘                      └─ 5 ─ 6
         do! TsamMutable.treeifyStm ()
-        do! TsamMutable.normalizeBlocks ()
+        do! TsamMutable.unnestBlocks ()
     }
 
     let phase2PushAssignmentsNotAtTheEnd () : TsamWorkflowFunction<_,unit> = workflow {
-        // We assume treeified form.
+        // We assume treeified form.        
         let! state = getState ()
         let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
 
@@ -766,14 +766,18 @@ module internal VcGuardWithAssignmentModel =
     }
 
     let transformTsamToTsamInGuardToAssignmentForm () : TsamWorkflowFunction<_,unit> = workflow {
-        // TODO: Assume Single Assignment Form        
-        do! phase1TreeifyAndNormalize ()
-        do! phase2PushAssignmentsNotAtTheEnd ()
-        do! phase3PullChoicesTowardsBeginning ()
-        do! phase4PullAssertionsAndAssumptionsTowardsBeginning ()
-        do! phase5MergeChoicesAtTheBeginning ()
-        do! phase6MergeStochasticsAtTheEnd ()
-        return ()
+        let! model = getState()
+        if model.Pgm.CodeForm = CodeForm.Passive then
+            failwith "passive form cannot be used with this algorithm"
+            // Assume Single Assignment Form. TODO: Default form may also work. Examine. Passive form does not work.
+        else
+            do! phase1TreeifyAndNormalize ()
+            do! phase2PushAssignmentsNotAtTheEnd ()
+            do! phase3PullChoicesTowardsBeginning ()
+            do! phase4PullAssertionsAndAssumptionsTowardsBeginning ()
+            do! phase5MergeChoicesAtTheBeginning ()
+            do! phase6MergeStochasticsAtTheEnd ()
+            return ()
     }
 
         
@@ -802,8 +806,11 @@ module internal VcGuardWithAssignmentModel =
         let skipStm = Stm.Block(pgm.UniqueStatementIdGenerator (),[])
         
         let initialValuation =
-            // add for each globalVar a self assignment. Local Vars should only appear during the statements.
-            pgm.Globals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Read(var.Var))) Map.empty<Var,Expr>
+            // add for each globalVar a self assignment
+            let globalInit = pgm.Globals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Read(var.Var))) Map.empty<Var,Expr>
+            // every local variable should have its default value
+            let globalAndLocalInit = pgm.Locals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
+            globalAndLocalInit
             
         let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList  
         let nextGlobalToCurrent = pgm.NextGlobal |> Map.toList |> List.map (fun (oldVar,newVar) -> (newVar,oldVar) ) |> Map.ofList

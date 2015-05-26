@@ -88,14 +88,18 @@ module internal VcGuardWithAssignmentModelFast =
                 [AtomicStmBlock ([AtomicStm.Write(variable,expression)])]
 
         
-    let transformAtomicStmBlockToGuardWithAssignments (globalVars:Var list) (AtomicStmBlock(toTransform)) : Assignments =
+    let transformAtomicStmBlockToGuardWithAssignments (globalVars:Tsam.GlobalVarDecl list,localVars:Tsam.LocalVarDecl list) (AtomicStmBlock(toTransform)) : Assignments =
         // Start with guard true. Every time we cross an assumption, we add this assumption to our guard.
         // Every time we cross an assignment, we update the current assignments (forward similar to strongest postcondition)
         let initialGuard =
             Expr.Literal(Val.BoolVal(true))
         let initialValuation =
-            // add for each globalVar a self assignment. Local Vars should only appear during the statements.
-            globalVars |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var,Expr.Read(var))) Map.empty<Var,Expr>
+            // add for each globalVar a self assignment
+            let globalInit = globalVars |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Read(var.Var))) Map.empty<Var,Expr>
+            // every local variable should have its default value
+            let globalAndLocalInit = localVars |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
+            globalAndLocalInit
+
         let foldStm (currentGuard:Expr,currentValuation:Map<Var,Expr>) (stm:AtomicStm) : Expr*Map<Var,Expr> =
             match stm with
                 | AtomicStm.Assert (expr) ->
@@ -153,9 +157,8 @@ module internal VcGuardWithAssignmentModelFast =
         if pgm.CodeForm = Tsam.CodeForm.Passive then
             failwith "passive form cannot be used with this algorithm"
         let atomicStmBlocks = collectPaths pgm.Body
-        let globalVars = pgm.Globals |> List.map (fun gl-> gl.Var)
         let guardsWithFinalAssignments =
-            atomicStmBlocks |> List.map (transformAtomicStmBlockToGuardWithAssignments globalVars)
+            atomicStmBlocks |> List.map (transformAtomicStmBlockToGuardWithAssignments (pgm.Globals,pgm.Locals) )
                             |> List.map (redirectFinalVarsAndRemoveNonFinalAssignments pgm.NextGlobal)
         {
             GuardWithAssignmentModel.Globals = pgm.Globals;

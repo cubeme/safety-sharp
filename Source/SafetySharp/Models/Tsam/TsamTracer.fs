@@ -65,12 +65,12 @@ module internal TsamMutable =
         do! updateState tsamMutable
     }
     
-    let normalizeBlocks<'traceableOfOrigin> ()
+    let unnestBlocks<'traceableOfOrigin> ()
             : EndogenousWorkflowFunction<MutablePgm<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let newPgm =
             { state.Pgm with
-                Tsam.Pgm.Body = state.Pgm.Body.normalizeBlocks (state.Pgm.UniqueStatementIdGenerator)
+                Tsam.Pgm.Body = state.Pgm.Body.unnestBlocks (state.Pgm.UniqueStatementIdGenerator)
             }
         let tsamMutable =
             {

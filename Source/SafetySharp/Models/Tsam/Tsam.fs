@@ -67,7 +67,7 @@ module internal Tsam =
     
     [<RequireQualifiedAccessAttribute>]
     type CodeForm =
-        | MultipleAssignments
+        | Default
         | SingleAssignments
         | Passive
         
