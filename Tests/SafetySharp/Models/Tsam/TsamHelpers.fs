@@ -44,11 +44,11 @@ module TsamHelpers =
     open SafetySharp.Models.Sam
     open SafetySharp.Models.Tsam
     
-    let internal normalizeBlocks (inputFile:string) = workflow {
+    let internal unnestBlocks (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! SafetySharp.Models.TsamMutable.normalizeBlocks ()
+            do! SafetySharp.Models.TsamMutable.unnestBlocks ()
             let! model = SafetySharp.Models.TsamMutable.getTsamModel ()
             do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
             let! modelString = getState ()
@@ -67,32 +67,24 @@ module TsamHelpers =
         }
         
     [<Test>]
-    let ``normalizeBlocks applied on nestedBlocks1.sam returns a Stm without nested blocks `` () =
+    let ``unnestBlocks applied on nestedBlocks1.sam returns a Stm without nested blocks `` () =
         let expectedResult =
             Block (Some 1, [Write (Some 2,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 1)))); Choice (Some 3, [Block (Some 6, [Assume (Some 5,Literal (BoolVal false)); Write (Some 8,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 2))))]); Block (Some 10, [Assume (Some 9,Literal (BoolVal true)); Write (Some 12,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 4)))); Write (Some 13,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 8)))); Choice (Some 16, [Block (Some 19, [Assume (Some 18,Literal (BoolVal true)); Write (Some 22,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 16)))); Write (Some 25,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 32)))); Write (Some 29,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 128)))); Write (Some 30,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 64))))]); Block (Some 32, [Assume (Some 31,Literal (BoolVal false)); Write (Some 34,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 64))))])]); Write (Some 36,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 3))))])]); Write (Some 37,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 5)))); Write (Some 40,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal (bigint 7))))]);
                     
-        let treeifyAndNormalize = workflow {
-            do! SafetySharp.Models.TsamMutable.treeifyStm ()
-            do! SafetySharp.Models.TsamMutable.normalizeBlocks ()
-        }
         let inputFile = """../../Examples/SAM/nestedBlocks1.sam"""        
-        let (model,modelString) = SafetySharp.Workflow.runWorkflow_getResult (normalizeBlocks inputFile)
+        let (model,modelString) = SafetySharp.Workflow.runWorkflow_getResult (unnestBlocks inputFile)
         printf "%s" modelString
         printf "%+A" model
         model.Body =? expectedResult
         ()
         
     [<Test>]
-    let ``normalizeBlocks applied on nestedBlocks2.sam returns a Stm without nested blocks`` () =
+    let ``unnestBlocks applied on nestedBlocks2.sam returns a Stm without nested blocks`` () =
         let expectedResult =
             Block(Some 1, [Write (Some 2,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 1)))); Choice (Some 3, [Block(Some 6, [Assume (Some 5,Literal (BoolVal false)); Write (Some 8,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 2))))]); Block(Some 10, [Assume (Some 9,Literal (BoolVal true)); Write (Some 12,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 3)))); Write (Some 13,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 4)))); Stochastic (Some 15, [(Literal (ProbVal 0.2), Block(Some 16, [Write (Some 17,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 5))))])); (Literal (ProbVal 0.8), Block(Some 18, [Write (Some 19,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 6))))]))]); Choice (Some 21, [Block (Some 24, [Assume (Some 23,Literal (BoolVal true)); Write (Some 27,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 7)))); Stochastic (Some 28, [(Literal (ProbVal 0.1), Block(Some 29, [Write (Some 30,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 8))))])); (Literal (ProbVal 0.9), Block(Some 31,[Write (Some 32,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 9))))]))]); Write (Some 33,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 10)))); Write (Some 37,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 11)))); Write (Some 38,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 12))))]); Block(Some 40, [Assume (Some 39,Literal (BoolVal false)); Write (Some 42,Var "i", BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 13))))])]); Write (Some 44,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 14))))])]); Write (Some 45,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 15)))); Write (Some 48,Var "i",BExpr (Read (Var "i"),Add,Literal (NumbVal ( bigint 16))))])
                     
-        let treeifyAndNormalize = workflow {
-            do! SafetySharp.Models.TsamMutable.treeifyStm ()
-            do! SafetySharp.Models.TsamMutable.normalizeBlocks ()
-        }
         let inputFile = """../../Examples/SAM/nestedBlocks2.sam"""        
-        let (model,modelString) = SafetySharp.Workflow.runWorkflow_getResult (normalizeBlocks inputFile)
+        let (model,modelString) = SafetySharp.Workflow.runWorkflow_getResult (unnestBlocks inputFile)
         printf "%s" modelString
         printf "%+A" model
         model.Body =? expectedResult

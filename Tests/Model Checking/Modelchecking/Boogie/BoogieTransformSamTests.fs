@@ -137,3 +137,129 @@ module BoogieTransformSamTests =
         let output = transformSamTest inputFile
         printf "%s" output
         ()
+
+    [<Test>]
+    let ``smokeTest15.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest15.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest16.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest16.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest17.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest17.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest18.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest18.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest19.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest19.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest20.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest20.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest21.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest21.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest22.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest22.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest23.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest23.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``reserved names do not make any problems`` () =        
+        let inputFile = """../../Examples/SAM/reservedNames.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``overflowIntError1.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/overflowIntError1.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``overflowIntError2.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/overflowIntError2.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``overflowIntWrapAround1.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/overflowIntWrapAround1.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``overflowIntWrapAround2.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/overflowIntWrapAround2.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``overflowIntWrapAround3.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/overflowIntWrapAround3.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``overflowIntWrapAround4.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/overflowIntWrapAround4.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``overflowIntClamp1.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/overflowIntClamp1.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``overflowIntClamp2.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/overflowIntClamp2.sam"""
+        let output = transformSamTest inputFile
+        printf "%s" output
+        ()
