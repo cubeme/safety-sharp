@@ -42,7 +42,9 @@ module internal Tsam =
     type Val = SafetySharp.Models.Sam.Val
     type Expr = SafetySharp.Models.Sam.Expr
     
-    type StatementId = int option
+    type StatementId = StatementId of int
+        with
+            member this.id = match this with | StatementId(value)-> value
     
     type Stm =
         | Assert of SID:StatementId * Expression:Expr       //semantics: wp( Stm.Assert(e), phi) := e && phi (formula to prove is false, when assertion is false)

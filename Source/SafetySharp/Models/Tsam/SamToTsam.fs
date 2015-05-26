@@ -72,7 +72,7 @@ module internal SamToTsam =
             let stmIdCounter : int ref = ref 0 // this stays in the closure
             let generator () : Tsam.StatementId =
                 do stmIdCounter := stmIdCounter.Value + 1
-                Tsam.StatementId.Some(stmIdCounter.Value)
+                Tsam.StatementId(stmIdCounter.Value)
             generator
         {
             Tsam.Pgm.Globals = pgm.Globals;
@@ -83,23 +83,7 @@ module internal SamToTsam =
             Tsam.Pgm.UsedFeatures = ();
             Tsam.Pgm.UniqueStatementIdGenerator = uniqueStatementIdGenerator
         }
-        
-    let rec getMaximalStmId (stm:Tsam.Stm) : int =
-        match stm with
-            | Tsam.Stm.Assert (sid,_) ->
-                sid.Value
-            | Tsam.Stm.Assume (sid,_) ->
-                sid.Value
-            | Tsam.Stm.Block (sid,statements) ->
-                statements |> List.map getMaximalStmId
-                           |> List.max
-            | Tsam.Stm.Choice (sid,choices) ->
-                choices |> List.map getMaximalStmId |> List.max
-            | Tsam.Stm.Stochastic (sid,stochasticChoices) ->
-                stochasticChoices |> List.map (fun (prob,stm) -> getMaximalStmId stm) |> List.max
-            | Tsam.Stm.Write (sid,_,_) ->
-                sid.Value
-
+      
     open SafetySharp.Workflow
 
     let transformSamToTsam<'traceableOfOrigin> ()

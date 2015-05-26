@@ -161,7 +161,7 @@ module internal TsamPassiveFormFS01 =
                                 (newSubstitutions,newVarWithFreshName)
                             
 
-                static member merge (subs:Substitutions list) : (Substitutions * (Stm list list)) =
+                static member merge (uniqueStatementIdGenerator:unit->StatementId) (subs:Substitutions list) : (Substitutions * (Stm list list)) =
                     //subs contains at least one member
                     
                     // merge is only possible, when the ref cells of GlobalTakenNames match
@@ -224,7 +224,8 @@ module internal TsamPassiveFormFS01 =
                                 let assumptionForVar (_var:Var) =
                                     let currentVar = Expr.Read(sub.CurrentSubstitution.Item _var)
                                     let nextVar = Expr.Read(newSub.CurrentSubstitution.Item _var)
-                                    Stm.Assume(None,Expr.BExpr(currentVar,BOp.Equals,nextVar)) 
+                                    let newStatementId = uniqueStatementIdGenerator()
+                                    Stm.Assume(newStatementId,Expr.BExpr(currentVar,BOp.Equals,nextVar)) 
                                 variablesToMerge |> List.map assumptionForVar
                             livingBranches |> List.map (fun (number:int,sub) -> (number,appendsForSub sub))
                         let appendStatementsForDead : ((int*Stm list) list) =
@@ -259,58 +260,60 @@ module internal TsamPassiveFormFS01 =
                 | Expr.BExpr (left, bop, right) -> Expr.BExpr(replaceVarsWithCurrentVars sigma left,bop,replaceVarsWithCurrentVars sigma right)
         
     
-    let rec passify (sigma:Substitutions, stm:Stm) : (Substitutions*Stm) =
+    let rec passify (uniqueStatementIdGenerator:unit->StatementId) (sigma:Substitutions, stm:Stm) : (Substitutions*Stm) =
         match stm with
-            | Stm.Assert (_,expr) ->
+            | Stm.Assert (statementId,expr) ->
                 let expr = replaceVarsWithCurrentVars sigma expr //need to do it with old sigma!
                 if expr = Expr.Literal(Val.BoolVal(false)) then
                     (Substitutions.bottom,stm) //optimization: if false, then bottom
                 else
                     (sigma,stm)
-            | Stm.Assume (_,expr) ->
+            | Stm.Assume (statementId,expr) ->
                 let expr = replaceVarsWithCurrentVars sigma expr  //need to do it with old sigma!
                 if expr = Expr.Literal(Val.BoolVal(false)) then
                     (Substitutions.bottom,stm) //optimization: if false, then bottom
                 else
                     (sigma,stm)
-            | Stm.Write (_,variable,expression) ->
+            | Stm.Write (statementId,variable,expression) ->
                 let expr = replaceVarsWithCurrentVars sigma expression  //need to do it with old sigma!
                 let newSigma,newVar = sigma.getFreshVar variable
-                (newSigma,Stm.Assume(None,Expr.BExpr(Expr.Read(newVar),BOp.Equals,expr)))
-            | Stm.Block (_,statements) ->
+                (newSigma,Stm.Assume(statementId,Expr.BExpr(Expr.Read(newVar),BOp.Equals,expr)))
+            | Stm.Block (statementId,statements) ->
                 let newSigma,statementsRev =
                     let foldFct (sigma:Substitutions,statements:Stm list) (stm:Stm) =
-                        let (newSigma,newStm) = passify (sigma,stm)
+                        let (newSigma,newStm) = passify uniqueStatementIdGenerator (sigma,stm)
                         (newSigma,newStm::statements)
                     List.fold foldFct (sigma,[]) statements
-                (newSigma,Stm.Block(None,List.rev statementsRev))
-            | Stm.Choice (_,choices) ->
+                (newSigma,Stm.Block(statementId,List.rev statementsRev))
+            | Stm.Choice (statementId,choices) ->
                 if choices = [] then
-                    (sigma,Stm.Assume(None,Expr.Literal(Val.BoolVal(false))))
+                    (sigma,Stm.Assume(statementId,Expr.Literal(Val.BoolVal(false))))
                 else
                     let (sigmas,passifiedChoices) =
-                        choices |> List.map (fun choice -> passify (sigma,choice))
+                        choices |> List.map (fun choice -> passify uniqueStatementIdGenerator (sigma,choice))
                                 |> List.unzip
-                    let (newSigma,stmtssToAppend) = Substitutions.merge sigmas
+                    let (newSigma,stmtssToAppend) = Substitutions.merge uniqueStatementIdGenerator sigmas
                     let newChoices =
-                        List.map2 (fun passifiedChoice stmtsToAppend -> Stm.Block(None,passifiedChoice::stmtsToAppend)) passifiedChoices stmtssToAppend
-                    (newSigma,Stm.Choice (None,newChoices))
-            | Stm.Stochastic (_,choices) ->
+                        let newBlockStmId = uniqueStatementIdGenerator ()
+                        List.map2 (fun passifiedChoice stmtsToAppend -> Stm.Block(newBlockStmId,passifiedChoice::stmtsToAppend)) passifiedChoices stmtssToAppend
+                    (newSigma,Stm.Choice (statementId,newChoices))
+            | Stm.Stochastic (statementId,choices) ->
                 // TODO: Is this really what we want?!?
                 failwith "To be validated"
                 let passifyChoice (probability,stm) : Substitutions*(Expr*Stm) =
                     let probability = replaceVarsWithCurrentVars sigma probability
-                    let (sigma,stm) = passify (sigma,stm)
+                    let (sigma,stm) = passify uniqueStatementIdGenerator (sigma,stm)
                     (sigma,(probability,stm))                    
                 let (sigmas,passifiedChoices) =
                     choices |> List.map passifyChoice
                             |> List.unzip
-                let (newSigma,stmtssToAppend) = Substitutions.merge sigmas
+                let (newSigma,stmtssToAppend) = Substitutions.merge uniqueStatementIdGenerator sigmas
                 let newChoices =
+                    let newBlockStmId = uniqueStatementIdGenerator ()
                     let appendPrefixToChoice (passifiedChoiceProb,passifiedChoiceStm) stmtsToAppend =
-                        (passifiedChoiceProb,Stm.Block(None,passifiedChoiceStm::stmtsToAppend))
+                        (passifiedChoiceProb,Stm.Block(newBlockStmId,passifiedChoiceStm::stmtsToAppend))
                     List.map2 appendPrefixToChoice passifiedChoices stmtssToAppend
-                (newSigma,Stm.Stochastic (None,newChoices))
+                (newSigma,Stm.Stochastic (statementId,newChoices))
                     
     open SafetySharp.Workflow
     open SafetySharp.Models.SamHelpers
@@ -322,7 +325,7 @@ module internal TsamPassiveFormFS01 =
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
         let sigma = Substitutions.initial globalVars localVars
-        let (newSigma,newBody) = passify (sigma,pgm.Body)
+        let (newSigma,newBody) = passify (pgm.UniqueStatementIdGenerator) (sigma,pgm.Body)
         let newPgm =
             let createLocalVarDecl (_var,_type) = LocalVarDecl.createLocalVarDecl _var _type
             let oldGlobalsAsSet = pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList

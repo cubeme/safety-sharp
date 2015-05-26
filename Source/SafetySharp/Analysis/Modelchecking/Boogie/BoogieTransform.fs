@@ -49,9 +49,9 @@ module internal TsamToBoogie =
                 member this.getHybridCodeBlocks =
                     this.HybridCodeBlocksReverse |> List.rev
                 member this.getBlockIdForVcStmBlock (blockStmId:Tsam.StatementId) (part:int) =
-                    BoogieSimplifiedAst.BlockId(sprintf "Block%dPart%d" blockStmId.Value part)        
+                    BoogieSimplifiedAst.BlockId(sprintf "Block%dPart%d" blockStmId.id part)        
                 member this.getBlockIdForVcStmNonBlock (blockStmId:Tsam.StatementId) =
-                    BoogieSimplifiedAst.BlockId(sprintf "NonBlock%d" blockStmId.Value)
+                    BoogieSimplifiedAst.BlockId(sprintf "NonBlock%d" blockStmId.id)
                 static member initial = 
                     {
                         TransformationContext.HybridCodeBlocksReverse = [];
