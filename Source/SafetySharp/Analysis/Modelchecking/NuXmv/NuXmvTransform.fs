@@ -274,7 +274,7 @@ module internal ScmToNuXmv =
         let tsamModel = tsamModel.Pgm
         do printfn "%s" (SafetySharp.Models.TsamToString.exportModel tsamModel)
 
-        // Way 1: Use SP-Formula. Disadvantage: Generates a lot of IVARs (I think this could be avoided, by developing an SP-Algorithm, which depends on the SSA-Form (and during traversal, every local variable is replaced by the valuation))
+        // Way 1: Use SP-Formula. Disadvantage: Generates a lot of IVARs (I think this could be avoided, by developing an SP-Algorithm, which depends on the treeified-Form (and during traversal, every local variable is replaced by the valuation). SSA is not enough, because local variables are used to save the last values of each branch. Thus, they are needed, when branches merge again).
         //do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
         //do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
         
