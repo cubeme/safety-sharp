@@ -61,7 +61,8 @@ module internal TsamPassiveFormFS01 =
     type Substitutions =
         {
             IsBottom : bool;
-            CurrentSubstitution : Map<Var,Var>;
+            CurrentSubstitution : Map<Var,Expr>;
+            NextGlobal : Map<Var,Var>;
             LocalTakenNames : Set<string>;
             VarToType : Map<Var,Type>;
              // Note: the elements, where ref points to, stays the same, when copied. No need to merge here!
@@ -80,8 +81,12 @@ module internal TsamPassiveFormFS01 =
                     {
                         Substitutions.IsBottom = false;
                         Substitutions.CurrentSubstitution =
+                            let globalSubstitutions = globalVars |> List.fold (fun (acc:Map<Var,Expr>) (var,_type) -> acc.Add(var,Expr.Read(var))) Map.empty<Var,Expr>
+                            let localAndGlobalSubstitutions = localVars |> List.fold (fun (acc:Map<Var,Expr>) (var,_type) -> acc.Add(var,Expr.Literal(_type.getDefaultValue))) globalSubstitutions
+                            localAndGlobalSubstitutions
+                        Substitutions.NextGlobal  =
                             globalVars |> List.map (fun (var,_type) -> (var,var))
-                                       |> Map.ofList;
+                                       |> Map.ofList;                            
                         Substitutions.LocalTakenNames = takenNamesAsString
                         Substitutions.VarToType  =
                             localAndGlobalVars |> Map.ofList
@@ -102,7 +107,8 @@ module internal TsamPassiveFormFS01 =
                 static member bottom =
                     {
                         Substitutions.IsBottom = true;
-                        Substitutions.CurrentSubstitution = Map.empty<Var,Var>;
+                        Substitutions.CurrentSubstitution = Map.empty<Var,Expr>;
+                        Substitutions.NextGlobal = Map.empty<Var,Var>;
                         Substitutions.LocalTakenNames = Set.empty<string>;
                         Substitutions.VarToType = Map.empty<Var,Type>;
                         Substitutions.GlobalTakenNamesWithTypes = ref (Map.empty<Var,Type>)
@@ -130,7 +136,7 @@ module internal TsamPassiveFormFS01 =
                         //variable has never been used, so use the current name and increase counter to one
                         let newSubstitutions =
                             { this with
-                                Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,based_on)
+                                Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,Expr.Read(based_on))
                             }
                         do this.VarToCounter := this.VarToCounter.Value.Add (based_on, 1)
                         (newSubstitutions,based_on)
@@ -140,7 +146,12 @@ module internal TsamPassiveFormFS01 =
                             | Some (_var) ->
                                 let newSubstitutions =
                                     { this with
-                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,_var)
+                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,Expr.Read(_var))
+                                        Substitutions.NextGlobal =
+                                            if this.NextGlobal.ContainsKey based_on then
+                                                this.NextGlobal.Add(based_on,_var) // only update for global vars
+                                            else
+                                                this.NextGlobal
                                     }
                                 (newSubstitutions,_var)
                             | None ->
@@ -156,7 +167,12 @@ module internal TsamPassiveFormFS01 =
                                     { this with
                                         Substitutions.LocalTakenNames = this.LocalTakenNames.Add (freshName);
                                         Substitutions.VarToType = this.VarToType.Add (newVarWithFreshName,_type);
-                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,newVarWithFreshName);
+                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,Expr.Read(newVarWithFreshName));
+                                        Substitutions.NextGlobal =
+                                            if this.NextGlobal.ContainsKey based_on then
+                                                this.NextGlobal.Add(based_on,newVarWithFreshName) // only update for global vars
+                                            else
+                                                this.NextGlobal
                                     }
                                 (newSubstitutions,newVarWithFreshName)
                             
@@ -173,7 +189,6 @@ module internal TsamPassiveFormFS01 =
                         //nothing is alive, so bottom!
                         let appendStatements =
                             deadBranches |> List.map (fun _ -> [])
-                        let number,livingBranch = livingBranches.Head
                         (Substitutions.bottom,appendStatements)
                     else if livingBranches.Length = 1 then
                         // take the sub of the living branch.
@@ -191,7 +206,7 @@ module internal TsamPassiveFormFS01 =
                             // If they do not have all the same mapping, there is at least one sub, which
                             // has a different mapping than firstSub. That means comparing to firstSub is enough.
                             // There is no need to compare each pair of subs.
-                            let compareEveryVarWithFirstSub (sub:Map<Var,Var>) : Set<Var> =
+                            let compareEveryVarWithFirstSub (sub:Map<Var,Expr>) : Set<Var> =
                                 //returns Vars not equal
                                 sub |> Map.toList
                                     |> List.filter (fun (from,_to) -> (firstSub.Item from) <> _to )
@@ -222,8 +237,8 @@ module internal TsamPassiveFormFS01 =
                         let appendStatementsForLiving =
                             let appendsForSub (sub:Substitutions) : Stm list =                                          
                                 let assumptionForVar (_var:Var) =
-                                    let currentVar = Expr.Read(sub.CurrentSubstitution.Item _var)
-                                    let nextVar = Expr.Read(newSub.CurrentSubstitution.Item _var)
+                                    let currentVar = sub.CurrentSubstitution.Item _var
+                                    let nextVar = newSub.CurrentSubstitution.Item _var
                                     let newStatementId = uniqueStatementIdGenerator()
                                     Stm.Assume(newStatementId,Expr.BExpr(currentVar,BOp.Equals,nextVar)) 
                                 variablesToMerge |> List.map assumptionForVar
@@ -254,7 +269,8 @@ module internal TsamPassiveFormFS01 =
         else
             match expr with
                 | Expr.Literal (_val) -> expr
-                | Expr.Read (_var) -> Expr.Read(sigma.CurrentSubstitution.Item _var)
+                | Expr.Read (_var) ->
+                    sigma.CurrentSubstitution.Item _var
                 | Expr.ReadOld (_var) -> expr //old variables keep their value
                 | Expr.UExpr (expr,uop) -> Expr.UExpr(replaceVarsWithCurrentVars sigma expr ,uop)
                 | Expr.BExpr (left, bop, right) -> Expr.BExpr(replaceVarsWithCurrentVars sigma left,bop,replaceVarsWithCurrentVars sigma right)
@@ -281,8 +297,11 @@ module internal TsamPassiveFormFS01 =
             | Stm.Block (statementId,statements) ->
                 let newSigma,statementsRev =
                     let foldFct (sigma:Substitutions,statements:Stm list) (stm:Stm) =
-                        let (newSigma,newStm) = passify uniqueStatementIdGenerator (sigma,stm)
-                        (newSigma,newStm::statements)
+                        if sigma.IsBottom then
+                            (sigma,stm::statements) //nothing to do, the current block is already invalid (because there is one bottom in it)
+                        else
+                            let (newSigma,newStm) = passify uniqueStatementIdGenerator (sigma,stm)
+                            (newSigma,newStm::statements)
                     List.fold foldFct (sigma,[]) statements
                 (newSigma,Stm.Block(statementId,List.rev statementsRev))
             | Stm.Choice (statementId,choices) ->
@@ -291,6 +310,7 @@ module internal TsamPassiveFormFS01 =
                 else
                     let (sigmas,passifiedChoices) =
                         choices |> List.map (fun choice -> passify uniqueStatementIdGenerator (sigma,choice))
+                                |> List.filter (fun (sigma,choice) -> not(sigma.IsBottom))
                                 |> List.unzip
                     let (newSigma,stmtssToAppend) = Substitutions.merge uniqueStatementIdGenerator sigmas
                     let newChoices =
@@ -298,14 +318,16 @@ module internal TsamPassiveFormFS01 =
                         List.map2 (fun passifiedChoice stmtsToAppend -> Stm.Block(newBlockStmId,passifiedChoice::stmtsToAppend)) passifiedChoices stmtssToAppend
                     (newSigma,Stm.Choice (statementId,newChoices))
             | Stm.Stochastic (statementId,choices) ->
-                // TODO: Is this really what we want?!?
+                assert (choices.IsEmpty=false)
                 failwith "To be validated"
+                // TODO: Is this really what we want?!?
                 let passifyChoice (probability,stm) : Substitutions*(Expr*Stm) =
                     let probability = replaceVarsWithCurrentVars sigma probability
                     let (sigma,stm) = passify uniqueStatementIdGenerator (sigma,stm)
                     (sigma,(probability,stm))                    
                 let (sigmas,passifiedChoices) =
                     choices |> List.map passifyChoice
+                            |> List.filter (fun (sigma,choice) -> not(sigma.IsBottom))
                             |> List.unzip
                 let (newSigma,stmtssToAppend) = Substitutions.merge uniqueStatementIdGenerator sigmas
                 let newChoices =
@@ -337,7 +359,7 @@ module internal TsamPassiveFormFS01 =
                 Pgm.Body = newBody;
                 Pgm.Globals = pgm.Globals; // globals stay globals
                 Pgm.Locals = newLocals;
-                Pgm.NextGlobal = newSigma.CurrentSubstitution;
+                Pgm.NextGlobal = newSigma.NextGlobal;
                 Pgm.CodeForm = CodeForm.Passive;
             }            
         let newState = {state with Pgm=newPgm}
