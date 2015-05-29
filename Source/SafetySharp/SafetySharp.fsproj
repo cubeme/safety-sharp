@@ -59,6 +59,8 @@
     <Compile Include="Utilities\Workflow.fs" />
     <Compile Include="Utilities\GenericParsers.fs" />
     <Compile Include="Utilities\ITracing.fs" />
+    <Compile Include="Utilities\GraphvizDot\DotAst.fs" />
+    <Compile Include="Utilities\GraphvizDot\DotToString.fs" />
     <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
     <Compile Include="Modeling\Attributes.fs" />
     <Compile Include="Modeling\Binding.fs" />
