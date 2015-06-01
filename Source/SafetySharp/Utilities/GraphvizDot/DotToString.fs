@@ -146,14 +146,18 @@ module DotToString =
         keepLabel
     
     // to plain dot-format (for export to pdf svg png...)
-    //  TODO: Convert \alpha, \phi,... to UTF8
-    // let labelEditor = ""
+    let labelEditor_toUtf8 (str:string) =
+        str.Replace("\\alpha","α")
+           .Replace("\\beta","β")
+           .Replace("\\phi","φ")
+           .Replace("\\rightarrow","→")
+           //TODO (maybe as own labelEditor): With Subscripts ₀₁₂₃₄₅₆₇₈₉₍₎
+     
+    let labelEditor_embedInMath =
+        //  TODO: Embed \alpha, \phi,.. in Math environment. And \mathit
+        labelEditor_keepLabel
 
 
     // embedded in html (viz.js)
-    //  TODO: Convert \alpha, \phi,... to UTF8
-    // let labelEditor = ""
 
     // embedded in tex ()
-    //  TODO: Embed \alpha, \phi,.. in Math environment. And \mathit
-    // let labelEditor = ""

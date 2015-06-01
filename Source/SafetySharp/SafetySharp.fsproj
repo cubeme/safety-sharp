@@ -101,6 +101,7 @@
     <Compile Include="Models\Tsam\TsamHelpers.fs" />
     <Compile Include="Models\Tsam\TsamTracer.fs" />
     <Compile Include="Models\Tsam\TsamToString.fs" />
+    <Compile Include="Models\Tsam\TsamToDot.fs" />
     <Compile Include="Models\Tsam\SamToTsam.fs" />
     <Compile Include="Models\Tsam\TsamChangeIdentifier.fs" />
     <Compile Include="Models\Tsam\TsamPassiveFormFS01.fs" />
