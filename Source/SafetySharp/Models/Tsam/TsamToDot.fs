@@ -60,6 +60,7 @@ module internal TsamToDot =
     type CollectedInformation = {
         InitialState : State;
         EndState : State;
+        States : State list ref;
         StochasticTransitions : StochasticTransition list ref;
         IndeterministicTransitions : IndeterministicTransition list ref;
         DeterministicTransitions : DeterministicTransition list ref;
@@ -100,10 +101,13 @@ module internal TsamToDot =
                 let betweenStmStates : Map<Stm,State> =
                     // we create to every stm of the block a betweenStm
                     let createState (stm:Stm) : State =
-                        {
-                            State.StateId = alreadyCollected.UniqueStateIdGenerator ();
-                            State.Label = sprintf "Block%dBeforeStm%d" (blockSid.id) (stm.GetStatementId.id);
-                        }
+                        let newState =
+                            {
+                                State.StateId = alreadyCollected.UniqueStateIdGenerator ();
+                                State.Label = sprintf "Block%dBeforeStm%d" (blockSid.id) (stm.GetStatementId.id);
+                            }
+                        do alreadyCollected.States := newState::alreadyCollected.States.Value
+                        newState
                     stmts |> List.map (fun stm -> (stm,createState stm)) |> Map.ofList
                 let fromMap : Map<Stm,State> = betweenStmStates
                 let toMap : Map<Stm,State> =
@@ -149,7 +153,8 @@ module internal TsamToDot =
                         {
                             State.StateId = alreadyCollected.UniqueStateIdGenerator ();
                             State.Label = sprintf "Choice%dNo%d" (choiceSid.id) (stm.GetStatementId.id);
-                        }
+                        }                        
+                    do alreadyCollected.States := newState::alreadyCollected.States.Value
                     do collectStatesAndTransitions alreadyCollected (newState,nextState) stm
                     newState
                 let choiceStates = choices |> List.map createSubstateAndTraverseSubStatement
@@ -168,6 +173,7 @@ module internal TsamToDot =
                             State.StateId = alreadyCollected.UniqueStateIdGenerator ();
                             State.Label = sprintf "Stochastic%dNo%d" (choiceSid.id) (stm.GetStatementId.id);
                         }
+                    do alreadyCollected.States := newState::alreadyCollected.States.Value
                     do collectStatesAndTransitions alreadyCollected (newState,nextState) stm
                     (number,expr,newState)
                 let stochasticChoiceStates =
@@ -215,6 +221,7 @@ module internal TsamToDot =
             {
                 CollectedInformation.InitialState = initialState;
                 CollectedInformation.EndState = endState;
+                CollectedInformation.States = ref [initialState;endState];
                 CollectedInformation.StochasticTransitions = ref [];
                 CollectedInformation.IndeterministicTransitions = ref [];
                 CollectedInformation.DeterministicTransitions = ref [];
@@ -224,14 +231,71 @@ module internal TsamToDot =
         initialCollectedInformation
 
     open SafetySharp.GraphVizDot.DotAst
+    
+    let exportCollectedInformation (collectedInformation:CollectedInformation) : Digraph =
+        let stateToNodeMap : Map<State,Node> =
+            let stateToNode (state:State) : Node =
+                let nodeName = match state.StateId with | StateId(number) -> sprintf "state%d" number
+                nodeName
+            collectedInformation.States.Value |> List.map (fun state -> (state,stateToNode state)) |> Map.ofList
+            
+        let exportDeterministicTransition (transition:DeterministicTransition) : TransitionDecl list=
+            let exportTransition = 
+                {
+                    TransitionDecl.From = stateToNodeMap.Item transition.FromState;
+                    TransitionDecl.To = stateToNodeMap.Item transition.ToState;
+                    TransitionDecl.Attributes = [];
+                }
+            [exportTransition]
 
-    let exportModel (pgm:Pgm) : Digraph =
+        let exportIndeterministicTransition (transition:IndeterministicTransition) : TransitionDecl list=
+            let exportTransition (toState:State) = 
+                {
+                    TransitionDecl.From = stateToNodeMap.Item transition.FromState;
+                    TransitionDecl.To = stateToNodeMap.Item toState;
+                    TransitionDecl.Attributes = [];
+                }
+            transition.ToStates |> List.map exportTransition
+
+        let exportStochasticTransition (transition:StochasticTransition) : (TransitionDecl list*Node)= //exports the virtual node
+            let virtualNodeName =  match transition.FromState.StateId with | StateId(number) -> sprintf "state%dstosplit" number // for better design
+            let exportTransition (transitionNumber,expr,toState:State) = 
+                {
+                    TransitionDecl.From = virtualNodeName;
+                    TransitionDecl.To = stateToNodeMap.Item toState;
+                    TransitionDecl.Attributes = [Attribute.Style(Style.Dashed)];
+                }                
+            let toVirtualNode =
+                {
+                    TransitionDecl.From = stateToNodeMap.Item transition.FromState;
+                    TransitionDecl.To = virtualNodeName;
+                    TransitionDecl.Attributes = [Attribute.Direction(Direction.None)];
+                }
+            let fromVirtualNode = transition.ToStates |> List.map exportTransition
+            ((toVirtualNode::fromVirtualNode),virtualNodeName)
+        
+        let deterministicTransitions = collectedInformation.DeterministicTransitions.Value |> List.collect exportDeterministicTransition
+        let indeterministicTransitions = collectedInformation.IndeterministicTransitions.Value |> List.collect exportIndeterministicTransition
+        let (stochasticTransitionss,virtualStochasticNodes) =
+            collectedInformation.StochasticTransitions.Value |> List.map exportStochasticTransition |> List.unzip
+        let stochasticTransitions = stochasticTransitionss |> List.collect id
+        
+        let mainGroupWithTransitions =
+            {
+                Group.NodeAttributes = [];
+                Group.Nodes = [];
+                Group.Transitions = deterministicTransitions @ indeterministicTransitions @ stochasticTransitions;
+            }
+
         {
-            Digraph.Name = "";
+            Digraph.Name = "transformedGraph";
             Digraph.GraphAttributes = [];
-            Digraph.MainGroup = None;
+            Digraph.MainGroup = mainGroupWithTransitions;
             Digraph.SubGroups = [];
         }
+
+    let exportModel (pgm:Pgm) : Digraph =
+        pgm.Body |> transformToGraph |> exportCollectedInformation
 
     let hideExprs = id
     let hideActions = id
