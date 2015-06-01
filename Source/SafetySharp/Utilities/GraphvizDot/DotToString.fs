@@ -22,7 +22,7 @@
 
 namespace SafetySharp.GraphVizDot
 
-module DotToString =
+module internal DotToString =
     open DotAst
 
     type LabelEditor = string -> string
@@ -157,6 +157,14 @@ module DotToString =
         //  TODO: Embed \alpha, \phi,.. in Math environment. And \mathit
         labelEditor_keepLabel
 
+    open SafetySharp.Workflow
+        
+    let exportDotPlainFile () 
+            : ExogenousWorkflowFunction<Digraph,string> = workflow {
+        let! digraph = getState ()
+        let asString = exportDigraph labelEditor_keepLabel digraph
+        do! updateState asString
+    }
 
     // embedded in html (viz.js)
 
