@@ -1,0 +1,56 @@
+\documentclass[a4paper, 12pt,titlepage]{scrartcl} %twoside
+
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes}
+
+% Needs Python2 and dot2tex
+% You can install dot2tex with "pip install dot2tex" (even on Windows)
+\usepackage{dot2texi}
+
+\begin{document}
+	
+{\scriptsize 
+\begin{lstlisting}
+Original Modelglobals {
+  int i 0;
+}
+
+locals {
+}
+
+{
+  i := (i)+(1); 			// 2
+  choice {
+    {
+      assume false; 			// 5
+      {
+        i := (i)+(2); 			// 8
+      }			// 7
+    }			// 6
+    {
+      assume true; 			// 9
+      {
+        i := (i)+(4); 			// 12
+      }			// 11
+    }			// 10
+  }			// 3
+}			// 1
+\end{lstlisting}
+}
+
+\begin{tikzpicture}[>=latex',scale=0.5]
+	\begin{dot2tex}[dot,tikz,options=-s -tmath]
+digraph transformedGraph {
+	state7->state2;
+	state6->state7;
+	state5->state2;
+	state4->state5;
+	state1->state3;
+	state3->state4;
+	state3->state6;
+}
+	\end{dot2tex}.
+\end{tikzpicture}
+
+\end{document}
