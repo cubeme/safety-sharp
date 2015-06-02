@@ -98,55 +98,56 @@ module internal TsamToDot =
                 let nextStateAfterBlock = nextState
                 let previousStateBeforeBlock = previousState
 
-                let betweenStmStates : Map<Stm,State> =
-                    // we create to every stm of the block a betweenStm
-                    let createState (stm:Stm) : State =
-                        let newState =
-                            {
-                                State.StateId = alreadyCollected.UniqueStateIdGenerator ();
-                                State.Label = sprintf "Block%dBeforeStm%d" (blockSid.id) (stm.GetStatementId.id);
-                            }
-                        do alreadyCollected.States := newState::alreadyCollected.States.Value
-                        newState
-                    stmts |> List.map (fun stm -> (stm,createState stm)) |> Map.ofList
-                let fromMap : Map<Stm,State> = betweenStmStates
-                let toMap : Map<Stm,State> =
-                    if stmts.IsEmpty then
-                        Map.empty<Stm,State>
-                    else
-                        let rec traverse (acc:Map<Stm,State>) (previousStm:Stm,stmntsLeft:Stm list) : Map<Stm,State> =
-                            if stmntsLeft.IsEmpty then
-                                acc.Add(previousStm,nextStateAfterBlock)
-                            else
-                                let currentStm=stmntsLeft.Head
-                                let accWithPreviousStm = acc.Add(previousStm,betweenStmStates.Item currentStm)
-                                traverse accWithPreviousStm (currentStm,stmntsLeft.Tail)
-                        traverse Map.empty<Stm,State> (stmts.Head,stmts.Tail)
-                let traverseSubStatement (stm:Stm) =
-                    let previousState = fromMap.Item stm
-                    let nextState = toMap.Item stm
-                    do collectStatesAndTransitions (alreadyCollected) (previousState,nextState) stm
-                    ()                
-                let addTransitionFromPreviousStateBeforeBlock () =
-                    let successorOfPreviousStateBeforeBlock =
-                        if stmts.IsEmpty then
-                            //if no block element exists, connect to nextStateAfterBlock
-                            nextStateAfterBlock
-                        else
-                            // else connect to the first Stm
-                            betweenStmStates.Item (stmts.Head)
+                if stmts.IsEmpty then
+                    // connect previousStateBeforeBlock directly with nextStateAfterBlock
                     let newEntry =
                         {
                             DeterministicTransition.Label=sprintf "Block%dConnect" (blockSid.id);
                             DeterministicTransition.FromState=previousStateBeforeBlock;
-                            DeterministicTransition.ToState=successorOfPreviousStateBeforeBlock;
+                            DeterministicTransition.ToState=nextStateAfterBlock;
                             DeterministicTransition.Guard=None;
                             DeterministicTransition.Action=None;
                         }
                     do alreadyCollected.DeterministicTransitions := newEntry::alreadyCollected.DeterministicTransitions.Value
-                do stmts |> List.iter traverseSubStatement
-                do addTransitionFromPreviousStateBeforeBlock ()
-                ()
+                    ()
+                else
+                    let noOfBetweenStates = (stmts.Length - 1) 
+                    let statePositionToState : Map<int,State> =
+                        // Example: Assume 3 Statements
+                        //     * Position 0 |-> previousStateBeforeBlock
+                        //     * Position 1 |-> created betweenState 1
+                        //     * Position 2 |-> created betweenState 2
+                        //     * Position 3 = Position (stmts.Length) |-> nextStateAfterBlock
+                        //    In the transition from
+                        //     * Position 0 to 1 Stm1 is executed
+                        //     * Position 1 to 2 Stm2 is executed
+                        //     * Position 2 to 3 Stm3 is executed
+                        let createBetweenState (number:int) : State =                            
+                            let newBetweenState =
+                                {
+                                    State.StateId = alreadyCollected.UniqueStateIdGenerator ();
+                                    State.Label = sprintf "Block%dBetween%d" (blockSid.id) (number);
+                                }
+                            do alreadyCollected.States := newBetweenState::alreadyCollected.States.Value
+                            newBetweenState
+                        let positionsBetweenStates = seq {1..noOfBetweenStates} |> Seq.toList |> List.map (fun number -> (number,createBetweenState number)) |> Map.ofList                    
+                        let positionsAll =
+                            positionsBetweenStates.Add(0,previousStateBeforeBlock)
+                                                  .Add(stmts.Length,nextStateAfterBlock)
+                        positionsAll
+                    let fromMap : Map<Stm,State> =
+                        let fromStatePositions = seq {0..stmts.Length - 1} |> Seq.toList
+                        List.zip fromStatePositions stmts |> List.map (fun (previousStateNo,stm) -> (stm,statePositionToState.Item previousStateNo) ) |> Map.ofList
+                    let toMap : Map<Stm,State> =
+                        let toStatePositions = seq {1..stmts.Length} |> Seq.toList
+                        List.zip toStatePositions stmts |> List.map (fun (nextStateNo,stm) -> (stm,statePositionToState.Item nextStateNo) ) |> Map.ofList
+                    let traverseSubStatement (stm:Stm) =
+                        let previousState = fromMap.Item stm
+                        let nextState = toMap.Item stm
+                        do collectStatesAndTransitions (alreadyCollected) (previousState,nextState) stm
+                        ()
+                    do stmts |> List.iter traverseSubStatement
+                    ()
             | Stm.Choice (choiceSid,choices:Stm list) ->
                 let createSubstateAndTraverseSubStatement (stm:Stm) : State =
                     let newState =
