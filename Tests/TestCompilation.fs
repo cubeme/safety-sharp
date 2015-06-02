@@ -29,6 +29,7 @@ open System.Collections.Immutable
 open System.Linq
 open System.IO
 open System.Reflection
+open System.Text
 open System.Threading
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
@@ -141,9 +142,19 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     /// Emits an assembly for the compilation compiled with the S# compiler and loads the S# assembly into the app domain.
     member this.CompileSSharp runSSharpDiagnostics =
         if assembly = null then
-            // Create a temporary file and load the assembly from the file, as some
-            // tests require the assembly to be present on the file system
-            if not <| Compiler.Compile (csharpCompilation, assemblyPath, runSSharpDiagnostics) then
+            // Note: We create a temporary file for the compiled assembly and subsequently load 
+            // it from that file, as some tests require the assembly to be present on the file system
+            use workspace = new AdhocWorkspace ()
+            let project = workspace.AddProject (csharpCompilation.AssemblyName, LanguageNames.CSharp)
+            let project = csharpCompilation.References |> Seq.fold (fun (p : Project) r -> p.AddMetadataReference r) project
+            let project = 
+                csharpCompilation.SyntaxTrees |> Seq.fold (fun (p : Project) s -> 
+                    p.AddDocument(Guid.NewGuid().ToString (), s.GetRoot().GetText (Encoding.UTF8)).Project
+                ) project
+            let project = project.WithCompilationOptions csharpCompilation.Options
+            
+            let compiler = Compiler (true)
+            if not <| compiler.Compile (project, assemblyPath, runSSharpDiagnostics) then
                 failed "Assembly compilation failed."
 
             assembly <- Assembly.LoadFile assemblyPath

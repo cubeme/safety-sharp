@@ -46,8 +46,24 @@
       <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.CSharp.1.0.0-rc2\lib\net45\Microsoft.CodeAnalysis.CSharp.Desktop.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.CSharp.Workspaces.1.0.0-rc2\lib\net45\Microsoft.CodeAnalysis.CSharp.Workspaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces.Desktop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.CSharp.Workspaces.1.0.0-rc2\lib\net45\Microsoft.CodeAnalysis.CSharp.Workspaces.Desktop.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis.Desktop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Common.1.0.0-rc2\lib\net45\Microsoft.CodeAnalysis.Desktop.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Workspaces.Common.1.0.0-rc2\lib\net45\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces.Desktop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Workspaces.Common.1.0.0-rc2\lib\net45\Microsoft.CodeAnalysis.Workspaces.Desktop.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="QuickGraph, Version=3.6.61114.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">

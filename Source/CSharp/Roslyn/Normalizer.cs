@@ -22,25 +22,26 @@
 
 namespace SafetySharp.CSharp.Roslyn
 {
+	using System;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 
 	/// <summary>
-	///   A base class for C# normalizers that normalize certain C# language features.
+	///     A base class for C# normalizers that normalize certain C# language features.
 	/// </summary>
 	public abstract class Normalizer : CSharpSyntaxRewriter, INormalizer
 	{
 		/// <summary>
-		///   Gets the semantic model that should be used for semantic analysis during normalization.
+		///     Gets the semantic model that should be used for semantic analysis during normalization.
 		/// </summary>
 		protected SemanticModel SemanticModel { get; private set; }
 
 		/// <summary>
-		///   Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation." />
+		///     Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation." />
 		/// </summary>
 		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree." /></param>
 		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
-		SyntaxTree INormalizer.Normalize(Compilation compilation, SyntaxTree syntaxTree)
+		public SyntaxTree Normalize(Compilation compilation, SyntaxTree syntaxTree)
 		{
 			SemanticModel = compilation.GetSemanticModel(syntaxTree);
 

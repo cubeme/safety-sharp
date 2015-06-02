@@ -120,7 +120,8 @@ namespace SafetySharp.Compiler
 			// Start the compilation process.
 			try
 			{
-				if (!Compiler.Compile(ProjectFile, Configuration, Platform))
+				var compiler = new Compiler(testing: false);
+				if (!compiler.Compile(ProjectFile, Configuration, Platform))
 					return -1;
 
 				Log.Info("Compilation completed successfully.");

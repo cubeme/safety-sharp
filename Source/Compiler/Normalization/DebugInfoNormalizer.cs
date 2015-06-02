@@ -28,6 +28,7 @@ namespace SafetySharp.Compiler.Normalization
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Microsoft.CodeAnalysis.Editing;
 
 	/// <summary>
 	///   The S# compiler changes the C# code behind the modeler's back. To ensure that the debugging experience is not negatively
@@ -53,7 +54,7 @@ namespace SafetySharp.Compiler.Normalization
 			var root = (CompilationUnitSyntax)syntaxTree.GetRoot();
 			var node = root.GetFirstToken(true, true, true, true).Parent;
 			var newNode = node.WithLeadingTrivia(node.GetLeadingTrivia().Insert(0, trivia));
-
+			
 			return syntaxTree
 				.WithFilePath(syntaxTree.FilePath + Guid.NewGuid())
 				.WithChangedText(root.ReplaceNode(node, newNode).GetText(syntaxTree.GetText().Encoding ?? Encoding.UTF8));
