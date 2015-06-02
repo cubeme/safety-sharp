@@ -64,18 +64,12 @@ namespace SafetySharp.Compiler.Normalization
 		private int _bindingCount;
 
 		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		public BindingNormalizer()
-			: base(NormalizationScope.Global)
-		{
-		}
-
-		/// <summary>
 		///     Normalizes the <paramref name="classDeclaration" />.
 		/// </summary>
-		protected override ClassDeclarationSyntax NormalizeClassDeclaration(ClassDeclarationSyntax classDeclaration)
+		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
 		{
+			classDeclaration = (ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration);
+
 			var delegates = _delegates.Select(d => d.AddAttributeLists(CompilerGeneratedAttribute)).ToArray();
 			_delegates.Clear();
 

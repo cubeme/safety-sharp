@@ -160,7 +160,7 @@ module PortNormalizer =
 
     [<Test>]
     let ``normalizes required port of component class nested in other component class`` () =
-        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (PortNormalizer()) "class Y : Component { class X : Component { public extern void M(); } public extern void M(); }"
+        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (PortNormalizer()) "class Y : Component { class X : Component { public extern void M(); } public extern void N(); }"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "Y").ToFullString () =?  
             "class Y : Component { class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
@@ -168,7 +168,7 @@ module PortNormalizer =
             [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] public void M() => this.__portField0__();} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate1__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate1__ __portField1__;\
-            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] public void M() => this.__portField1__();}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] public void N() => this.__portField1__();}"
 
     [<Test>]
     let ``normalizes required port of component class nested in other non-component class`` () =

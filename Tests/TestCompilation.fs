@@ -36,6 +36,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open Mono.Cecil
 open SafetySharp.CSharp.Roslyn.Syntax
+open SafetySharp.CSharp.Roslyn.Symbols
 open SafetySharp.CSharp.Roslyn
 open SafetySharp.CSharp.Analyzers
 open SafetySharp.Compiler
@@ -379,17 +380,17 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
             diagnostics.[0] |> Some
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
-    static member GetNormalizedSyntaxTree (normalizer : Normalizer) csharpCode =
+    static member GetNormalizedSyntaxTree (normalizer : INormalizer) csharpCode =
         let compilation = TestCompilation csharpCode
-        normalizer.Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        compilation.CSharpCompilation.Normalize(normalizer).SyntaxTrees.Single ()
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
-    static member GetNormalizedSyntaxTreeWithExternAliases (normalizer : Normalizer) csharpCode externAliases =
+    static member GetNormalizedSyntaxTreeWithExternAliases (normalizer : INormalizer) csharpCode externAliases =
         let compilation = TestCompilation (csharpCode, [||], externAliases |> Array.ofList)
-        normalizer.Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        compilation.CSharpCompilation.Normalize(normalizer).SyntaxTrees.Single ()
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
-    static member GetNormalizedClass (normalizer : Normalizer) csharpCode =
+    static member GetNormalizedClass (normalizer : INormalizer) csharpCode =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree normalizer csharpCode
 
         // Check if the normalized tree is valid C# code
@@ -399,12 +400,12 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         syntaxTree.Descendants<ClassDeclarationSyntax>().First().ToFullString ()
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
-    static member GetNormalizedClassWithExternAliases (normalizer : Normalizer) csharpCode externAliases =
+    static member GetNormalizedClassWithExternAliases (normalizer : INormalizer) csharpCode externAliases =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTreeWithExternAliases normalizer csharpCode externAliases
         syntaxTree.Descendants<ClassDeclarationSyntax>().First().ToFullString ()
 
     /// Normalizes the code using the given normalizer and returns the code of the first interface contained in the given code.
-    static member GetNormalizedInterface (normalizer : Normalizer) csharpCode =
+    static member GetNormalizedInterface (normalizer : INormalizer) csharpCode =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree normalizer csharpCode
         syntaxTree.Descendants<InterfaceDeclarationSyntax>().First().ToFullString ()
 

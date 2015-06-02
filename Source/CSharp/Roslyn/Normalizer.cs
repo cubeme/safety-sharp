@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -22,36 +22,35 @@
 
 namespace SafetySharp.CSharp.Roslyn
 {
-	using System;
-	using Modeling;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
 
 	/// <summary>
-	///     Indicates which parts of the code are affected by a <see cref="CSharpNormalizer" />.
+	///   A base class for C# normalizers that normalize certain C# language features.
 	/// </summary>
-	[Flags]
-	public enum NormalizationScope
+	public abstract class Normalizer : CSharpSyntaxRewriter, INormalizer
 	{
 		/// <summary>
-		///     Limits the scope of the <see cref="CSharpNormalizer" /> to all members of all classes derived from
-		///     <see cref="Component" />.
+		///   Gets the semantic model that should be used for semantic analysis during normalization.
 		/// </summary>
-		Components = 1,
+		protected SemanticModel SemanticModel { get; private set; }
 
 		/// <summary>
-		///     Limits the scope of the <see cref="CSharpNormalizer" /> to all members of all interfaces derived from
-		///     <see cref="IComponent" />.
+		///   Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation." />
 		/// </summary>
-		ComponentInterfaces = 2,
+		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree." /></param>
+		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
+		SyntaxTree INormalizer.Normalize(Compilation compilation, SyntaxTree syntaxTree)
+		{
+			SemanticModel = compilation.GetSemanticModel(syntaxTree);
 
-		/// <summary>
-		///     Limits the scope of the <see cref="CSharpNormalizer" /> to all statements (excluding those of the constructors) of
-		///     all classes derived from <see cref="Component" />.
-		/// </summary>
-		ComponentStatements = 4,
+			var root = syntaxTree.GetRoot();
+			var normalizedRoot = Visit(root);
 
-		/// <summary>
-		///     Does not limit the scope of the <see cref="CSharpNormalizer" />.
-		/// </summary>
-		Global = 8
+			if (root == normalizedRoot)
+				return syntaxTree;
+
+			return syntaxTree.WithChangedText(normalizedRoot.GetText(syntaxTree.GetText().Encoding));
+		}
 	}
 }

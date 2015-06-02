@@ -30,7 +30,7 @@ namespace SafetySharp.CSharp.Roslyn
 	using Utilities;
 
 	/// <summary>
-	///     Represents a diagnostic produced by a <see cref="CSharpAnalyzer" />, providing information about errors and
+	///     Represents a diagnostic produced by a <see cref="Analyzer" />, providing information about errors and
 	///     warnings in a S# model.
 	/// </summary>
 	public class DiagnosticInfo

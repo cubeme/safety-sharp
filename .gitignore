@@ -4,6 +4,7 @@
 
 #SafetySharp-specific files
 *.Generated.cs
+*.gv
 
 # User-specific files
 *.suo

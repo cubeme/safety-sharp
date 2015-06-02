@@ -26,7 +26,7 @@ namespace SafetySharp.CSharp.Analyzers
 	using Roslyn;
 
 	/// <summary>
-	///     Represents a unique identifier for a S# diagnostic emitted by a <see cref="CSharpAnalyzer" />.
+	///     Represents a unique identifier for a S# diagnostic emitted by a <see cref="Analyzer" />.
 	/// </summary>
 	public enum DiagnosticIdentifier
 	{

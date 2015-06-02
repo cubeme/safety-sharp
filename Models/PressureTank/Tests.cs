@@ -36,8 +36,8 @@ namespace PressureTank
 	{
 		private static void Main()
 		{
-			var tests = new ModelCheckingTests();
-			tests.FirstTest();
+			var tests = new Tests();
+			tests.TankDoesNotRuptureWhenNoFaultsOccur();
 		}
 
 		[Test]

@@ -85,9 +85,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Analyzers\DiagnosticIdentifier.cs" />
     <Compile Include="Roslyn\DiagnosticInfo.cs" />
-    <Compile Include="Roslyn\CSharpAnalyzer.cs" />
+    <Compile Include="Roslyn\Analyzer.cs" />
     <Compile Include="Roslyn\IdentifierNameSynthesizer.cs" />
-    <Compile Include="Roslyn\NormalizationScope.cs" />
+    <Compile Include="Roslyn\ComponentNormalizer.cs" />
+    <Compile Include="Roslyn\INormalizer.cs" />
+    <Compile Include="Roslyn\Normalizer.cs" />
     <Compile Include="Roslyn\SideEffectAnalyzer.cs" />
     <Compile Include="Roslyn\Symbols\CompilationExtensions.cs" />
     <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.cs" />

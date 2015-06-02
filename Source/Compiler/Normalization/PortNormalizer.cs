@@ -35,11 +35,10 @@ namespace SafetySharp.Compiler.Normalization
 	using Modeling;
 
 	/// <summary>
-	///     Replaces all port declarations within a component with a matching delegate type, a field of that
-	///     delegate type, and a non-extern method invoking the delegate instance stored in the field.
-	/// 
-	///     For instance:
-	///     <code>
+	///   Replaces all port declarations within a component with a matching delegate type, a field of that
+	///   delegate type, and a non-extern method invoking the delegate instance stored in the field.
+	///   For instance:
+	///   <code>
 	///    		public extern void MyMethod(int a, double b);
 	///    		// becomes (on a single line with uniquely generated names):
 	///  		[CompilerGenerated] public delegate void d(int a, double b);
@@ -68,46 +67,38 @@ namespace SafetySharp.Compiler.Normalization
 	///    		[SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute("f")] public void MyMethod(int a, double b) { f(a, b); }
 	///   	</code>
 	/// </summary>
-	public class PortNormalizer : Normalizer
+	public class PortNormalizer : ComponentNormalizer
 	{
 		/// <summary>
-		///     Represents the [CompilerGenerated] attribute syntax.
+		///   Represents the [CompilerGenerated] attribute syntax.
 		/// </summary>
 		private static readonly AttributeListSyntax CompilerGeneratedAttribute =
 			SyntaxBuilder.Attribute(typeof(CompilerGeneratedAttribute).FullName).WithTrailingSpace();
 
 		/// <summary>
-		///     Represents the [Required] attribute syntax.
+		///   Represents the [Required] attribute syntax.
 		/// </summary>
 		private static readonly AttributeListSyntax RequiredAttribute = SyntaxBuilder.Attribute(typeof(RequiredAttribute).FullName);
 
 		/// <summary>
-		///     Represents the [Provided] attribute syntax.
+		///   Represents the [Provided] attribute syntax.
 		/// </summary>
 		private static readonly AttributeListSyntax ProvidedAttribute = SyntaxBuilder.Attribute(typeof(ProvidedAttribute).FullName);
 
 		/// <summary>
-		///     Represents the [DebuggerBrowsable(DebuggerBrowsableState.Never)] attribute syntax.
+		///   Represents the [DebuggerBrowsable(DebuggerBrowsableState.Never)] attribute syntax.
 		/// </summary>
 		private static readonly AttributeListSyntax BrowsableAttribute = SyntaxBuilder.Attribute(
 			typeof(DebuggerBrowsableAttribute).FullName,
 			SyntaxFactory.ParseExpression("System.Diagnostics.DebuggerBrowsableState.Never"));
 
 		/// <summary>
-		///     The number of required ports declared by the compilation.
+		///   The number of required ports declared by the compilation.
 		/// </summary>
 		private int _portCount;
 
 		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		public PortNormalizer()
-			: base(NormalizationScope.Components)
-		{
-		}
-
-		/// <summary>
-		///     Normalizes the <paramref name="classDeclaration" />.
+		///   Normalizes the <paramref name="classDeclaration" />.
 		/// </summary>
 		protected override ClassDeclarationSyntax NormalizeClassDeclaration(ClassDeclarationSyntax classDeclaration)
 		{
@@ -136,7 +127,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes the given required port declaration and adds the generated members to the member list at the given index.
+		///   Normalizes the given required port declaration and adds the generated members to the member list at the given index.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
 		/// <param name="members">The members of the containing type that should be updated.</param>
@@ -168,7 +159,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes the given provided port declaration and adds the generated members to the member list at the given index.
+		///   Normalizes the given provided port declaration and adds the generated members to the member list at the given index.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
 		/// <param name="members">The members of the containing type that should be updated.</param>
@@ -221,7 +212,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Gets the name of the delegate for the current port.
+		///   Gets the name of the delegate for the current port.
 		/// </summary>
 		private string GetDelegateName()
 		{
@@ -229,7 +220,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Gets the name of the field for the current port.
+		///   Gets the name of the field for the current port.
 		/// </summary>
 		private string GetFieldName()
 		{
@@ -237,7 +228,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Creates a delegate declaration that is compatible with <paramref name="methodDeclaration" />.
+		///   Creates a delegate declaration that is compatible with <paramref name="methodDeclaration" />.
 		/// </summary>
 		/// <param name="methodDeclaration">The declaration of the method the delegate should be created for.</param>
 		private DelegateDeclarationSyntax CreateDelegate(MethodDeclarationSyntax methodDeclaration)
@@ -250,7 +241,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Creates a field declaration that stores <paramref name="methodDelegate" />.
+		///   Creates a field declaration that stores <paramref name="methodDelegate" />.
 		/// </summary>
 		/// <param name="methodDelegate">The delegate the field should be created for.</param>
 		private FieldDeclarationSyntax CreateField(DelegateDeclarationSyntax methodDelegate)
@@ -260,7 +251,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Adds the [BackingField] attribute to <paramref name="methodDeclaration" />.
+		///   Adds the [BackingField] attribute to <paramref name="methodDeclaration" />.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration the attribute should be added to.</param>
 		private MethodDeclarationSyntax AddBackingFieldAttribute(MethodDeclarationSyntax methodDeclaration)
@@ -272,7 +263,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Replaces <paramref name="methodDeclaration" />'s body with an invocation of the port's delegate.
+		///   Replaces <paramref name="methodDeclaration" />'s body with an invocation of the port's delegate.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration whose body should be replaced.</param>
 		private MethodDeclarationSyntax ReplaceBodyWithDelegateInvocation(MethodDeclarationSyntax methodDeclaration)
@@ -304,7 +295,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Adds <paramref name="newMembers" /> to the list of <paramref name="members" /> at the given <paramref name="index" />.
+		///   Adds <paramref name="newMembers" /> to the list of <paramref name="members" /> at the given <paramref name="index" />.
 		/// </summary>
 		/// <param name="members">The members of the containing type that should be updated.</param>
 		/// <param name="index">The index where the new members should be inserted.</param>

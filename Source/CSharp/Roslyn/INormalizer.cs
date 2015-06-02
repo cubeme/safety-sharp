@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -22,40 +22,20 @@
 
 namespace SafetySharp.CSharp.Roslyn
 {
-	using System;
-	using System.Collections.Immutable;
-	using System.Linq;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.Diagnostics;
-	using Utilities;
 
 	/// <summary>
-	///     A base class for S# code analyzers.
+	///   Represents a normalizer that normalize certain C# language features.
 	/// </summary>
-	public abstract class CSharpAnalyzer : DiagnosticAnalyzer
+	public interface INormalizer
 	{
 		/// <summary>
-		///     The set of descriptors for the diagnostics that this analyzer is capable of producing.
+		///   Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation." />
 		/// </summary>
-		private readonly ImmutableArray<DiagnosticDescriptor> _supportedDiagnostics;
-
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="diagnostics">The diagnostics supported by the analyzer.</param>
-		protected CSharpAnalyzer([NotNull] params DiagnosticInfo[] diagnostics)
-		{
-			Requires.NotNull(diagnostics, () => diagnostics);
-			_supportedDiagnostics = diagnostics.Select(message => message.Descriptor).ToImmutableArray();
-		}
-
-		/// <summary>
-		///     Returns a set of descriptors for the diagnostics that this analyzer is capable of producing.
-		/// </summary>
-		public override sealed ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-		{
-			get { return _supportedDiagnostics; }
-		}
+		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree." /></param>
+		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
+		[NotNull]
+		SyntaxTree Normalize([NotNull] Compilation compilation, [NotNull] SyntaxTree syntaxTree);
 	}
 }

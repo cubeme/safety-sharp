@@ -20,40 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Normalization
+namespace SafetySharp.CSharp.Roslyn
 {
+	using System;
+	using System.Collections.Immutable;
 	using System.Linq;
-	using CSharp.Roslyn;
-	using CSharp.Roslyn.Syntax;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Modeling.CompilerServices;
+	using Microsoft.CodeAnalysis.Diagnostics;
+	using Utilities;
 
 	/// <summary>
-	///   Replaces the parameters of method invocations or object creations with a lifted lambda if the corresponding
-	///   method argument has the <see cref="LiftExpressionAttribute" /> applied.
-	///   For instance, with method M declared as <c>void M([LiftExpression] int a, int b)</c>:
-	///   <code>
-	///  		M(1 + 2, 4); 
-	///  		// becomes:
-	///  		M(() => 1 + 2, 4);
-	/// 	</code>
+	///     A base class for S# code analyzers.
 	/// </summary>
-	public class ExpressionLifter : Normalizer
+	public abstract class Analyzer : DiagnosticAnalyzer
 	{
 		/// <summary>
-		///   Lifts the expression represented by <paramref name="argument" />, if necessary.
+		///     The set of descriptors for the diagnostics that this analyzer is capable of producing.
 		/// </summary>
-		public override SyntaxNode VisitArgument(ArgumentSyntax argument)
+		private readonly ImmutableArray<DiagnosticDescriptor> _supportedDiagnostics;
+
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="diagnostics">The diagnostics supported by the analyzer.</param>
+		protected Analyzer([NotNull] params DiagnosticInfo[] diagnostics)
 		{
-			var requiresLifting = argument.HasAttribute<LiftExpressionAttribute>(SemanticModel);
-			argument = (ArgumentSyntax)base.VisitArgument(argument);
+			Requires.NotNull(diagnostics, () => diagnostics);
+			_supportedDiagnostics = diagnostics.Select(message => message.Descriptor).ToImmutableArray();
+		}
 
-			if (!requiresLifting)
-				return argument;
-
-			var expression = SyntaxBuilder.Lambda(Enumerable.Empty<ParameterSyntax>(), argument.Expression).WithTrivia(argument);
-			return argument.WithExpression(expression);
+		/// <summary>
+		///     Returns a set of descriptors for the diagnostics that this analyzer is capable of producing.
+		/// </summary>
+		public override sealed ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+		{
+			get { return _supportedDiagnostics; }
 		}
 	}
 }

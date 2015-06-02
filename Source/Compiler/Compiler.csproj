@@ -104,8 +104,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Normalization\Normalizer.cs" />
     <Compile Include="Normalization\BindingNormalizer.cs" />
+    <Compile Include="Normalization\DebugInfoNormalizer.cs" />
     <Compile Include="Normalization\PortNormalizer.cs" />
     <Compile Include="Normalization\ExpressionLifter.cs" />
     <Compile Include="Compiler.cs" />
