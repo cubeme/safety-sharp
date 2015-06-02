@@ -2,20 +2,20 @@
 // I) Different forms of Sourcecode
 //    A. Sourcefile
 //       text, graph
-//    B. remove nested blocks
+//    B. Single Static Assignment
 //       text, graph
-//    C. Treeified
+//    C. Passive Form
 //       text, graph
-//    D. Single Static Assignment
+//    D. remove nested blocks
 //       text, graph
-//    E. Passive Form
+//    E. Treeified
 //       text, graph
 //    F. Gwa Form (My Form)
 //       text, graph, transformations in between
 //  II) Different Transformations to merge statements to a big step
-//    1. Weakest Precondition (from E)
+//    1. Weakest Precondition (from C)
 //        * show problem, why it does not work in the indeterministic case
-//    2. Strongest Postcondition (from E)
+//    2. Strongest Postcondition (from C)
 //        * show problem with instantiation of exists quantifier
 //        * show that input variables are necessary
 //    3. Gwa-Form (From F)
@@ -29,6 +29,11 @@
 //    6. Prism from  II 3
 
 
+// Generate TeX output of Scm-Stuff
+// 1. Upleveling of Subcomponents
+// 2. Conversion of Faults
+// 3. Conversion of Delayed Ports
+// 4. Inlining of Ports
 
 
 

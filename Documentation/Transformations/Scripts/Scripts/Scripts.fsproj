@@ -49,12 +49,12 @@
   <ItemGroup>
     <Compile Include="Program.fs" />
     <None Include="App.config" />
-    <None Include="DemonstrateWithSmokeTest8.fsx" />
-    <None Include="DemonstrateWithSmokeTest10.fsx" />
-    <None Include="DemonstrateWithSmokeTest9.fsx" />
-    <None Include="StepsOfGwaForm.fsx" />
-    <None Include="SamSemanticsAsProgramGraph.fsx" />
-    <None Include="SamSemanticsAsMarkovDecisionProcess.fsx" />
+    <None Include="TsamDemonstrateWithSmokeTest8.fsx" />
+    <None Include="TsamDemonstrateWithSmokeTest10.fsx" />
+    <None Include="TsamDemonstrateWithSmokeTest9.fsx" />
+    <None Include="TsamStepsOfGwaForm.fsx" />
+    <None Include="TsamSemanticsAsProgramGraph.fsx" />
+    <None Include="TsamSemanticsAsMarkovDecisionProcess.fsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Source\SafetySharp\SafetySharp.fsproj">
