@@ -72,6 +72,8 @@ module internal DotToString =
                 sprintf "peripheries=%d" peripheries
             | Attribute.Label (label) ->
                 sprintf "label=%s" (labelEditor label)
+            | Attribute.TexLabel (label) ->
+                sprintf "texlbl=%s" (labelEditor label)
             | Attribute.ExternalLabel (xlabel) ->
                 sprintf "xlabel=%s" (labelEditor xlabel)
             | Attribute.Fontsize (fontsize) ->
@@ -169,3 +171,13 @@ module internal DotToString =
     // embedded in html (viz.js)
 
     // embedded in tex ()
+
+    let texFilePackagesInHeader = """
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes}
+
+% Needs Python2 and dot2tex
+% You can install dot2tex with "pip install dot2tex" (even on Windows)
+\usepackage{dot2texi}
+"""
+    

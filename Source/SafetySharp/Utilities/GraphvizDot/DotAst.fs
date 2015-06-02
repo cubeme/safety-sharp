@@ -61,6 +61,7 @@ module DotAst =
         | Width of int
         | Peripheries of int
         | Label of string
+        | TexLabel of string
         | ExternalLabel of string
         | Fontsize of int
         | Fixedsize of bool

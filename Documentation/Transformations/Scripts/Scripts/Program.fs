@@ -35,6 +35,8 @@
 // 3. Conversion of Delayed Ports
 // 4. Inlining of Ports
 
+// TODO: Maybe make real reports out of it
+
 namespace SafetySharp.Documentation.Scripts
 
 module TsamToTex =
@@ -43,7 +45,14 @@ module TsamToTex =
     open SafetySharp.Models.TsamMutable
     open SafetySharp.Workflow
 
-    let generateTexFile (useOnlyTransformationsWithStochasticSupport:bool) (path:string) (filename:string) : string =
+    type OutputStyleDecorator = {
+        Content : string->string;
+        Section : string->string;
+        TsamSource : string->string;
+        Graph : string->string;
+    }
+        
+    let generateFile (outputstyle:OutputStyleDecorator) (useOnlyTransformationsWithStochasticSupport:bool) (path:string) (filename:string) : string =
         let tsamSourceModel =
             let readInputFileAndGenerateDotFile = workflow {
                     do! readFile filename
@@ -53,7 +62,7 @@ module TsamToTex =
             runWorkflow_getState readInputFileAndGenerateDotFile
             
         let output_I_complete : string =
-            let printModelAsTextAndGraphWorkflow (header:string) = workflow {
+            let printModelAsTextAndGraphWorkflow (chapter:string) = workflow {
                     let! modelToPrint = getState ()
                     do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
                     let! modelAsText = getState ()
@@ -61,7 +70,7 @@ module TsamToTex =
                     do! SafetySharp.Models.TsamToDot.exportModelWorkflow ()
                     do! SafetySharp.GraphVizDot.DotToString.exportDotPlainFile ()
                     let! modelAsGraph = getState ()
-                    return header + modelAsText + modelAsGraph
+                    return (outputstyle.Section chapter) + (outputstyle.TsamSource modelAsText) + (outputstyle.Graph modelAsGraph)
             }
                        
             let output_I_A_wf () = workflow {
@@ -110,12 +119,37 @@ module TsamToTex =
                 return output_I_A + output_I_B + output_I_C + output_I_D + output_I_E + output_I_F
             }
             runWorkflow_getResult outputWorkflow
-
-        let completeOutput = output_I_complete
+                    
+        let completeOutput : string =
+            let content = sprintf "%s" output_I_complete
+            outputstyle.Content content
         do SafetySharp.FileSystem.WriteToAsciiFile path completeOutput
-
         completeOutput
 
+        
+    let texOutput : OutputStyleDecorator =
+        let contentDecoration (content:string) = 
+            let texTemplateAsString = """
+\documentclass[a4paper, 12pt,titlepage]{scrartcl}
+%s
+%s
+\begin{document}
+%s
+\end{document}
+"""
+            let texTemplate = Printf.StringFormat<_,string>(texTemplateAsString)
+            sprintf texTemplate (SafetySharp.GraphVizDot.DotToString.texFilePackagesInHeader) (SafetySharp.Models.TsamToString.texFilePackagesInHeader) content        
+        let sectionDecoration (chapterName:string) = sprintf "\\section{%s}\n" chapterName
+        let tsamSourceDecorator (tsamSource:string) = sprintf "\n{\\scriptsize\n\\begin{lstlisting}\n%s\n\\end{lstlisting}\n}\n" tsamSource
+        let graphDecorator (graph:string) = sprintf "\n\\begin{tikzpicture}[>=latex',scale=0.5]\n\\begin{dot2tex}[dot,tikz,options=-s -tmath]\n%s\\end{dot2tex}.\n\\end{tikzpicture}\n" graph
+        {
+            OutputStyleDecorator.Content = contentDecoration
+            OutputStyleDecorator.Section = sectionDecoration;
+            OutputStyleDecorator.TsamSource = tsamSourceDecorator;
+            OutputStyleDecorator.Graph = graphDecorator;
+        }
+
+    let generateTexFile = generateFile texOutput
         (*
         let generateIII (filename:string) : string =
             // III 1:
@@ -174,12 +208,30 @@ module TsamToTexTest =
     open SafetySharp.Workflow
     
     // NOTE: Make sure, we use the same F#-version as the SafetySharp Project. Otherwise it cannot be started. See App.config for details
-
+    
     [<Test>]
     let testWithSmokeTest8 () =        
         let useOnlyStochastic = false
         let path = "../../"
 
         let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/smokeTest8.tex") (path + "/../../../../Examples/SAM/smokeTest8.sam")
+        printfn "%s" output
+        ()
+
+    [<Test>]
+    let testWithSmokeTest9 () =        
+        let useOnlyStochastic = false
+        let path = "../../"
+
+        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/smokeTest9.tex") (path + "/../../../../Examples/SAM/smokeTest9.sam")
+        printfn "%s" output
+        ()
+
+    [<Test>]
+    let testWithSmokeTest10 () =        
+        let useOnlyStochastic = false
+        let path = "../../"
+
+        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/smokeTest10.tex") (path + "/../../../../Examples/SAM/smokeTest10.sam")
         printfn "%s" output
         ()
