@@ -43,7 +43,7 @@ module TsamToTex =
     open SafetySharp.Models.TsamMutable
     open SafetySharp.Workflow
 
-    let generateTexFile (useOnlyTransformationsWithStochasticSupport:bool) (filename:string) : string =
+    let generateTexFile (useOnlyTransformationsWithStochasticSupport:bool) (path:string) (filename:string) : string =
         let tsamSourceModel =
             let readInputFileAndGenerateDotFile = workflow {
                     do! readFile filename
@@ -111,7 +111,10 @@ module TsamToTex =
             }
             runWorkflow_getResult outputWorkflow
 
-        output_I_complete
+        let completeOutput = output_I_complete
+        do SafetySharp.FileSystem.WriteToAsciiFile path completeOutput
+
+        completeOutput
 
         (*
         let generateIII (filename:string) : string =
@@ -163,3 +166,20 @@ module TsamToTex =
             //let runSmokeTest (inputFile) =
             //    SafetySharp.Workflow.runWorkflow_getState (smokeTestWorkflow inputFile)
             *)
+
+open NUnit.Framework
+
+[<TestFixture>]
+module TsamToTexTest =
+    open SafetySharp.Workflow
+    
+    // NOTE: Make sure, we use the same F#-version as the SafetySharp Project. Otherwise it cannot be started. See App.config for details
+
+    [<Test>]
+    let testWithSmokeTest8 () =        
+        let useOnlyStochastic = false
+        let path = "../../"
+
+        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/smokeTest8.tex") (path + "/../../../../Examples/SAM/smokeTest8.sam")
+        printfn "%s" output
+        ()

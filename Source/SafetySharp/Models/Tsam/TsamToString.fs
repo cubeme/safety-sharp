@@ -66,6 +66,11 @@ module internal TsamToString =
                 | BOp.GreaterEqual -> ">="
         append toAppend
          
+    let exportStatementId (sid:StatementId) : AstToStringStateFunction =
+        let toAppend =
+            match sid with | StatementId.StatementId(id) -> sprintf "%d" id
+        append toAppend
+
     let exportVal (_val:Val) : AstToStringStateFunction =
         let toAppend =
             match _val with
@@ -97,22 +102,22 @@ module internal TsamToString =
                 (append "assert ") >>=
                 (exportExpr expr) >>=
                 (append "; ") >>=
-                (append "\t\t\t// ") >>= (append (sid.ToString() )) >>= newLine
+                (append "\t\t\t// ") >>= (exportStatementId sid) >>= newLine
             | Stm.Assume (sid,expr) ->
                 (append "assume ") >>=
                 (exportExpr expr) >>=
                 (append "; ") >>=
-                (append "\t\t\t// ") >>= (append (sid.ToString() )) >>= newLine
+                (append "\t\t\t// ") >>= (exportStatementId sid) >>= newLine
             | Stm.Block (sid,stmts) ->
                 newLine >>= (append "{") >>= newLineAndIncreaseIndent >>= 
                 (foreach stmts (fun stm -> exportStm stm >>= newLine)) >>=
                 decreaseIndent >>= (append "}") >>=
-                (append "\t\t\t// ") >>= (append (sid.ToString() )) >>= newLine
+                (append "\t\t\t// ") >>= (exportStatementId sid) >>= newLine
             | Stm.Choice (sid,choices:Stm list) ->
                 newLine >>= (append "choice {") >>= newLineAndIncreaseIndent >>= 
                 (foreach choices exportStm) >>=
                 decreaseIndent >>= (append "}") >>=
-                (append "\t\t\t// ") >>= (append (sid.ToString() )) >>= newLine
+                (append "\t\t\t// ") >>= (exportStatementId sid) >>= newLine
             | Stm.Stochastic (sid,stochasticChoices) ->
                 newLine >>= (append "stochastic {") >>= newLineAndIncreaseIndent >>= 
                 (foreach stochasticChoices
@@ -120,13 +125,13 @@ module internal TsamToString =
                         exportExpr probExpr >>= append " => " >>= exportStm stm >>= newLine)
                     ) >>=
                 decreaseIndent >>= (append "}") >>=
-                (append "\t\t\t// ") >>= (append (sid.ToString() )) >>= newLine
+                (append "\t\t\t// ") >>= (exportStatementId sid) >>= newLine
             | Stm.Write (sid,var,expr) ->
                 (exportVar var) >>=
                 (append " := ") >>=
                 (exportExpr expr) >>=
                 (append "; ") >>=
-                (append "\t\t\t// ") >>= (append (sid.ToString() )) >>= newLine
+                (append "\t\t\t// ") >>= (exportStatementId sid) >>= newLine
        
     let exportType (_type:Type) : AstToStringStateFunction =
         let onOverrun _overflow = 
