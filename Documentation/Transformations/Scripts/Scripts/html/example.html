@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Report</title>
+    <!-- graphviz.js by mdaines from https://github.com/mdaines/viz.js (emscripten version of graphviz)-->
+    <script src="lib/graphviz.js"></script>
+    <script src="lib/codemirror.js"></script>
+    <script src="lib/jquery-2.1.4.min.js"></script>
+
+    <link rel="stylesheet" href="lib/codemirror.css">
+  </head>
+  <body>
+  <div class="chapter">
+    <h1>Original Model</h1>
+    <form>
+      <textarea class="tsamSource">globals {
+  int<0..20,clamp on overrun> i 0;
+}
+
+locals {
+}
+
+{
+  choice {
+    {
+      assume true; 			// 4
+      {
+        i := (i)+(1); 			// 7
+      }			// 6
+    }			// 5
+    {
+      assume true; 			// 8
+      {
+      }			// 10
+    }			// 9
+  }			// 2
+  i := (i)+(2); 			// 11
+  i := (i)+(4); 			// 12
+}			// 1</textarea>
+    </form>
+    <div class="graph">
+      <script type="text/vnd.graphviz" class="graphSource">
+        digraph transformedGraph {
+        	state4->state2 [label="// i:=(i)+(4)"];
+        	state3->state4 [label="// i:=(i)+(2)"];
+        	state8->state3 [label=""];
+        	state7->state8 [label="true"];
+        	state6->state3 [label="// i:=(i)+(1)"];
+        	state5->state6 [label="true"];
+        	state1->state5;
+        	state1->state7;
+        }
+      </script>
+    </div>
+
+  <script type="text/javascript">
+      $(".graph").each(function(index) {
+          var dotSource = $(".graphSource",this).html();
+          var svgPicture = Viz(dotSource, "svg");
+          //console.log(dotSource);
+          $(this).html(svgPicture);
+      } );
+      $(".tsamSource").each(function(index) {
+        CodeMirror.fromTextArea(this);
+      } )
+  </script>
+  </body>
+</html>
