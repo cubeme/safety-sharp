@@ -17,6 +17,7 @@
 * overflowIntWrapAround4.sam: Lower bound twice the range
 * overflowIntClamp1.sam: upper bound
 * overflowIntClamp2.sam: lower bound
+* overflowIntClamp3.sam: test, if the merging of states makes a failure with the semantics of clamp. Should clamping always occur or only after the step?!? i should be 10 and j 15. If a bug occurs, j is 20 or 15.
 * nestedBlocks.sam: Many nested Blocks
 
 ## Smoke Tests of evaluation

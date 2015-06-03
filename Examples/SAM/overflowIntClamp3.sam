@@ -1,0 +1,12 @@
+globals {
+	i : int<0..10,clamp on overrun> = 0;
+	j : int<0..25,clamp on overrun> = 0;
+}
+locals {
+}
+choice {
+	i := i + 5;
+	i := i + 5;
+	i := i + 5;
+	j := i + 5;
+}
