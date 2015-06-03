@@ -182,6 +182,12 @@ module TsamPassiveFormFS01Tests =
         ()
 
     [<Test>]
+    let ``smokeTest24 gets converted to Passive Form`` () =
+        let inputFile = """../../Examples/SAM/smokeTest24.sam"""
+        let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToPassiveForm inputFile)
+        ()
+
+    [<Test>]
     let ``nestedBlocks1 gets converted to Passive Form`` () =
         let inputFile = """../../Examples/SAM/nestedBlocks1.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToPassiveForm inputFile)

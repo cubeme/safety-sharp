@@ -30,3 +30,4 @@
 * smokeTest21.sam: example, which exposed a bug in passification
 * smokeTest22.sam: works with local variables, too
 * smokeTest23.sam: local variable has always the defined initial values
+* smokeTest24.sam: similar to smokeTest8, smokeTest9, smokeTest10. Good to demonstrate the different Tsam-Forms (SSA, Passive, GWA). Also gives the idea of exponential blowup of GWA-Form

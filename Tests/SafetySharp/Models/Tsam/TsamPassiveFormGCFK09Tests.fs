@@ -193,6 +193,12 @@ module TsamPassiveFormGCFK09Tests =
         ()
 
     [<Test>]
+    let ``smokeTest24 gets converted to SSA`` () =
+        let inputFile = """../../Examples/SAM/smokeTest24.sam"""
+        let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToSsa inputFile)
+        ()
+
+    [<Test>]
     let ``nestedBlocks1 gets converted to SSA`` () =
         let inputFile = """../../Examples/SAM/nestedBlocks1.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToSsa inputFile)
@@ -342,6 +348,12 @@ module TsamPassiveFormGCFK09Tests =
     [<Test>]
     let ``smokeTest23 gets converted to Passive Form`` () =
         let inputFile = """../../Examples/SAM/smokeTest23.sam"""
+        let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToPassiveForm inputFile)
+        ()
+
+    [<Test>]
+    let ``smokeTest24 gets converted to Passive Form`` () =
+        let inputFile = """../../Examples/SAM/smokeTest24.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndTransformToPassiveForm inputFile)
         ()
 
