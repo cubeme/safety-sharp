@@ -23,41 +23,30 @@
 namespace SafetySharp.Compiler.Normalization
 {
 	using System;
-	using System.Text;
 	using CSharp.Roslyn;
+	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Microsoft.CodeAnalysis.Editing;
 
 	/// <summary>
-	///   The S# compiler changes the C# code behind the modeler's back. To ensure that the debugging experience is not negatively
-	///   influenced, this normalizer adds a <c>#line</c> pragma directive to the beginning of each file that redirects the debugger
-	///   to the original source file. Also, it changes the name of the compiled file so that the PDB does not reference the actual
-	///   file that is on-disk (there would be a checksum mismatch and debugging would not work properly).
+	///     The S# compiler changes the C# code behind the modeler's back. To ensure that the debugging experience is not negatively
+	///     influenced, this normalizer adds a <c>#line</c> pragma directive to the beginning of each file that redirects the
+	///     debugger to the original source file. Also, it changes the name of the compiled file so that the PDB does not reference
+	///     the actual file that is on-disk (there would be a checksum mismatch and debugging would not work properly).
 	/// </summary>
-	public class DebugInfoNormalizer : INormalizer
+	public sealed class DebugInfoNormalizer : Normalizer
 	{
 		/// <summary>
-		///   Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation." />
+		///     Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation" />.
 		/// </summary>
-		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree." /></param>
+		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree" />.</param>
 		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
-		public SyntaxTree Normalize(Compilation compilation, SyntaxTree syntaxTree)
+		protected override SyntaxTree Normalize(Compilation compilation, SyntaxTree syntaxTree)
 		{
-			var path = syntaxTree.FilePath;
-			var lineToken = SyntaxFactory.Literal(1);
-			var fileToken = SyntaxFactory.Literal(path);
-			var lineDirective = SyntaxFactory.LineDirectiveTrivia(lineToken, fileToken, true).NormalizeWhitespace();
-			var trivia = SyntaxFactory.Trivia(lineDirective);
-
 			var root = (CompilationUnitSyntax)syntaxTree.GetRoot();
-			var node = root.GetFirstToken(true, true, true, true).Parent;
-			var newNode = node.WithLeadingTrivia(node.GetLeadingTrivia().Insert(0, trivia));
-			
-			return syntaxTree
-				.WithFilePath(syntaxTree.FilePath + Guid.NewGuid())
-				.WithChangedText(root.ReplaceNode(node, newNode).GetText(syntaxTree.GetText().Encoding ?? Encoding.UTF8));
+			var node = root.GetFirstToken(true, true, true, true).Parent.PrependLineDirective(1, syntaxTree.FilePath);
+
+			return syntaxTree.WithFilePath(syntaxTree.FilePath + Guid.NewGuid()).WithRoot(root.ReplaceNode(node, node));
 		}
 	}
 }

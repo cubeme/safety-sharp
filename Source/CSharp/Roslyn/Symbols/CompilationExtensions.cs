@@ -175,33 +175,5 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 				.OfType<IMethodSymbol>()
 				.Single(method => method.Parameters.Length == 1);
 		}
-
-		/// <summary>
-		///   Applies the <paramref name="normalizer" /> to the <paramref name="compilation" />.
-		/// </summary>
-		/// <param name="compilation">The compilation that should be normalized.</param>
-		/// <param name="normalizer">The normalizer that should be used to normalize the compilation.</param>
-		[NotNull, Pure]
-		public static Compilation Normalize([NotNull] this Compilation compilation, [NotNull] INormalizer normalizer)
-		{
-			Requires.NotNull(compilation, () => compilation);
-			Requires.NotNull(normalizer, () => normalizer);
-
-			foreach (var syntaxTree in compilation.SyntaxTrees)
-				compilation = compilation.ReplaceSyntaxTree(syntaxTree, normalizer.Normalize(compilation, syntaxTree));
-
-			return compilation;
-		}
-
-		/// <summary>
-		///   Initializes a <typeparamref name="TNormalizer" /> instance and applies it to the <paramref name="compilation" />.
-		/// </summary>
-		/// <param name="compilation">The compilation that should be normalized.</param>
-		[NotNull, Pure]
-		public static Compilation Normalize<TNormalizer>([NotNull] this Compilation compilation)
-			where TNormalizer : INormalizer, new()
-		{
-			return Normalize(compilation, new TNormalizer());
-		}
 	}
 }

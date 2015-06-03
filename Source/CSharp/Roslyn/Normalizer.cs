@@ -23,25 +23,62 @@
 namespace SafetySharp.CSharp.Roslyn
 {
 	using System;
+	using System.IO;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Syntax;
+	using Utilities;
 
 	/// <summary>
 	///     A base class for C# normalizers that normalize certain C# language features.
 	/// </summary>
-	public abstract class Normalizer : CSharpSyntaxRewriter, INormalizer
+	public abstract class Normalizer : CSharpSyntaxRewriter
 	{
+		/// <summary>
+		///     The syntax tree that is currently being normalized.
+		/// </summary>
+		private SyntaxTree _syntaxTree;
+
+		/// <summary>
+		///     Gets the compilation that is currently being normalized.
+		/// </summary>
+		protected Compilation Compilation { get; private set; }
+
 		/// <summary>
 		///     Gets the semantic model that should be used for semantic analysis during normalization.
 		/// </summary>
 		protected SemanticModel SemanticModel { get; private set; }
 
 		/// <summary>
-		///     Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation." />
+		///     Normalizes the <paramref name="compilation" />.
 		/// </summary>
-		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree." /></param>
+		/// <param name="compilation">The compilation that should be normalized.</param>
+		[NotNull]
+		public Compilation Normalize([NotNull] Compilation compilation)
+		{
+			Requires.NotNull(compilation, () => compilation);
+
+			Compilation = compilation;
+
+			foreach (var syntaxTree in compilation.SyntaxTrees)
+			{
+				_syntaxTree = syntaxTree;
+
+				var normalizedSyntaxTree = Normalize(compilation, syntaxTree);
+				Compilation = Compilation.ReplaceSyntaxTree(syntaxTree, normalizedSyntaxTree);
+			}
+
+			return Compilation;
+		}
+
+		/// <summary>
+		///     Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree" />.</param>
 		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
-		public SyntaxTree Normalize(Compilation compilation, SyntaxTree syntaxTree)
+		protected virtual SyntaxTree Normalize(Compilation compilation, SyntaxTree syntaxTree)
 		{
 			SemanticModel = compilation.GetSemanticModel(syntaxTree);
 
@@ -51,7 +88,22 @@ namespace SafetySharp.CSharp.Roslyn
 			if (root == normalizedRoot)
 				return syntaxTree;
 
-			return syntaxTree.WithChangedText(normalizedRoot.GetText(syntaxTree.GetText().Encoding));
+			return syntaxTree.WithRoot(normalizedRoot);
+		}
+
+		/// <summary>
+		///     Adds the <paramref name="compilationUnit" /> to the normalized compilation.
+		/// </summary>
+		/// <param name="compilationUnit">The compilation unit that should be added.</param>
+		protected void AddCompilationUnit([NotNull] CompilationUnitSyntax compilationUnit)
+		{
+			Requires.NotNull(compilationUnit, () => compilationUnit);
+
+			var originalPath = _syntaxTree.FilePath ?? String.Empty;
+			var path = String.Format("{0}.g.cs{1}", Path.GetFileNameWithoutExtension(originalPath), Guid.NewGuid());
+			var syntaxTree = _syntaxTree.WithRoot(compilationUnit.NormalizeWhitespace()).WithFilePath(path);
+
+			Compilation = Compilation.AddSyntaxTrees(syntaxTree);
 		}
 	}
 }

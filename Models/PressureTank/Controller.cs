@@ -118,7 +118,7 @@ namespace PressureTank
 				_timer.Start();
 				_pump.Enable();
 				_state = State.Filling;
-			}
+			} 
 		}
 	}
-}
+} 

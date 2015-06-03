@@ -79,7 +79,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		///     Checks whether <paramref name="argument" /> is of type <typeparamref name="T" /> within the context of the
 		///     <paramref name="semanticModel" />.
 		/// </summary>
-		/// <typeparam name="T">The expected type of <paramref name="argument." /></typeparam>
+		/// <typeparam name="T">The expected type of <paramref name="argument" />.</typeparam>
 		/// <param name="argument">The argument that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbols.</param>
 		[Pure]
@@ -100,7 +100,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		/// </summary>
 		/// <param name="argument">The argument that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbols.</param>
-		/// <param name="argumentType">The expected type of <paramref name="argument." /></param>
+		/// <param name="argumentType">The expected type of <paramref name="argument" />.</param>
 		[Pure]
 		public static bool IsOfType([NotNull] this ArgumentSyntax argument, [NotNull] SemanticModel semanticModel,
 									[NotNull] ITypeSymbol argumentType)

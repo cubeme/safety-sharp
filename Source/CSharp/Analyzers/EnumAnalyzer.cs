@@ -37,7 +37,7 @@ namespace SafetySharp.CSharp.Analyzers
 	///     is <see cref="int" />.
 	/// </summary>
 	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
-	public class EnumAnalyzer : Analyzer
+	public sealed class EnumAnalyzer : Analyzer
 	{
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer.

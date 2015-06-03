@@ -90,6 +90,90 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		}
 
 		/// <summary>
+		/// Checks whether <paramref name="methodSymbol"/> represents a required port of a S# component or interface.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsRequiredPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(compilation, () => compilation);
+
+			if (methodSymbol.IsStatic || methodSymbol.MethodKind != MethodKind.Ordinary)
+				return false;
+
+			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
+				return false;
+
+			switch (methodSymbol.ContainingType.TypeKind)
+			{
+				case TypeKind.Class:
+					return methodSymbol.IsExtern;
+				case TypeKind.Interface:
+					return methodSymbol.HasAttribute<RequiredAttribute>(compilation);
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Checks whether <paramref name="methodSymbol"/> represents a required port of a S# component or interface.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsRequiredPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			return methodSymbol.IsRequiredPort(semanticModel.Compilation);
+		}
+
+		/// <summary>
+		/// Checks whether <paramref name="methodSymbol"/> represents a provided port of a S# component or interface.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsProvidedPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(compilation, () => compilation);
+
+			if (methodSymbol.IsStatic || methodSymbol.MethodKind != MethodKind.Ordinary)
+				return false;
+
+			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
+				return false;
+
+			switch (methodSymbol.ContainingType.TypeKind)
+			{
+				case TypeKind.Class:
+					return !methodSymbol.IsExtern && !methodSymbol.IsUpdateMethod(compilation);
+				case TypeKind.Interface:
+					return methodSymbol.HasAttribute<ProvidedAttribute>(compilation);
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Checks whether <paramref name="methodSymbol"/> represents a provided port of a S# component or interface.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsProvidedPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			return methodSymbol.IsProvidedPort(semanticModel.Compilation);
+		}
+
+		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a built-in operator of the <see cref="int" />,
 		///     <see cref="bool" />, or <see cref="decimal" /> types.
 		/// </summary>

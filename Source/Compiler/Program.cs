@@ -130,7 +130,9 @@ namespace SafetySharp.Compiler
 			catch (Exception e)
 			{
 				Log.Error("A fatal compilation error occurred: {0}", e.Message);
-				Log.Info("{0}", e.StackTrace);
+#if DEBUG
+				Log.Error("StackTrace:\n{0}", e.StackTrace);
+#endif
 				return -1;
 			}
 		}

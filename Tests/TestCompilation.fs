@@ -391,34 +391,40 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
             diagnostics.[0] |> Some
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
-    static member GetNormalizedSyntaxTree (normalizer : INormalizer) csharpCode =
-        let compilation = TestCompilation csharpCode
-        compilation.CSharpCompilation.Normalize(normalizer).SyntaxTrees.Single ()
-
-    /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
-    static member GetNormalizedSyntaxTreeWithExternAliases (normalizer : INormalizer) csharpCode externAliases =
-        let compilation = TestCompilation (csharpCode, [||], externAliases |> Array.ofList)
-        compilation.CSharpCompilation.Normalize(normalizer).SyntaxTrees.Single ()
-
-    /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
-    static member GetNormalizedClass (normalizer : INormalizer) csharpCode =
-        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree normalizer csharpCode
-
+    static member GetNormalizedSyntaxTreesWithExternAliases (normalizer : Normalizer) csharpCode externAliases =
+        let compilation = TestCompilation (csharpCode, [||], externAliases)
+        let syntaxTrees = normalizer.Normalize(compilation.CSharpCompilation).SyntaxTrees
+        
         // Check if the normalized tree is valid C# code
-        let compilation = TestCompilation (syntaxTree.ToString ())
+        let compilation = TestCompilation (syntaxTrees |> Seq.fold (fun result tree -> result + (tree.ToString ())) String.Empty, [||], externAliases)
         compilation.Compile () |> ignore
 
-        syntaxTree.Descendants<ClassDeclarationSyntax>().First().ToFullString ()
+        syntaxTrees |> Seq.toList
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
-    static member GetNormalizedClassWithExternAliases (normalizer : INormalizer) csharpCode externAliases =
-        let syntaxTree = TestCompilation.GetNormalizedSyntaxTreeWithExternAliases normalizer csharpCode externAliases
-        syntaxTree.Descendants<ClassDeclarationSyntax>().First().ToFullString ()
+    static member GetNormalizedSyntaxTrees (normalizer : Normalizer) csharpCode =
+        TestCompilation.GetNormalizedSyntaxTreesWithExternAliases normalizer csharpCode [||]
+
+    /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
+    static member GetNormalizedClass (normalizer : Normalizer) csharpCode =
+        TestCompilation.GetNormalizedSyntaxTrees normalizer csharpCode
+        |> Seq.collect (fun tree -> tree.Descendants<ClassDeclarationSyntax> ()) 
+        |> Seq.map (fun tree -> tree.ToString () |> normalizeNewLines)
+        |> Seq.toList
+
+    /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
+    static member GetNormalizedClassWithExternAliases (normalizer : Normalizer) csharpCode externAliases =
+        TestCompilation.GetNormalizedSyntaxTreesWithExternAliases normalizer csharpCode externAliases
+        |> Seq.collect (fun tree -> tree.Descendants<ClassDeclarationSyntax> ()) 
+        |> Seq.map (fun tree -> tree.ToString () |> normalizeNewLines)
+        |> Seq.toList
 
     /// Normalizes the code using the given normalizer and returns the code of the first interface contained in the given code.
-    static member GetNormalizedInterface (normalizer : INormalizer) csharpCode =
-        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree normalizer csharpCode
-        syntaxTree.Descendants<InterfaceDeclarationSyntax>().First().ToFullString ()
+    static member GetNormalizedInterface (normalizer : Normalizer) csharpCode =
+        TestCompilation.GetNormalizedSyntaxTrees normalizer csharpCode
+        |> Seq.collect (fun tree -> tree.Descendants<InterfaceDeclarationSyntax> ())
+        |> Seq.map (fun tree -> tree.ToString () |> normalizeNewLines) 
+        |> Seq.toList
 
     /// Compiles the given C# code and creates an instance of the "TestModel" class.
     static member CreateModel (csharpCode, ?runSSharpDiagnostics : bool) =

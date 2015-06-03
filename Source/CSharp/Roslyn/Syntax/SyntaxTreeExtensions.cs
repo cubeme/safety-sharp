@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Text;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Utilities;
@@ -60,6 +61,19 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		{
 			Requires.NotNull(syntaxTree, () => syntaxTree);
 			return syntaxTree.GetRoot().DescendantNodesAndSelf().OfType<T>();
+		}
+
+		/// <summary>
+		///     Replaces <paramref name="syntaxTree" />'s current root node with <paramref name="rootNode" />.
+		/// </summary>
+		/// <param name="syntaxTree">The syntax tree whose root node should be changed.</param>
+		/// <param name="rootNode">The new root node of the syntax tree.</param>
+		public static SyntaxTree WithRoot([NotNull] this SyntaxTree syntaxTree, [NotNull] SyntaxNode rootNode)
+		{
+			Requires.NotNull(syntaxTree, () => syntaxTree);
+			Requires.NotNull(rootNode, () => rootNode);
+
+			return syntaxTree.WithChangedText(rootNode.GetText(syntaxTree.GetText().Encoding ?? Encoding.UTF8));
 		}
 	}
 }

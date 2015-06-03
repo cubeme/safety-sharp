@@ -21,80 +21,80 @@
 // THE SOFTWARE.
 
 namespace Normalization
-
-open System
-open System.Linq
-open NUnit.Framework
-open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.CSharp.Syntax
-open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.Modeling
-open SafetySharp.Compiler.Normalization
-open SafetySharp.CSharp.Roslyn.Syntax
-open SafetySharp.CSharp.Roslyn.Symbols
-
-[<TestFixture>]
-module ExpressionLifter =
-    let normalize csharpCode =
-        let csharpCode = 
-            sprintf "
-            class C : Component
-            {
-                C(bool b) {}
-                C([LiftExpression] int i) {}
-
-                int M(int i) { return 0; }
-                int N([LiftExpression] int i) { return 0; }
-                int O([LiftExpression] int i, [LiftExpression] int j) { return 0; }
-                int P(int i, [LiftExpression] bool b) { return 0; }
-
-                void Test() { %s; }
-            }" csharpCode
-
-        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (ExpressionLifter ()) csharpCode
-        let creationInvocation = syntaxTree.Descendants<ObjectCreationExpressionSyntax>().FirstOrDefault ()
-        
-        if creationInvocation <> null then
-            creationInvocation.ToString ()
-        else
-            let methodInvocation = syntaxTree.Descendants<InvocationExpressionSyntax>().FirstOrDefault ()
-            methodInvocation.ToString ()
-
-    [<Test>]
-    let ``does not lift method invocation argument that does not require lifting`` () =
-        normalize "M(30)" =? "M(30)"
-
-    [<Test>]
-    let ``does not lift object creation argument that does not require lifting`` () =
-        normalize "new C(false)" =? "new C(false)"
-
-    [<Test>]
-    let ``lifts object creation argument`` () =
-        normalize "new C(1)" =? "new C(() => 1)"
-        normalize "new C(1 + 3 / 54 + (true == false ? 17 : 33 + 1))" =? "new C(() => 1 + 3 / 54 + (true == false ? 17 : 33 + 1))"
-
-    [<Test>]
-    let ``lifts method invocation argument`` () =
-        normalize "N(1)" =? "N(() => 1)"
-        normalize "N(1 + 3 / 54 + (true == false ? 17 : 33 + 1))" =? "N(() => 1 + 3 / 54 + (true == false ? 17 : 33 + 1))"
-
-    [<Test>]
-    let ``lifts both method invocation arguments`` () =
-        normalize "O(1, 17)" =? "O(() => 1, () => 17)"
-        normalize "O(1, 1 + 3)" =? "O(() => 1, () => 1 + 3)"
-        normalize "O(1 - 0, 3)" =? "O(() => 1 - 0, () => 3)"
-
-    [<Test>]
-    let ``lifts second method invocation argument`` () =
-        normalize "P(1, true)" =? "P(1, () => true)"
-        normalize "P(1, true || false)" =? "P(1, () => true || false)"
-        normalize "P(1 - 0, false)" =? "P(1 - 0, () => false)"
-
-    [<Test>]
-    let ``lifts nested method invocations and object creations`` () =
-        normalize "new C(O(M(1), N(17 + 1)))" =? "new C(() => O(() => M(1), () => N(() => 17 + 1)))"
-
-    [<Test>]
-    let ``preserves all line breaks in expressions`` () =
-        normalize "new C(1\n + 1)" =? "new C(() => 1\n + 1)"
-        normalize "O(M(2 -\n1)\n+ 0,\n3\n- N(\n2 *\n5))" =? "O(() => M(2 -\n1)\n+ 0,\n() => 3\n- N(\n() => 2 *\n5))"
+//
+//open System
+//open System.Linq
+//open NUnit.Framework
+//open Microsoft.CodeAnalysis
+//open Microsoft.CodeAnalysis.CSharp.Syntax
+//open Microsoft.CodeAnalysis.Diagnostics
+//open SafetySharp.Modeling
+//open SafetySharp.Compiler.Normalization
+//open SafetySharp.CSharp.Roslyn.Syntax
+//open SafetySharp.CSharp.Roslyn.Symbols
+//
+//[<TestFixture>]
+//module ExpressionLifter =
+//    let normalize csharpCode =
+//        let csharpCode = 
+//            sprintf "
+//            class C : Component
+//            {
+//                C(bool b) {}
+//                C([LiftExpression] int i) {}
+//
+//                int M(int i) { return 0; }
+//                int N([LiftExpression] int i) { return 0; }
+//                int O([LiftExpression] int i, [LiftExpression] int j) { return 0; }
+//                int P(int i, [LiftExpression] bool b) { return 0; }
+//
+//                void Test() { %s; }
+//            }" csharpCode
+//
+//        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (ExpressionLifter ()) csharpCode
+//        let creationInvocation = syntaxTree.Descendants<ObjectCreationExpressionSyntax>().FirstOrDefault ()
+//        
+//        if creationInvocation <> null then
+//            creationInvocation.ToString ()
+//        else
+//            let methodInvocation = syntaxTree.Descendants<InvocationExpressionSyntax>().FirstOrDefault ()
+//            methodInvocation.ToString ()
+//
+//    [<Test>]
+//    let ``does not lift method invocation argument that does not require lifting`` () =
+//        normalize "M(30)" =? "M(30)"
+//
+//    [<Test>]
+//    let ``does not lift object creation argument that does not require lifting`` () =
+//        normalize "new C(false)" =? "new C(false)"
+//
+//    [<Test>]
+//    let ``lifts object creation argument`` () =
+//        normalize "new C(1)" =? "new C(() => 1)"
+//        normalize "new C(1 + 3 / 54 + (true == false ? 17 : 33 + 1))" =? "new C(() => 1 + 3 / 54 + (true == false ? 17 : 33 + 1))"
+//
+//    [<Test>]
+//    let ``lifts method invocation argument`` () =
+//        normalize "N(1)" =? "N(() => 1)"
+//        normalize "N(1 + 3 / 54 + (true == false ? 17 : 33 + 1))" =? "N(() => 1 + 3 / 54 + (true == false ? 17 : 33 + 1))"
+//
+//    [<Test>]
+//    let ``lifts both method invocation arguments`` () =
+//        normalize "O(1, 17)" =? "O(() => 1, () => 17)"
+//        normalize "O(1, 1 + 3)" =? "O(() => 1, () => 1 + 3)"
+//        normalize "O(1 - 0, 3)" =? "O(() => 1 - 0, () => 3)"
+//
+//    [<Test>]
+//    let ``lifts second method invocation argument`` () =
+//        normalize "P(1, true)" =? "P(1, () => true)"
+//        normalize "P(1, true || false)" =? "P(1, () => true || false)"
+//        normalize "P(1 - 0, false)" =? "P(1 - 0, () => false)"
+//
+//    [<Test>]
+//    let ``lifts nested method invocations and object creations`` () =
+//        normalize "new C(O(M(1), N(17 + 1)))" =? "new C(() => O(() => M(1), () => N(() => 17 + 1)))"
+//
+//    [<Test>]
+//    let ``preserves all line breaks in expressions`` () =
+//        normalize "new C(1\n + 1)" =? "new C(() => 1\n + 1)"
+//        normalize "O(M(2 -\n1)\n+ 0,\n3\n- N(\n2 *\n5))" =? "O(() => M(2 -\n1)\n+ 0,\n() => 3\n- N(\n() => 2 *\n5))"

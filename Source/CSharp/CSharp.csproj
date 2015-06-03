@@ -103,8 +103,6 @@
     <Compile Include="Roslyn\DiagnosticInfo.cs" />
     <Compile Include="Roslyn\Analyzer.cs" />
     <Compile Include="Roslyn\IdentifierNameSynthesizer.cs" />
-    <Compile Include="Roslyn\ComponentNormalizer.cs" />
-    <Compile Include="Roslyn\INormalizer.cs" />
     <Compile Include="Roslyn\Normalizer.cs" />
     <Compile Include="Roslyn\SideEffectAnalyzer.cs" />
     <Compile Include="Roslyn\Symbols\CompilationExtensions.cs" />
@@ -116,6 +114,7 @@
     <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.cs" />
     <Compile Include="Roslyn\Syntax\ArgumentExtensions.cs" />
     <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\ClassDeclarationExtensions.cs" />
     <Compile Include="Roslyn\Syntax\MemberAccessExpressionExtensions.cs" />
     <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxBuilder.cs" />

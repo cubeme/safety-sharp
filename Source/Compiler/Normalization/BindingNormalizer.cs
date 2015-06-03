@@ -45,7 +45,7 @@ namespace SafetySharp.Compiler.Normalization
 	///  		Bind(new PortBinding(PortInfo.RequiredPort((D)c.X, "..."), PortInfo.ProvidedPort((D)Y)));
 	///   	</code>
 	/// </summary>
-	public class BindingNormalizer : Normalizer
+	public sealed class BindingNormalizer : Normalizer
 	{
 		/// <summary>
 		///     Represents the [CompilerGenerated] attribute syntax.
@@ -68,12 +68,15 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
 		{
-			classDeclaration = (ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration);
+			var normalizedClassDeclaration = (ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration);
 
-			var delegates = _delegates.Select(d => d.AddAttributeLists(CompilerGeneratedAttribute)).ToArray();
+			var delegates = _delegates.Select(d => (MemberDeclarationSyntax)d.AddAttributeLists(CompilerGeneratedAttribute)).ToArray();
 			_delegates.Clear();
 
-			return classDeclaration.AddMembers(delegates);
+			if (delegates.Length > 0)
+				AddCompilationUnit(classDeclaration.GeneratePartWithMembers(SemanticModel, delegates));
+
+			return normalizedClassDeclaration;
 		}
 
 		/// <summary>

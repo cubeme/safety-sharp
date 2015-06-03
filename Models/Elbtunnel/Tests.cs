@@ -57,7 +57,7 @@ namespace Elbtunnel
 
             var heightControl = new HeightControl(preControl, mainControl, endControl, trafficLights);
             var vehicles = new VehicleCollection(vehicle1, vehicle2, vehicle3);
-
+			
             _model = new Model(heightControl, vehicles);
 
             Bind(vehicles, lightBarrier1);

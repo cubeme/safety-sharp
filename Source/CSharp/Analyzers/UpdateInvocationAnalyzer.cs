@@ -36,7 +36,7 @@ namespace SafetySharp.CSharp.Analyzers
 	///     Ensures that Update methods are only called by other Update methods.
 	/// </summary>
 	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
-	public class UpdateInvocationAnalyzer : Analyzer
+	public sealed class UpdateInvocationAnalyzer : Analyzer
 	{
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer.

@@ -187,7 +187,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		///     The number of end-of-line trivia tokens that should be appended to <paramref name="syntaxNode" />.
 		/// </param>
 		[Pure, NotNull]
-		private static T WithTrailingNewLines<T>([NotNull] this T syntaxNode, int newLineCount)
+		public static T WithTrailingNewLines<T>([NotNull] this T syntaxNode, int newLineCount)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -197,6 +197,31 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 
 			var trivia = syntaxNode.GetTrailingTrivia().AddRange(Enumerable.Repeat(SyntaxFactory.EndOfLine("\n"), newLineCount));
 			return syntaxNode.WithTrailingTrivia(trivia);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with <paramref name="newLineCount" /> many end-of-line trivia tokens
+		///     prepended to <paramref name="syntaxNode" />'s leading trivia.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node that should have the end-of-line trivia prepended.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have the end-of-line trivia prepended.</param>
+		/// <param name="newLineCount">
+		///     The number of end-of-line trivia tokens that should be prepended to <paramref name="syntaxNode" />.
+		/// </param>
+		[Pure, NotNull]
+		public static T WithLeadingNewLines<T>([NotNull] this T syntaxNode, int newLineCount)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+
+			if (newLineCount <= 0)
+				return syntaxNode;
+
+			var trivia = syntaxNode.GetLeadingTrivia();
+			for (var i = 0; i < newLineCount; ++i)
+				trivia = trivia.Insert(0, SyntaxFactory.EndOfLine("\n"));
+
+			return syntaxNode.WithLeadingTrivia(trivia);
 		}
 
 		/// <summary>
@@ -359,6 +384,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		/// <summary>
 		///     Returns a copy of <paramref name="syntaxNode" /> with all leading and trailing trivia replaced by a single space token.
 		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have its trivia replaced.</param>
 		[Pure, NotNull]
 		public static T WithLeadingAndTrailingSpace<T>([NotNull] this T syntaxNode)
@@ -371,6 +397,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		/// <summary>
 		///     Returns a copy of <paramref name="syntaxNode" /> with all leading trivia replaced by a single space token.
 		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have its trivia replaced.</param>
 		[Pure, NotNull]
 		public static T WithLeadingSpace<T>([NotNull] this T syntaxNode)
@@ -383,6 +410,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		/// <summary>
 		///     Returns a copy of <paramref name="syntaxNode" /> with all trailing trivia replaced by a single space token.
 		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have its trivia replaced.</param>
 		[Pure, NotNull]
 		public static T WithTrailingSpace<T>([NotNull] this T syntaxNode)
@@ -390,6 +418,48 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
 			return syntaxNode.WithTrailingTrivia(SyntaxFactory.Space);
+		}
+
+		/// <summary>
+		///     Creates a <c>#line</c> directive.
+		/// </summary>
+		/// <param name="line">The original line number.</param>
+		/// <param name="filePath">The path of the original file; if null, only the line numbering will be affected by the directive.</param>
+		private static SyntaxTrivia CreateLineDirective(int line, string filePath)
+		{
+			var lineToken = SyntaxFactory.Literal(line);
+			var lineDirective = String.IsNullOrWhiteSpace(filePath)
+				? SyntaxFactory.LineDirectiveTrivia(lineToken, true).NormalizeWhitespace()
+				: SyntaxFactory.LineDirectiveTrivia(lineToken, SyntaxFactory.Literal(filePath), true).NormalizeWhitespace();
+			return SyntaxFactory.Trivia(lineDirective);
+		}
+
+		/// <summary>
+		///     Prepends a <c>#line</c> directive at the beginning of <paramref name="syntaxNode" />'s leading trivia.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node the directive should be added to.</param>
+		/// <param name="line">The original line number.</param>
+		/// <param name="filePath">The path of the original file; if null, only the line numbering will be affected by the directive.</param>
+		public static T PrependLineDirective<T>([NotNull] this T syntaxNode, int line, string filePath = null)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithLeadingTrivia(syntaxNode.GetLeadingTrivia().Insert(0, CreateLineDirective(line, filePath)));
+		}
+
+		/// <summary>
+		///     Appends a <c>#line</c> directive at the end of <paramref name="syntaxNode" />'s trailing trivia.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node the directive should be added to.</param>
+		/// <param name="line">The original line number.</param>
+		/// <param name="filePath">The path of the original file; if null, only the line numbering will be affected by the directive.</param>
+		public static T AppendLineDirective<T>([NotNull] this T syntaxNode, int line, string filePath = null)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithTrailingTrivia(syntaxNode.GetTrailingTrivia().Add(CreateLineDirective(line, filePath)));
 		}
 	}
 }

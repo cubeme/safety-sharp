@@ -36,7 +36,7 @@ namespace SafetySharp.CSharp.Analyzers
 	///     corresponding interface method or property.
 	/// </summary>
 	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
-	public class PortImplementationAnalyzer : Analyzer
+	public sealed class PortImplementationAnalyzer : Analyzer
 	{
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a required port is implemented as a provided port.

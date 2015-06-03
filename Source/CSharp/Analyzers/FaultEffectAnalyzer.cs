@@ -34,7 +34,7 @@ namespace SafetySharp.CSharp.Analyzers
 	///     Ensures that fault effects are declared correctly.
 	/// </summary>
 	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
-	public class FaultEffectAnalyzer : Analyzer
+	public sealed class FaultEffectAnalyzer : Analyzer
 	{
 		/// <summary>
 		///     Indicates that the fault effect overrides an unknown method port.
