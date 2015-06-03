@@ -13,26 +13,29 @@
 //    F. Gwa Form (My Form)
 //       text, graph, transformations in between
 //  II) Different Transformations to merge statements to a big step
-//    1. Weakest Precondition (from C)
+//    1. Transition system: Weakest Precondition (from A)
 //        * show problem, why it does not work in the indeterministic case
-//    2. Strongest Postcondition (from C)
-//        * show problem with instantiation of exists quantifier
-//        * show that input variables are necessary
-//    3. Gwa-Form (From E) with Strongest Postcondition
+//    2. Transition system: Weakest Precondition (from C)
+//        * show problem, why it does not work in the indeterministic case
+//        * show that using (from C) reduces the size of the condition, but adds new input variables
+//    3. Transition system: Strongest Postcondition (from C)
+//        * show that input variables are necessary.
+//          show problem with instantiation of exists quantifier (if we try from A)
+//    4. Transition system: Gwa-Form (From E) with Strongest Postcondition
 //        * show problem of resulting large expressions
-//        * show that it only work
-//    4. Gwa-Form (From F) with the merging of the last statements
+//        * show that it only works for systems, where transition relation can be entered directly
+//    5. Gwa-Model: Gwa-Form (From F) with the merging of the last statements
 //        * show problem of resulting large expressions
-//  III) Different model checker inputs
+//  III) Different model checker languages
 //    1. Promela/Spin (direct) from I A
 //          (Problem of getting stuck, if assertion invalid, how is it handled)
 //    2. NuXmv/NuSMV from I A
 //          (Problem of getting stuck, if assertion invalid, how is it handled)
-//    3. NuXmv/NuSMV from II 2
-//    4. NuXmv/NuSMV from II 3
-//    5. NuXmv/NuSMV from II 4
-//    6. Prism from  I A
-//    7. Prism from  II 4
+//    3. NuXmv/NuSMV from II 3
+//    4. NuXmv/NuSMV from II 4
+//    5. NuXmv/NuSMV from II 5
+//    6. Prism from  I A (same limitations apply to SAML)
+//    7. Prism from  II 5 (same limitations apply to SAML)
 
 
 // Generate TeX output of Scm-Stuff
@@ -45,7 +48,7 @@
 
 namespace SafetySharp.Documentation.Scripts
 
-module TsamToTex =
+module TsamToReport =
 
     open SafetySharp.Models.Tsam
     open SafetySharp.Models.TsamMutable
@@ -125,9 +128,58 @@ module TsamToTex =
                 return output_I_A + output_I_B + output_I_C + output_I_D + output_I_E + output_I_F
             }
             runWorkflow_getResult outputWorkflow
+
+        let output_II_complete : string =
+            let output_II_1_wf () = workflow {
+                do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
+                //let formulaToBeTrueAfterwards = .
+                return ""
+            }
+                       
+            let output_II_2_wf () = workflow {
+                return ""
+            }
+                       
+            let output_II_3_wf () = workflow {
+                do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
+                let! modelAsText = getState ()
+                let formulaTrueInTheBeginning = "TODO"
+                let result = sprintf "Formula, which expresses the state(s) in the beginning:\n%s\n%s" formulaTrueInTheBeginning modelAsText
+                let resultDecorated = (outputstyle.Section "Transition system: Strongest Postcondition (from C)") + (outputstyle.TsamSource result)
+                return resultDecorated
+            }
+                       
+            let output_II_4_wf () = workflow {
+                do! updateState tsamSourceModel
+                return ""
+            }
+
+            let output_II_5_wf () = workflow {
+                do! updateState tsamSourceModel
+                return ""
+            }
+                            
+            let outputWorkflow = workflow {
+                let! output_II_1 = output_II_1_wf ()
+                let! output_II_2 = output_II_2_wf ()
+                let! output_II_3 = output_II_3_wf ()
+                let! output_II_4 = output_II_4_wf ()
+                let! output_II_5 = output_II_5_wf ()
+                return output_II_1 + output_II_2 + output_II_3 + output_II_4 + output_II_5
+            }
+            runWorkflow_getResult outputWorkflow
+
+
+
+
+
                     
         let completeOutput : string =
-            let content = sprintf "%s" output_I_complete
+            let content = sprintf "%s %s" output_I_complete output_II_complete
             outputstyle.Content content
         do SafetySharp.FileSystem.WriteToAsciiFile path completeOutput
         completeOutput
@@ -210,7 +262,7 @@ module TsamToTex =
 open NUnit.Framework
 
 [<TestFixture>]
-module TsamToTexTest =
+module TsamToReportTexTest =
     open SafetySharp.Workflow
     
     // NOTE: Make sure, we use the same F#-version as the SafetySharp Project. Otherwise it cannot be started. See App.config for details
@@ -220,7 +272,7 @@ module TsamToTexTest =
         let useOnlyStochastic = false
         let path = "../../"
 
-        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest8.tex") (path + "/../../../../Examples/SAM/smokeTest8.sam")
+        let output = TsamToReport.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest8.tex") (path + "/../../../../Examples/SAM/smokeTest8.sam")
         printfn "%s" output
         ()
 
@@ -229,7 +281,7 @@ module TsamToTexTest =
         let useOnlyStochastic = false
         let path = "../../"
 
-        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest9.tex") (path + "/../../../../Examples/SAM/smokeTest9.sam")
+        let output = TsamToReport.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest9.tex") (path + "/../../../../Examples/SAM/smokeTest9.sam")
         printfn "%s" output
         ()
 
@@ -238,7 +290,7 @@ module TsamToTexTest =
         let useOnlyStochastic = false
         let path = "../../"
 
-        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest10.tex") (path + "/../../../../Examples/SAM/smokeTest10.sam")
+        let output = TsamToReport.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest10.tex") (path + "/../../../../Examples/SAM/smokeTest10.sam")
         printfn "%s" output
         ()
 
@@ -247,6 +299,6 @@ module TsamToTexTest =
         let useOnlyStochastic = false
         let path = "../../"
 
-        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest24.tex") (path + "/../../../../Examples/SAM/smokeTest24.sam")
+        let output = TsamToReport.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest24.tex") (path + "/../../../../Examples/SAM/smokeTest24.sam")
         printfn "%s" output
         ()

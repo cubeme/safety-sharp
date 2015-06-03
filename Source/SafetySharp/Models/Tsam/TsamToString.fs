@@ -193,4 +193,8 @@ module internal TsamToString =
     
     let texFilePackagesInHeader = """
 \usepackage{listings}
+\lstset{
+	frame=single,
+	breaklines=true
+}
 """

@@ -92,7 +92,7 @@ module internal VcTransitionRelationToNuXmv =
             
     let generateGlobalVarDeclarations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : ModuleElement =
         let varDecls = transitionSystem.Globals
-        let generateDecl (varDecl:Tsam.GlobalVarDecl) : TypedIdentifier =
+        let generateDecl (varDecl:TransitionSystemAsRelationExpr.VarDecl) : TypedIdentifier =
             let _type = match varDecl.Type with
                             | Sam.Type.BoolType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.BooleanTypeSpecifier)
                             | Sam.Type.IntType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerTypeSpecifier)

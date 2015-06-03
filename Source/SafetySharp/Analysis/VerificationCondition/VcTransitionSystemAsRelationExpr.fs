@@ -29,8 +29,7 @@ module internal TransitionSystemAsRelationExpr =
     open SafetySharp.Models.SamHelpers
     open VcGuardWithAssignmentModel
     
-    type VarDecl = Tsam.GlobalVarDecl
-    type IvarDecl = Tsam.LocalVarDecl
+    type VarDecl = Tsam.LocalVarDecl
     type Var = Tsam.Var
     type Val = Tsam.Val
     type BOp= Tsam.BOp
@@ -38,7 +37,7 @@ module internal TransitionSystemAsRelationExpr =
 
     type TransitionSystem = {
         Globals : VarDecl list;
-        Ivars : IvarDecl list;
+        Ivars : VarDecl list;
         // The virtual next var should be purely virtual. In e.g. NuXmv it will be replaced by next(x). This variable should neither appear in
         // Globals nor in Ivars. Every Global should have a virtual next var
         VirtualNextVarToVar : Map<Var,Var>;
@@ -69,8 +68,8 @@ module internal TransitionSystemAsRelationExpr =
 
     // -- COMMON ------------------------------------------------------
 
-    let generateInitCondition (varDecls:VarDecl list) : Expr =
-        let generateInit (varDecl:VarDecl) : Expr =
+    let generateInitCondition (varDecls:Tsam.GlobalVarDecl list) : Expr =
+        let generateInit (varDecl:Tsam.GlobalVarDecl) : Expr =
             let generatePossibleValues (initialValue : Val) : Expr =
                 let assignVar = varDecl.Var
                 let assignExpr = Expr.Literal(initialValue)
@@ -81,6 +80,40 @@ module internal TransitionSystemAsRelationExpr =
         varDecls |> List.map generateInit
                  |> TsamHelpers.createAndedExpr
     
+    let tsamGlobalVarDeclToVarDecl (varDecls:Tsam.GlobalVarDecl list) : VarDecl list =
+        varDecls |> List.map (fun varDecl -> {VarDecl.Var=varDecl.Var;VarDecl.Type=varDecl.Type;})
+    
+    let transitionSystemToString (ts:TransitionSystem) : string =    
+        let rec addPrimeToNextVariableInExpr (expr:Expr) : Expr =
+            let addPrimeToNextVariable (_var:Tsam.Var) : Tsam.Var =
+                if ts.VirtualNextVarToVar.ContainsKey _var then
+                    let normalVar = ts.VirtualNextVarToVar.Item _var
+                    Tsam.Var.Var(normalVar.getName + "'")
+                else
+                    _var
+            match expr with
+                | Tsam.Expr.Literal (_)->
+                    expr
+                | Tsam.Expr.UExpr (operand,operator) ->
+                    Expr.UExpr(addPrimeToNextVariableInExpr operand,operator)
+                | Tsam.Expr.BExpr (leftExpression,operator,rightExpression ) ->
+                    Expr.BExpr(addPrimeToNextVariableInExpr leftExpression,operator,addPrimeToNextVariableInExpr rightExpression)
+                | Tsam.Expr.Read (variable) ->
+                    Expr.Read(addPrimeToNextVariable variable)
+                | Tsam.Expr.ReadOld (variable) ->
+                    Expr.ReadOld(addPrimeToNextVariable variable)
+        let exportExpr (expr:Expr) =
+            let exported = TsamToString.exportExpr expr SamToStringHelpers.AstToStringState.initial
+            exported.ToString()
+        let exportVarDecl (varDecl:VarDecl) =
+            let exported = TsamToString.exportLocalVarDecl varDecl SamToStringHelpers.AstToStringState.initial
+            exported.ToString()
+        let globals = ts.Globals |> List.map exportVarDecl |> String.concat ""
+        let inputVariables = ts.Ivars  |> List.map exportVarDecl |> String.concat ""
+        let init = exportExpr ts.Init
+        let trans = exportExpr ts.Trans
+        let output = sprintf "Global State Variables:\n%sInput Variables\n%sExpression with initial State:\n%s\nExpression with transition relation:\n%s\n" globals inputVariables init trans
+        output
     
     // -- GWAM --------------------------------------------------------
     
@@ -96,7 +129,7 @@ module internal TransitionSystemAsRelationExpr =
             let freshName = nameGenerator takenNames.Value (nameCandidate)
             takenNames:=takenNames.Value.Add(freshName)
             freshName        
-        let createVirtualVarForVar (var:VarDecl) =
+        let createVirtualVarForVar (var:Tsam.GlobalVarDecl) =
             let virtualVar = Var.Var(createNewName var.Var)
             (var.Var,virtualVar)        
         let virtualVarEntries =
@@ -133,9 +166,9 @@ module internal TransitionSystemAsRelationExpr =
 
         let transformedGwas =
             gwam.Assignments |> List.map transformAssignments
-                             |> Expr.createOredExpr // the gwas are connected with an or                        
+                             |> Expr.createOredExpr // the gwas are connected with an or
         {
-            TransitionSystem.Globals = gwam.Globals;
+            TransitionSystem.Globals = tsamGlobalVarDeclToVarDecl gwam.Globals;
             TransitionSystem.Ivars = [];
             TransitionSystem.VirtualNextVarToVar = virtualVarToVar;
             TransitionSystem.VarToVirtualNextVar = varToVirtualVar;
@@ -161,7 +194,7 @@ module internal TransitionSystemAsRelationExpr =
             let freshName = nameGenerator takenNames.Value (nameCandidate)
             takenNames:=takenNames.Value.Add(freshName)
             freshName
-        let createVirtualVarForVar (var:VarDecl) =
+        let createVirtualVarForVar (var:Tsam.GlobalVarDecl) =
             let virtualVar = Var.Var(createNewName var.Var)
             (var.Var,virtualVar)        
         let virtualVarEntries =
@@ -182,7 +215,7 @@ module internal TransitionSystemAsRelationExpr =
             // Otherwise we add a new virtual variable.
             let virtualVarPool = createVirtualVarEntryPool pgm            
             let ivarsComplete = pgm.Locals |> Set.ofList            
-            let processGlobalVar (varToVirtualNextVarEntries:(Var*Var) list,ivars:Set<IvarDecl>) (gl:VarDecl) =
+            let processGlobalVar (varToVirtualNextVarEntries:(Var*Var) list,ivars:Set<VarDecl>) (gl:Tsam.GlobalVarDecl) =
                 if pgm.NextGlobal.Item gl.Var =  gl.Var then
                     // We need to create a new virtual var. we use one from the pool. Ivars needs no change
                     let newVirtualEntry =
@@ -195,7 +228,7 @@ module internal TransitionSystemAsRelationExpr =
                     let newVirtualEntry =
                         pgm.NextGlobal.Item gl.Var
                     let newIvars = 
-                        ivars.Remove ({IvarDecl.Type=gl.Type;IvarDecl.Var=newVirtualEntry;})
+                        ivars.Remove ({VarDecl.Type=gl.Type;VarDecl.Var=newVirtualEntry;})
                     let newEntry = (gl.Var,newVirtualEntry)
                     (newEntry::varToVirtualNextVarEntries,newIvars)
             pgm.Globals |> List.fold processGlobalVar ([],ivarsComplete)
@@ -227,7 +260,7 @@ module internal TransitionSystemAsRelationExpr =
         let spOfPgm = VcStrongestPostcondition.sp
                                 
         {
-            TransitionSystem.Globals = pgm.Globals;
+            TransitionSystem.Globals = tsamGlobalVarDeclToVarDecl pgm.Globals;
             TransitionSystem.Ivars = ivars |> Set.toList;
             TransitionSystem.VirtualNextVarToVar = virtualNextVarToVar;
             TransitionSystem.VarToVirtualNextVar = varToVirtualNextVar;
@@ -239,11 +272,13 @@ module internal TransitionSystemAsRelationExpr =
     
     // Note:
     //  weakest precondition does only work in deterministic cases
-    //    let formulaForWPPostcondition =
+    //    let formulaForWPPostcondition (``I know what I do. I am sure the input program is deterministic``: bool ) =
     //        // First Approach: "a'=a_last, b'<->b_last, ...."
     //        // THIS FORMULA IS WRONG. It only works for the deterministic case. SEE RESULTS OF smokeTest5.sam
     //        // The paper "To Goto Where No Statement Has Gone Before" offers in chapter 3 a way out.
     //        // Their goal is to transform "Code Expressions" (Code with statements) into genuine Expressions.
+    //        if ``I know what I do. I am sure the input program is deterministic`` = false then
+    //            failwith "please read the comments of this function"
     //        let createFormulaForGlobalVarDecl (globalVarDecl:Tsam.GlobalVarDecl) : Tsam.Expr =
     //            let varCurrent = globalVarDecl.Var
     //            let varPost = nuXmvVariables.VarToVirtualVar.Item varCurrent
@@ -281,5 +316,11 @@ module internal TransitionSystemAsRelationExpr =
                 TransitionSystemTracer.ForwardTracer = state.ForwardTracer;
             }
         do! updateState transformed
+    }
+
+    let modelToStringWorkflow<'traceableOfOrigin> () : WorkflowFunction<TransitionSystemTracer<'traceableOfOrigin>,string,unit> = workflow {
+        let! model = getState ()
+        let asString = transitionSystemToString model.TransitionSystem
+        do! updateState asString
     }
     

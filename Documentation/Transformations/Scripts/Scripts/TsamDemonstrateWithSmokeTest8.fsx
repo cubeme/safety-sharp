@@ -9,6 +9,6 @@ let path = __SOURCE_DIRECTORY__
 
 #r @"bin\Debug\SafetySharp.Documentation.Scripts.dll"
 let useOnlyStochastic = false
-let output = SafetySharp.Documentation.Scripts.TsamToTex.generateTexFile useOnlyStochastic (path+"/smokeTest8.tex") (path + "/../../../../Examples/SAM/smokeTest8.sam")
+let output = SafetySharp.Documentation.Scripts.TsamToReport.generateTexFile useOnlyStochastic (path+"/smokeTest8.tex") (path + "/../../../../Examples/SAM/smokeTest8.sam")
 
 do printfn "%s" output
