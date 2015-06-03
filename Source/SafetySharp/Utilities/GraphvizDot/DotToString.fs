@@ -71,11 +71,11 @@ module internal DotToString =
             | Attribute.Peripheries (peripheries) ->
                 sprintf "peripheries=%d" peripheries
             | Attribute.Label (label) ->
-                sprintf "label=%s" (labelEditor label)
+                sprintf "label=\"%s\"" (labelEditor label)
             | Attribute.TexLabel (label) ->
-                sprintf "texlbl=%s" (labelEditor label)
+                sprintf "texlbl=\"%s\"" (labelEditor label)
             | Attribute.ExternalLabel (xlabel) ->
-                sprintf "xlabel=%s" (labelEditor xlabel)
+                sprintf "xlabel=\"%s\"" (labelEditor xlabel)
             | Attribute.Fontsize (fontsize) ->
                 sprintf "fontsize=%d" fontsize
             | Attribute.Fixedsize (fixedsize) ->
@@ -91,7 +91,7 @@ module internal DotToString =
             | Attribute.Headclip (headclip) ->
                 sprintf "headclip=%s" (exportBoolean headclip)
             | Attribute.Fontname (fontname) ->
-                sprintf "fontname=%s" fontname
+                sprintf "fontname=\"%s\"" fontname
             | Attribute.Rank (rank) ->
                 sprintf "rank=%s" rank
             | Attribute.Rankdir (rankdir) ->

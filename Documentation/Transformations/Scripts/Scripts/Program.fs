@@ -18,15 +18,21 @@
 //    2. Strongest Postcondition (from C)
 //        * show problem with instantiation of exists quantifier
 //        * show that input variables are necessary
-//    3. Gwa-Form (From F) with Strongest Postcondition
+//    3. Gwa-Form (From E) with Strongest Postcondition
+//        * show problem of resulting large expressions
+//        * show that it only work
+//    4. Gwa-Form (From F) with the merging of the last statements
 //        * show problem of resulting large expressions
 //  III) Different model checker inputs
 //    1. Promela/Spin (direct) from I A
+//          (Problem of getting stuck, if assertion invalid, how is it handled)
 //    2. NuXmv/NuSMV from I A
+//          (Problem of getting stuck, if assertion invalid, how is it handled)
 //    3. NuXmv/NuSMV from II 2
 //    4. NuXmv/NuSMV from II 3
-//    5. Prism from  I A
-//    6. Prism from  II 3
+//    5. NuXmv/NuSMV from II 4
+//    6. Prism from  I A
+//    7. Prism from  II 4
 
 
 // Generate TeX output of Scm-Stuff
@@ -214,7 +220,7 @@ module TsamToTexTest =
         let useOnlyStochastic = false
         let path = "../../"
 
-        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/smokeTest8.tex") (path + "/../../../../Examples/SAM/smokeTest8.sam")
+        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest8.tex") (path + "/../../../../Examples/SAM/smokeTest8.sam")
         printfn "%s" output
         ()
 
@@ -223,7 +229,7 @@ module TsamToTexTest =
         let useOnlyStochastic = false
         let path = "../../"
 
-        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/smokeTest9.tex") (path + "/../../../../Examples/SAM/smokeTest9.sam")
+        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest9.tex") (path + "/../../../../Examples/SAM/smokeTest9.sam")
         printfn "%s" output
         ()
 
@@ -232,6 +238,15 @@ module TsamToTexTest =
         let useOnlyStochastic = false
         let path = "../../"
 
-        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/smokeTest10.tex") (path + "/../../../../Examples/SAM/smokeTest10.sam")
+        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest10.tex") (path + "/../../../../Examples/SAM/smokeTest10.sam")
+        printfn "%s" output
+        ()
+
+    [<Test>]
+    let testWithSmokeTest24 () =        
+        let useOnlyStochastic = false
+        let path = "../../"
+
+        let output = TsamToTex.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest24.tex") (path + "/../../../../Examples/SAM/smokeTest24.sam")
         printfn "%s" output
         ()

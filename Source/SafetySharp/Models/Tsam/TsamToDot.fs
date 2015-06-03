@@ -26,9 +26,17 @@ namespace SafetySharp.Models
 module internal TsamToDot =
     open Tsam
     
-    let rec exportExpr (expr:Expr) : string =
+    let exportExpr (expr:Expr) : string =
         let result = TsamToString.exportExpr expr SamToStringHelpers.AstToStringState.initial
-        result.ToString ()
+        result.ToString().Replace("\r\n","").Replace("\n","")
+        
+    //let exportStm (stm:Stm) : string =
+    //    let result = TsamToString.exportStm stm SamToStringHelpers.AstToStringState.initial
+    //    result.ToString().Replace("\r\n","").Replace("\n","")
+
+    let exportVar (_var:Var) : string =
+        let result = TsamToString.exportVar _var SamToStringHelpers.AstToStringState.initial
+        result.ToString().Replace("\r\n","").Replace("\n","")
     
     type StateId = StateId of int
     
@@ -240,16 +248,26 @@ module internal TsamToDot =
                 nodeName
             collectedInformation.States.Value |> List.map (fun state -> (state,stateToNode state)) |> Map.ofList
             
-        let exportDeterministicTransition (transition:DeterministicTransition) : TransitionDecl list=
+        let exportDeterministicTransition (transition:DeterministicTransition) : TransitionDecl list =
+            let label =
+                match (transition.Guard,transition.Action) with
+                    | Some(guard),Some(assignTo,assignThis) ->
+                        sprintf "%s // %s:=%s" (exportExpr guard) (exportVar assignTo) (exportExpr assignThis)
+                    | Some(guard),None ->
+                        sprintf "%s" (exportExpr guard)
+                    | None,Some(assignTo,assignThis) ->
+                        sprintf "// %s:=%s" (exportVar assignTo) (exportExpr assignThis)
+                    | None,None ->
+                        ""
             let exportTransition = 
                 {
                     TransitionDecl.From = stateToNodeMap.Item transition.FromState;
                     TransitionDecl.To = stateToNodeMap.Item transition.ToState;
-                    TransitionDecl.Attributes = [];
+                    TransitionDecl.Attributes = [Attribute.Label(label)];
                 }
             [exportTransition]
 
-        let exportIndeterministicTransition (transition:IndeterministicTransition) : TransitionDecl list=
+        let exportIndeterministicTransition (transition:IndeterministicTransition) : TransitionDecl list =
             let exportTransition (toState:State) = 
                 {
                     TransitionDecl.From = stateToNodeMap.Item transition.FromState;
@@ -260,11 +278,12 @@ module internal TsamToDot =
 
         let exportStochasticTransition (transition:StochasticTransition) : (TransitionDecl list*Node)= //exports the virtual node
             let virtualNodeName =  match transition.FromState.StateId with | StateId(number) -> sprintf "state%dstosplit" number // for better design
-            let exportTransition (transitionNumber,expr,toState:State) = 
+            let exportTransition (transitionNumber,probabilityExpr,toState:State) =
+                let probabilityLabel = (exportExpr probabilityExpr)
                 {
                     TransitionDecl.From = virtualNodeName;
                     TransitionDecl.To = stateToNodeMap.Item toState;
-                    TransitionDecl.Attributes = [Attribute.Style(Style.Dashed)];
+                    TransitionDecl.Attributes = [Attribute.Style(Style.Dashed);Attribute.Label(probabilityLabel)];
                 }                
             let toVirtualNode =
                 {
