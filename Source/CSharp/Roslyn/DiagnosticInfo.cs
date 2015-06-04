@@ -58,6 +58,11 @@ namespace SafetySharp.CSharp.Roslyn
 		public DiagnosticDescriptor Descriptor { get; private set; }
 
 		/// <summary>
+		///     Gets the identifier of the diagnostic.
+		/// </summary>
+		public DiagnosticIdentifier Id { get; private set; }
+
+		/// <summary>
 		///     Describes the error diagnostic of the analyzer.
 		/// </summary>
 		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
@@ -95,7 +100,8 @@ namespace SafetySharp.CSharp.Roslyn
 
 			return new DiagnosticInfo
 			{
-				Descriptor = new DiagnosticDescriptor(Prefix + (int)identifier, description, messageFormat, Category, severity, true)
+				Descriptor = new DiagnosticDescriptor(Prefix + (int)identifier, description, messageFormat, Category, severity, true),
+				Id = identifier
 			};
 		}
 
@@ -108,7 +114,7 @@ namespace SafetySharp.CSharp.Roslyn
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
 		public void Emit(SyntaxNodeAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
 		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
+			context.ReportDiagnostic(CreateDiagnostic(syntaxNode.GetLocation(), messageArgs));
 		}
 
 		/// <summary>
@@ -120,7 +126,7 @@ namespace SafetySharp.CSharp.Roslyn
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
 		public void Emit(SyntaxTreeAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
 		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
+			context.ReportDiagnostic(CreateDiagnostic(syntaxNode.GetLocation(), messageArgs));
 		}
 
 		/// <summary>
@@ -132,7 +138,7 @@ namespace SafetySharp.CSharp.Roslyn
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
 		public void Emit(SyntaxTreeAnalysisContext context, SyntaxToken syntaxToken, params object[] messageArgs)
 		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxToken.GetLocation(), messageArgs));
+			context.ReportDiagnostic(CreateDiagnostic(syntaxToken.GetLocation(), messageArgs));
 		}
 
 		/// <summary>
@@ -144,7 +150,7 @@ namespace SafetySharp.CSharp.Roslyn
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
 		public void Emit(SemanticModelAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
 		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
+			context.ReportDiagnostic(CreateDiagnostic(syntaxNode.GetLocation(), messageArgs));
 		}
 
 		/// <summary>
@@ -156,7 +162,7 @@ namespace SafetySharp.CSharp.Roslyn
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
 		public void Emit(SemanticModelAnalysisContext context, SyntaxToken syntaxToken, params object[] messageArgs)
 		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxToken.GetLocation(), messageArgs));
+			context.ReportDiagnostic(CreateDiagnostic(syntaxToken.GetLocation(), messageArgs));
 		}
 
 		/// <summary>
@@ -168,7 +174,7 @@ namespace SafetySharp.CSharp.Roslyn
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
 		public void Emit(SemanticModelAnalysisContext context, [NotNull] Location location, params object[] messageArgs)
 		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, location, messageArgs));
+			context.ReportDiagnostic(CreateDiagnostic(location, messageArgs));
 		}
 
 		/// <summary>
@@ -180,7 +186,18 @@ namespace SafetySharp.CSharp.Roslyn
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
 		public void Emit(SymbolAnalysisContext context, [NotNull] ISymbol symbol, params object[] messageArgs)
 		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, symbol.Locations[0], messageArgs));
+			context.ReportDiagnostic(CreateDiagnostic(symbol.Locations[0], messageArgs));
+		}
+
+		/// <summary>
+		///     Creates a diagnostic for <paramref name="location" /> using the <paramref name="messageArgs" /> to format the
+		///     diagnostic message.
+		/// </summary>
+		/// <param name="location">The location the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		public Diagnostic CreateDiagnostic([NotNull] Location location, params object[] messageArgs)
+		{
+			return Diagnostic.Create(Descriptor, location, messageArgs);
 		}
 	}
 }

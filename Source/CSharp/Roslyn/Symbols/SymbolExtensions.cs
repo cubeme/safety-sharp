@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Roslyn.Symbols
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
@@ -44,13 +45,14 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			Requires.NotNull(symbol, () => symbol);
 			Requires.NotNull(attribute, () => attribute);
 
-			return symbol.GetAttributes().Any(a => a.AttributeClass == attribute);
+			return symbol.GetAttributes().Any(a => Equals(a.AttributeClass, attribute));
 		}
 
 		/// <summary>
 		///     Checks whether <paramref name="symbol" /> is marked with an attribute of type <typeparamref name="T" /> within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
+		/// <typeparam name="T">The type of the attribute.</typeparam>
 		/// <param name="symbol">The symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve the type symbol for <typeparamref name="T" />.</param>
 		[Pure]
@@ -67,6 +69,7 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		///     Checks whether <paramref name="symbol" /> is marked with an attribute of type <typeparamref name="T" /> within the
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
+		/// <typeparam name="T">The type of the attribute.</typeparam>
 		/// <param name="symbol">The symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve the type symbol for <typeparamref name="T" />.</param>
 		[Pure]
@@ -77,6 +80,36 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			Requires.NotNull(semanticModel, () => semanticModel);
 
 			return symbol.HasAttribute(semanticModel.GetTypeSymbol<T>());
+		}
+
+		/// <summary>
+		///     Gets all instance of <paramref name="attribute" /> that <paramref name="symbol" /> is marked with.
+		/// </summary>
+		/// <param name="symbol">The symbol that should be checked.</param>
+		/// <param name="attribute">The symbol of the attribute that <paramref name="symbol" /> should be marked with.</param>
+		[Pure]
+		public static IEnumerable<AttributeData> GetAttributes([NotNull] this ISymbol symbol, [NotNull] INamedTypeSymbol attribute)
+		{
+			Requires.NotNull(symbol, () => symbol);
+			Requires.NotNull(attribute, () => attribute);
+
+			return symbol.GetAttributes().Where(a => Equals(a.AttributeClass, attribute));
+		}
+
+		/// <summary>
+		///     Gets all attribute instance of <typeparamref name="T" /> that <paramref name="symbol" /> is marked with.
+		/// </summary>
+		/// <typeparam name="T">The type of the attribute.</typeparam>
+		/// <param name="symbol">The symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve the type symbol for <typeparamref name="T" />.</param>
+		[Pure]
+		public static IEnumerable<AttributeData> GetAttributes<T>([NotNull] this ISymbol symbol, [NotNull] SemanticModel semanticModel)
+			where T : Attribute
+		{
+			Requires.NotNull(symbol, () => symbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			return symbol.GetAttributes(semanticModel.GetTypeSymbol<T>());
 		}
 	}
 }

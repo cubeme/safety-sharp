@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp.Roslyn
 	using System;
 	using System.Collections.Immutable;
 	using System.Linq;
+	using Analyzers;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
@@ -35,6 +36,11 @@ namespace SafetySharp.CSharp.Roslyn
 	/// </summary>
 	public abstract class Analyzer : DiagnosticAnalyzer
 	{
+		/// <summary>
+		///     The set of supported diagnostics.
+		/// </summary>
+		private readonly DiagnosticInfo[] _diagnostics;
+
 		/// <summary>
 		///     The set of descriptors for the diagnostics that this analyzer is capable of producing.
 		/// </summary>
@@ -47,6 +53,9 @@ namespace SafetySharp.CSharp.Roslyn
 		protected Analyzer([NotNull] params DiagnosticInfo[] diagnostics)
 		{
 			Requires.NotNull(diagnostics, () => diagnostics);
+			Requires.That(diagnostics.Select(d => d.Id).Distinct().Count() == diagnostics.Length, "Duplicate diagnostic ids.");
+
+			_diagnostics = diagnostics;
 			_supportedDiagnostics = diagnostics.Select(message => message.Descriptor).ToImmutableArray();
 		}
 
@@ -56,6 +65,20 @@ namespace SafetySharp.CSharp.Roslyn
 		public override sealed ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 		{
 			get { return _supportedDiagnostics; }
+		}
+
+		/// <summary>
+		///     Gets the <see cref="DiagnosticInfo" /> corresponding to the <paramref name="id" />.
+		/// </summary>
+		/// <param name="id">The diagnostic identifier the <see cref="DiagnosticInfo" /> should be returned for.</param>
+		public DiagnosticInfo GetDiagnosticInfo(DiagnosticIdentifier id)
+		{
+			Requires.InRange(id, () => id);
+
+			var diagnostics = _diagnostics.Where(d => d.Id == id).ToArray();
+			Requires.That(diagnostics.Length == 1, "Analyzer '{0}' does not emit diagnostic '{1}'.", GetType().FullName, id);
+
+			return diagnostics[0];
 		}
 	}
 }

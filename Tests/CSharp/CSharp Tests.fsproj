@@ -76,13 +76,10 @@
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.fs" />
     <Compile Include="Roslyn\SideEffectAnalyzer.fs" />
     <Compile Include="Analyzers\BindingAnalyzer.fs" />
-    <Compile Include="Analyzers\CustomComponentAnalyzer.fs" />
-    <Compile Include="Analyzers\EnumAnalyzer.fs" />
     <Compile Include="Analyzers\FaultEffectAnalyzer.fs" />
     <Compile Include="Analyzers\OccurrencePatternAnalyzer.fs" />
     <Compile Include="Analyzers\PortBindingInstantiationAnalyzer.fs" />
     <Compile Include="Analyzers\PortImplementationAnalyzer.fs" />
-    <Compile Include="Analyzers\PortKindAnalyzer.fs" />
     <Compile Include="Analyzers\PortReferenceAnalyzer.fs" />
     <Compile Include="Analyzers\RecursionAnalyzer.fs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />

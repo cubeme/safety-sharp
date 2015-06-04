@@ -114,7 +114,7 @@ namespace SafetySharp.CSharp.Analyzers
 		/// </summary>
 		public PortKindAnalyzer()
 			: base(ExternProvidedPort, NonExternRequiredPort, AmbiguousPortKind, UpdateMethodMarkedAsPort,
-				ExternProvidedPort, ExternUpdateMethod, PortPropertyAccessor, UnmarkedInterfacePort)
+				ExternUpdateMethod, PortPropertyAccessor, UnmarkedInterfacePort)
 		{
 		}
 
