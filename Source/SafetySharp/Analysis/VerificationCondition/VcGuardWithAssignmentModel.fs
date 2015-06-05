@@ -801,6 +801,38 @@ module internal VcGuardWithAssignmentModel =
         Globals : VarDecl list;
         Assignments : Assignments list;
     }
+
+    
+    let guardWithAssignmentModelToString (gwam:GuardWithAssignmentModel) : string =
+        let exportExpr (expr:Expr) =
+            let exported = TsamToString.exportExpr expr SamToStringHelpers.AstToStringState.initial
+            exported.ToString()
+        let exportVarDecl (varDecl:VarDecl) =
+            let exported = TsamToString.exportGlobalVarDecl varDecl SamToStringHelpers.AstToStringState.initial
+            exported.ToString()
+        let globals = gwam.Globals |> List.map exportVarDecl |> String.concat ""
+        let assigns =
+            let finalAssignments (assignments:FinalVariableAssignments) : string =
+                let varAssignToString (var,expr) =
+                    let varName = match var with | Var.Var(name) -> name
+                    sprintf "      %s := %s;\n" (varName) (exportExpr expr)
+                assignments.Assignments |> Map.toList |> List.map varAssignToString |> String.concat ""
+            let deterministicAssign (guard:Expr,assignment:FinalVariableAssignments) : string =                
+                sprintf "Case %s:\n%s" (exportExpr guard) (finalAssignments assignment)
+            let stochasticAssign (guard:Expr,assignment:StochasticAssignment list) : string =
+                let stochasticCase (stochasticAssignment:StochasticAssignment) =
+                    sprintf "   Probability: %s\n%s" (exportExpr stochasticAssignment.Probability) (finalAssignments stochasticAssignment.Assignments)
+                let cases = assignment |> List.map stochasticCase |> String.concat ""
+                sprintf "Case %s:\n%s" (exportExpr guard) (cases)
+            let assign (assign:Assignments) =
+                match assign with
+                    | Assignments.Deterministic (guard,assignment) -> deterministicAssign (guard,assignment)
+                    | Assignments.Stochastic(guard,stoAssignment) -> stochasticAssign (guard,stoAssignment)
+            gwam.Assignments |> List.map assign |> String.concat ""
+        let output = sprintf "Global State Variables:\n%sAssignments:\n%s" globals assigns
+        output
+
+
     
     let transformGwaTsamToGwaModel (pgm:Tsam.Pgm) : GuardWithAssignmentModel =
         let skipStm = Stm.Block(pgm.UniqueStatementIdGenerator (),[])
@@ -937,3 +969,10 @@ module internal VcGuardWithAssignmentModel =
             }
         do! updateState transformed
     }
+
+    let modelToStringWorkflow<'traceableOfOrigin> () : WorkflowFunction<GuardWithAssignmentModelTracer<'traceableOfOrigin>,string,unit> = workflow {
+        let! model = getState ()
+        let asString = guardWithAssignmentModelToString model.GuardWithAssignmentModel
+        do! updateState asString
+    }
+    

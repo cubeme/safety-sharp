@@ -25,13 +25,14 @@
 //        * show that input variables are necessary.
 //          show problem with instantiation of exists quantifier (if we try from A)
 //        * The way presented here is optimized: It reduces the number of input variables in lots of cases.
-//    5. Transition system: Tree-Form (From E) with propagation of variable substitution (merging of last statements)
-//        * show problem of resulting large expressions
-//    6. Gwa-Model: Gwa-Form (From F) with the merging of the last statements (equals simplified sp)
-//        * show problem of resulting large expressions
-//    7. Transition system: Gwa-Form (From E) with Strongest Postcondition
+//    5. Transition system: Tree-Form (From E) with propagation
+//        * similar to Strongest Postcondition.  Propagation of variable substitution (merging of last statements)
 //        * show problem of resulting large expressions
 //        * show that it only works for systems, where transition relation can be entered directly
+//    6. Transition system: Gwa-Form (From F) with propagation
+//        * propagation here is only the merging of the last statements (equals simplified sp)
+//        * show problem of resulting large expressions
+//        * show also Gwa-Model as step in between
 //  III) Different model checker languages
 //    1. Promela/Spin (direct) from I A
 //          (Problem of getting stuck, if assertion invalid, how is it handled)
@@ -40,9 +41,8 @@
 //    3. NuXmv/NuSMV from II 4
 //    4. NuXmv/NuSMV from II 5
 //    5. NuXmv/NuSMV from II 6
-//    6. NuXmv/NuSMV from II 7
-//    7. Prism from  I A (same limitations apply to SAML)
-//    8. Prism from  II 6 (same limitations apply to SAML)
+//    6. Prism from  I A (same limitations apply to SAML)
+//    7. Prism from  II 6 (same limitations apply to SAML)
 
 
 // Generate TeX output of Scm-Stuff
@@ -137,6 +137,7 @@ module TsamToReport =
             runWorkflow_getResult outputWorkflow
 
         let output_II_complete : string =
+
             let output_II_1_wf () = workflow {
                 do! updateState tsamSourceModel
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithWpWorkflow true
@@ -230,12 +231,17 @@ module TsamToReport =
                        
             let output_II_6_wf () = workflow {
                 do! updateState tsamSourceModel
-                return ""
-            }
-                       
-            let output_II_7_wf () = workflow {
-                do! updateState tsamSourceModel
-                return ""
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow ()
+                let! gwamModel = getState ()
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.modelToStringWorkflow ()
+                let! gwamModelAsText = getState ()
+                do! updateState gwamModel
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
+                let! tsModelAsText = getState ()
+                let result = sprintf "Guard With Assignment Model:\n%s\n%s" gwamModelAsText tsModelAsText
+                let resultDecorated = (outputstyle.Section "Transition system: Gwa-Form (From F) with propagation") + (outputstyle.TsamSource result)
+                return resultDecorated
             }
                             
             let outputWorkflow = workflow {
@@ -245,8 +251,7 @@ module TsamToReport =
                 let! output_II_4 = output_II_4_wf ()
                 let! output_II_5 = output_II_5_wf ()
                 let! output_II_6 = output_II_6_wf ()
-                let! output_II_7 = output_II_7_wf ()
-                return output_II_1 + output_II_2 + output_II_3 + output_II_4 + output_II_5 + output_II_6 + output_II_7
+                return output_II_1 + output_II_2 + output_II_3 + output_II_4 + output_II_5 + output_II_6
             }
             runWorkflow_getResult outputWorkflow
 

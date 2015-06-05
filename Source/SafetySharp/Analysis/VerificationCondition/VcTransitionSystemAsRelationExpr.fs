@@ -108,8 +108,8 @@ module internal TransitionSystemAsRelationExpr =
         let exportVarDecl (varDecl:VarDecl) =
             let exported = TsamToString.exportLocalVarDecl varDecl SamToStringHelpers.AstToStringState.initial
             exported.ToString()
-        let globals = ts.Globals |> List.map exportVarDecl |> String.concat ""
-        let inputVariables = ts.Ivars  |> List.map exportVarDecl |> String.concat ""
+        let globals = ts.Globals |> List.map (fun var -> (exportVarDecl var) + "\n") |> String.concat ""
+        let inputVariables = ts.Ivars  |> List.map (fun var -> (exportVarDecl var) + "\n")  |> String.concat ""
         let init = exportExpr ts.Init
         let trans =
             let transRewritten = addPrimeToNextVariableInExpr ts.Trans
