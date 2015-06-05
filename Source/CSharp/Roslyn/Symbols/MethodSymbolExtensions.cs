@@ -100,7 +100,10 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(compilation, () => compilation);
 
-			if (methodSymbol.IsStatic || methodSymbol.MethodKind != MethodKind.Ordinary)
+			if (methodSymbol.IsStatic)
+				return false;
+
+			if (methodSymbol.MethodKind != MethodKind.Ordinary && methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation)
 				return false;
 
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
@@ -142,7 +145,10 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(compilation, () => compilation);
 
-			if (methodSymbol.IsStatic || methodSymbol.MethodKind != MethodKind.Ordinary)
+			if (methodSymbol.IsStatic)
+				return false;
+
+			if (methodSymbol.MethodKind != MethodKind.Ordinary && methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation)
 				return false;
 
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))

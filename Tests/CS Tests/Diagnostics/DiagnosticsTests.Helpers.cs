@@ -133,15 +133,7 @@ namespace Tests.Diagnostics
 		[UsedImplicitly]
 		public static IEnumerable<object[]> DiscoverTests(string directory)
 		{
-			var files = Directory.GetFiles(Path.Combine(Path.GetDirectoryName(GetFileName()), directory));
-
-			foreach (var file in files)
-			{
-				var testName = Path.GetFileNameWithoutExtension(file);
-				var code = File.ReadAllText(file).Replace("\t", "    ");
-
-				yield return new object[] { testName, code };
-			}
+			return EnumerateTestCases(Path.Combine(Path.GetDirectoryName(GetFileName()), directory));
 		}
 	}
 }

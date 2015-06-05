@@ -23,6 +23,8 @@
 namespace Tests.Utilities
 {
 	using System;
+	using System.Collections.Generic;
+	using System.IO;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
 	using System.Text;
@@ -139,6 +141,26 @@ namespace Tests.Utilities
 			message = message.Substring(message.IndexOf(":", StringComparison.InvariantCulture) + 1);
 
 			builder.AppendFormat("({1}-{2}) {0}\n\n", message, lineSpan.StartLinePosition, lineSpan.EndLinePosition);
+		}
+
+		/// <summary>
+		///     Enumerates all C#-based test cases located at <paramref name="path" /> or any sub-directory.
+		/// </summary>
+		/// <param name="path">The path to the directory where C#-based tests are located.</param>
+		protected static IEnumerable<object[]> EnumerateTestCases(string path)
+		{
+			var files = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
+
+			foreach (var file in files)
+			{
+				var prefix = Path.GetDirectoryName(file).Substring(path.Length);
+				var testName = String.IsNullOrWhiteSpace(prefix)
+					? Path.GetFileNameWithoutExtension(file)
+					: String.Format("[{0}] {1}", prefix.Substring(1), Path.GetFileNameWithoutExtension(file));
+				var code = File.ReadAllText(file).Replace("\t", "    ");
+
+				yield return new object[] { testName, code };
+			}
 		}
 	}
 }

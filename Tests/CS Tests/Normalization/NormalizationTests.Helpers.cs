@@ -60,7 +60,7 @@ namespace Tests.Normalization
 			where T : Normalizer, new()
 		{
 			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code);
-			
+
 			// Ensure that there are no errors
 			CreateCompilation(syntaxTree);
 
@@ -90,7 +90,11 @@ namespace Tests.Normalization
 			compilation = normalizer.Normalize(compilation);
 
 			// Compare the results
-			var actualOutputs = compilation.SyntaxTrees.SelectMany(t => t.Descendants<BaseTypeDeclarationSyntax>()).ToArray();
+			var actualOutputs = compilation
+				.SyntaxTrees
+				.SelectMany(t => t.Descendants<BaseTypeDeclarationSyntax>())
+				.Where(t => t.Identifier.ValueText.StartsWith("In"))
+				.ToArray();
 			var commonOutput = expectedOutputs.Intersect(actualOutputs, new SyntaxNodeComparer());
 
 			if (actualOutputs.Length == expectedOutputs.Length && actualOutputs.Length == commonOutput.Count())
@@ -118,15 +122,7 @@ namespace Tests.Normalization
 		[UsedImplicitly]
 		public static IEnumerable<object[]> DiscoverTests(string directory)
 		{
-			var files = Directory.GetFiles(Path.Combine(Path.GetDirectoryName(GetFileName()), directory));
-
-			foreach (var file in files)
-			{
-				var testName = Path.GetFileNameWithoutExtension(file);
-				var code = File.ReadAllText(file);
-
-				yield return new object[] { testName, code };
-			}
+			return EnumerateTestCases(Path.Combine(Path.GetDirectoryName(GetFileName()), directory));
 		}
 
 		private class Renamer : CSharpSyntaxRewriter
