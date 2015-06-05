@@ -13,26 +13,33 @@
 //    F. Gwa Form (My Form)
 //       text, graph, transformations in between
 //  II) Different Transformations to merge statements to a big step
-//    1. Transition system: Weakest Precondition (from A)
+//    1. Transition system <--Weakest Precondition-- IA
 //        * show problem, why it does not work in the indeterministic case
-//    2. Transition system: Weakest Precondition (from C)
+//    2. Transition system <--Weakest Precondition-- IC (Passive Form)
 //        * show problem, why it does not work in the indeterministic case
 //        * show that using (from C) reduces the size of the condition, but adds new input variables
-//    3. Transition system: Strongest Postcondition (from C)
+//    3. Transition system <--Strongest Postcondition-- IC (Passive Form)
 //        * show that input variables are necessary.
 //          show problem with instantiation of exists quantifier (if we try from A)
-//    4. Transition system: Strongest Postcondition (from C) optimized
+//    4. Transition system <--Strongest Postcondition (optimized)-- IC (Passive Form)
 //        * show that input variables are necessary.
 //          show problem with instantiation of exists quantifier (if we try from A)
 //        * The way presented here is optimized: It reduces the number of input variables in lots of cases.
-//    5. Transition system: Tree-Form (From E) with propagation
+//    5. Transition system <--Propagation--  Tree-Form IE (Tree Form)
 //        * similar to Strongest Postcondition.  Propagation of variable substitution (merging of last statements)
 //        * show problem of resulting large expressions
 //        * show that it only works for systems, where transition relation can be entered directly
-//    6. Transition system: Gwa-Form (From F) with propagation
-//        * propagation here is only the merging of the last statements (equals simplified sp)
+//    6. Transition system <--...-- Gwa-Model  <--Propagation-- IF(Gwa-Form)
+//        * propagation here is only the merging of the last statements
+//        * currently only way to transform to prism and remove local variables
 //        * show problem of resulting large expressions
 //        * show also Gwa-Model as step in between
+//        * show transformation of Gwa-Model to Transition system to demonstrate the semantics of the Gwa-Model as classical transition system.
+//          If a TS is needed without local variables II 5 seems superior.
+//    7. Transition system <--Propagation-- IF(Gwa-Form)
+//        * propagation here is done directly with algorithm of II 5
+//        * This transformation is only to compare this result with II 6 and II 5.
+//          If a TS is needed without local variables II 5 seems superior.
 //  III) Different model checker languages
 //    1. Promela/Spin (direct) from I A
 //          (Problem of getting stuck, if assertion invalid, how is it handled)
@@ -42,7 +49,7 @@
 //    4. NuXmv/NuSMV from II 5
 //    5. NuXmv/NuSMV from II 6
 //    6. Prism from  I A (same limitations apply to SAML)
-//    7. Prism from  II 6 (same limitations apply to SAML)
+//    7. Prism from Gwa-Model (of II 6) (same limitations apply to SAML)
 
 
 // Generate TeX output of Scm-Stuff
@@ -52,6 +59,9 @@
 // 4. Inlining of Ports
 
 // TODO: Maybe make real reports out of it
+
+TODO: Check, if variables, which have never been written to, keep their value!!!!!!!!!!!!!!!!!!!
+
 
 namespace SafetySharp.Documentation.Scripts
 
@@ -156,7 +166,7 @@ module TsamToReport =
                     let exprAsString = SafetySharp.Models.TsamToString.exportExpr postConditionAsFormula SafetySharp.Models.SamToStringHelpers.AstToStringState.initial
                     exprAsString.ToString()
                 let result = sprintf "Formula, which expresses the states at the end (precondition):%s\n\n%s" formulaTrueAtTheEnd modelAsText
-                let resultDecorated = (outputstyle.Section "Transition system: Weakest Precondition (from A)") + (outputstyle.TsamSource result)
+                let resultDecorated = (outputstyle.Section "Transition system <--Weakest Precondition-- IA") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
                        
@@ -179,7 +189,7 @@ module TsamToReport =
                     let exprAsString = SafetySharp.Models.TsamToString.exportExpr postConditionAsFormula SafetySharp.Models.SamToStringHelpers.AstToStringState.initial
                     exprAsString.ToString()
                 let result = sprintf "Formula, which expresses the states at the end (precondition):%s\n\n%s" formulaTrueAtTheEnd modelAsText
-                let resultDecorated = (outputstyle.Section "Transition system: Weakest Precondition (from C)") + (outputstyle.TsamSource result)
+                let resultDecorated = (outputstyle.Section "Transition system <--Weakest Precondition-- IC (Passive Form)") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
                        
@@ -203,7 +213,7 @@ module TsamToReport =
                     let exprAsString = SafetySharp.Models.TsamToString.exportExpr globalNextExpr SafetySharp.Models.SamToStringHelpers.AstToStringState.initial
                     exprAsString.ToString()
                 let result = sprintf "Formula, which expresses the state(s) in the beginning (precondition):%s\nExpression to add to sp(Pgm,precondition):%s\n%s" formulaTrueInTheBeginning formulaToAddAtTheEnd modelAsText
-                let resultDecorated = (outputstyle.Section "Transition system: Strongest Postcondition (from C)") + (outputstyle.TsamSource result)
+                let resultDecorated = (outputstyle.Section "Transition system <--Strongest Postcondition-- IC (Passive Form)") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
 
@@ -220,13 +230,19 @@ module TsamToReport =
                     // If none was created, we must add next(var)=var by hand. See TransitionSystemAsRelationExpr TODO: Find a better way that actually uses the real code
                     ""
                 let result = sprintf "Formula, which expresses the state(s) in the beginning (precondition):%s\n%s" formulaTrueInTheBeginning modelAsText
-                let resultDecorated = (outputstyle.Section "Transition system: Strongest Postcondition (from C) optimized") + (outputstyle.TsamSource result)
+                let resultDecorated = (outputstyle.Section "Transition system <--Strongest Postcondition (optimized)-- IC (Passive Form)") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
 
             let output_II_5_wf () = workflow {
                 do! updateState tsamSourceModel
-                return ""
+                do! SafetySharp.Models.TsamMutable.treeifyStm ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithPropagationWorkflow ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
+                let! tsModelAsText = getState ()
+                let result = tsModelAsText
+                let resultDecorated = (outputstyle.Section "Transition system <--Propagation--  Tree-Form IE (Tree Form)") + (outputstyle.TsamSource result)
+                return resultDecorated
             }
                        
             let output_II_6_wf () = workflow {
@@ -240,7 +256,18 @@ module TsamToReport =
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
                 let! tsModelAsText = getState ()
                 let result = sprintf "Guard With Assignment Model:\n%s\n%s" gwamModelAsText tsModelAsText
-                let resultDecorated = (outputstyle.Section "Transition system: Gwa-Form (From F) with propagation") + (outputstyle.TsamSource result)
+                let resultDecorated = (outputstyle.Section "Transition system <--...-- Gwa-Model  <--Propagation-- IF(Gwa-Form)") + (outputstyle.TsamSource result)
+                return resultDecorated
+            }
+                       
+            let output_II_7_wf () = workflow {
+                do! updateState tsamSourceModel
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToTsamInGuardToAssignmentForm()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithPropagationWorkflow ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
+                let! tsModelAsText = getState ()
+                let result = tsModelAsText
+                let resultDecorated = (outputstyle.Section "Transition system <--Propagation-- IF(Gwa-Form)") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
                             
@@ -251,7 +278,8 @@ module TsamToReport =
                 let! output_II_4 = output_II_4_wf ()
                 let! output_II_5 = output_II_5_wf ()
                 let! output_II_6 = output_II_6_wf ()
-                return output_II_1 + output_II_2 + output_II_3 + output_II_4 + output_II_5 + output_II_6
+                let! output_II_7 = output_II_7_wf ()
+                return output_II_1 + output_II_2 + output_II_3 + output_II_4 + output_II_5 + output_II_6 + output_II_7
             }
             runWorkflow_getResult outputWorkflow
 
