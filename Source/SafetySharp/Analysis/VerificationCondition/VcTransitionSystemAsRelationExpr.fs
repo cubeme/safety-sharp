@@ -111,7 +111,9 @@ module internal TransitionSystemAsRelationExpr =
         let globals = ts.Globals |> List.map exportVarDecl |> String.concat ""
         let inputVariables = ts.Ivars  |> List.map exportVarDecl |> String.concat ""
         let init = exportExpr ts.Init
-        let trans = exportExpr ts.Trans
+        let trans =
+            let transRewritten = addPrimeToNextVariableInExpr ts.Trans
+            exportExpr transRewritten
         let output = sprintf "Global State Variables:\n%sInput Variables\n%sExpression with initial State:\n%s\nExpression with transition relation:\n%s\n" globals inputVariables init trans
         output
     
@@ -209,7 +211,9 @@ module internal TransitionSystemAsRelationExpr =
             failwith "program needs to be in passive form to use this algorithm"
 
         let varToVirtualNextVarEntries,ivars =
-            // Every global var needs a virtual next var for the transition system.
+            // Every global var needs a virtual next var for the transition system. 
+            // This way we can reuse the last version of a global variable and thus possibly reduce the number of input
+            // variables.
             // If there already exists a local variable, which contains the next value of this global variable,
             // we do not threat this variable as a global variable anymore (remove from ivars).
             // Otherwise we add a new virtual variable.
@@ -255,6 +259,52 @@ module internal TransitionSystemAsRelationExpr =
             // add proof obligations, which come from Stm.Asserts
             let proofObligationsAsList = additionalProofObligations |> Set.toList
             // we "And" all three things and get our transExpr
+            // TODO: Remove the proofObligations from the Transition relation and add them to the invariants
+            (passivePgmAsExpr::globalNextExprList@proofObligationsAsList) |> Expr.createAndedExpr
+        // remove last version from ivar (if a version was created)
+        let spOfPgm = VcStrongestPostcondition.sp
+                                
+        {
+            TransitionSystem.Globals = tsamGlobalVarDeclToVarDecl pgm.Globals;
+            TransitionSystem.Ivars = ivars |> Set.toList;
+            TransitionSystem.VirtualNextVarToVar = virtualNextVarToVar;
+            TransitionSystem.VarToVirtualNextVar = varToVirtualNextVar;
+            TransitionSystem.Init = initExpr;
+            TransitionSystem.Trans = transExpr;
+        }
+
+        
+    let transformTsamToTsareWithSpUnopzimized (pgm:Tsam.Pgm) : TransitionSystem =
+        // Note: Just here for theoretical purposes. Not tested really well!
+        // Program needs to be in passive form!
+        // The way we implemented VcStrongestPostcondition.sp requires pgm to be in passive form
+        // Note: In the description below, pgm.next[x:Var] : Var is the map entry of pgm.NextGlobal
+        if pgm.CodeForm <> Tsam.CodeForm.Passive then
+            failwith "program needs to be in passive form to use this algorithm"
+
+        let varToVirtualNextVar = createVirtualVarEntryPool pgm
+        let virtualNextVarToVar = varToVirtualNextVar |> Map.toList |> List.map ( fun (var,virtVar) -> (virtVar,var)) |> Map.ofList
+        
+        let ivars = pgm.Locals |> Set.ofList
+        
+        let initExpr = generateInitCondition pgm.Globals
+                
+        let formulaForSPPrecondition =
+            Expr.Literal(Val.BoolVal(true)) // we do not assume anything before                        
+        let transExpr =
+            // use strongest postcondition on program
+            let passivePgmAsExpr,additionalProofObligations =
+                VcStrongestPostcondition.sp (formulaForSPPrecondition,pgm.Body)
+            // to add a connection between now and the next state, we add next(x) = pgm.next[x] for each global variable
+            let globalNextExprList =
+                let createEntry (globalVar,nextGlobal) =
+                    Expr.BExpr(Expr.Read(nextGlobal),BOp.Equals,Expr.Read(varToVirtualNextVar.Item globalVar))
+                pgm.NextGlobal |> Map.toList
+                               |> List.map createEntry
+            // add proof obligations, which come from Stm.Asserts
+            let proofObligationsAsList = additionalProofObligations |> Set.toList
+            // we "And" all three things and get our transExpr
+            // TODO: Remove the proofObligations from the Transition relation and add them to the invariants
             (passivePgmAsExpr::globalNextExprList@proofObligationsAsList) |> Expr.createAndedExpr
         // remove last version from ivar (if a version was created)
         let spOfPgm = VcStrongestPostcondition.sp
@@ -312,6 +362,19 @@ module internal TransitionSystemAsRelationExpr =
         let transformed =
             {
                 TransitionSystemTracer.TransitionSystem = transformTsamToTsareWithSp model;
+                TransitionSystemTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TransitionSystemTracer.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState transformed
+    }
+
+    let transformTsamToTsareWithSpUnoptimizedWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let model = state.Pgm
+        let transformed =
+            {
+                TransitionSystemTracer.TransitionSystem = transformTsamToTsareWithSpUnopzimized model;
                 TransitionSystemTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
                 TransitionSystemTracer.ForwardTracer = state.ForwardTracer;
             }

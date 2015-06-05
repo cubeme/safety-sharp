@@ -21,21 +21,28 @@
 //    3. Transition system: Strongest Postcondition (from C)
 //        * show that input variables are necessary.
 //          show problem with instantiation of exists quantifier (if we try from A)
-//    4. Transition system: Gwa-Form (From E) with Strongest Postcondition
+//    4. Transition system: Strongest Postcondition (from C) optimized
+//        * show that input variables are necessary.
+//          show problem with instantiation of exists quantifier (if we try from A)
+//        * The way presented here is optimized: It reduces the number of input variables in lots of cases.
+//    5. Transition system: Tree-Form (From E) with propagation of variable substitution (merging of last statements)
+//        * show problem of resulting large expressions
+//    6. Gwa-Model: Gwa-Form (From F) with the merging of the last statements (equals simplified sp)
+//        * show problem of resulting large expressions
+//    7. Transition system: Gwa-Form (From E) with Strongest Postcondition
 //        * show problem of resulting large expressions
 //        * show that it only works for systems, where transition relation can be entered directly
-//    5. Gwa-Model: Gwa-Form (From F) with the merging of the last statements
-//        * show problem of resulting large expressions
 //  III) Different model checker languages
 //    1. Promela/Spin (direct) from I A
 //          (Problem of getting stuck, if assertion invalid, how is it handled)
 //    2. NuXmv/NuSMV from I A
 //          (Problem of getting stuck, if assertion invalid, how is it handled)
-//    3. NuXmv/NuSMV from II 3
-//    4. NuXmv/NuSMV from II 4
-//    5. NuXmv/NuSMV from II 5
-//    6. Prism from  I A (same limitations apply to SAML)
-//    7. Prism from  II 5 (same limitations apply to SAML)
+//    3. NuXmv/NuSMV from II 4
+//    4. NuXmv/NuSMV from II 5
+//    5. NuXmv/NuSMV from II 6
+//    6. NuXmv/NuSMV from II 7
+//    7. Prism from  I A (same limitations apply to SAML)
+//    8. Prism from  II 6 (same limitations apply to SAML)
 
 
 // Generate TeX output of Scm-Stuff
@@ -144,21 +151,55 @@ module TsamToReport =
             let output_II_3_wf () = workflow {
                 do! updateState tsamSourceModel
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
-                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpUnoptimizedWorkflow ()
+                let! model = getState ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
                 let! modelAsText = getState ()
-                let formulaTrueInTheBeginning = "TODO"
-                let result = sprintf "Formula, which expresses the state(s) in the beginning:\n%s\n%s" formulaTrueInTheBeginning modelAsText
+                let formulaTrueInTheBeginning = "true" //hardcoded
+                let formulaToAddAtTheEnd =
+                    // See TransitionSystemAsRelationExpr TODO: Find a better way that actually uses the real code
+                    let globalNextExpr =
+                        let createEntry (globalVar:SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.VarDecl) =
+                            let primedVar = match globalVar.Var with | Var.Var (name) -> name + "'"
+                            Expr.BExpr(Expr.Read(Var.Var(primedVar)),BOp.Equals,Expr.Read(model.TransitionSystem.VarToVirtualNextVar.Item globalVar.Var))
+                        model.TransitionSystem.Globals
+                            |> List.map createEntry
+                            |> SafetySharp.Models.TsamHelpers.createAndedExpr
+                    let exprAsString = SafetySharp.Models.TsamToString.exportExpr globalNextExpr SafetySharp.Models.SamToStringHelpers.AstToStringState.initial
+                    exprAsString.ToString()
+                let result = sprintf "Formula, which expresses the state(s) in the beginning (precondition):%s\nExpression to add to sp(Pgm,precondition):%s\n%s" formulaTrueInTheBeginning formulaToAddAtTheEnd modelAsText
                 let resultDecorated = (outputstyle.Section "Transition system: Strongest Postcondition (from C)") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
-                       
+
             let output_II_4_wf () = workflow {
                 do! updateState tsamSourceModel
-                return ""
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
+                let! model = getState ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
+                let! modelAsText = getState ()
+                let formulaTrueInTheBeginning = "true" //hardcoded
+                let formulaToAddAtTheEnd =
+                    // The transformation algorithm actually uses an optimization: If a virtual variable version was created, the last one is used as next variable.
+                    // If none was created, we must add next(var)=var by hand. See TransitionSystemAsRelationExpr TODO: Find a better way that actually uses the real code
+                    ""
+                let result = sprintf "Formula, which expresses the state(s) in the beginning (precondition):%s\n%s" formulaTrueInTheBeginning modelAsText
+                let resultDecorated = (outputstyle.Section "Transition system: Strongest Postcondition (from C) optimized") + (outputstyle.TsamSource result)
+                return resultDecorated
             }
 
             let output_II_5_wf () = workflow {
+                do! updateState tsamSourceModel
+                return ""
+            }
+                       
+            let output_II_6_wf () = workflow {
+                do! updateState tsamSourceModel
+                return ""
+            }
+                       
+            let output_II_7_wf () = workflow {
                 do! updateState tsamSourceModel
                 return ""
             }
@@ -169,7 +210,9 @@ module TsamToReport =
                 let! output_II_3 = output_II_3_wf ()
                 let! output_II_4 = output_II_4_wf ()
                 let! output_II_5 = output_II_5_wf ()
-                return output_II_1 + output_II_2 + output_II_3 + output_II_4 + output_II_5
+                let! output_II_6 = output_II_6_wf ()
+                let! output_II_7 = output_II_7_wf ()
+                return output_II_1 + output_II_2 + output_II_3 + output_II_4 + output_II_5 + output_II_6 + output_II_7
             }
             runWorkflow_getResult outputWorkflow
 
