@@ -183,14 +183,15 @@
       <DependentUpon>NormalizationTests.cs</DependentUpon>
     </Compile>
     <Compile Include="Normalization\NormalizationTests.cs" />
-    <None Include="Normalization\Ports\Required\normalized - parameters, value return.cs" />
-    <None Include="Normalization\Ports\Required\normalized - parameterless, void-return.cs" />
-    <None Include="Normalization\Ports\Required\normalized - parameters, void-return.cs" />
-    <None Include="Normalization\Ports\Required\normalized - explicit implementation.cs" />
-    <None Include="Normalization\Ports\Required\normalized - ref, out, params.cs" />
-    <Compile Include="Normalization\Ports\Unchanged\members outside component.cs" />
-    <Compile Include="Normalization\Ports\Unchanged\interface members.cs" />
-    <Compile Include="Normalization\Ports\Unchanged\static members.cs" />
+    <None Include="Normalization\Ports\Required\parameters, value return.cs" />
+    <None Include="Normalization\Ports\Required\parameterless, void-return.cs" />
+    <None Include="Normalization\Ports\Required\parameters, void-return.cs" />
+    <None Include="Normalization\Ports\Required\explicit implementation.cs" />
+    <None Include="Normalization\Ports\Required\ref, out, params.cs" />
+    <Compile Include="Normalization\Ports\OtherMembers\members outside component.cs" />
+    <Compile Include="Normalization\Ports\OtherMembers\interface members.cs" />
+    <Compile Include="Normalization\Ports\OtherMembers\static members.cs" />
+    <None Include="Normalization\Ports\Provided\parameterless, void-return.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\CSharpException.cs" />
     <Compile Include="Utilities\TestException.cs" />
