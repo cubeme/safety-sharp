@@ -260,10 +260,7 @@ module internal TransitionSystemAsRelationExpr =
             let proofObligationsAsList = additionalProofObligations |> Set.toList
             // we "And" all three things and get our transExpr
             // TODO: Remove the proofObligations from the Transition relation and add them to the invariants
-            (passivePgmAsExpr::globalNextExprList@proofObligationsAsList) |> Expr.createAndedExpr
-        // remove last version from ivar (if a version was created)
-        let spOfPgm = VcStrongestPostcondition.sp
-                                
+            (passivePgmAsExpr::globalNextExprList@proofObligationsAsList) |> Expr.createAndedExpr                                
         {
             TransitionSystem.Globals = tsamGlobalVarDeclToVarDecl pgm.Globals;
             TransitionSystem.Ivars = ivars |> Set.toList;
@@ -306,7 +303,6 @@ module internal TransitionSystemAsRelationExpr =
             // we "And" all three things and get our transExpr
             // TODO: Remove the proofObligations from the Transition relation and add them to the invariants
             (passivePgmAsExpr::globalNextExprList@proofObligationsAsList) |> Expr.createAndedExpr
-        // remove last version from ivar (if a version was created)
         let spOfPgm = VcStrongestPostcondition.sp
                                 
         {
@@ -320,22 +316,38 @@ module internal TransitionSystemAsRelationExpr =
         
     // -- TSAM with weakest precondition ------------------------------    
     
-    // Note:
-    //  weakest precondition does only work in deterministic cases
-    //    let formulaForWPPostcondition (``I know what I do. I am sure the input program is deterministic``: bool ) =
-    //        // First Approach: "a'=a_last, b'<->b_last, ...."
-    //        // THIS FORMULA IS WRONG. It only works for the deterministic case. SEE RESULTS OF smokeTest5.sam
-    //        // The paper "To Goto Where No Statement Has Gone Before" offers in chapter 3 a way out.
-    //        // Their goal is to transform "Code Expressions" (Code with statements) into genuine Expressions.
-    //        if ``I know what I do. I am sure the input program is deterministic`` = false then
-    //            failwith "please read the comments of this function"
-    //        let createFormulaForGlobalVarDecl (globalVarDecl:Tsam.GlobalVarDecl) : Tsam.Expr =
-    //            let varCurrent = globalVarDecl.Var
-    //            let varPost = nuXmvVariables.VarToVirtualVar.Item varCurrent
-    //            let operator = Tsam.BOp.Equals
-    //            Tsam.Expr.BExpr(Tsam.Expr.Read(varPost),operator,Tsam.Expr.Read(varCurrent))
-    //        pgm.Globals |> List.map createFormulaForGlobalVarDecl
-    //                    |> Tsam.createAndedExpr
+    // Note: weakest precondition does only work in deterministic cases
+    let transformTsamToTsareWithWp (``yes, I know what I do. I am sure the input program is deterministic``: bool) (pgm:Tsam.Pgm) : TransitionSystem =
+        // Note: Just here for theoretical purposes. Not tested really well!
+        if ``yes, I know what I do. I am sure the input program is deterministic`` = false then
+            failwith "please read the comments of this function"
+        else
+            let varToVirtualNextVar = createVirtualVarEntryPool pgm
+            let virtualNextVarToVar = varToVirtualNextVar |> Map.toList |> List.map ( fun (var,virtVar) -> (virtVar,var)) |> Map.ofList
+            let ivars = pgm.Locals |> Set.ofList        
+            let initExpr = generateInitCondition pgm.Globals
+
+            let formulaForWPPostcondition =
+                // First Approach: "a'=a_last, b'<->b_last, ...."
+                // THIS FORMULA IS WRONG. It only works for the deterministic case. SEE RESULTS OF smokeTest5.sam
+                // The paper "To Goto Where No Statement Has Gone Before" offers in chapter 3 a way out.
+                // Their goal is to transform "Code Expressions" (Code with statements) into genuine Expressions.
+                let createFormulaForGlobalVarDecl (globalVarDecl:Tsam.GlobalVarDecl) : Tsam.Expr =
+                    let varCurrent = globalVarDecl.Var
+                    let varPost = varToVirtualNextVar.Item varCurrent
+                    let operator = Tsam.BOp.Equals
+                    Tsam.Expr.BExpr(Tsam.Expr.Read(varPost),operator,Tsam.Expr.Read(varCurrent))
+                pgm.Globals |> List.map createFormulaForGlobalVarDecl
+                            |> SafetySharp.Models.TsamHelpers.createAndedExpr
+            let transExpr = VcWeakestPrecondition.wp pgm.Body formulaForWPPostcondition
+            {
+                TransitionSystem.Globals = tsamGlobalVarDeclToVarDecl pgm.Globals;
+                TransitionSystem.Ivars = ivars |> Set.toList;
+                TransitionSystem.VirtualNextVarToVar = virtualNextVarToVar;
+                TransitionSystem.VarToVirtualNextVar = varToVirtualNextVar;
+                TransitionSystem.Init = initExpr;
+                TransitionSystem.Trans = transExpr;
+            }
 
 
         
@@ -375,6 +387,19 @@ module internal TransitionSystemAsRelationExpr =
         let transformed =
             {
                 TransitionSystemTracer.TransitionSystem = transformTsamToTsareWithSpUnopzimized model;
+                TransitionSystemTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TransitionSystemTracer.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState transformed
+    }
+
+    let transformTsamToTsareWithWpWorkflow<'traceableOfOrigin> (``yes, I know what I do. I am sure the input program is deterministic``: bool)
+            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let model = state.Pgm
+        let transformed =
+            {
+                TransitionSystemTracer.TransitionSystem = transformTsamToTsareWithWp (``yes, I know what I do. I am sure the input program is deterministic``) model;
                 TransitionSystemTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
                 TransitionSystemTracer.ForwardTracer = state.ForwardTracer;
             }

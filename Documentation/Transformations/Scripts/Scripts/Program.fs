@@ -139,13 +139,47 @@ module TsamToReport =
         let output_II_complete : string =
             let output_II_1_wf () = workflow {
                 do! updateState tsamSourceModel
-                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
-                //let formulaToBeTrueAfterwards = .
-                return ""
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithWpWorkflow true
+                let! model = getState ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
+                let! modelAsText = getState ()
+                let formulaTrueAtTheEnd =
+                    // See TransitionSystemAsRelationExpr TODO: Find a better way that actually uses the real code
+                    let postConditionAsFormula =
+                        let createFormulaForGlobalVarDecl (globalVar:SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.VarDecl) =
+                            let primedVar = match globalVar.Var with | Var.Var (name) -> name + "'"
+                            Expr.BExpr(Expr.Read(Var.Var(primedVar)),BOp.Equals,Expr.Read(globalVar.Var))
+                        model.TransitionSystem.Globals
+                            |> List.map createFormulaForGlobalVarDecl
+                            |> SafetySharp.Models.TsamHelpers.createAndedExpr
+                    let exprAsString = SafetySharp.Models.TsamToString.exportExpr postConditionAsFormula SafetySharp.Models.SamToStringHelpers.AstToStringState.initial
+                    exprAsString.ToString()
+                let result = sprintf "Formula, which expresses the states at the end (precondition):%s\n\n%s" formulaTrueAtTheEnd modelAsText
+                let resultDecorated = (outputstyle.Section "Transition system: Weakest Precondition (from A)") + (outputstyle.TsamSource result)
+                return resultDecorated
             }
                        
             let output_II_2_wf () = workflow {
-                return ""
+                do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithWpWorkflow true
+                let! model = getState ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
+                let! modelAsText = getState ()
+                let formulaTrueAtTheEnd =
+                    // See TransitionSystemAsRelationExpr TODO: Find a better way that actually uses the real code
+                    let postConditionAsFormula =
+                        let createFormulaForGlobalVarDecl (globalVar:SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.VarDecl) =
+                            let primedVar = match globalVar.Var with | Var.Var (name) -> name + "'"
+                            Expr.BExpr(Expr.Read(Var.Var(primedVar)),BOp.Equals,Expr.Read(globalVar.Var))
+                        model.TransitionSystem.Globals
+                            |> List.map createFormulaForGlobalVarDecl
+                            |> SafetySharp.Models.TsamHelpers.createAndedExpr
+                    let exprAsString = SafetySharp.Models.TsamToString.exportExpr postConditionAsFormula SafetySharp.Models.SamToStringHelpers.AstToStringState.initial
+                    exprAsString.ToString()
+                let result = sprintf "Formula, which expresses the states at the end (precondition):%s\n\n%s" formulaTrueAtTheEnd modelAsText
+                let resultDecorated = (outputstyle.Section "Transition system: Weakest Precondition (from C)") + (outputstyle.TsamSource result)
+                return resultDecorated
             }
                        
             let output_II_3_wf () = workflow {
