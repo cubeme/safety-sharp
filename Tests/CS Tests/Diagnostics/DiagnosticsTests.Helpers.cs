@@ -37,6 +37,7 @@ namespace Tests.Diagnostics
 	using SafetySharp.CSharp.Roslyn;
 	using SafetySharp.CSharp.Roslyn.Symbols;
 	using SafetySharp.CSharp.Roslyn.Syntax;
+	using Utilities;
 	using Xunit.Abstractions;
 
 	public class DiagnosticAttribute : Attribute
@@ -47,7 +48,7 @@ namespace Tests.Diagnostics
 		}
 	}
 
-	public class DiagnosticComparer : IEqualityComparer<Diagnostic>
+	internal class DiagnosticComparer : IEqualityComparer<Diagnostic>
 	{
 		public bool Equals(Diagnostic x, Diagnostic y)
 		{
@@ -56,7 +57,7 @@ namespace Tests.Diagnostics
 
 		public int GetHashCode(Diagnostic obj)
 		{
-			return obj.GetHashCode();
+			return 0;
 		}
 	}
 
@@ -67,15 +68,17 @@ namespace Tests.Diagnostics
 		{
 		}
 
-		private void CheckDiagnostics(string code, Analyzer analyzer)
+		private void CheckDiagnostics<T>(string code)
+			where T : Analyzer, new()
 		{
+			var analyzer = new T();
 			var compilation = CreateCompilation(code).WithAnalyzers(ImmutableArray.Create((DiagnosticAnalyzer)analyzer));
 
 			var expectedDiagnostics = GetExpectedDiagnostics(analyzer, compilation.Compilation).ToArray();
 			var actualDiagnostics = compilation.GetAllDiagnosticsAsync().Result.Where(d => !d.Descriptor.Id.StartsWith("CS")).ToArray();
-			var commonDiagnostics = expectedDiagnostics.Intersect(actualDiagnostics, new DiagnosticComparer()).Count();
+			var commonDiagnostics = expectedDiagnostics.Intersect(actualDiagnostics, new DiagnosticComparer());
 
-			if (expectedDiagnostics.Length != actualDiagnostics.Length || expectedDiagnostics.Length != commonDiagnostics)
+			if (expectedDiagnostics.Length != actualDiagnostics.Length || expectedDiagnostics.Length != commonDiagnostics.Count())
 			{
 				var builder = new StringBuilder();
 				builder.AppendLine();
@@ -92,7 +95,7 @@ namespace Tests.Diagnostics
 				foreach (var diagnostic in expectedDiagnostics.OrderBy(d => d.Location.SourceSpan.Start))
 					Write(builder, diagnostic);
 
-				throw new Exception(builder.ToString());
+				throw new TestException(builder.ToString());
 			}
 
 			foreach (var diagnostic in actualDiagnostics)

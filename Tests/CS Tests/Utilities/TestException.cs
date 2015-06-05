@@ -20,37 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Utilities
 {
 	using System;
-	using SafetySharp.CSharp.Analyzers;
-	using Utilities;
-	using Xunit;
+	using JetBrains.Annotations;
 
-	public partial class DiagnosticsTests : Tests
+	/// <summary>
+	///     Raised when the test execution encounters an error.
+	/// </summary>
+	public class TestException : Exception
 	{
-		[Theory, MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="message">The format message of the exception.</param>
+		/// <param name="args">The format arguments.</param>
+		[StringFormatMethod("message")]
+		public TestException(string message, params object[] args)
+			: base(String.Format("\n\n{0}", String.Format(message, args)))
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
-		{
-			CheckDiagnostics<BindingAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
-		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
 		}
 	}
 }

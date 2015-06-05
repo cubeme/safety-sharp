@@ -20,37 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Normalization.Ports
 {
 	using System;
-	using SafetySharp.CSharp.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class DiagnosticsTests : Tests
+	internal interface In2 : IComponent
 	{
-		[Theory, MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
-		{
-			CheckDiagnostics<EnumAnalyzer>(code);
-		}
+		[Provided]
+		int M2 { get; set; }
 
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
-		{
-			CheckDiagnostics<BindingAnalyzer>(code);
-		}
+		[Provided]
+		int M3 { get; }
 
-		[Theory, MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
-		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
+		[Provided]
+		int M4 { set; }
 
-		[Theory, MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
-		}
+		[Provided]
+		void M1();
+	}
+
+	internal interface In3
+	{
+		[Provided]
+		int M2 { get; set; }
+
+		[Provided]
+		int M3 { get; }
+
+		[Provided]
+		int M4 { set; }
+
+		[Provided]
+		void M1();
 	}
 }

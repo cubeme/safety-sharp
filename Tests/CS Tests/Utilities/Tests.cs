@@ -30,6 +30,8 @@ namespace Tests.Utilities
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.Diagnostics;
+	using SafetySharp.Compiler;
 	using SafetySharp.Compiler.Normalization;
 	using SafetySharp.CSharp.Analyzers;
 	using SafetySharp.CSharp.Utilities;
@@ -82,10 +84,19 @@ namespace Tests.Utilities
 		/// <param name="compilationUnits">The compilation units the compilation should contain.</param>
 		protected static Compilation CreateCompilation(params string[] compilationUnits)
 		{
+			return CreateCompilation(compilationUnits.Select(unit => SyntaxFactory.ParseSyntaxTree(unit)).ToArray());
+		}
+
+		/// <summary>
+		///     Creates a compilation for the <paramref name="syntaxTrees" />.
+		/// </summary>
+		/// <param name="syntaxTrees">The syntax trees the compilation should contain.</param>
+		protected static Compilation CreateCompilation(params SyntaxTree[] syntaxTrees)
+		{
 			var compilation = CSharpCompilation
 				.Create("Test")
 				.WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-				.AddSyntaxTrees(compilationUnits.Select(unit => SyntaxFactory.ParseSyntaxTree(unit)))
+				.AddSyntaxTrees(syntaxTrees)
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(object).Assembly))
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(DynamicAttribute).Assembly))
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(Component).Assembly))
@@ -94,15 +105,26 @@ namespace Tests.Utilities
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(BindingNormalizer).Assembly));
 
 			var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
-			if (errors.Length == 0)
-				return compilation;
+			if (errors.Length != 0)
+				throw new CSharpException(errors, "Failed to create compilation.");
 
-			var builder = new StringBuilder();
+			return compilation;
+		}
 
-			foreach (var diagnostic in errors)
-				Write(builder, diagnostic);
+		/// <summary>
+		///     Runs the S# analyzers on the given compilation, ensuring that the compilation contains no errors.
+		/// </summary>
+		/// <param name="compilation">The compilation that should be checked.</param>
+		protected static void CheckForSSharpDiagnostics(Compilation compilation)
+		{
+			var errors = compilation
+				.WithAnalyzers(Compiler.Analyzers)
+				.GetAllDiagnosticsAsync().Result
+				.Where(d => d.Severity == DiagnosticSeverity.Error && !d.Id.StartsWith("CS"))
+				.ToArray();
 
-			throw new CSharpException("\n\nFailed to create compilation:\n\n" + builder);
+			if (errors.Length != 0)
+				throw new CSharpException(errors, "Failed to create compilation.");
 		}
 
 		/// <summary>
@@ -110,30 +132,13 @@ namespace Tests.Utilities
 		/// </summary>
 		/// <param name="builder">The builder the diagnostic should be appended to.</param>
 		/// <param name="diagnostic">The diagnostic that should be appended.</param>
-		protected static void Write(StringBuilder builder, Diagnostic diagnostic)
+		public static void Write(StringBuilder builder, Diagnostic diagnostic)
 		{
 			var lineSpan = diagnostic.Location.GetLineSpan();
 			var message = diagnostic.ToString();
 			message = message.Substring(message.IndexOf(":", StringComparison.InvariantCulture) + 1);
 
 			builder.AppendFormat("({1}-{2}) {0}\n\n", message, lineSpan.StartLinePosition, lineSpan.EndLinePosition);
-		}
-
-		/// <summary>
-		///     Raised when invalid C# code is detected or compilation of a dynamic C# project failed.
-		/// </summary>
-		private class CSharpException : Exception
-		{
-			/// <summary>
-			///     Initializes a new instance.
-			/// </summary>
-			/// <param name="message">The format message of the exception.</param>
-			/// <param name="args">The format arguments.</param>
-			[StringFormatMethod("message")]
-			public CSharpException(string message, params object[] args)
-				: base(String.Format(message, args))
-			{
-			}
 		}
 	}
 }

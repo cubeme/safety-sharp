@@ -39,7 +39,7 @@ namespace SafetySharp.Compiler
 	/// <summary>
 	///     Compiles a S# modeling project authored in C# to a S# modeling assembly.
 	/// </summary>
-	internal class Compiler
+	public class Compiler
 	{
 		/// <summary>
 		///     The diagnostic analyzers that are used to diagnose the C# code before compilation.
@@ -63,7 +63,7 @@ namespace SafetySharp.Compiler
 		/// <summary>
 		///     Gets the diagnostic analyzers that are used to diagnose the C# code before compilation.
 		/// </summary>
-		private static ImmutableArray<DiagnosticAnalyzer> Analyzers
+		public static ImmutableArray<DiagnosticAnalyzer> Analyzers
 		{
 			get
 			{

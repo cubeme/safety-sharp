@@ -38,35 +38,7 @@ module PortNormalizer =
     let normalize csharpCode = 
         TestCompilation.GetNormalizedClass (PortNormalizer ()) (sprintf "using System.Diagnostics; %s" csharpCode)
 
-    [<Test>]
-    let ``does not normalize extern method not declared within a component class`` () =
-        normalize "class X { extern void M(); }" =? ["class X { extern void M(); }"]
-        normalize "class X { void M() {} }" =? ["class X { void M() {} }"]
-
-    [<Test>]
-    let ``does not normalize static methods`` () =
-        normalize "class X : Component { static extern void M(); }" =? ["class X : Component { static extern void M(); }"]
-        normalize "class X : Component { static void M() {} }" =? ["class X : Component { static void M() {} }"]
-
-    [<Test>]
-    let ``does not normalize interface methods`` () =
-        normalize "interface X : IComponent { [Required] void M(); }" =? ["interface X : IComponent { [Required] void M(); }"]
-        normalize "interface X : IComponent { [Provided] void M(); }" =? ["interface X : IComponent { [Provided] void M(); }"]
-
-    [<Test>]
-    let ``normalizes extern 'void -> void' method within a component`` () =
-        let normalized accessibility = [sprintf "\
-            class X : Component { \
-            [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
-            [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] %s void M() => this.__portField0__();}" accessibility]
-
-        normalize "class X : Component { public extern void M(); }" =? normalized "public"
-        normalize "class X : Component { internal extern void M(); }" =? normalized "internal"
-        normalize "class X : Component { protected internal extern void M(); }" =? normalized "protected internal"
-        normalize "class X : Component { protected extern void M(); }" =? normalized "protected"
-        normalize "class X : Component { private extern void M(); }" =? normalized "private"
-
+  
     [<Test>]
     let ``normalizes extern void returning method within a component`` () =
         normalize "class X : Component { public extern void M(int a); }" =? 

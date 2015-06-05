@@ -20,37 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Normalization
 {
 	using System;
-	using SafetySharp.CSharp.Analyzers;
+	using SafetySharp.Compiler.Normalization;
 	using Utilities;
 	using Xunit;
 
-	public partial class DiagnosticsTests : Tests
+	public partial class NormalizationTests : Tests
 	{
-		[Theory, MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
+		[Theory, MemberData("DiscoverTests", "Ports")]
+		public void Ports(string test, string code)
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
-		{
-			CheckDiagnostics<BindingAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
-		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
+			CheckNormalization<PortNormalizer>(code);
 		}
 	}
 }
