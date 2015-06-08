@@ -288,13 +288,103 @@ module TsamToReport =
             }
             runWorkflow_getResult outputWorkflow
 
+            
+        let output_III_complete : string =
+        
+            let output_III_1_wf () = workflow {
+                do! readFile filename
+                do! SafetySharp.Models.SamParser.parseStringWorkflow
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigurationWf ()
+                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+                do! SafetySharp.ITracing.removeTracing ()
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
+                let! result = getState ()
+                let resultDecorated = (outputstyle.Section "Promela/Spin (direct) from I A") + (outputstyle.TsamSource result)
+                return resultDecorated
+            }
+        
+            let output_III_2_wf () = workflow {
+                do! updateState tsamSourceModel
+                let result = "TODO"
+                let resultDecorated = (outputstyle.Section "NuXmv/NuSMV from I A") + (outputstyle.TsamSource result)
+                return resultDecorated
+            }
+            
+            let output_III_3_wf () = workflow {
+                //II 4. Transition system <--Strongest Postcondition (optimized)-- IC (Passive Form) <---- IA
+                do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+                do! SafetySharp.ITracing.removeTracing ()
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
+                let! result = getState ()
+                let resultDecorated = (outputstyle.Section "NuXmv/NuSMV from II 4") + (outputstyle.TsamSource result)
+                return resultDecorated
+            }
+            let output_III_4_wf () = workflow {
+                //II 5. Transition system <--Propagation--  IE (Tree Form) <--treeify-- SSA Form (IB) <---- IA
+                do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
+                do! SafetySharp.Models.TsamMutable.treeifyStm ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithPropagationWorkflow ()
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+                do! SafetySharp.ITracing.removeTracing ()
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
+                let! result = getState ()
+                let resultDecorated = (outputstyle.Section "NuXmv/NuSMV from II 5") + (outputstyle.TsamSource result)
+                return resultDecorated
+            }
+            let output_III_5_wf () = workflow {
+                //II 6. Transition system <--...-- Gwa-Model  <--Gwa-Propagation-- IF(Gwa-Form) <---- IA
+                do! updateState tsamSourceModel
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+                do! SafetySharp.ITracing.removeTracing ()
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
+                let! result = getState ()
+                let resultDecorated = (outputstyle.Section "NuXmv/NuSMV from II 6") + (outputstyle.TsamSource result)
+                return resultDecorated
+            }
+            let output_III_6_wf () = workflow {
+                do! updateState tsamSourceModel
+                let result = "TODO"
+                let resultDecorated = (outputstyle.Section "Prism from  I A") + (outputstyle.TsamSource result)
+                return resultDecorated
+            }
+            let output_III_7_wf () = workflow {
+                do! updateState tsamSourceModel
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow ()
+                do! SafetySharp.Analysis.Modelchecking.Prism.GwamToPrism.transformWorkflow ()
+                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+                do! SafetySharp.ITracing.removeTracing ()
+                do! SafetySharp.Analysis.Modelchecking.Prism.ExportPrismAstToFile.workflow ()
+                let! result = getState ()
+                let resultDecorated = (outputstyle.Section "Prism from Gwa-Model") + (outputstyle.TsamSource result)
+                return resultDecorated
+            }
 
+            let outputWorkflow = workflow {
+                let! output_III_1 = output_III_1_wf ()
+                let! output_III_2 = output_III_2_wf ()
+                let! output_III_3 = output_III_3_wf ()
+                let! output_III_4 = output_III_4_wf ()
+                let! output_III_5 = output_III_5_wf ()
+                let! output_III_6 = output_III_6_wf ()
+                let! output_III_7 = output_III_7_wf ()
+                return output_III_1 + output_III_2 + output_III_3 + output_III_4 + output_III_5 + output_III_6 + output_III_7
+            }
+            runWorkflow_getResult outputWorkflow
 
 
 
                     
         let completeOutput : string =
-            let content = sprintf "%s %s" output_I_complete output_II_complete
+            let content = sprintf "%s%s%s" output_I_complete output_II_complete output_III_complete
             outputstyle.Content content
         do SafetySharp.FileSystem.WriteToAsciiFile path completeOutput
         completeOutput
@@ -323,56 +413,6 @@ module TsamToReport =
         }
 
     let generateTexFile = generateFile texOutput
-        (*
-        let generateIII (filename:string) : string =
-            // III 1:
-            let promelaSmokeTestWorkflow (inputFile:string) = workflow {    
-                    do! readFile inputFile
-                    do! SafetySharp.Models.SamParser.parseStringWorkflow
-                    do! SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigurationWf ()
-                    do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
-                    do! SafetySharp.ITracing.removeTracing ()
-                    do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
-                    let filename = sprintf "%s.pml" (System.IO.Path.GetFileName(inputFile) ) |> SafetySharp.FileSystem.FileName
-                    do! saveToFile filename
-                    do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan ()
-            }
-            // III 2:     
-            // III 3:   
-            let nuxmv2smokeTestWorkflow (inputFile:string) = workflow {
-                do! readFile inputFile
-                do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
-                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow ()
-                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
-                do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
-                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
-                do! SafetySharp.ITracing.removeTracing ()
-                do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
-                let outputFile = inputFileNameToOutputFileName inputFile
-                do! printToFile outputFile
-            }
-            // III 4:
-            // III 5:
-            // III 6:
-            let prismSmokeTestWorkflow (inputFile:string) = workflow {
-                do! readFile inputFile
-                do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
-                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow ()
-                do! SafetySharp.Analysis.Modelchecking.Prism.GwamToPrism.transformWorkflow ()
-                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
-                do! SafetySharp.ITracing.removeTracing ()
-                do! SafetySharp.Analysis.Modelchecking.Prism.ExportPrismAstToFile.workflow ()
-                let outputFile = inputFileNameToOutputFileName inputFile
-                do! printToFile outputFile
-            }
-
-            //let runSmokeTest (inputFile) =
-            //    SafetySharp.Workflow.runWorkflow_getState (smokeTestWorkflow inputFile)
-            *)
 
 open NUnit.Framework
 
