@@ -45,6 +45,7 @@ namespace SafetySharp.Models
 // Advantage of this algorithm:
 // Disadvantages of this algorithm:
 
+// Modification of the original algorithm: Add currently unwritten statements
 
 // TODO: Switch ReadVersion to actually read versions and WriteVersion to actually written versions
 
@@ -449,10 +450,11 @@ module internal TsamPassiveFormGCFK09 =
     
     let transformProgramToSsaForm_Original<'traceableOfOrigin>
             () : EndogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+        do! TsamMutable.prependKeepValueAssignments ()
         let! state = getState ()
         let pgm = state.Pgm
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
-        let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
+        let localVars = pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
         
         let statementInfos = calculateStatementInfos pgm
         

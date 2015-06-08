@@ -96,3 +96,50 @@ module internal TsamMutable =
             }
         do! updateState tsamMutable
     }
+
+    let prependKeepValueAssignments<'traceableOfOrigin> ()
+            : EndogenousWorkflowFunction<MutablePgm<'traceableOfOrigin>> = workflow {
+        // Find every global variable, which was not written to. Prepend statements which keep their value.
+        // This is useful for the SSA-Form to express that a variable should keep its value.
+        let! state = getState ()
+        assert (state.Pgm.CodeForm = Tsam.CodeForm.Default)
+
+        let rec varsWrittenTo (acc:Set<Tsam.Var>) (stm:Tsam.Stm) =
+            match stm with
+                | Tsam.Stm.Assert _ ->
+                    acc
+                | Tsam.Stm.Assume _ ->
+                    acc
+                | Tsam.Stm.Block (sid,statements) ->
+                    let newAccs = statements |> List.map (varsWrittenTo acc)
+                    newAccs |> Set.unionMany
+                | Tsam.Stm.Choice (sid,choices) ->
+                    let newAccs = choices |> List.map (varsWrittenTo acc)
+                    newAccs |> Set.unionMany
+                | Tsam.Stm.Stochastic (sid,stochasticChoices) ->
+                    let newAccs = stochasticChoices |> List.map (fun (_,stochasticStm) -> (varsWrittenTo acc stochasticStm))
+                    newAccs |> Set.unionMany
+                | Tsam.Stm.Write (sid,_var,expr) ->
+                    acc.Add _var
+
+        let globalVarSet = state.Pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
+        let varsToAddStatementsFor = Set.difference globalVarSet (varsWrittenTo (Set.empty<Tsam.Var>) (state.Pgm.Body) ) |> Set.toList
+        let statementsToPrepend =
+            let createAssignment (_var:Tsam.Var) =
+                Tsam.Stm.Write(state.Pgm.UniqueStatementIdGenerator (),_var,Tsam.Expr.Read(_var))
+            varsToAddStatementsFor |> List.map createAssignment
+
+        let newBody = state.Pgm.Body.prependStatements state.Pgm.UniqueStatementIdGenerator statementsToPrepend
+
+        let newPgm =
+            { state.Pgm with
+                Tsam.Pgm.Body = newBody
+            }
+        let tsamMutable =
+            {
+                MutablePgm.Pgm = newPgm;
+                MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                MutablePgm.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState tsamMutable
+    }

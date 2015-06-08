@@ -342,6 +342,7 @@ module internal TsamPassiveFormFS01 =
 
     let passifyPgm<'traceableOfOrigin>
             () : EndogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+        do! TsamMutable.prependKeepValueAssignments ()
         let! state = getState ()
         let pgm = state.Pgm
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)

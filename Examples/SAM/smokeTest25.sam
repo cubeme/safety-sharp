@@ -1,0 +1,7 @@
+globals {
+	i : int<0..200,clamp on overrun> = 0;
+	j : bool = false;
+}
+locals {
+}
+i := 200;

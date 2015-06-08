@@ -26,6 +26,7 @@ module internal TransitionSystemAsRelationExpr =
     // Tsare
 
     open SafetySharp.Models
+    open SafetySharp.Models.TsamHelpers
     open SafetySharp.Models.SamHelpers
     open VcGuardWithAssignmentModel
     
@@ -333,10 +334,11 @@ module internal TransitionSystemAsRelationExpr =
                 // The paper "To Goto Where No Statement Has Gone Before" offers in chapter 3 a way out.
                 // Their goal is to transform "Code Expressions" (Code with statements) into genuine Expressions.
                 let createFormulaForGlobalVarDecl (globalVarDecl:Tsam.GlobalVarDecl) : Tsam.Expr =
-                    let varCurrent = globalVarDecl.Var
-                    let varPost = varToVirtualNextVar.Item varCurrent
+                    let var = globalVarDecl.Var
+                    let varWithLastValue = pgm.NextGlobal.Item var
+                    let varPost = varToVirtualNextVar.Item var
                     let operator = Tsam.BOp.Equals
-                    Tsam.Expr.BExpr(Tsam.Expr.Read(varPost),operator,Tsam.Expr.Read(varCurrent))
+                    Tsam.Expr.BExpr(Tsam.Expr.Read(varPost),operator,Tsam.Expr.Read(varWithLastValue))
                 pgm.Globals |> List.map createFormulaForGlobalVarDecl
                             |> SafetySharp.Models.TsamHelpers.createAndedExpr
             let transExpr = VcWeakestPrecondition.wp pgm.Body formulaForWPPostcondition
@@ -348,7 +350,97 @@ module internal TransitionSystemAsRelationExpr =
                 TransitionSystem.Init = initExpr;
                 TransitionSystem.Trans = transExpr;
             }
+            
+    // -- TSAM with weakest precondition ------------------------------   
+        
+    let transformTsamToTsareWithPropagation (pgm:Tsam.Pgm) : TransitionSystem =
+        // Note: Just here for theoretical purposes. Not tested really well!
+        // Assume:
+        //   * Every variable is written exactly once
+        //   * Tree-Form
+        // TODO: Treat proof obligations. Add parameter "untreated global variable". After the statementId of every branch, these must be treated.
+        
+        if pgm.CodeForm <> Tsam.CodeForm.SingleAssignments then
+            failwith "program must be in SSA form to use this algorithm"
+        
+        let varToVirtualNextVar = createVirtualVarEntryPool pgm
+        let virtualNextVarToVar = varToVirtualNextVar |> Map.toList |> List.map ( fun (var,virtVar) -> (virtVar,var)) |> Map.ofList
 
+        // We assume Tree-Form (There is no statement _after_ a Indeterministic/Stochastic Choice in a block)
+        let initialValuation =
+            // add for each globalVar a self assignment
+            let globalInit = pgm.Globals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Read(var.Var))) Map.empty<Var,Expr>
+            // every local variable should have its default value
+            let globalAndLocalInit = pgm.Locals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
+            globalAndLocalInit
+
+        let interestingVariablesToRemapToVirtualNextVar =
+            pgm.NextGlobal |> Map.toList
+                           |> List.map ( fun (globalVar,nextVar) -> (nextVar,varToVirtualNextVar.Item globalVar) )
+                           |> Map.ofList
+                           
+        let rec buildFormulaAndPropagateValuation (currentValuation:Map<Var,Expr>) (stm:Tsam.Stm) : Expr*Map<Var,Expr>*bool = //returns (SubExpression:Expr*NewValuation:Map<Var,Expr>*ContainedChoice:bool)
+            match stm with
+                | Tsam.Stm.Assert (_,expr) ->
+                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation 
+                    failwith "No support for proof obligations here, yet"
+                | Tsam.Stm.Assume (_,expr) ->
+                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation
+                    (newExpr,currentValuation,false)
+                | Tsam.Stm.Block (_,statements) ->
+                    let rec processBlockStm (collectedExpr:Tsam.Expr,stmnts:Tsam.Stm list,currentValuation:Map<Var,Expr>,containedChoice:bool) : (Expr*Map<Var,Expr>*bool) =
+                        if stmnts.IsEmpty then                            
+                            (collectedExpr,currentValuation,containedChoice)
+                        else
+                            if containedChoice = true then
+                                failwith "We do not allow a statement _after_ a choice in a block"
+                            else                                
+                                let stmToTraverse = stmnts.Head
+                                let (exprOfNext,valuationAfterNext,containedChoice) = buildFormulaAndPropagateValuation (currentValuation) stmToTraverse
+                                let newCollectedExpr= Tsam.Expr.BExpr(collectedExpr,Tsam.BOp.And,exprOfNext)
+                                processBlockStm (newCollectedExpr,stmnts.Tail,valuationAfterNext,containedChoice)
+                    processBlockStm (Tsam.Expr.Literal(Tsam.Val.BoolVal(true)) ,statements,currentValuation,false)
+                | Tsam.Stm.Choice (_,choices) ->
+                    let subExpressions,_,_=
+                        choices |> List.map (fun (choice:Tsam.Stm) -> buildFormulaAndPropagateValuation currentValuation choice)
+                                |> List.unzip3
+                    let newFormula = subExpressions |> Expr.createOredExpr // "or", because we go from left to right like strongest postcondition
+                    (newFormula,Map.empty<Var,Expr>,true)
+                | Tsam.Stm.Stochastic _ ->
+                    failwith "Stochastic case distinction is not supported by boolean only strongest postcondition"
+                    // TODO: Maybe in future it is possible to declare a transition relation with probabilities in Prism
+                | Tsam.Stm.Write (sid, var, expr) ->
+                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation
+                    let newValuation = currentValuation.Add(var,newExpr)
+                    let newAssignmentInFormula =
+                        if (interestingVariablesToRemapToVirtualNextVar.ContainsKey var) then
+                            let virtualNextVar = interestingVariablesToRemapToVirtualNextVar.Item var
+                            Expr.BExpr(Expr.Read(virtualNextVar),BOp.Equals,newExpr)
+                        else
+                            Expr.Literal(Val.BoolVal(true)) // we do not care about local variables or non-final assignments
+                    (newAssignmentInFormula,newValuation,false)
+
+        
+        let ivars = pgm.Locals |> Set.ofList
+        
+        let initExpr = generateInitCondition pgm.Globals
+                
+        let formulaForSPPrecondition =
+            Expr.Literal(Val.BoolVal(true)) // we do not assume anything before                        
+        let transExpr =
+            let transExpr,_,_ = buildFormulaAndPropagateValuation (initialValuation) pgm.Body
+            // to add a connection between now and the next state, we add next(x) = pgm.next[x] for each global variable
+            transExpr
+        let spOfPgm = VcStrongestPostcondition.sp
+                                
+        {
+            TransitionSystem.Globals = tsamGlobalVarDeclToVarDecl pgm.Globals;
+            TransitionSystem.Ivars = ivars |> Set.toList;
+            TransitionSystem.VirtualNextVarToVar = virtualNextVarToVar;
+            TransitionSystem.VarToVirtualNextVar = varToVirtualNextVar;
+            TransitionSystem.Init = initExpr;
+            TransitionSystem.Trans = transExpr;
+        }
 
         
     // -- Workflow ----------------------------------------------------
@@ -400,6 +492,19 @@ module internal TransitionSystemAsRelationExpr =
         let transformed =
             {
                 TransitionSystemTracer.TransitionSystem = transformTsamToTsareWithWp (``yes, I know what I do. I am sure the input program is deterministic``) model;
+                TransitionSystemTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TransitionSystemTracer.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState transformed
+    }
+
+    let transformTsamToTsareWithPropagationWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let model = state.Pgm
+        let transformed =
+            {
+                TransitionSystemTracer.TransitionSystem = transformTsamToTsareWithPropagation model;
                 TransitionSystemTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
                 TransitionSystemTracer.ForwardTracer = state.ForwardTracer;
             }

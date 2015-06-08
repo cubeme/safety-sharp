@@ -835,6 +835,7 @@ module internal VcGuardWithAssignmentModel =
 
     
     let transformGwaTsamToGwaModel (pgm:Tsam.Pgm) : GuardWithAssignmentModel =
+        // The algorithm also ensures variables never written to keep their value
         let skipStm = Stm.Block(pgm.UniqueStatementIdGenerator (),[])
         
         let initialValuation =
