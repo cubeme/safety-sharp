@@ -54,7 +54,7 @@ namespace Tests.Utilities
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="output">The stream that should be used to write the test output.</param>
-		public Tests(ITestOutputHelper output)
+		protected Tests(ITestOutputHelper output)
 		{
 			Requires.NotNull(output, () => output);
 			_output = output;
@@ -151,7 +151,7 @@ namespace Tests.Utilities
 		{
 			var files = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
 
-			foreach (var file in files)
+			foreach (var file in files.OrderBy(file => file))
 			{
 				var prefix = Path.GetDirectoryName(file).Substring(path.Length);
 				var testName = String.IsNullOrWhiteSpace(prefix)

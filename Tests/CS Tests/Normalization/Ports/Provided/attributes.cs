@@ -20,70 +20,121 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Required
+namespace Tests.Normalization.Ports.Provided
 {
 	using System;
+	using System.Diagnostics;
 	using SafetySharp.Modeling;
 
-	internal partial class In8 : Component
+	internal partial class In1 : Component
 	{
-		public extern bool M1(ref int a);
-		public extern bool M2(out int a);
-		public extern bool M3(params int[] a);
-		public extern int M4(ref int a, out decimal b, params int[] c);
+		[Provided]
+		public void M1()
+		{
+			var i = 1 + 2;
+		}
+
+		[DebuggerHidden]
+		internal void M2()
+		{
+			var i = 1 + 2;
+		}
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
+		protected internal void M3()
+		{
+			var i = 1 + 2;
+		}
+
+		[DebuggerHidden, DebuggerStepThrough]
+		protected void M4()
+		{
+			var i = 1 + 2;
+		}
 	}
 
-	internal partial class Out8 : Component
+	internal partial class Out1 : Component
 	{
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
-		public bool M1(ref int a) => this.__portField0__(ref a);
-		
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField1__")]
-		public bool M2(out int a) => this.__portField1__(out a);
+		[Provided]
+		private void __DefaultImplementation0__()
+		{
+			var i = 1 + 2;
+		}
 
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField2__")]
-		public bool M3(params int[] a) => this.__portField2__(a);
+		[DebuggerHidden]
+		private void __DefaultImplementation1__()
+		{
+			var i = 1 + 2;
+		}
 
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField3__")]
-		public int M4(ref int a, out decimal b, params int[] c) => this.__portField3__(ref a, out b, c);
+		[DebuggerHidden]
+		[DebuggerStepThrough]
+		private void __DefaultImplementation2__()
+		{
+			var i = 1 + 2;
+		}
+
+		[DebuggerHidden, DebuggerStepThrough]
+		private void __DefaultImplementation3__()
+		{
+			var i = 1 + 2;
+		}
 	}
 
-	partial class Out8
+	partial class Out1
 	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private __PortDelegate0__ __portField0__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate bool __PortDelegate0__(ref int a);
+		private delegate void __PortDelegate0__();
+
+		[Provided]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		public void M1() => this.__portField0__();
 
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private __PortDelegate1__ __portField1__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate bool __PortDelegate1__(out int a);
+		private delegate void __PortDelegate1__();
+
+		[DebuggerHidden]
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation1__")]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField1__")]
+		internal void M2() => this.__portField1__();
 
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private __PortDelegate2__ __portField2__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate bool __PortDelegate2__(params int[] a);
+		private delegate void __PortDelegate2__();
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation2__")]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField2__")]
+		protected internal void M3() => this.__portField2__();
 
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private __PortDelegate3__ __portField3__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate int __PortDelegate3__(ref int a, out decimal b, params int[] c);
+		private delegate void __PortDelegate3__();
+
+		[DebuggerHidden, DebuggerStepThrough]
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation3__")]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField3__")]
+		protected void M4() => this.__portField3__();
 	}
 }

@@ -20,57 +20,104 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Required
+namespace Tests.Normalization.Ports.Provided
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	internal partial class In7 : Component
+	internal partial class In1 : Component
 	{
-		public extern bool M(int a);
-		public extern int M(int a, decimal b);
-		public extern decimal M(int a, decimal b, bool c);
+		public virtual int M(int x)
+		{
+			return x;
+		}
 	}
 
-	internal partial class Out7 : Component
+	internal partial class In2 : In1
 	{
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
-		public bool M(int a) => this.__portField0__(a);
-		
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField1__")]
-		public int M(int a, decimal b) => this.__portField1__(a, b);
-
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField2__")]
-		public decimal M(int a, decimal b, bool c) => this.__portField2__(a, b, c);
+		public override int M(int x)
+		{
+			return 1;//TODO: base.M(x);
+		}
 	}
 
-	partial class Out7
+	internal partial class In3 : In2
+	{
+		public sealed override int M(int x)
+		{
+			return 1;
+		}
+	}
+
+	internal partial class Out1 : Component
+	{
+		private int __DefaultImplementation0__(int x)
+		{
+			return x;
+		}
+	}
+
+	internal partial class Out2 : Out1
+	{
+		private int __DefaultImplementation0__(int x)
+		{
+			return 1;//TODO: base.M(x);
+		}
+	}
+
+	internal partial class Out3 : Out2
+	{
+		private int __DefaultImplementation0__(int x)
+		{
+			return 1;
+		}
+	}
+
+	partial class Out1
 	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private __PortDelegate0__ __portField0__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate bool __PortDelegate0__(int a);
+		private delegate int __PortDelegate0__(int x);
 
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		public virtual int M(int x) => this.__portField0__(x);
+	}
+
+	partial class Out2
+	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate1__ __portField1__;
+		private __PortDelegate0__ __portField0__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate int __PortDelegate1__(int a, decimal b);
+		private delegate int __PortDelegate0__(int x);
 
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		public override int M(int x) => this.__portField0__(x);
+	}
+
+	partial class Out3
+	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate2__ __portField2__;
+		private __PortDelegate0__ __portField0__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate decimal __PortDelegate2__(int a, decimal b, bool c);
+		private delegate int __PortDelegate0__(int x);
+
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		public sealed override int M(int x) => this.__portField0__(x);
 	}
 }

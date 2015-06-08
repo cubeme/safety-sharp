@@ -29,7 +29,7 @@ namespace Tests.Normalization
 
 	public partial class NormalizationTests : Tests
 	{
-		[Theory, MemberData("DiscoverTests", "Ports")]
+		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Ports")]
 		public void Ports(string test, string code)
 		{
 			CheckNormalization<PortNormalizer>(code);

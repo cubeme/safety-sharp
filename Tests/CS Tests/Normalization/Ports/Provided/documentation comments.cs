@@ -20,37 +20,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Required
+namespace Tests.Normalization.Ports.Provided
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	interface I1 : IComponent
+	[CheckCommentsAndLineCount]
+	internal partial class In1 : Component
 	{
-		[Required]
-		void M();
-	}
-	
-	internal partial class In9 : Component, Tests.Normalization.Ports.Required.I1
-	{
-		extern void Tests.Normalization.Ports.Required.I1.M();
-	}
-
-	internal partial class Out9 : Component, Tests.Normalization.Ports.Required.I1
-	{
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
-		void Tests.Normalization.Ports.Required.I1.M() => this.__portField0__();
+		// test
+		/// <summary>
+		/// Some documentation.
+		/// </summary>
+		// test
+		public int M1()
+		{
+			return 1;
+		} /* test */
 	}
 
-	partial class Out9
+	[CheckCommentsAndLineCount]
+	internal partial class Out1 : Component
+	{
+		// test
+		/// <summary>
+		/// Some documentation.
+		/// </summary>
+		// test
+		private int __DefaultImplementation0__()
+		{
+			return 1;
+		} /* test */
+#line 40
+	}
+
+	partial class Out1
 	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private __PortDelegate0__ __portField0__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate void __PortDelegate0__();
+		private delegate int __PortDelegate0__();
+
+		// test
+		/// <summary>
+		/// Some documentation.
+		/// </summary>
+		// test
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		public int M1() => this.__portField0__(); /* test */
 	}
 }

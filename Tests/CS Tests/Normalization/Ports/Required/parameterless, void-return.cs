@@ -32,29 +32,40 @@ namespace Tests.Normalization.Ports.Required
 		protected internal extern void M3();
 		protected extern void M4();
 		private extern void M5();
+		extern void M6();
 	}
 
 	internal partial class Out1 : Component
 	{
 		[SafetySharp.Modeling.RequiredAttribute()]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
 		public void M1() => this.__portField0__();
 
 		[SafetySharp.Modeling.RequiredAttribute()]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField1__")]
 		internal void M2() => this.__portField1__();
 
 		[SafetySharp.Modeling.RequiredAttribute()]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField2__")]
 		protected internal void M3() => this.__portField2__();
 
 		[SafetySharp.Modeling.RequiredAttribute()]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField3__")]
 		protected void M4() => this.__portField3__();
 
 		[SafetySharp.Modeling.RequiredAttribute()]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField4__")]
 		private void M5() => this.__portField4__();
+
+		[SafetySharp.Modeling.RequiredAttribute()]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField5__")]
+		void M6() => this.__portField5__();
 	}
 
 	partial class Out1
@@ -93,5 +104,12 @@ namespace Tests.Normalization.Ports.Required
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private delegate void __PortDelegate4__();
+
+		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		private __PortDelegate5__ __portField5__;
+
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		private delegate void __PortDelegate5__();
 	}
 }

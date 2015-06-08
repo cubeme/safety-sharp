@@ -20,31 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Normalization.Ports.Required
 {
 	using System;
-	using SafetySharp.CSharp.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class DiagnosticsTests : Tests
+	internal partial class In1
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
+		partial class In2 : Component
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
+			internal extern void M2();
 		}
+	}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
+	internal partial class Out1
+	{
+		partial class Out2 : Component
 		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
+			[SafetySharp.Modeling.RequiredAttribute()]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
+			[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+			internal void M2() => this.__portField0__();
 		}
+	}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
+	partial class Out1
+	{
+		partial class Out2
 		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
+			[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
+			[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+			private __PortDelegate0__ __portField0__;
+
+			[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+			private delegate void __PortDelegate0__();
 		}
 	}
 }

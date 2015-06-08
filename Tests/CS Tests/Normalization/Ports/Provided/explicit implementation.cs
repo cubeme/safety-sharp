@@ -20,11 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics.Bindings
+namespace Tests.Normalization.Ports.Required
 {
 	using System;
+	using SafetySharp.Modeling;
 
-	public class ValidBindings
+	interface I1 : IComponent
 	{
+		[Provided]
+		int M();
+	}
+	
+	internal partial class In9 : Component, Tests.Normalization.Ports.Required.I1
+	{
+		int Tests.Normalization.Ports.Required.I1.M()
+		{
+			return 1;
+		}
+	}
+
+	internal partial class Out9 : Component, Tests.Normalization.Ports.Required.I1
+	{
+		private int __DefaultImplementation0__()
+		{
+			return 1;
+		}
+	}
+
+	partial class Out9
+	{
+		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		private __PortDelegate0__ __portField0__;
+
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		private delegate int __PortDelegate0__();
+
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		int Tests.Normalization.Ports.Required.I1.M() => this.__portField0__();
 	}
 }

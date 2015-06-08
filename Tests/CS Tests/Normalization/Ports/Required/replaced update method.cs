@@ -25,52 +25,26 @@ namespace Tests.Normalization.Ports.Required
 	using System;
 	using SafetySharp.Modeling;
 
-	internal partial class In7 : Component
+	internal partial class In1 : Component
 	{
-		public extern bool M(int a);
-		public extern int M(int a, decimal b);
-		public extern decimal M(int a, decimal b, bool c);
+		public new extern void Update();
 	}
 
-	internal partial class Out7 : Component
+	internal partial class Out1 : Component
 	{
 		[SafetySharp.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
-		public bool M(int a) => this.__portField0__(a);
-		
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField1__")]
-		public int M(int a, decimal b) => this.__portField1__(a, b);
-
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField2__")]
-		public decimal M(int a, decimal b, bool c) => this.__portField2__(a, b, c);
+		public new void Update() => this.__portField0__();
 	}
 
-	partial class Out7
+	partial class Out1
 	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private __PortDelegate0__ __portField0__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate bool __PortDelegate0__(int a);
-
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate1__ __portField1__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate int __PortDelegate1__(int a, decimal b);
-
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate2__ __portField2__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate decimal __PortDelegate2__(int a, decimal b, bool c);
+		private delegate void __PortDelegate0__();
 	}
 }

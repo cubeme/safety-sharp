@@ -461,5 +461,21 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 			Requires.NotNull(syntaxNode, () => syntaxNode);
 			return syntaxNode.WithTrailingTrivia(syntaxNode.GetTrailingTrivia().Add(CreateLineDirective(line, filePath)));
 		}
+
+		/// <summary>
+		/// Ensures that <paramref name="syntaxNode"/> ends at the same line count as <paramref name="templateNode"/>.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node that is not allowed to change the line count.</param>
+		/// <param name="templateNode">The template node that defines the original line count.</param>
+		public static T EnsureLineCount<T>([NotNull] this T syntaxNode, T templateNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(templateNode, () => templateNode);
+
+			var line = templateNode.GetLastToken(true, true, true, true).GetLocation().GetMappedLineSpan().EndLinePosition.Line;
+			return syntaxNode.AppendLineDirective(line + 2);
+		}
 	}
 }

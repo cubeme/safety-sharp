@@ -26,7 +26,6 @@ namespace SafetySharp.Compiler.Normalization
 	using CSharp.Roslyn;
 	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 	/// <summary>
 	///     The S# compiler changes the C# code behind the modeler's back. To ensure that the debugging experience is not negatively
@@ -37,16 +36,16 @@ namespace SafetySharp.Compiler.Normalization
 	public sealed class DebugInfoNormalizer : Normalizer
 	{
 		/// <summary>
-		///     Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation" />.
+		///     Normalizes the <paramref name="syntaxTree" /> of the <see cref="Compilation" />.
 		/// </summary>
-		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree" />.</param>
 		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
-		protected override SyntaxTree Normalize(Compilation compilation, SyntaxTree syntaxTree)
+		protected override SyntaxTree Normalize(SyntaxTree syntaxTree)
 		{
-			var root = (CompilationUnitSyntax)syntaxTree.GetRoot();
-			var node = root.GetFirstToken(true, true, true, true).Parent.PrependLineDirective(1, syntaxTree.FilePath);
+			var root = syntaxTree.GetRoot();
+			var firstNode = root.GetFirstToken(true, true, true, true).Parent;
+			var updatedNode = firstNode.PrependLineDirective(1, syntaxTree.FilePath);
 
-			return syntaxTree.WithFilePath(syntaxTree.FilePath + Guid.NewGuid()).WithRoot(root.ReplaceNode(node, node));
+			return syntaxTree.WithFilePath(syntaxTree.FilePath + Guid.NewGuid()).WithRoot(root.ReplaceNode(firstNode, updatedNode));
 		}
 	}
 }

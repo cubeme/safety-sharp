@@ -86,7 +86,6 @@
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.fs" />
     <Compile Include="Normalizers\BindingNormalizer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
-    <Compile Include="Normalizers\PortNormalizer.fs" />
     <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>

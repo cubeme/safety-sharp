@@ -66,7 +66,7 @@ namespace SafetySharp.CSharp.Roslyn
 			{
 				_syntaxTree = syntaxTree;
 
-				var normalizedSyntaxTree = Normalize(compilation, syntaxTree);
+				var normalizedSyntaxTree = Normalize(syntaxTree);
 				Compilation = Compilation.ReplaceSyntaxTree(syntaxTree, normalizedSyntaxTree);
 			}
 
@@ -74,13 +74,12 @@ namespace SafetySharp.CSharp.Roslyn
 		}
 
 		/// <summary>
-		///     Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation" />.
+		///     Normalizes the <paramref name="syntaxTree" /> of the <see cref="Compilation" />.
 		/// </summary>
-		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree" />.</param>
 		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
-		protected virtual SyntaxTree Normalize(Compilation compilation, SyntaxTree syntaxTree)
+		protected virtual SyntaxTree Normalize(SyntaxTree syntaxTree)
 		{
-			SemanticModel = compilation.GetSemanticModel(syntaxTree);
+			SemanticModel = Compilation.GetSemanticModel(syntaxTree);
 
 			var root = syntaxTree.GetRoot();
 			var normalizedRoot = Visit(root);

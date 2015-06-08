@@ -32,14 +32,25 @@ namespace Tests.Normalization
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using SafetySharp.CSharp.Roslyn;
+	using SafetySharp.CSharp.Roslyn.Symbols;
 	using SafetySharp.CSharp.Roslyn.Syntax;
 	using Utilities;
 	using Xunit.Abstractions;
 
 	internal class SyntaxNodeComparer : IEqualityComparer<BaseTypeDeclarationSyntax>
 	{
+		private readonly HashSet<string> _checkTrivia;
+
+		public SyntaxNodeComparer(HashSet<string> checkTrivia)
+		{
+			_checkTrivia = checkTrivia;
+		}
+
 		public bool Equals(BaseTypeDeclarationSyntax x, BaseTypeDeclarationSyntax y)
 		{
+			if (_checkTrivia.Contains(x.Identifier.ValueText) || _checkTrivia.Contains(y.Identifier.ValueText))
+				return x.NormalizeWhitespace().IsEquivalentTo(y.NormalizeWhitespace());
+			
 			return x.IsEquivalentTo(y, topLevel: false);
 		}
 
@@ -47,6 +58,10 @@ namespace Tests.Normalization
 		{
 			return 0;
 		}
+	}
+
+	public class CheckCommentsAndLineCountAttribute : Attribute
+	{
 	}
 
 	public partial class NormalizationTests
@@ -61,22 +76,34 @@ namespace Tests.Normalization
 		{
 			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code);
 
-			// Ensure that there are no errors
-			CreateCompilation(syntaxTree);
+			// Ensure that there are no C# errors
+			var compilation = CreateCompilation(syntaxTree);
 
 			// Extract the inputs and outputs
 			var inputs = syntaxTree.Descendants<BaseTypeDeclarationSyntax>().Where(t => t.Identifier.ValueText.StartsWith("In")).ToArray();
 			var expectedOutputs = syntaxTree.Descendants<BaseTypeDeclarationSyntax>().Where(t => t.Identifier.ValueText.StartsWith("Out")).ToArray();
 
 			if (inputs.Length == 0)
-				throw new TestException("Expected a type declaration with an identifier starting with 'In'.");
+				throw new TestException("Expected at least one type declaration with an identifier starting with 'In'.");
+
+			// Determine the inputs for which we have to compare the trivia
+			var semanticModel = compilation.GetSemanticModel(syntaxTree);
+			var checkTrivia = new HashSet<string>();
+
+			foreach (var input in inputs)
+			{
+				var symbol = input.GetTypeSymbol(semanticModel);
+
+				if (symbol.HasAttribute<CheckCommentsAndLineCountAttribute>(semanticModel))
+					checkTrivia.Add(input.Identifier.ValueText);
+			}
 
 			// Remove the outputs from the input code
 			var root = syntaxTree.GetRoot();
 			var inputCode = root.RemoveNodes(expectedOutputs, SyntaxRemoveOptions.KeepNoTrivia);
 
-			// Create a compilation for the inputs and check for any errors
-			var compilation = CreateCompilation(SyntaxFactory.SyntaxTree(inputCode));
+			// Create a compilation for the inputs and check for any C# and S# errors
+			compilation = CreateCompilation(SyntaxFactory.SyntaxTree(inputCode));
 			CheckForSSharpDiagnostics(compilation);
 
 			// Create the expected outputs; if the normalization does nothing, the inputs also act as the expected outputs
@@ -95,7 +122,7 @@ namespace Tests.Normalization
 				.SelectMany(t => t.Descendants<BaseTypeDeclarationSyntax>())
 				.Where(t => t.Identifier.ValueText.StartsWith("In"))
 				.ToArray();
-			var commonOutput = expectedOutputs.Intersect(actualOutputs, new SyntaxNodeComparer());
+			var commonOutput = expectedOutputs.Intersect(actualOutputs, new SyntaxNodeComparer(checkTrivia));
 
 			if (actualOutputs.Length == expectedOutputs.Length && actualOutputs.Length == commonOutput.Count())
 				return;
@@ -110,6 +137,7 @@ namespace Tests.Normalization
 			foreach (var declaration in actualOutputs)
 				builder.AppendLine(declaration.NormalizeWhitespace().ToFullString());
 
+			builder.AppendLine();
 			builder.AppendLine("Expected Outputs:");
 			builder.AppendLine("=================");
 
@@ -127,6 +155,14 @@ namespace Tests.Normalization
 
 		private class Renamer : CSharpSyntaxRewriter
 		{
+			public override SyntaxNode VisitIdentifierName(IdentifierNameSyntax node)
+			{
+				if (!node.Identifier.ValueText.StartsWith("Out"))
+					return base.VisitIdentifierName(node);
+
+				return ((IdentifierNameSyntax)base.VisitIdentifierName(node)).WithIdentifier(Rename(node.Identifier));
+			}
+
 			public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax node)
 			{
 				if (!node.Identifier.ValueText.StartsWith("Out"))

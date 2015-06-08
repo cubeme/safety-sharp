@@ -42,16 +42,15 @@ namespace SafetySharp.Compiler.Normalization
 	///     <code>
 	///    		public extern void MyMethod(int a, double b);
 	///    		// becomes (on a single line with uniquely generated names):
-	///  		[CompilerGenerated] public delegate void d(int a, double b);
-	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] d f;
-	///    		[SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute("f")] public void MyMethod(int a, double b) { f(a, b); }
+	///  		[CompilerGenerated] 
+	///         private delegate void d(int a, double b);
+	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] 
+	///         d f;
+	///         [DebuggerHidden]
+	///    		[SafetySharp.Modeling.RequiredAttribute()] 
+	///         [SafetySharp.Modeling.BackingFieldAttribute("f")] 
+	///         public void MyMethod(int a, double b) => f(a, b);
 	///    		
-	///    		private extern bool MyMethod(out int a);
-	///    		// becomes (on a single line with uniquely generated names):
-	///    		[CompilerGenerated] public delegate bool d(out int a);
-	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] private d f;
-	///    		[SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute("f")] private bool MyMethod(out int a) { return f(out a); }
-	///  
 	/// 		private extern bool MyProperty { get; set; } // TODO!
 	///    		// becomes (on a single line with uniquely generated names):
 	///    		[CompilerGenerated] public delegate bool d1();
@@ -62,10 +61,15 @@ namespace SafetySharp.Compiler.Normalization
 	/// 
 	///         public void MyMethod(int a, double b) { ... }
 	///    		// becomes:
-	///         [CompilerGenerated] public delegate void d(int a, double b);
-	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] d f;
+	///         [CompilerGenerated] 
+	///         public delegate void d(int a, double b);
+	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] 
+	///         d f;
 	///         private void __MyMethod__(int a, double b) { ... }
-	///    		[SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute("f")] public void MyMethod(int a, double b) { f(a, b); }
+	///         [DebuggerHidden]
+	///    		[SafetySharp.Modeling.ProvidedAttribute()]
+	///         [SafetySharp.Modeling.BackingFieldAttribute("f")] 
+	///         public void MyMethod(int a, double b) => f(a, b);
 	///   	</code>
 	/// </summary>
 	public sealed class PortNormalizer : Normalizer
@@ -75,6 +79,12 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		private static readonly AttributeListSyntax CompilerGeneratedAttribute =
 			SyntaxBuilder.Attribute(typeof(CompilerGeneratedAttribute).FullName).WithTrailingSpace();
+
+		/// <summary>
+		///     Represents the [DebuggerHidden] attribute syntax.
+		/// </summary>
+		private static readonly AttributeListSyntax DebuggerHiddenAttribute =
+			SyntaxBuilder.Attribute(typeof(DebuggerHiddenAttribute).FullName).WithTrailingSpace();
 
 		/// <summary>
 		///     Represents the [Required] attribute syntax.
@@ -156,29 +166,36 @@ namespace SafetySharp.Compiler.Normalization
 		private MethodDeclarationSyntax NormalizeRequiredPort(MethodDeclarationSyntax methodDeclaration)
 		{
 			var originalDeclaration = methodDeclaration;
+
 			var methodDelegate = CreateDelegate(methodDeclaration);
 			var methodField = CreateField(methodDelegate);
 
 			// Add the [Required] attribute if it is not already present
 			if (!methodDeclaration.HasAttribute<RequiredAttribute>(SemanticModel))
+			{
+				methodDeclaration = methodDeclaration.RemoveTrivia();
 				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(RequiredAttribute.WithTrailingSpace()));
+			}
 
 			// Remove the 'extern' keyword from the method
 			var externIndex = methodDeclaration.Modifiers.IndexOf(SyntaxKind.ExternKeyword);
 			methodDeclaration = methodDeclaration.WithModifiers(methodDeclaration.Modifiers.RemoveAt(externIndex));
 
+			// Add the [DebuggerHidden] attribute if it is not already present
+			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))
+				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(DebuggerHiddenAttribute));
+
 			// Replace the method's body and ensure that we don't modify the line count of the containing type
 			methodDeclaration = AddBackingFieldAttribute(methodDeclaration);
 			methodDeclaration = ReplaceBodyWithDelegateInvocation(methodDeclaration);
-			methodDeclaration = methodDeclaration.RemoveComments();
-			methodDeclaration = methodDeclaration.NormalizeWhitespace().AsSingleLine().WithLeadingTrivia(originalDeclaration.GetLeadingTrivia());
-			methodDeclaration = methodDeclaration.EnsureSameLineCount(originalDeclaration);
+			methodDeclaration = methodDeclaration.NormalizeWhitespace();
+			methodDeclaration = methodDeclaration.WithTrivia(originalDeclaration);
 
 			_generatedMembers.Add(methodField);
 			_generatedMembers.Add(methodDelegate);
 
 			++_portCount;
-			return methodDeclaration;
+			return methodDeclaration.EnsureLineCount(originalDeclaration);
 		}
 
 		/// <summary>
@@ -216,17 +233,20 @@ namespace SafetySharp.Compiler.Normalization
 			var implementationAttribute = SyntaxBuilder.Attribute(typeof(DefaultImplementationAttribute).FullName, implementationArgument);
 			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(implementationAttribute));
 
+			// Add the [DebuggerHidden] attribute if it is not already present
+			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))
+				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(DebuggerHiddenAttribute));
+
 			methodDeclaration = AddBackingFieldAttribute(methodDeclaration);
 			methodDeclaration = ReplaceBodyWithDelegateInvocation(methodDeclaration);
-			methodDeclaration = methodDeclaration.RemoveComments();
-			methodDeclaration = methodDeclaration.NormalizeWhitespace().AsSingleLine();
+			methodDeclaration = methodDeclaration.RemoveComments().WithTrivia(originalDeclaration);
 
 			_generatedMembers.Add(methodField);
 			_generatedMembers.Add(methodDelegate);
 			_generatedMembers.Add(methodDeclaration);
 
 			++_portCount;
-			return portImplementation;
+			return portImplementation.EnsureLineCount(originalDeclaration);
 		}
 
 		/// <summary>
@@ -304,7 +324,7 @@ namespace SafetySharp.Compiler.Normalization
 			var body = SyntaxFactory.InvocationExpression(fieldReference, SyntaxFactory.ArgumentList(argumentList));
 			var arrowExpression = SyntaxFactory.ArrowExpressionClause(body);
 
-			methodDeclaration = methodDeclaration.WithBody(null).WithExpressionBody(arrowExpression);
+			methodDeclaration = methodDeclaration.WithBody(null).WithExpressionBody(arrowExpression.NormalizeWhitespace());
 
 			if (methodDeclaration.SemicolonToken.Kind() != SyntaxKind.SemicolonToken)
 				return methodDeclaration.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));

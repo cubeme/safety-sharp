@@ -51,6 +51,11 @@ namespace Tests.Normalization.Ports.Provided
 		{
 			var i = 1 + 2;
 		}
+
+		void M6()
+		{
+			var i = 1 + 2;
+		}
 	}
 
 	internal partial class Out1 : Component
@@ -79,6 +84,11 @@ namespace Tests.Normalization.Ports.Provided
 		{
 			var i = 1 + 2;
 		}
+
+		private void __DefaultImplementation5__()
+		{
+			var i = 1 + 2;
+		}
 	}
 
 	partial class Out1
@@ -92,6 +102,7 @@ namespace Tests.Normalization.Ports.Provided
 
 		[SafetySharp.Modeling.ProvidedAttribute()]
 		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
 		public void M1() => this.__portField0__();
 
@@ -104,6 +115,7 @@ namespace Tests.Normalization.Ports.Provided
 
 		[SafetySharp.Modeling.ProvidedAttribute()]
 		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation1__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField1__")]
 		internal void M2() => this.__portField1__();
 
@@ -116,6 +128,7 @@ namespace Tests.Normalization.Ports.Provided
 
 		[SafetySharp.Modeling.ProvidedAttribute()]
 		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation2__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField2__")]
 		protected internal void M3() => this.__portField2__();
 
@@ -128,6 +141,7 @@ namespace Tests.Normalization.Ports.Provided
 
 		[SafetySharp.Modeling.ProvidedAttribute()]
 		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation3__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField3__")]
 		protected void M4() => this.__portField3__();
 
@@ -140,7 +154,21 @@ namespace Tests.Normalization.Ports.Provided
 
 		[SafetySharp.Modeling.ProvidedAttribute()]
 		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation4__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField4__")]
 		private void M5() => this.__portField4__();
+
+		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		private __PortDelegate5__ __portField5__;
+
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		private delegate void __PortDelegate5__();
+
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation5__")]
+		[System.Diagnostics.DebuggerHiddenAttribute()]
+		[SafetySharp.Modeling.BackingFieldAttribute("__portField5__")]
+		void M6() => this.__portField5__();
 	}
 }
