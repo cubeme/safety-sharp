@@ -435,7 +435,7 @@ module internal TransitionSystemAsRelationExpr =
                                 
         {
             TransitionSystem.Globals = tsamGlobalVarDeclToVarDecl pgm.Globals;
-            TransitionSystem.Ivars = ivars |> Set.toList;
+            TransitionSystem.Ivars = [];
             TransitionSystem.VirtualNextVarToVar = virtualNextVarToVar;
             TransitionSystem.VarToVirtualNextVar = varToVirtualNextVar;
             TransitionSystem.Init = initExpr;
