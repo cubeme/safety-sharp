@@ -184,6 +184,18 @@ module TsamToDotTests =
         ()
 
     [<Test>]
+    let ``create dot graph of smokeTest24`` () =
+        let inputFile = """../../Examples/SAM/smokeTest24.sam"""
+        let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndGenerateDotFile inputFile)
+        ()
+
+    [<Test>]
+    let ``create dot graph of smokeTest25`` () =
+        let inputFile = """../../Examples/SAM/smokeTest25.sam"""
+        let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndGenerateDotFile inputFile)
+        ()
+
+    [<Test>]
     let ``create dot graph of nestedBlocks1`` () =
         let inputFile = """../../Examples/SAM/nestedBlocks1.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (readInputFileAndGenerateDotFile inputFile)

@@ -220,6 +220,13 @@ module PrismCheckSmokeWithGwamFastTests =
         ()
 
     [<Test>]
+    let ``smokeTest25.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest25.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
     let ``nestedBlocks1.sam returns the expected results`` () =        
         let inputFile = """../../Examples/SAM/nestedBlocks1.sam"""
         let output = runSmokeTest inputFile
@@ -480,6 +487,13 @@ module PrismCheckSmokeWithGwamTests =
     [<Test>]
     let ``smokeTest24.sam returns the expected results`` () =        
         let inputFile = """../../Examples/SAM/smokeTest24.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest25.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest25.sam"""
         let output = runSmokeTest inputFile
         printf "%s" output
         ()
