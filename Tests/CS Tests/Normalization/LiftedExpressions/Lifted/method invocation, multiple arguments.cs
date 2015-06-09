@@ -20,40 +20,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Required
+namespace Tests.Normalization.LiftedExpressions.Lifted
 {
 	using System;
-	using SafetySharp.Modeling;
+	using System.Linq.Expressions;
+	using SafetySharp.Modeling.CompilerServices;
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class In1 : Component
+	public class Test3
 	{
-		internal 
-			extern
+		protected void N([LiftExpression] int i, [LiftExpression] bool j, [LiftExpression] int k)
+		{
+		}
 
-			int M
-			(
-			int 
-			x);
+		protected void N(Expression<Func<int>> i, Expression<Func<bool>> j, Expression<Func<int>> k)
+		{
+		}
+
+		protected void P(int i, [LiftExpression] bool j, int k)
+		{
+		}
+
+		protected void P(int i, Expression<Func<bool>> j, int k)
+		{
+		}
 	}
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class Out1 : Component
+	public class In3 : Test3
 	{
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
-		internal int M(int x) => this.__portField0__(x);
-#line 38
+		private void Q(int x)
+		{
+			N(1, true, 4);
+			N(1 + x / 54 + (true == false ? 17 : 33 + 1), 3 > 5 ? true : false, 33 + 11 / x);
+
+			P(1, true, 17);
+			P(1, true || false, 33 << 2);
+			P(1 - 0, false, 22 / 2);
+		}
 	}
 
-	partial class Out1
+	public class Out3 : Test3
 	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate0__ __portField0__;
+		private void Q(int x)
+		{
+			N(() => 1, () => true, () => 4);
+			N(() => 1 + x / 54 + (true == false ? 17 : 33 + 1), () => 3 > 5 ? true : false, () => 33 + 11 / x);
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate int __PortDelegate0__(int x);
+			P(1, () => true, 17);
+			P(1, () => true || false, 33 << 2);
+			P(1 - 0, () => false, 22 / 2);
+		}
 	}
 }

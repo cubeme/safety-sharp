@@ -20,40 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Required
+namespace Tests.Normalization.LiftedExpressions.Lifted
 {
 	using System;
-	using SafetySharp.Modeling;
+	using System.Linq.Expressions;
+	using SafetySharp.Modeling.CompilerServices;
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class In1 : Component
+	public class Test1
 	{
-		internal 
-			extern
+		protected void N([LiftExpression] int i)
+		{
+		}
 
-			int M
-			(
-			int 
-			x);
+		protected void N(Expression<Func<int>> i)
+		{
+		}
 	}
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class Out1 : Component
+	public class In1 : Test1
 	{
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
-		internal int M(int x) => this.__portField0__(x);
-#line 38
+		private void Q()
+		{
+			N(1);
+			N(1 + 3 / 54 + (true == false ? 17 : 33 + 1));
+		}
 	}
 
-	partial class Out1
+	public class Out1 : Test1
 	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate0__ __portField0__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate int __PortDelegate0__(int x);
+		private void Q()
+		{
+			N(() => 1);
+			N(() => 1 + 3 / 54 + (true == false ? 17 : 33 + 1));
+		}
 	}
 }

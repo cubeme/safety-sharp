@@ -20,40 +20,85 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Required
+namespace Tests.Normalization.LiftedExpressions.Lifted
 {
 	using System;
-	using SafetySharp.Modeling;
+	using System.Linq.Expressions;
+	using SafetySharp.Modeling.CompilerServices;
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class In1 : Component
+	public class Test5
 	{
-		internal 
-			extern
+		public Test5()
+		{
+		}
 
-			int M
-			(
-			int 
-			x);
+		public Test5([LiftExpression] int i)
+		{
+		}
+
+		public Test5(Expression<Func<int>> i)
+		{
+		}
+
+		protected int M(int i)
+		{
+			return 0;
+		}
+
+		protected int N([LiftExpression] int i)
+		{
+			return 0;
+		}
+
+		protected int N(Expression<Func<int>> i)
+		{
+			return 0;
+		}
+
+		protected int O([LiftExpression] int i, [LiftExpression] int j)
+		{
+			return 0;
+		}
+
+		protected int O(Expression<Func<int>> i, Expression<Func<int>> j)
+		{
+			return 0;
+		}
 	}
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class Out1 : Component
+	[CheckTrivia(TriviaType.All)]
+	public class In5 : Test5
 	{
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
-		internal int M(int x) => this.__portField0__(x);
-#line 38
+		private void M()
+		{
+			new Test5(1
+					  + 1);
+
+			O(M(2 -
+				1)
+			  + 0,
+				3
+				- N(
+					2 *
+					5));
+		}
 	}
 
-	partial class Out1
+	[CheckTrivia(TriviaType.All)]
+	public class Out5 : Test5
 	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate0__ __portField0__;
+		private void M()
+        {
+            new Test5(() => 1
+                      + 1);
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate int __PortDelegate0__(int x);
+            O(() => M(2 -
+                1)
+              + 0,
+                () =>                 3
+                - N(
+                    () =>                     2 *
+                    5));
+        }
 	}
 }

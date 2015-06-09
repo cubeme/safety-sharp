@@ -25,7 +25,7 @@ namespace Tests.Normalization.Ports.Provided
 	using System;
 	using SafetySharp.Modeling;
 
-	[CheckCommentsAndLineCount]
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
 	internal partial class In1 : Component
 	{
 		public 
@@ -41,7 +41,7 @@ namespace Tests.Normalization.Ports.Provided
 		}
 	}
 
-	[CheckCommentsAndLineCount]
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
 	internal partial class Out1 : Component
 	{
 		private int __DefaultImplementation0__(int x)

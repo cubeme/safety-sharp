@@ -113,7 +113,7 @@
     <Compile Include="Normalization\DebugInfoNormalizer.cs" />
     <Compile Include="Normalization\PartialNormalizer.cs" />
     <Compile Include="Normalization\PortNormalizer.cs" />
-    <Compile Include="Normalization\ExpressionLifter.cs" />
+    <Compile Include="Normalization\LiftedExpressionNormalizer.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

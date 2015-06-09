@@ -37,31 +37,18 @@ namespace Tests.Normalization
 	using Utilities;
 	using Xunit.Abstractions;
 
-	internal class SyntaxNodeComparer : IEqualityComparer<BaseTypeDeclarationSyntax>
+	public enum TriviaType
 	{
-		private readonly HashSet<string> _checkTrivia;
-
-		public SyntaxNodeComparer(HashSet<string> checkTrivia)
-		{
-			_checkTrivia = checkTrivia;
-		}
-
-		public bool Equals(BaseTypeDeclarationSyntax x, BaseTypeDeclarationSyntax y)
-		{
-			if (_checkTrivia.Contains(x.Identifier.ValueText) || _checkTrivia.Contains(y.Identifier.ValueText))
-				return x.NormalizeWhitespace().IsEquivalentTo(y.NormalizeWhitespace());
-			
-			return x.IsEquivalentTo(y, topLevel: false);
-		}
-
-		public int GetHashCode(BaseTypeDeclarationSyntax obj)
-		{
-			return 0;
-		}
+		None,
+		DocCommentsAndDirectives,
+		All
 	}
 
-	public class CheckCommentsAndLineCountAttribute : Attribute
+	public class CheckTrivia : Attribute
 	{
+		public CheckTrivia(TriviaType triviaType = TriviaType.None)
+		{
+		}
 	}
 
 	public partial class NormalizationTests
@@ -88,14 +75,14 @@ namespace Tests.Normalization
 
 			// Determine the inputs for which we have to compare the trivia
 			var semanticModel = compilation.GetSemanticModel(syntaxTree);
-			var checkTrivia = new HashSet<string>();
+			var checkTrivia = new Dictionary<string, TriviaType>();
 
 			foreach (var input in inputs)
 			{
 				var symbol = input.GetTypeSymbol(semanticModel);
-
-				if (symbol.HasAttribute<CheckCommentsAndLineCountAttribute>(semanticModel))
-					checkTrivia.Add(input.Identifier.ValueText);
+				var attribute = symbol.GetAttributes<CheckTrivia>(semanticModel).FirstOrDefault();
+				var triviaType = attribute == null ? TriviaType.None : (TriviaType)attribute.ConstructorArguments[0].Value;
+				checkTrivia.Add(input.Identifier.ValueText, triviaType);
 			}
 
 			// Remove the outputs from the input code
@@ -135,14 +122,24 @@ namespace Tests.Normalization
 			builder.AppendLine("===============");
 
 			foreach (var declaration in actualOutputs)
-				builder.AppendLine(declaration.NormalizeWhitespace().ToFullString());
+			{
+				if (checkTrivia[declaration.Identifier.ValueText] == TriviaType.All)
+					builder.AppendLine(declaration.ToFullString());
+				else
+					builder.AppendLine(declaration.NormalizeWhitespace().ToFullString());
+			}
 
 			builder.AppendLine();
 			builder.AppendLine("Expected Outputs:");
 			builder.AppendLine("=================");
 
 			foreach (var declaration in expectedOutputs)
-				builder.AppendLine(declaration.NormalizeWhitespace().ToFullString());
+			{
+				if (checkTrivia[declaration.Identifier.ValueText] == TriviaType.All)
+					builder.AppendLine(declaration.ToFullString());
+				else
+					builder.AppendLine(declaration.NormalizeWhitespace().ToFullString());
+			}
 
 			throw new TestException("{0}", builder);
 		}
@@ -153,8 +150,51 @@ namespace Tests.Normalization
 			return EnumerateTestCases(Path.Combine(Path.GetDirectoryName(GetFileName()), directory));
 		}
 
+		private class SyntaxNodeComparer : IEqualityComparer<BaseTypeDeclarationSyntax>
+		{
+			private readonly Dictionary<string, TriviaType> _checkTrivia;
+
+			public SyntaxNodeComparer(Dictionary<string, TriviaType> checkTrivia)
+			{
+				_checkTrivia = checkTrivia;
+			}
+
+			public bool Equals(BaseTypeDeclarationSyntax x, BaseTypeDeclarationSyntax y)
+			{
+				var triviaType = _checkTrivia[x.Identifier.ValueText];
+
+				if (triviaType != _checkTrivia[y.Identifier.ValueText])
+					throw new TestException("Trivia type checks don't match.");
+
+				switch (triviaType)
+				{
+					case TriviaType.None:
+						return x.IsEquivalentTo(y, topLevel: false);
+					case TriviaType.DocCommentsAndDirectives:
+						return x.NormalizeWhitespace().IsEquivalentTo(y.NormalizeWhitespace());
+					case TriviaType.All:
+						return x.ToFullString().Equals(y.ToFullString());
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
+
+			public int GetHashCode(BaseTypeDeclarationSyntax obj)
+			{
+				return 0;
+			}
+		}
+
 		private class Renamer : CSharpSyntaxRewriter
 		{
+			public override SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
+			{
+				if (!node.Identifier.ValueText.StartsWith("Out"))
+					return base.VisitConstructorDeclaration(node);
+
+				return ((ConstructorDeclarationSyntax)base.VisitConstructorDeclaration(node)).WithIdentifier(Rename(node.Identifier));
+			}
+
 			public override SyntaxNode VisitIdentifierName(IdentifierNameSyntax node)
 			{
 				if (!node.Identifier.ValueText.StartsWith("Out"))

@@ -178,6 +178,13 @@
     <Compile Include="Diagnostics\PortKinds\Valid\non-extern with Required attribute outside of component.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\replaced update method.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\unmarked update methods.cs" />
+    <Compile Include="Normalization\LiftedExpressions\Lifted\method invocation, multiple arguments.cs" />
+    <Compile Include="Normalization\LiftedExpressions\Lifted\method invocation, single argument.cs" />
+    <Compile Include="Normalization\LiftedExpressions\Lifted\nested invocations.cs" />
+    <None Include="Normalization\LiftedExpressions\Lifted\line break preservation.cs" />
+    <Compile Include="Normalization\LiftedExpressions\Lifted\object creation.cs" />
+    <Compile Include="Normalization\LiftedExpressions\Unlifted\object creation.cs" />
+    <Compile Include="Normalization\LiftedExpressions\Unlifted\method invocation.cs" />
     <Compile Include="Normalization\NormalizationTests.Helpers.cs">
       <DependentUpon>NormalizationTests.cs</DependentUpon>
     </Compile>

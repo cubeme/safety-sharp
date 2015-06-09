@@ -85,7 +85,6 @@
     <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.fs" />
     <Compile Include="Normalizers\BindingNormalizer.fs" />
-    <Compile Include="Normalizers\ExpressionLifter.fs" />
     <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>

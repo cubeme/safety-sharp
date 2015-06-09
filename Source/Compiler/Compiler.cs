@@ -270,7 +270,7 @@ namespace SafetySharp.Compiler
 		{
 			compilation = ApplyNormalizer<DebugInfoNormalizer>(compilation);
 			compilation = ApplyNormalizer<PartialNormalizer>(compilation);
-			compilation = ApplyNormalizer<ExpressionLifter>(compilation);
+			compilation = ApplyNormalizer<LiftedExpressionNormalizer>(compilation);
 			compilation = ApplyNormalizer<PortNormalizer>(compilation);
 			compilation = ApplyNormalizer<BindingNormalizer>(compilation);
 

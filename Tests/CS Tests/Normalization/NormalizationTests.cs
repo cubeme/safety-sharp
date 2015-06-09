@@ -34,5 +34,11 @@ namespace Tests.Normalization
 		{
 			CheckNormalization<PortNormalizer>(code);
 		}
+
+		[Theory(DisplayName = ""), MemberData("DiscoverTests", "LiftedExpressions")]
+		public void LiftedExpressions(string test, string code)
+		{
+			CheckNormalization<LiftedExpressionNormalizer>(code);
+		}
 	}
 }
