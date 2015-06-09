@@ -8,4 +8,4 @@ Optional Requirements for more features
 * NuXmv / NuSMV (Allows symbolic model checking)
 * MinGW (Allows use of SPIN for explicit model checking)
 * Prism Model Checker and Java (Allows stochastic model checking)
-* Resharper (To use our NUnit tests)
+* Resharper (to use our NUnit tests). Resharper with xUnit plugin (see "resharper/extension manager" to use our xUnit tests)

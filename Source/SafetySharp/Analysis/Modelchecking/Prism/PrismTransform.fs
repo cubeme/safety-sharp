@@ -251,6 +251,7 @@ module internal StochasticProgramGraphToPrism =
         
 
         let (globalVariables,forwardTrace) =
+            // TODO: Add StateVariables
             let transformVarDecl (varDecl:VarDecl) : (Prism.VariableDeclaration*(Traceable*Prism.Traceable)) =
                 let variableDeclaration =
                     {
@@ -272,7 +273,8 @@ module internal StochasticProgramGraphToPrism =
             let expr = translateExpression prismIdentifiers expr
             (varToWrite,expr)
 
-        let transformDeterministicTransition (transition:DeterministicTransition) : Prism.Command =        
+        let transformDeterministicTransition (transition:DeterministicTransition) : Prism.Command =
+            // TODO: Add State to Guard. Update State Variables
             let transformedGuard =
                 match transition.Guard with
                     | None -> Expression.Constant(Constant.Boolean(true))
@@ -294,6 +296,7 @@ module internal StochasticProgramGraphToPrism =
             }
 
         let transformStochasticTransition (transition:StochasticTransition) : Prism.Command =
+            // TODO: Add State to Guard. Update State Variables
             let transformedGuard =
                 match transition.Guard with
                     | None -> Expression.Constant(Constant.Boolean(true))
@@ -320,6 +323,7 @@ module internal StochasticProgramGraphToPrism =
             let transformedTransitions =
                 let deterministic = spg.DeterministicTransitions |> Set.toList |> List.map transformDeterministicTransition
                 let stochastic = spg.StochasticTransitions |> Set.toList |> List.map transformStochasticTransition
+                //TODO: Add transitions from EndOfLoopStates to InitialState
                 deterministic @ stochastic
             Prism.Module(systemModuleIdentifier,[],transformedTransitions)
         

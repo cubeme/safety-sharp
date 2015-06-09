@@ -65,6 +65,7 @@ module internal Spg =
         Variables : VarDecl list;
         States : Set<State>;
         InitialState : State;
+        //EndOfLoopStates : Set<State>;
         StochasticTransitions : Set<StochasticTransition>;
         DeterministicTransitions : Set<DeterministicTransition>;
         UniqueStateIdGenerator : unit -> StateId;
@@ -87,7 +88,8 @@ module internal Spg =
                 }
             member this.unionWithMany (unionWith:StochasticProgramGraph list) =
                 { this with
-                    // Keep the InitialState of this!!!
+                    // Keep the InitialState of this
+                    // Keep the EndOfLoopStates of this
                     States = Set.unionMany ((this.States) ::(unionWith |> List.map (fun spg -> spg.States)))
                     StochasticTransitions = Set.unionMany ((this.StochasticTransitions) ::(unionWith |> List.map (fun spg -> spg.StochasticTransitions)))
                     DeterministicTransitions = Set.unionMany ((this.DeterministicTransitions) ::(unionWith |> List.map (fun spg -> spg.DeterministicTransitions)))
