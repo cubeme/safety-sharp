@@ -34,8 +34,8 @@ namespace Tests.Utilities
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using SafetySharp.Compiler;
-	using SafetySharp.Compiler.Normalization;
 	using SafetySharp.Compiler.Analyzers;
+	using SafetySharp.Compiler.Normalization;
 	using SafetySharp.Compiler.Utilities;
 	using SafetySharp.Modeling;
 	using Xunit.Abstractions;
@@ -54,9 +54,8 @@ namespace Tests.Utilities
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="output">The stream that should be used to write the test output.</param>
-		protected Tests(ITestOutputHelper output)
+		protected Tests(ITestOutputHelper output = null)
 		{
-			Requires.NotNull(output, () => output);
 			_output = output;
 		}
 
@@ -68,6 +67,7 @@ namespace Tests.Utilities
 		[StringFormatMethod("message")]
 		protected void Log(string message, params object[] args)
 		{
+			Assert.NotNull(_output, "A test output helper must be provided via the constructor.");
 			_output.WriteLine(message, args);
 		}
 
@@ -144,6 +144,17 @@ namespace Tests.Utilities
 		}
 
 		/// <summary>
+		///     Fails the test with the explanatory <paramref name="message" />.
+		/// </summary>
+		/// <param name="message">The explanatory format message.</param>
+		/// <param name="args">The format arguments.</param>
+		[StringFormatMethod("message")]
+		protected static void Fail(string message, params object[] args)
+		{
+			throw new TestException(message, args);
+		}
+
+		/// <summary>
 		///     Enumerates all C#-based test cases located at <paramref name="path" /> or any sub-directory.
 		/// </summary>
 		/// <param name="path">The path to the directory where C#-based tests are located.</param>
@@ -161,6 +172,84 @@ namespace Tests.Utilities
 
 				yield return new object[] { testName, code };
 			}
+		}
+
+		/// <summary>
+		///     Checks that no exceptions escape unhandled during the execution of <paramref name="action" />.
+		/// </summary>
+		/// <param name="action">The action that should be checked.</param>
+		protected static void NoThrow(Action action)
+		{
+			Requires.NotNull(action, () => action);
+
+			try
+			{
+				action();
+			}
+			catch (Exception e)
+			{
+				var message = "Expected no exception to be thrown, but an exception of type '{0}' was raised:\n{1}";
+				Fail(message, e.GetType().FullName, e.Message);
+			}
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="action" /> raises an exception of type <typeparamref name="T" /> satisfying the
+		///     <paramref name="assertion" />.
+		/// </summary>
+		/// <typeparam name="T">The type of the exception that is expected to be thrown.</typeparam>
+		/// <param name="action">The action that should be checked.</param>
+		/// <param name="assertion">The assertion that should be checked on the thrown exception.</param>
+		protected static void RaisesWith<T>(Action action, Action<T> assertion)
+			where T : Exception
+		{
+			Requires.NotNull(action, () => action);
+
+			Exception exception = null;
+
+			try
+			{
+				action();
+			}
+			catch (Exception e)
+			{
+				exception = e;
+			}
+
+			if (exception == null)
+				Fail("Expected an exception of type '{0}', but no exception was thrown.", typeof(T).FullName);
+
+			var typedException = exception as T;
+			if (typedException != null)
+			{
+				if (assertion != null)
+					assertion(typedException);
+			}
+			else
+			{
+				var message = "Expected an exception of type '{0}', but an exception of type '{1}' was thrown instead.\n\nMessage:\n{2}";
+				Fail(message, typeof(T).FullName, exception.GetType().FullName, exception.Message);
+			}
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="action" /> raises an exception of type <typeparamref name="T" />.
+		/// </summary>
+		/// <typeparam name="T">The type of the exception that is expected to be thrown.</typeparam>
+		/// <param name="action">The action that should be checked.</param>
+		protected static void Raises<T>(Action action)
+			where T : Exception
+		{
+			RaisesWith<T>(action, null);
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="action" /> raises an <see cref="InvalidOperationException" />.
+		/// </summary>
+		/// <param name="action">The action that should be checked.</param>
+		protected static void RaisesInvalidOpException(Action action)
+		{
+			Raises<InvalidOperationException>(action);
 		}
 	}
 }

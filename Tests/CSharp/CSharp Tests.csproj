@@ -196,6 +196,10 @@
     <Compile Include="Normalization\LiftedExpressions\Lifted\method invocation, multiple arguments.cs" />
     <Compile Include="Normalization\LiftedExpressions\Lifted\method invocation, single argument.cs" />
     <Compile Include="Normalization\LiftedExpressions\Lifted\nested invocations.cs" />
+    <Compile Include="Utilities\AssertTests\IsNotNullMethod.cs" />
+    <Compile Include="Utilities\AssertTests\NotNullOrWhitespaceMethod.cs" />
+    <Compile Include="Utilities\AssertTests\IsNullMethod.cs" />
+    <Compile Include="Utilities\LogTests\LogTests.cs" />
     <None Include="Normalization\LiftedExpressions\Lifted\line break preservation.cs" />
     <Compile Include="Normalization\LiftedExpressions\Lifted\object creation.cs" />
     <Compile Include="Normalization\LiftedExpressions\Unlifted\object creation.cs" />

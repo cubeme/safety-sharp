@@ -51,7 +51,6 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-
   <ItemGroup>
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
@@ -91,7 +90,6 @@
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
     <Compile Include="Analysis\VcGuardWithAssignmentModelTests.fs" />
     <Compile Include="Utilities\Assert.fs" />
-    <Compile Include="Utilities\Log.fs" />
     <Compile Include="Utilities\Requires.fs" />
     <Compile Include="Roslyn\Symbols\CompilationExtensions.fs" />
     <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.fs" />
@@ -256,7 +254,7 @@
     <Error Condition="!Exists('..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets'))" />
   </Target>
   <Import Project="..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets" Condition="Exists('..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets')" />
-    <Import Project="$(FSharpTargetsPath)" />
+  <Import Project="$(FSharpTargetsPath)" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

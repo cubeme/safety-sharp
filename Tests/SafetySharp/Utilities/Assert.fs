@@ -28,50 +28,6 @@ open NUnit.Framework
 open SafetySharp.Compiler.Utilities
 
 [<TestFixture>]
-module ``IsNull method`` =
-    [<Test>]    
-    let ``throws if obj is not null`` () =
-        let e = raisesWith<InvalidOperationException> (fun () -> Assert.IsNull (obj (), "null: {0}", 1))
-        e.Message =? "null: 1"
-
-        let e = raisesWith<InvalidOperationException> (fun () -> Assert.IsNull (obj (), null))
-        e.Message =? "Expected 'null'."
-
-    [<Test>]
-    let ``does not throw if obj is null`` () =
-        nothrow (fun () -> Assert.IsNull (null, null))
-
-[<TestFixture>]
-module ``NotNull method`` =
-    [<Test>]    
-    let ``throws if obj is null`` () =
-        let e = raisesWith<NullReferenceException> (fun () -> Assert.NotNull (null, "null: {0}", 1))
-        e.Message =? "null: 1"
-
-        let e = raisesWith<NullReferenceException> (fun () -> Assert.NotNull (null, null))
-        e.Message =? "Unexpected 'null'."
-
-    [<Test>]
-    let ``does not throw if obj is not null`` () =
-        nothrow (fun () -> Assert.NotNull (obj (), null))
-
-[<TestFixture>]
-module ``NotNullOrWhitespace method`` =
-    [<Test>]    
-    let ``throws if string is null`` () =
-        raises<NullReferenceException> (fun () -> Assert.NotNullOrWhitespace null)
-
-    [<Test>]    
-    let ``throws if string is empty`` () =
-        raises<InvalidOperationException> (fun () -> Assert.NotNullOrWhitespace "")
-        raises<InvalidOperationException> (fun () -> Assert.NotNullOrWhitespace "  ")
-        raises<InvalidOperationException> (fun () -> Assert.NotNullOrWhitespace "       \n ")
-
-    [<Test>]
-    let ``does not throw if string is neither null nor empty`` () =
-        nothrow (fun () -> Assert.NotNullOrWhitespace "a")
-
-[<TestFixture>]
 module ``That method`` =
     [<Test>]
     let ``throws if message is null`` () =

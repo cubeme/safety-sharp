@@ -20,18 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+namespace Tests.Utilities.AssertTests
+{
+	using System;
+	using Shouldly;
+	using Utilities;
+	using Xunit;
+	using Assert = SafetySharp.Compiler.Utilities.Assert;
 
-[assembly: AssemblyTitle("S# Compiler")]
-[assembly: AssemblyDescription("S# Compiler")]
-[assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
-[assembly: AssemblyProduct("S#")]
-[assembly: AssemblyCopyright("Copyright (c) 2014-2015, Institute for Software & Systems Engineering")]
-[assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
-[assembly: ComVisible(false)]
-[assembly: InternalsVisibleTo("SafetySharp.Tests")]
-[assembly: InternalsVisibleTo("SafetySharp.CSharpTests")]
+	public class IsNotNullMethod : Tests
+	{
+		[Fact]
+		public void ThrowsIfObjIsNull()
+		{
+			RaisesWith(
+				() => Assert.NotNull((object)null, "null: {0}", 1),
+				(NullReferenceException e) => e.Message.ShouldBe("null: 1"));
+
+			RaisesWith(
+				() => Assert.NotNull((object)null),
+				(NullReferenceException e) => e.Message.ShouldBe("Unexpected 'null'."));
+		}
+
+		[Fact]
+		public void DoesNotThrowIfObjIsNotNull()
+		{
+			NoThrow(() => Assert.NotNull(new object()));
+		}
+	}
+}

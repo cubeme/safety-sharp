@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,18 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+namespace Tests.Utilities.AssertTests
+{
+	using System;
+	using Xunit;
+	using Assert = SafetySharp.Compiler.Utilities.Assert;
 
-[assembly: AssemblyTitle("S# Compiler")]
-[assembly: AssemblyDescription("S# Compiler")]
-[assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
-[assembly: AssemblyProduct("S#")]
-[assembly: AssemblyCopyright("Copyright (c) 2014-2015, Institute for Software & Systems Engineering")]
-[assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
-[assembly: ComVisible(false)]
-[assembly: InternalsVisibleTo("SafetySharp.Tests")]
-[assembly: InternalsVisibleTo("SafetySharp.CSharpTests")]
+	public class NotNullOrWhitespaceMethod : Tests
+	{
+		[Fact]
+		public void ThrowsIfStringIsNull()
+		{
+			Raises<NullReferenceException>(() => Assert.NotNullOrWhitespace(null));
+		}
+
+		[Fact]
+		public void ThrowsIfStringIsEmpty()
+		{
+			RaisesInvalidOpException(() => Assert.NotNullOrWhitespace(""));
+			RaisesInvalidOpException(() => Assert.NotNullOrWhitespace("  "));
+			RaisesInvalidOpException(() => Assert.NotNullOrWhitespace(" \t\n  "));
+		}
+
+		[Fact]
+		public void DoesNotThrowIfStringIsNeitherNullNorEmpty()
+		{
+			NoThrow(() => Assert.NotNullOrWhitespace("a"));
+		}
+	}
+}
