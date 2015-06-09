@@ -60,6 +60,32 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
+		///     Checks whether <paramref name="methodSymbol" /> replaces <paramref name="replacedMethod" />.
+		/// </summary>
+		/// <param name="methodSymbol">The symbol of the method that should be checked.</param>
+		/// <param name="replacedMethod">The symbol of the method that should be replaced.</param>
+		[Pure]
+		public static bool Replaces([NotNull] this IMethodSymbol methodSymbol, [NotNull] IMethodSymbol replacedMethod)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(replacedMethod, () => replacedMethod);
+
+			if (methodSymbol.Equals(replacedMethod))
+				return true;
+
+			if (methodSymbol.Name != replacedMethod.Name)
+				return false;
+
+			if (!methodSymbol.ContainingType.IsDerivedFrom(replacedMethod.ContainingType))
+				return false;
+
+			if (methodSymbol.Overrides(replacedMethod))
+				return false;
+
+			return methodSymbol.IsSignatureCompatibleTo(replacedMethod);
+		}
+
+		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> overrides the <see cref="Component.Update()" /> method within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>

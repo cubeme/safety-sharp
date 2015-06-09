@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\Dependencies\Packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props" Condition="Exists('..\..\Dependencies\Packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -12,6 +13,7 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
     <Name>SafetySharp Tests</Name>
+    <NuGetPackageImportStamp>fc238c19</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -58,6 +60,10 @@
   </Target>
   -->
   <Import Project="../TestCleanup.targets" />
+  <UsingTask AssemblyFile="xunit.runner.msbuild.dll" TaskName="Xunit.Runner.MSBuild.xunit" />
+  <Target Name="Test">
+    <xunit Assemblies="$(TargetPath)" TeamCity="true" ParallelizeTestCollections="true" />
+  </Target>
   <ItemGroup>
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
@@ -123,7 +129,6 @@
     <Compile Include="Analyzers\RecursionAnalyzer.fs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.fs" />
-    <Compile Include="Normalizers\BindingNormalizer.fs" />
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
@@ -242,5 +247,25 @@
       <HintPath>..\..\Dependencies\Packages\System.Reflection.Metadata.1.0.18-beta\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="xunit.abstractions">
+      <HintPath>..\..\Dependencies\Packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="xunit.assert">
+      <HintPath>..\..\Dependencies\Packages\xunit.assert.2.0.0\lib\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.assert.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="xunit.core">
+      <HintPath>..\..\Dependencies\Packages\xunit.extensibility.core.2.0.0\lib\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\Dependencies\Packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Dependencies\Packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props'))" />
+    <Error Condition="!Exists('..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets'))" />
+  </Target>
+  <Import Project="..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets" Condition="Exists('..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets')" />
 </Project>

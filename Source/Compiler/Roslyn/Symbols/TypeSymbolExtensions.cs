@@ -205,8 +205,9 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				.Union(inheritedPorts)
 				.ToArray();
 
-			// Filter out all ports that are overridden by another one
-			return ports.Where(port => ports.All(derivedPort => !derivedPort.Overrides(port) || Equals(derivedPort, port)));
+			// Filter out all ports that are overridden or replaced by another one
+			return ports.Where(port =>
+				ports.All(derivedPort => Equals(derivedPort, port) || (!derivedPort.Overrides(port) && !derivedPort.Replaces(port))));
 		}
 
 		/// <summary>

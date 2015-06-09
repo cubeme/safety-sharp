@@ -20,31 +20,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization
+namespace Tests.Normalization.Bindings.Components
 {
 	using System;
-	using SafetySharp.Compiler.Normalization;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class NormalizationTests : Tests
+	internal interface I6 : IComponent
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Ports")]
-		public void Ports(string test, string code)
+		[Provided]
+		void M();
+
+		[Required]
+		void N();
+	}
+
+	partial class In6 : Component
+	{
+		private I6 i;
+
+		private In6()
 		{
-			CheckNormalization<PortNormalizer>(code);
+			Bind(X().i.RequiredPorts.N = X().i.ProvidedPorts.M).Delayed();
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "LiftedExpressions")]
-		public void LiftedExpressions(string test, string code)
+		private In6 X()
 		{
-			CheckNormalization<LiftedExpressionNormalizer>(code);
+			return null;
+		}
+	}
+
+	partial class Out6 : Component
+	{
+		private I6 i;
+
+		private Out6()
+		{
+			Bind(new SafetySharp.Modeling.PortBinding(
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(X().i.N)),
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(X().i.M))))
+				.Delayed();
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
+		private Out6 X()
 		{
-			CheckNormalization<BindingNormalizer>(code);
+			return null;
 		}
+	}
+
+	partial class Out6
+	{
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		private delegate void __BindingDelegate0__();
 	}
 }

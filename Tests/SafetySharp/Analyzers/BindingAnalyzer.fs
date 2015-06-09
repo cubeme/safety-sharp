@@ -230,14 +230,12 @@ module ``Bindings`` =
         getDiagnostic "class X : Component { public virtual extern void M(); } class Y : X { void N() {} public extern override void M(); Y() { Bind(RequiredPorts.M = ProvidedPorts.N); }}" =? None
 
     [<Test>]
-    let ``new and original provided ports are both considered causing an ambiguity`` () =
-        getDiagnostic "class X : Component { public void M() {}} class Y : X { extern void N(); public new void M() {} Y() { Bind(RequiredPorts.N = ProvidedPorts.M); }}" =? 
-            ambiguous 107 140 ["Y.N()"] ["Y.M()"; "X.M()"]
+    let ``replaced provided ports are valid`` () =
+        getDiagnostic "class X : Component { public void M() {}} class Y : X { extern void N(); public new void M() {} Y() { Bind(RequiredPorts.N = ProvidedPorts.M); }}" =? None
 
     [<Test>]
-    let ``new and original required ports are both considered causing an ambiguity`` () =
-        getDiagnostic "class X : Component { public extern void M(); } class Y : X { void N() {} public extern new void M(); Y() { Bind(RequiredPorts.M = ProvidedPorts.N); }}" =? 
-            ambiguous 113 146 ["Y.M()"; "X.M()"] ["Y.N()"]
+    let ``replaced required ports are valid`` () =
+        getDiagnostic "class X : Component { public extern void M(); } class Y : X { void N() {} public extern new void M(); Y() { Bind(RequiredPorts.M = ProvidedPorts.N); }}" =? None
 
     [<Test>]
     let ``provided port replaced by new required port`` () =

@@ -20,31 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization
+namespace Tests.Normalization.Bindings.Components
 {
 	using System;
-	using SafetySharp.Compiler.Normalization;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class NormalizationTests : Tests
+	partial class In2 : Component
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Ports")]
-		public void Ports(string test, string code)
+		private In2(In2 x, In2 y)
 		{
-			CheckNormalization<PortNormalizer>(code);
+			Bind(x.RequiredPorts.N = y.ProvidedPorts.M).Delayed();
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "LiftedExpressions")]
-		public void LiftedExpressions(string test, string code)
+		private void M(ref int i)
 		{
-			CheckNormalization<LiftedExpressionNormalizer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
+		private extern void N(ref int i);
+	}
+
+	partial class Out2 : Component
+	{
+		private Out2(Out2 x, Out2 y)
 		{
-			CheckNormalization<BindingNormalizer>(code);
+			Bind(new SafetySharp.Modeling.PortBinding(
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x.N)),
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(y.M))))
+				.Delayed();
 		}
+
+		private void M(ref int i)
+		{
+		}
+
+		private extern void N(ref int i);
+	}
+
+	partial class Out2
+	{
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		private delegate void __BindingDelegate0__(ref int i);
 	}
 }

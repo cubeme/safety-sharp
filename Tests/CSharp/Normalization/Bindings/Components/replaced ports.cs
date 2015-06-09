@@ -20,31 +20,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization
+namespace Tests.Normalization.Bindings.Components
 {
 	using System;
-	using SafetySharp.Compiler.Normalization;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class NormalizationTests : Tests
+	internal class X12 : Component
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Ports")]
-		public void Ports(string test, string code)
+		public extern void N();
+
+		public void M()
 		{
-			CheckNormalization<PortNormalizer>(code);
+		}
+	}
+
+	partial class In12 : X12
+	{
+		private In12()
+		{
+			Bind(RequiredPorts.N = ProvidedPorts.M);
+			//Bind(((X12)this).RequiredPorts.N = ProvidedPorts.M);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "LiftedExpressions")]
-		public void LiftedExpressions(string test, string code)
+		public new extern void N();
+
+		public new void M()
 		{
-			CheckNormalization<LiftedExpressionNormalizer>(code);
+		}
+	}
+
+	partial class Out12 : X12
+	{
+		private Out12()
+		{
+			Bind(new SafetySharp.Modeling.PortBinding(
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(N)),
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M))));
+			//Bind(new SafetySharp.Modeling.PortBinding(
+			//	SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(((X12)this).N)),
+			//	SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M))));
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
+		public new extern void N();
+
+		public new void M()
 		{
-			CheckNormalization<BindingNormalizer>(code);
 		}
+	}
+
+	partial class Out12
+	{
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		private delegate void __BindingDelegate0__();
 	}
 }
