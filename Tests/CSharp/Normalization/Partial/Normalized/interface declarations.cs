@@ -20,37 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization
+namespace Tests.Normalization.Partial.Normalized
 {
 	using System;
-	using SafetySharp.Compiler.Normalization;
-	using Utilities;
-	using Xunit;
 
-	public partial class NormalizationTests : Tests
+	public interface In1
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Ports")]
-		public void Ports(string test, string code)
-		{
-			CheckNormalization<PortNormalizer>(code);
-		}
+	}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "LiftedExpressions")]
-		public void LiftedExpressions(string test, string code)
-		{
-			CheckNormalization<LiftedExpressionNormalizer>(code);
-		}
+	interface In2
+	{
+	}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
-		{
-			CheckNormalization<BindingNormalizer>(code);
-		}
+	public partial interface Out1
+	{
+	}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Partial")]
-		public void Partial(string test, string code)
-		{
-			CheckNormalization<PartialNormalizer>(code);
-		}
+	partial interface Out2
+	{
 	}
 }

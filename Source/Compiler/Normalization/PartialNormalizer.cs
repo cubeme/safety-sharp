@@ -30,8 +30,9 @@ namespace SafetySharp.Compiler.Normalization
 	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Ensures that all class declarations are marked <c>partial</c> such that additionally generated code can be easily added
-	///     without having to consider fixing up line information for debugging purposes.
+	///     Ensures that all class, struct, and interface declarations are marked <c>partial</c> such that
+	///     additionally generated code can be easily added without having to consider fixing up line information
+	///     for debugging purposes.
 	/// </summary>
 	public sealed class PartialNormalizer : Normalizer
 	{
@@ -49,6 +50,38 @@ namespace SafetySharp.Compiler.Normalization
 			}
 
 			return classDeclaration;
+		}
+
+		/// <summary>
+		///     Normalizes the <paramref name="structDeclaration" />.
+		/// </summary>
+		public override SyntaxNode VisitStructDeclaration(StructDeclarationSyntax structDeclaration)
+		{
+			structDeclaration = (StructDeclarationSyntax)base.VisitStructDeclaration(structDeclaration);
+
+			if (!structDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword))
+			{
+				var partialKeyword = SyntaxFactory.Token(SyntaxKind.PartialKeyword).WithTrailingSpace();
+				structDeclaration = structDeclaration.WithModifiers(structDeclaration.Modifiers.Add(partialKeyword));
+			}
+
+			return structDeclaration;
+		}
+
+		/// <summary>
+		///     Normalizes the <paramref name="interfaceDeclaration" />.
+		/// </summary>
+		public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax interfaceDeclaration)
+		{
+			interfaceDeclaration = (InterfaceDeclarationSyntax)base.VisitInterfaceDeclaration(interfaceDeclaration);
+
+			if (!interfaceDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword))
+			{
+				var partialKeyword = SyntaxFactory.Token(SyntaxKind.PartialKeyword).WithTrailingSpace();
+				interfaceDeclaration = interfaceDeclaration.WithModifiers(interfaceDeclaration.Modifiers.Add(partialKeyword));
+			}
+
+			return interfaceDeclaration;
 		}
 	}
 }

@@ -209,6 +209,13 @@
     <None Include="Normalization\Ports\Required\parameters, void-return.cs" />
     <None Include="Normalization\Ports\Required\explicit implementation.cs" />
     <None Include="Normalization\Ports\Required\ref, out, params.cs" />
+    <None Include="Normalization\Partial\Normalized\class declarations.cs" />
+    <None Include="Normalization\Partial\Normalized\struct declarations.cs" />
+    <None Include="Normalization\Partial\Normalized\interface declarations.cs" />
+    <None Include="Normalization\Partial\Unchanged\class declarations.cs" />
+    <Compile Include="Normalization\Partial\Unchanged\enum declaration.cs" />
+    <None Include="Normalization\Partial\Unchanged\interface declarations.cs" />
+    <None Include="Normalization\Partial\Unchanged\struct declarations.cs" />
     <Compile Include="Normalization\Ports\OtherMembers\members outside component.cs" />
     <Compile Include="Normalization\Ports\OtherMembers\interface members.cs" />
     <None Include="Normalization\Ports\OtherMembers\provided and required.cs" />

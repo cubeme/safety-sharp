@@ -51,19 +51,7 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-  <Import Project="$(FSharpTargetsPath)" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
-  <Import Project="../TestCleanup.targets" />
-  <UsingTask AssemblyFile="xunit.runner.msbuild.dll" TaskName="Xunit.Runner.MSBuild.xunit" />
-  <Target Name="Test">
-    <xunit Assemblies="$(TargetPath)" TeamCity="true" ParallelizeTestCollections="true" />
-  </Target>
+
   <ItemGroup>
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
@@ -268,4 +256,17 @@
     <Error Condition="!Exists('..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets'))" />
   </Target>
   <Import Project="..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets" Condition="Exists('..\..\Dependencies\Packages\xunit.MSBuild.2.0.0.0\build\xunit.MSBuild.targets')" />
+    <Import Project="$(FSharpTargetsPath)" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <Import Project="../TestCleanup.targets" />
+  <UsingTask AssemblyFile="xunit.runner.msbuild.dll" TaskName="Xunit.Runner.MSBuild.xunit" />
+  <Target Name="Test">
+    <xunit Assemblies="$(TargetPath)" TeamCity="true" ParallelizeTestCollections="true" />
+  </Target>
 </Project>
