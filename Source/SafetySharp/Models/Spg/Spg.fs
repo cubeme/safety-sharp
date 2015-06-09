@@ -28,6 +28,7 @@ module internal Spg =
     
     type Var = Tsam.Var
     type Expr = Tsam.Expr
+    type VarDecl = Tsam.GlobalVarDecl
     
     type StateId = StateId of int
     
@@ -61,17 +62,19 @@ module internal Spg =
     }
 
     type StochasticProgramGraph = {
-        InitialState : State;
+        Variables : VarDecl list;
         States : Set<State>;
+        InitialState : State;
         StochasticTransitions : Set<StochasticTransition>;
         DeterministicTransitions : Set<DeterministicTransition>;
         UniqueStateIdGenerator : unit -> StateId;
     }
         with
-            static member initial (states:Set<State>) (initialState : State) (uniqueStateIdGenerator : unit -> StateId) = 
+            static member initial (variables:VarDecl list) (states:Set<State>) (initialState : State) (uniqueStateIdGenerator : unit -> StateId) = 
                 {
-                    StochasticProgramGraph.InitialState = initialState;
+                    StochasticProgramGraph.Variables = variables;
                     StochasticProgramGraph.States = states;
+                    StochasticProgramGraph.InitialState = initialState;
                     StochasticProgramGraph.StochasticTransitions = Set.empty<StochasticTransition>;
                     StochasticProgramGraph.DeterministicTransitions = Set.empty<DeterministicTransition>;
                     StochasticProgramGraph.UniqueStateIdGenerator = uniqueStateIdGenerator;

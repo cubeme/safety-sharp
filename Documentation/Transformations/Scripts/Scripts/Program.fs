@@ -352,7 +352,12 @@ module TsamToReport =
             }
             let output_III_6_wf () = workflow {
                 do! updateState tsamSourceModel
-                let result = "TODO"
+                do! SafetySharp.Models.TsamToSpg.transformToStochasticProgramGraphWorkflow ()
+                do! SafetySharp.Analysis.Modelchecking.Prism.StochasticProgramGraphToPrism.transformWorkflow ()
+                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+                do! SafetySharp.ITracing.removeTracing ()
+                do! SafetySharp.Analysis.Modelchecking.Prism.ExportPrismAstToFile.workflow ()
+                let! result = getState ()
                 let resultDecorated = (outputstyle.Section "Prism from  I A") + (outputstyle.TsamSource result)
                 return resultDecorated
             }

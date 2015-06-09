@@ -29,9 +29,13 @@ open SafetySharp.Models
 open SafetySharp.Models.SamHelpers
 open SafetySharp.Analysis.Modelchecking
 
-module internal GwamToPrism =
-    
+module internal GenericToPrism =
     type PrismVariables = Map<Tsam.Var,Prism.Identifier>
+    
+    // probForSure := probability = 1.0
+    let probForSure = Prism.Expression.Constant(Prism.Double(1.0))
+
+    
 
     let createPrismIdentifiers (vars:Tsam.Var list) : PrismVariables =
         let initialMap = Map.empty<Tsam.Var,Prism.Identifier>
@@ -107,6 +111,28 @@ module internal GwamToPrism =
                 Prism.VariableDeclarationType.IntRange(_from,_to)
             | Tsam.Type.RealType -> failwith "No support in Prism for real values, yet."
             | Tsam.Type.RangedRealType _ -> failwith "No support in Prism for ranged real values, yet."
+
+            
+    open SafetySharp.Workflow
+    open SafetySharp.ITracing
+
+    type PrismModelTracer<'traceableOfOrigin> = {
+        PrismModel : Prism.PrismModel;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Prism.Traceable;
+    }
+        with
+            interface ITracing<Prism.PrismModel,'traceableOfOrigin,Prism.Traceable,PrismModelTracer<'traceableOfOrigin>> with
+                member this.getModel = this.PrismModel
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> Prism.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Prism.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : Prism.Traceable list = []
+
+
+module internal GwamToPrism =
+    open GenericToPrism
     
     let transformGwamToPrism (gwam:GuardWithAssignmentModel) : (Prism.PrismModel*Map<Traceable,Prism.Traceable>) =
         let allInitsDeterministic = gwam.Globals |> List.forall (fun gl -> gl.Init.Length = 1 )
@@ -134,10 +160,7 @@ module internal GwamToPrism =
                 (variableDeclaration,(Tsam.Traceable.Traceable(globalVarDecl.Var),variableDeclaration.Name.Name))
             gwam.Globals |> List.map transformGlobalVar
                          |> List.unzip
-
-        // probForSure := probability = 1.0
-        let probForSure = Prism.Expression.Constant(Prism.Double(1.0))
-
+                         
         let transformAssignments (assignments:Assignments) : Prism.Command =        
             let transformAssignment (var:Tsam.Var,expr:Tsam.Expr) : (Prism.Identifier * Prism.Expression) =
                 let varToWrite = prismIdentifiers.Item var
@@ -191,23 +214,7 @@ module internal GwamToPrism =
 
         
     open SafetySharp.Workflow
-    open SafetySharp.Analysis.VerificationCondition
-    open SafetySharp.ITracing
 
-    type PrismModelTracer<'traceableOfOrigin> = {
-        PrismModel : Prism.PrismModel;
-        TraceablesOfOrigin : 'traceableOfOrigin list;
-        ForwardTracer : 'traceableOfOrigin -> Prism.Traceable;
-    }
-        with
-            interface ITracing<Prism.PrismModel,'traceableOfOrigin,Prism.Traceable,PrismModelTracer<'traceableOfOrigin>> with
-                member this.getModel = this.PrismModel
-                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
-                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
-                member this.getForwardTracer : ('traceableOfOrigin -> Prism.Traceable) = this.ForwardTracer
-                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Prism.Traceable)) = {this with ForwardTracer=forwardTracer}
-                member this.getTraceables : Prism.Traceable list = []
-    
     let transformWorkflow<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<GuardWithAssignmentModelTracer<'traceableOfOrigin>,PrismModelTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
@@ -225,5 +232,128 @@ module internal GwamToPrism =
         do! updateState transformed
     }
 
+    
+module internal StochasticProgramGraphToPrism =
+    open GenericToPrism
+    open SafetySharp.Models.Spg
 
+    let transformSpgToPrism (spg:StochasticProgramGraph) : (Prism.PrismModel*Map<Traceable,Prism.Traceable>) =
+        
+        let allInitsDeterministic = spg.Variables |> List.forall (fun gl -> gl.Init.Length = 1 )
 
+        let prismIdentifiers = spg.Variables |> List.map (fun gl -> gl.Var) |> createPrismIdentifiers
+        
+        let initModule =
+            if allInitsDeterministic then
+                None
+            else
+                spg.Variables |> generateInitCondition  |> (translateExpression prismIdentifiers) |> Some
+        
+
+        let (globalVariables,forwardTrace) =
+            let transformVarDecl (varDecl:VarDecl) : (Prism.VariableDeclaration*(Traceable*Prism.Traceable)) =
+                let variableDeclaration =
+                    {
+                        VariableDeclaration.Name = prismIdentifiers.Item (varDecl.Var);
+                        VariableDeclaration.Type = transformTsamTypeToPrismType (varDecl.Type);
+                        VariableDeclaration.InitialValue =
+                            if allInitsDeterministic then
+                                Some(translateLiteral (varDecl.Init.Head) )
+                            else
+                                None
+                    }
+                (variableDeclaration,(Tsam.Traceable.Traceable(varDecl.Var),variableDeclaration.Name.Name))
+            spg.Variables |> List.map transformVarDecl
+                          |> List.unzip
+
+        
+        let transformAction (var:Tsam.Var,expr:Tsam.Expr) : (Prism.Identifier * Prism.Expression) =
+            let varToWrite = prismIdentifiers.Item var
+            let expr = translateExpression prismIdentifiers expr
+            (varToWrite,expr)
+
+        let transformDeterministicTransition (transition:DeterministicTransition) : Prism.Command =        
+            let transformedGuard =
+                match transition.Guard with
+                    | None -> Expression.Constant(Constant.Boolean(true))
+                    | Some (guard) -> translateExpression prismIdentifiers guard
+            let quantifiedUpdateOfVariables =
+                let transformedAction : (Prism.Expression * Prism.DeterministicUpdateOfVariables) list =
+                    let probability = probForSure
+                    match transition.Action with
+                        | Some (action) ->                            
+                            let assignment = action |> transformAction
+                            [(probability,[assignment])]  // we only have one element, because we handle the deterministic case with probability 1.0. Currently Action has also only one Element
+                        | None ->
+                            [(probability,[])]
+                transformedAction
+            {
+                Prism.Command.Action = Prism.CommandAction.NoActionLabel;
+                Prism.Command.Guard = transformedGuard;
+                Prism.Command.QuantifiedUpdateOfVariables = quantifiedUpdateOfVariables;
+            }
+
+        let transformStochasticTransition (transition:StochasticTransition) : Prism.Command =
+            let transformedGuard =
+                match transition.Guard with
+                    | None -> Expression.Constant(Constant.Boolean(true))
+                    | Some (guard) -> translateExpression prismIdentifiers guard
+            let quantifiedUpdateOfVariables =
+                let transformOption (option:StochasticOption) : (Prism.Expression * Prism.DeterministicUpdateOfVariables) =
+                    let probability = translateExpression prismIdentifiers (option.Probability)
+                    match option.Action with
+                        | Some (action) ->                            
+                            let assignment = action |> transformAction
+                            (probability,[assignment])
+                        | None ->
+                            (probability,[])
+                let transformedOptions = transition.Options |> List.map transformOption
+                transformedOptions
+            {
+                Prism.Command.Action = Prism.CommandAction.NoActionLabel;
+                Prism.Command.Guard = transformedGuard;
+                Prism.Command.QuantifiedUpdateOfVariables = quantifiedUpdateOfVariables;
+            }
+        
+        let moduleWithTransitions =
+            let systemModuleIdentifier = {Prism.Identifier.Name="systemModule"}
+            let transformedTransitions =
+                let deterministic = spg.DeterministicTransitions |> Set.toList |> List.map transformDeterministicTransition
+                let stochastic = spg.StochasticTransitions |> Set.toList |> List.map transformStochasticTransition
+                deterministic @ stochastic
+            Prism.Module(systemModuleIdentifier,[],transformedTransitions)
+        
+        let prismModel = 
+            {
+                Prism.PrismModel.ModelType = Prism.ModelType.MDP;
+                Prism.PrismModel.Constants = [];
+                Prism.PrismModel.InitModule = initModule; //Chapter Multiple Initial States e.g. "x+y=1"
+                Prism.PrismModel.GlobalVariables = globalVariables;
+                Prism.PrismModel.Modules = [moduleWithTransitions];
+                Prism.PrismModel.Formulas = [];
+                Prism.PrismModel.Labels = [];
+                Prism.PrismModel.Rewards = [];
+                Prism.PrismModel.ParallelComposition = None;
+            }
+        let forwardTrace = forwardTrace |> Map.ofList
+        (prismModel,forwardTrace)
+        
+    open SafetySharp.Workflow
+    open SafetySharp.Models.SpgTracer
+
+    let transformWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<StochasticProgramGraphTracer<'traceableOfOrigin>,PrismModelTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let model = state.ProgramGraph
+        let (transformedModel,forwardTraceInClosure) = transformSpgToPrism model
+        let tracer (oldValue:'traceableOfOrigin) =
+            let beforeTransform = state.ForwardTracer oldValue
+            forwardTraceInClosure.Item beforeTransform
+        let transformed =
+            {
+                PrismModelTracer.PrismModel = transformedModel;
+                PrismModelTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                PrismModelTracer.ForwardTracer = tracer;
+            }
+        do! updateState transformed
+    }

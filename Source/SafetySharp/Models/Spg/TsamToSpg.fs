@@ -156,7 +156,7 @@ module internal TsamToSpg =
                         }
                     let alreadyCollectedForSubStatements =
                         let statesInSubGraph = Set.empty<State>.Add(newState).Add(nextState)
-                        StochasticProgramGraph.initial statesInSubGraph newState (alreadyCollected.UniqueStateIdGenerator)
+                        StochasticProgramGraph.initial (alreadyCollected.Variables) statesInSubGraph newState (alreadyCollected.UniqueStateIdGenerator)
                     let subProgramGraph = collectStatesAndTransitions alreadyCollectedForSubStatements (newState,nextState) stm
                     (subProgramGraph,newState)
                 let (subProgramGraphs,connectionStatesToProgramGraphs) =
@@ -188,7 +188,7 @@ module internal TsamToSpg =
                         }
                     let alreadyCollectedForSubStatements =
                         let statesInSubGraph = Set.empty<State>.Add(newState).Add(nextState)
-                        StochasticProgramGraph.initial statesInSubGraph newState (alreadyCollected.UniqueStateIdGenerator)
+                        StochasticProgramGraph.initial (alreadyCollected.Variables) statesInSubGraph newState (alreadyCollected.UniqueStateIdGenerator)
                     let subProgramGraph = collectStatesAndTransitions alreadyCollectedForSubStatements (newState,nextState) stm                    
                     let stochasticOption =
                         {
@@ -232,7 +232,7 @@ module internal TsamToSpg =
                 }
     
     
-    let transformToStochasticProgramGraph (pgm:Stm) : StochasticProgramGraph =
+    let transformToStochasticProgramGraph (pgm:Pgm) : StochasticProgramGraph =
         let uniqueStateIdGenerator =
             let stmIdCounter : int ref = ref 0 // this stays in the closure
             let generator () : StateId =
@@ -251,7 +251,27 @@ module internal TsamToSpg =
             }
         let initialCollectedInformation =
             let states = Set.empty.Add(initialState).Add(endState)
-            StochasticProgramGraph.initial states initialState uniqueStateIdGenerator
+            let vardecls =
+                let globals = pgm.Globals
+                let locals = pgm.Locals |> List.map (fun l -> {GlobalVarDecl.Var=l.Var;GlobalVarDecl.Type=l.Type;GlobalVarDecl.Init=[l.Type.getDefaultValue]})
+                globals@locals
+            StochasticProgramGraph.initial vardecls states initialState uniqueStateIdGenerator
 
-        let transformed = collectStatesAndTransitions initialCollectedInformation (initialState,endState) (pgm)
+        let transformed = collectStatesAndTransitions initialCollectedInformation (initialState,endState) (pgm.Body)
         transformed
+
+
+    open SafetySharp.Workflow
+    open SafetySharp.Models.SpgTracer
+
+    let transformToStochasticProgramGraphWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,StochasticProgramGraphTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let transformed =
+            {
+                StochasticProgramGraphTracer.ProgramGraph = transformToStochasticProgramGraph (state.Pgm);
+                StochasticProgramGraphTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                StochasticProgramGraphTracer.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState transformed
+    }

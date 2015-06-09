@@ -22,21 +22,21 @@
 
 namespace SafetySharp.Models
 
+module internal SpgTracer =
 
-module internal TsamToDot =
-    open Tsam
-    open Spg
-    open SafetySharp.GraphVizDot.DotAst
-    
+    open SafetySharp.ITracing
 
-    let exportModel (pgm:Pgm) : Digraph =
-        pgm |> TsamToSpg.transformToStochasticProgramGraph |> SpgToDot.exportStochasticProgramGraph
-
-    open SafetySharp.Workflow
-
-    let exportModelWorkflow () 
-            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,Digraph> = workflow {
-        let! pgm = getState ()
-        let asString = exportModel (pgm.Pgm)
-        do! updateState asString
+    type StochasticProgramGraphTracer<'traceableOfOrigin> = {
+        ProgramGraph : Spg.StochasticProgramGraph;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
     }
+        with
+            interface ITracing<Spg.StochasticProgramGraph,'traceableOfOrigin,Tsam.Traceable,StochasticProgramGraphTracer<'traceableOfOrigin>> with
+                member this.getModel = this.ProgramGraph
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> Sam.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Sam.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : Tsam.Traceable list =
+                    failwith "NotYetImplemented"
