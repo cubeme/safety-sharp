@@ -26,14 +26,13 @@ namespace SafetySharp.Compiler.Normalization
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
-	using CSharp;
-	using CSharp.Roslyn;
-	using CSharp.Roslyn.Symbols;
-	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
+	using Roslyn;
+	using Roslyn.Symbols;
+	using Roslyn.Syntax;
 
 	/// <summary>
 	///     Replaces all port binding assignments with constructor invocations of <see cref="PortBinding" />.

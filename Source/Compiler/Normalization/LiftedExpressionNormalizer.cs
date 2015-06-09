@@ -22,18 +22,19 @@
 
 namespace SafetySharp.Compiler.Normalization
 {
+	using System;
 	using System.Linq;
-	using CSharp.Roslyn;
-	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling.CompilerServices;
+	using Roslyn;
+	using Roslyn.Syntax;
 
 	/// <summary>
-	///   Replaces the parameters of method invocations or object creations with a lifted lambda if the corresponding
-	///   method argument has the <see cref="LiftExpressionAttribute" /> applied.
-	///   For instance, with method M declared as <c>void M([LiftExpression] int a, int b)</c>:
-	///   <code>
+	///     Replaces the parameters of method invocations or object creations with a lifted lambda if the corresponding
+	///     method argument has the <see cref="LiftExpressionAttribute" /> applied.
+	///     For instance, with method M declared as <c>void M([LiftExpression] int a, int b)</c>:
+	///     <code>
 	///  		M(1 + 2, 4); 
 	///  		// becomes:
 	///  		M(() => 1 + 2, 4);
@@ -42,7 +43,7 @@ namespace SafetySharp.Compiler.Normalization
 	public sealed class LiftedExpressionNormalizer : Normalizer
 	{
 		/// <summary>
-		///   Lifts the expression represented by <paramref name="argument" />, if necessary.
+		///     Lifts the expression represented by <paramref name="argument" />, if necessary.
 		/// </summary>
 		public override SyntaxNode VisitArgument(ArgumentSyntax argument)
 		{

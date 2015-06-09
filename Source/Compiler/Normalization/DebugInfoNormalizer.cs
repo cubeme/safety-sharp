@@ -23,9 +23,9 @@
 namespace SafetySharp.Compiler.Normalization
 {
 	using System;
-	using CSharp.Roslyn;
-	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
+	using Roslyn;
+	using Roslyn.Syntax;
 
 	/// <summary>
 	///     The S# compiler changes the C# code behind the modeler's back. To ensure that the debugging experience is not negatively

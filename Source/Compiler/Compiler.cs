@@ -28,13 +28,13 @@ namespace SafetySharp.Compiler
 	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
-	using CSharp.Roslyn;
-	using CSharp.Utilities;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.MSBuild;
 	using Normalization;
+	using Roslyn;
+	using Utilities;
 
 	/// <summary>
 	///     Compiles a S# modeling project authored in C# to a S# modeling assembly.

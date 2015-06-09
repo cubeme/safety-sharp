@@ -27,13 +27,13 @@ namespace SafetySharp.Compiler.Normalization
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
-	using CSharp.Roslyn;
-	using CSharp.Roslyn.Symbols;
-	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
+	using Roslyn;
+	using Roslyn.Symbols;
+	using Roslyn.Syntax;
 
 	/// <summary>
 	///     Replaces all port declarations within a component with a matching delegate type, a field of that

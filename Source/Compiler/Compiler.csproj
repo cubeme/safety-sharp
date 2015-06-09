@@ -47,6 +47,10 @@
       <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Common.1.0.0-rc2\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
       <Private>True</Private>
     </Reference>
+	<Reference Include="QuickGraph, Version=3.6.61114.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Dependencies\QuickGraph.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.CSharp.1.0.0-rc2\lib\net45\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
       <Private>True</Private>
@@ -109,23 +113,63 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzers\BindingAnalyzer.cs" />
+    <Compile Include="Analyzers\CustomComponentAnalyzer.cs" />
+    <Compile Include="Analyzers\DiagnosticIdentifier.cs" />
+    <Compile Include="Analyzers\EnumAnalyzer.cs" />
+    <Compile Include="Analyzers\FaultEffectAnalyzer.cs" />
+    <Compile Include="Analyzers\OccurrencePatternAnalyzer.cs" />
+    <Compile Include="Analyzers\PortBindingInstantiationAnalyzer.cs" />
+    <Compile Include="Analyzers\PortImplementationAnalyzer.cs" />
+    <Compile Include="Analyzers\PortKindAnalyzer.cs" />
+    <Compile Include="Analyzers\PortReferenceAnalyzer.cs" />
+    <Compile Include="Analyzers\RecursionAnalyzer.cs" />
+    <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />
+    <Compile Include="Analyzers\UpdateInvocationAnalyzer.cs" />
     <Compile Include="Normalization\BindingNormalizer.cs" />
     <Compile Include="Normalization\DebugInfoNormalizer.cs" />
     <Compile Include="Normalization\PartialNormalizer.cs" />
     <Compile Include="Normalization\PortNormalizer.cs" />
     <Compile Include="Normalization\LiftedExpressionNormalizer.cs" />
     <Compile Include="Compiler.cs" />
+    <Compile Include="Port.cs" />
+    <Compile Include="PortCollection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Roslyn\Analyzer.cs" />
+    <Compile Include="Roslyn\DiagnosticInfo.cs" />
+    <Compile Include="Roslyn\IdentifierNameSynthesizer.cs" />
+    <Compile Include="Roslyn\Normalizer.cs" />
+    <Compile Include="Roslyn\SideEffectAnalyzer.cs" />
+    <Compile Include="Roslyn\Symbols\CompilationExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\MethodSymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\PropertySymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\SemanticModelExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\SymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\ArgumentExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\ClassDeclarationExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\MemberAccessExpressionExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxBuilder.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTokenExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTreeExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\Visibility.cs" />
+    <Compile Include="Utilities\Assert.cs" />
+    <Compile Include="Utilities\Log.cs" />
+    <Compile Include="Utilities\LogEntry.cs" />
+    <Compile Include="Utilities\LogType.cs" />
+    <Compile Include="Utilities\Requires.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CSharp\CSharp.csproj">
-      <Project>{24c31b36-8ed2-4a2a-ac73-6539ec8cae63}</Project>
-      <Name>CSharp</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">
       <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
       <Name>SafetySharp</Name>

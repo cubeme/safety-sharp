@@ -62,11 +62,10 @@
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
     </Compile>
-    <Compile Include="..\TestCompilation.fs">
-      <Link>TestCompilation.fs</Link>
-    </Compile>
     <Compile Include="..\AstTestHelpers.fs">
       <Link>AstTestHelpers.fs</Link>
+    </Compile>
+    <Compile Include="TestCompilation.fs">
     </Compile>
     <Compile Include="Modeling\ModelingTestHelpers.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
@@ -97,6 +96,34 @@
     <Compile Include="Models\Transformations\SsmToScmTests.fs" />
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
     <Compile Include="Analysis\VcGuardWithAssignmentModelTests.fs" />
+    <Compile Include="Utilities\Assert.fs" />
+    <Compile Include="Utilities\Log.fs" />
+    <Compile Include="Utilities\Requires.fs" />
+    <Compile Include="Roslyn\Symbols\CompilationExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\MethodSymbolExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\PropertySymbolExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\SemanticModelExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\SymbolExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\ArgumentExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\SyntaxBuilder.fs" />
+    <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.fs" />
+    <Compile Include="Roslyn\SideEffectAnalyzer.fs" />
+    <Compile Include="Analyzers\BindingAnalyzer.fs" />
+    <Compile Include="Analyzers\FaultEffectAnalyzer.fs" />
+    <Compile Include="Analyzers\OccurrencePatternAnalyzer.fs" />
+    <Compile Include="Analyzers\PortBindingInstantiationAnalyzer.fs" />
+    <Compile Include="Analyzers\PortImplementationAnalyzer.fs" />
+    <Compile Include="Analyzers\PortReferenceAnalyzer.fs" />
+    <Compile Include="Analyzers\RecursionAnalyzer.fs" />
+    <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />
+    <Compile Include="Analyzers\UpdateInvocationAnalyzer.fs" />
+    <Compile Include="Normalizers\BindingNormalizer.fs" />
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
@@ -204,11 +231,6 @@
     <ProjectReference Include="..\..\Source\Compiler\Compiler.csproj">
       <Name>Compiler</Name>
       <Project>{8823091c-387f-4f4d-abcd-8f71d1528cbb}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Source\CSharp\CSharp.csproj">
-      <Name>CSharp</Name>
-      <Project>{24c31b36-8ed2-4a2a-ac73-6539ec8cae63}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">

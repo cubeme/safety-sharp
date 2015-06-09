@@ -23,11 +23,11 @@
 namespace SafetySharp.Compiler.Normalization
 {
 	using System;
-	using CSharp.Roslyn;
-	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Roslyn;
+	using Roslyn.Syntax;
 
 	/// <summary>
 	///     Ensures that all class declarations are marked <c>partial</c> such that additionally generated code can be easily added

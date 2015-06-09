@@ -54,7 +54,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\..\Binaries\Debug\SafetySharp.CSharp.dll" />
+    <Analyzer Include="..\..\Binaries\Debug\SafetySharp.Compiler.exe" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
