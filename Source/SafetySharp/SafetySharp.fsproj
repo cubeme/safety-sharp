@@ -101,13 +101,16 @@
     <Compile Include="Models\Tsam\TsamHelpers.fs" />
     <Compile Include="Models\Tsam\TsamTracer.fs" />
     <Compile Include="Models\Tsam\TsamToString.fs" />
-    <Compile Include="Models\Tsam\TsamToDot.fs" />
     <Compile Include="Models\Tsam\SamToTsam.fs" />
     <Compile Include="Models\Tsam\TsamChangeIdentifier.fs" />
     <Compile Include="Models\Tsam\TsamPassiveFormFS01.fs" />
     <Compile Include="Models\Tsam\TsamPassiveFormGCFK09.fs" />
+    <Compile Include="Models\Spg\Spg.fs" />
+    <Compile Include="Models\Spg\TsamToSpg.fs" />
+    <Compile Include="Models\Spg\SpgToDot.fs" />
     <Compile Include="Models\Transformations\SsmToScm.fs" />
     <Compile Include="Models\Transformations\ScmToSam.fs" />
+    <Compile Include="Models\Transformations\TsamToDot.fs" />
     <Compile Include="Analysis\Checks\WellDefinedGuardedCommands.fs" />
     <Compile Include="Analysis\VerificationCondition\VcWeakestPrecondition.fs" />
     <Compile Include="Analysis\VerificationCondition\VcStrongestPostcondition.fs" />

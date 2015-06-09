@@ -783,6 +783,8 @@ module internal VcGuardWithAssignmentModel =
         
 
 
+    // GuardWithAssignmentModel is actually somehow a Spg with only one state. Thus, the state
+    // can easily be abstracted away.
 
     type FinalVariableAssignments = {
         Assignments : Map<Var,Expr>;
