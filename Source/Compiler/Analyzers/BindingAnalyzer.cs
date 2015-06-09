@@ -30,10 +30,10 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
+	using Runtime.Modeling;
 
 	/// <summary>
 	///     Ensures that bindings resolve to a unique pair of bound ports.

@@ -27,7 +27,8 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open SafetySharp
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
+open SafetySharp.Runtime.Modeling
 
 [<AutoOpen>]
 module Helpers =
@@ -55,42 +56,6 @@ type internal OneFieldComponent =
 
     new () = { _field = 0 }
     val private _field : int
-
-    [<Required>]
-    member this.ReqPort1 () = ()
-
-    [<Provided>]
-    member this.ProvPort1 () = ()
-
-    [<Required>]
-    member this.ReqPort2 (x : int) = x > 0
-
-    [<Provided>]
-    member this.ProvPort2 (x : int) = x > 0
-
-    [<Required>]
-    member this.OverloadedReqPort (x : int) = x
-
-    [<Provided>]
-    member this.OverloadedProvPort (x : int) = x
-
-    [<Required>]
-    member this.OverloadedReqPort (x : bool) = x
-
-    [<Provided>]
-    member this.OverloadedProvPort (x : bool) = x
-
-    [<Required>]
-    member this.OverloadedReqPort2 (x : int) = x
-
-    [<Provided>]
-    member this.OverloadedProvPort2 (x : int) = x
-
-    [<Required>]
-    member this.OverloadedReqPort2 (x : bool) = x
-
-    [<Provided>]
-    member this.OverloadedProvPort2 (x : double) = x
 
 type internal TwoFieldsComponent =
     inherit Component

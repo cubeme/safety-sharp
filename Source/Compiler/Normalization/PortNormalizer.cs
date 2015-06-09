@@ -30,10 +30,11 @@ namespace SafetySharp.Compiler.Normalization
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
+	using Runtime.CompilerServices;
+	using Runtime.Modeling;
 
 	/// <summary>
 	///     Replaces all port declarations within a component with a matching delegate type, a field of that
@@ -47,17 +48,29 @@ namespace SafetySharp.Compiler.Normalization
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] 
 	///         d f;
 	///         [DebuggerHidden]
-	///    		[SafetySharp.Modeling.RequiredAttribute()] 
-	///         [SafetySharp.Modeling.BackingFieldAttribute("f")] 
+	///    		[SafetySharp.Runtime.Modeling.RequiredAttribute()] 
+	///         [SafetySharp.Runtime.Modeling.BackingFieldAttribute("f")] 
 	///         public void MyMethod(int a, double b) => f(a, b);
 	///    		
 	/// 		private extern bool MyProperty { get; set; } // TODO!
 	///    		// becomes (on a single line with uniquely generated names):
-	///    		[CompilerGenerated] public delegate bool d1();
-	///   		[CompilerGenerated] public delegate void d2(bool value);
-	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] private d1 f1;
-	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] private d2 f2;
-	///    		private bool MyProperty { [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute("f1")] get { return f1(); } [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute("f2")] set { f2(value); } }
+	///    		[CompilerGenerated] 
+	///         public delegate bool d1();
+	///   		[CompilerGenerated] 
+	///         public delegate void d2(bool value);
+	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] 
+	///         private d1 f1;
+	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] 
+	///         private d2 f2;
+	///    		private bool MyProperty 
+	///         { 
+	///              [SafetySharp.Modeling.RequiredAttribute()] 
+	///              [SafetySharp.Modeling.BackingFieldAttribute("f1")]
+	///              get { return f1(); } 
+	///              [SafetySharp.Modeling.RequiredAttribute()] 
+	///              [SafetySharp.Modeling.BackingFieldAttribute("f2")] 
+	///              set { f2(value); } 
+	///         }
 	/// 
 	///         public void MyMethod(int a, double b) { ... }
 	///    		// becomes:
@@ -67,8 +80,9 @@ namespace SafetySharp.Compiler.Normalization
 	///         d f;
 	///         private void __MyMethod__(int a, double b) { ... }
 	///         [DebuggerHidden]
-	///    		[SafetySharp.Modeling.ProvidedAttribute()]
-	///         [SafetySharp.Modeling.BackingFieldAttribute("f")] 
+	///    		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
+	///         [SafetySharp.Runtime.Modeling.BackingFieldAttribute("f")] 
+	///         [SafetySharp.Runtime.Modeling.PortBehavior("__MyMethod__")]
 	///         public void MyMethod(int a, double b) => f(a, b);
 	///   	</code>
 	/// </summary>
@@ -228,10 +242,10 @@ namespace SafetySharp.Compiler.Normalization
 			if (methodDeclaration.Modifiers.IndexOf(SyntaxKind.AbstractKeyword) != -1)
 				return methodDeclaration;
 
-			// Add the [DefaultImplementation] attribute
-			var implementationArgument = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", methodName));
-			var implementationAttribute = SyntaxBuilder.Attribute(typeof(DefaultImplementationAttribute).FullName, implementationArgument);
-			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(implementationAttribute));
+			// Add the [PortBehavior] attribute
+			var behaviorArgument = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", methodName));
+			var behaviorAttribute = SyntaxBuilder.Attribute(typeof(PortBehaviorAttribute).FullName, behaviorArgument);
+			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(behaviorAttribute));
 
 			// Add the [DebuggerHidden] attribute if it is not already present
 			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))

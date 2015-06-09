@@ -26,7 +26,7 @@ open System
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
@@ -36,7 +36,8 @@ module ``Local bindings`` =
         let csharpCode = sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" csharpCode
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model |> SsmLowering.lowerLocalBindings
+        let metadataProvider = model.GetMetadataProvider ()
+        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model metadataProvider |> SsmLowering.lowerLocalBindings
         root.Subs.[0]
 
     let private tmp = CilToSsm.freshLocal
@@ -101,7 +102,7 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (MemberExpr (Field ("R.X0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 1 0, "SafetySharp.Modeling.Component", [], [], VoidType, [], false))); RetStm None]
+                            Body = SeqStm [ExprStm (MemberExpr (Field ("R.X0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 1 0, "SafetySharp.Runtime.Modeling.Component", [], [], VoidType, [], false))); RetStm None]
                         }
                     ]
             }
@@ -165,7 +166,7 @@ module ``Local bindings`` =
                             SourcePort = methodName "M" 2 0
                             TargetComp = "R.X0@0"; 
                             TargetPort = synName "M" 2 0 0
-                            Kind = Instantaneous 
+                            Kind = BindingKind.Instantaneous 
                         }
                     ]
                 Methods = 
@@ -218,7 +219,7 @@ module ``Local bindings`` =
                                         SourcePort = methodName "M" 2 0
                                         TargetComp = "R.X0@0.y@0"; 
                                         TargetPort = synName "M" 2 0 0
-                                        Kind = Instantaneous 
+                                        Kind = BindingKind.Instantaneous 
                                     }
                                 ]
                             Methods = 
@@ -271,7 +272,7 @@ module ``Local bindings`` =
                             SourcePort = methodName "M" 3 0
                             TargetComp = "R.X0@0"; 
                             TargetPort = synName "M" 3 0 0
-                            Kind = Instantaneous 
+                            Kind = BindingKind.Instantaneous 
                         }
                     ]
                 Methods = 
@@ -327,7 +328,7 @@ module ``Local bindings`` =
                             SourcePort = methodName "M" 2 0
                             TargetComp = "R.X0@0"; 
                             TargetPort = synName "M" 2 0 0
-                            Kind = Instantaneous 
+                            Kind = BindingKind.Instantaneous 
                         }
                     ]
                 Methods = 
@@ -396,7 +397,7 @@ module ``Local bindings`` =
                             SourcePort = methodName "M" 2 0
                             TargetComp = "R.X0@0"; 
                             TargetPort = synName "M" 2 0 0
-                            Kind = Instantaneous 
+                            Kind = BindingKind.Instantaneous 
                         }
                     ]
                 Methods = 
@@ -441,7 +442,7 @@ module ``Local bindings`` =
                                         SourcePort = methodName "N" 2 0
                                         TargetComp = "R.X0@0.y@0" 
                                         TargetPort = synName "N" 2 0 0
-                                        Kind = Instantaneous 
+                                        Kind = BindingKind.Instantaneous 
                                     }
                                 ]
                             Methods = 
@@ -482,21 +483,21 @@ module ``Local bindings`` =
                             SourcePort = methodName "M" 2 0
                             TargetComp = "R.X0@0"; 
                             TargetPort = synName "M" 2 0 0
-                            Kind = Instantaneous 
+                            Kind = BindingKind.Instantaneous 
                         }
                         { 
                             SourceComp = "R.X0@0"
                             SourcePort = methodName "Q" 2 0
                             TargetComp = "R.X0@0"; 
                             TargetPort = synName "Q" 2 0 1
-                            Kind = Instantaneous 
+                            Kind = BindingKind.Instantaneous 
                         }
                         { 
                             SourceComp = "R.X0@0"
                             SourcePort = methodName "Q" 2 0
                             TargetComp = "R.X0@0"; 
                             TargetPort = synName "Q" 2 0 2
-                            Kind = Instantaneous 
+                            Kind = BindingKind.Instantaneous 
                         }
                     ]
                 Methods = 

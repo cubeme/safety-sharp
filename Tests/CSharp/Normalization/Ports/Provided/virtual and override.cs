@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.Provided
 {
 	using System;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	internal partial class In1 : Component
 	{
@@ -82,10 +82,10 @@ namespace Tests.Normalization.Ports.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private delegate int __PortDelegate0__(int x);
 
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
+		[SafetySharp.Runtime.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public virtual int M(int x) => this.__portField0__(x);
 	}
 
@@ -98,10 +98,10 @@ namespace Tests.Normalization.Ports.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private delegate int __PortDelegate0__(int x);
 
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
+		[SafetySharp.Runtime.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public override int M(int x) => this.__portField0__(x);
 	}
 
@@ -114,10 +114,10 @@ namespace Tests.Normalization.Ports.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private delegate int __PortDelegate0__(int x);
 
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
+		[SafetySharp.Runtime.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public sealed override int M(int x) => this.__portField0__(x);
 	}
 }

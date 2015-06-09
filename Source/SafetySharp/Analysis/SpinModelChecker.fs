@@ -24,7 +24,7 @@ namespace SafetySharp.Analysis
 
 open System
 open SafetySharp
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 open SafetySharp.Models
 open SafetySharp.Analysis.Modelchecking.PromelaSpin
 open SafetySharp.Workflow

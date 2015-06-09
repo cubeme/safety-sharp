@@ -24,7 +24,7 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	[Diagnostic(DiagnosticIdentifier.ComponentInterfaceReimplementation, 30, 20, 2, "Tests.Diagnostics.CustomComponents.Invalid.W1")]
 	internal class W1 : Component, IComponent

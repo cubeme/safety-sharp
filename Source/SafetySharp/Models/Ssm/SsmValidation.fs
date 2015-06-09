@@ -26,7 +26,8 @@ open System
 open System.Collections.Generic
 open System.Reflection
 open SafetySharp
-open SafetySharp.Modeling
+open SafetySharp.Reflection
+open SafetySharp.Runtime.Modeling
 open Ssm
 open QuickGraph
 open QuickGraph.Algorithms
@@ -91,13 +92,15 @@ type CyclicControlFlowException internal (cycle : (Component * MethodInfo) array
 module internal SsmValidation =
     
     /// Maps the given information to a <see cref="PortInfo" /> instance.
-    let private toPortInfo (model : Model) (componentName : string) (portName : string) = 
+    let private toPortInfo (model : Model) (metadataProvider : MetadataProvider) (componentName : string) (portName : string) = 
         let c = model.FindComponent componentName
-        PortInfo (c, model.MetadataProvider.UnmapMethod (c.GetType ()) portName)
+        PortInfo (c, metadataProvider.UnmapMethod (c.GetType ()) portName)
 
     /// Maps the given information to a <see cref="PortBinding" /> instance.
-    let private toPortBinding (model : Model) (componentName : string) (binding : Binding) =
-        let portBinding = PortBinding (toPortInfo model binding.TargetComp binding.TargetPort, toPortInfo model binding.SourceComp binding.SourcePort)
+    let private toPortBinding (model : Model) (metadataProvider : MetadataProvider) (componentName : string) (binding : Binding) =
+        let portBinding = PortBinding (toPortInfo model metadataProvider binding.TargetComp binding.TargetPort, 
+                                       toPortInfo model metadataProvider binding.SourceComp binding.SourcePort)
+
         portBinding.Kind <- binding.Kind
         portBinding.Binder <- model.FindComponent componentName
         portBinding
@@ -109,7 +112,7 @@ module internal SsmValidation =
     }
 
     /// Checks for invalid bindings, i.e., bindings involving a port of a component that is not part of the declaring component's sub tree.
-    let private invalidBindings (model : Model) (c : Comp) =
+    let private invalidBindings (model : Model) (metadataProvider : MetadataProvider) (c : Comp) =
         let rec check (c : Comp) = seq {
             let invalidComp (portComponent : string) = portComponent.StartsWith c.Name |> not
             yield! c.Bindings 
@@ -120,10 +123,10 @@ module internal SsmValidation =
 
         let bindings = check c |> Seq.toArray
         if bindings.Length > 0 then
-            raise (InvalidBindingsException (bindings |> Array.map (fun (c, binding) -> toPortBinding model c.Name binding)))
+            raise (InvalidBindingsException (bindings |> Array.map (fun (c, binding) -> toPortBinding model metadataProvider c.Name binding)))
 
     /// Checks for unbound or ambiguously bound required ports.
-    let private invalidRequiredPortBindings (model : Model) (c : Comp) =
+    let private invalidRequiredPortBindings (model : Model) (metadataProvider : MetadataProvider) (c : Comp) =
         let reqPorts = collect (fun c -> c.Methods |> Seq.filter (fun m -> match m.Kind with ReqPort -> true | _ -> false)) c
         let bindings = collect (fun c -> c.Bindings) c
 
@@ -135,23 +138,23 @@ module internal SsmValidation =
 
         let unbound = invalid |> Array.filter (fun (c, p, bindings) -> bindings.Length = 0)
         if unbound.Length > 0 then
-            raise (UnboundRequiredPortsException (unbound |> Array.map (fun (c, m, _) -> toPortInfo model c.Name m.Name)))
+            raise (UnboundRequiredPortsException (unbound |> Array.map (fun (c, m, _) -> toPortInfo model metadataProvider c.Name m.Name)))
 
         let ambiguous = invalid |> Array.filter (fun (c, p, bindings) -> bindings.Length > 1)
         if ambiguous.Length > 0 then
-            raise (AmbiguousRequiredPortBindingsException (ambiguous |> Array.map (fun (_, _, b) -> b |> Array.map (fun (c, b) -> toPortBinding model c.Name b))))
+            raise (AmbiguousRequiredPortBindingsException (ambiguous |> Array.map (fun (_, _, b) -> b |> Array.map (fun (c, b) -> toPortBinding model metadataProvider c.Name b))))
 
     /// Checks for cyclic control flow, i.e., ports recursively invoking themselves without a delayed binding in between.
-    let private controlFlowCycles (model : Model) (c : Comp) =
+    let private controlFlowCycles (model : Model) (metadataProvider : MetadataProvider) (c : Comp) =
         let componentMethodVertex componentName portName = 
             let c = model.FindComponent componentName
-            (c, model.MetadataProvider.UnmapMethod (c.GetType ()) portName)
+            (c, metadataProvider.UnmapMethod (c.GetType ()) portName)
 
         let edges = List<SEdge<_>> ()
         let edge startVertex endVertex = edges.Add (SEdge<_> (startVertex, endVertex))
 
         // Compute the edges from the required ports to the instantly bound provided ports
-        let required = collect (fun c -> c.Bindings) c |> Seq.filter (fun (c, binding) -> binding.Kind = Instantaneous) |> Seq.iter (fun (c, binding) -> 
+        let required = collect (fun c -> c.Bindings) c |> Seq.filter (fun (c, binding) -> binding.Kind = BindingKind.Instantaneous) |> Seq.iter (fun (c, binding) -> 
             edge (componentMethodVertex binding.TargetComp binding.TargetPort) (componentMethodVertex binding.SourceComp binding.SourcePort)
         )
 
@@ -204,7 +207,8 @@ module internal SsmValidation =
 
     /// Performs the validation of the given SSM root component and S# model.
     let validate (model : Model) (c : Comp) =
-        invalidBindings model c
-        invalidRequiredPortBindings model c
-        controlFlowCycles model c
+        let metadataProvider = model.GetMetadataProvider ()
+        invalidBindings model metadataProvider c
+        invalidRequiredPortBindings model metadataProvider c
+        controlFlowCycles model metadataProvider c
         c

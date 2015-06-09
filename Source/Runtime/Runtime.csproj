@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SafetySharp.Runtime</RootNamespace>
+    <AssemblyName>SafetySharp.Runtime</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\Binaries\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\Binaries\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="JetBrains.Annotations, Version=9.1.1.0, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
+      <HintPath>..\..\Dependencies\Packages\JetBrains.Annotations.9.1.1\lib\net20\JetBrains.Annotations.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Collections.Immutable, Version=1.1.33.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\Dependencies\Packages\System.Collections.Immutable.1.1.33-beta\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Runtime" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Analysis\ComponentExtensions.cs" />
+    <Compile Include="Analysis\IMemberAccess.cs" />
+    <Compile Include="Analysis\MemberAccess.cs" />
+    <Compile Include="Analysis\Spin.cs" />
+    <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
+    <Compile Include="CompilerServices\LiftExpressionAttribute.cs" />
+    <Compile Include="CompilerServices\PortBehaviorAttribute.cs" />
+    <Compile Include="CompilerServices\SafetySharpAssemblyAttribute.cs" />
+    <Compile Include="Modeling\BindingKind.cs" />
+    <Compile Include="Modeling\Model.Immutability.cs">
+      <DependentUpon>Model.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modeling\Component.Ports.cs">
+      <DependentUpon>Component.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modeling\Component.Faults.cs">
+      <DependentUpon>Component.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modeling\Component.Hierarchy.cs">
+      <DependentUpon>Component.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modeling\Choose.cs" />
+    <Compile Include="Modeling\Component.Bindings.cs">
+      <DependentUpon>Component.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modeling\Component.Immutability.cs">
+      <DependentUpon>Component.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modeling\Component.cs" />
+    <Compile Include="Modeling\Component.Fields.cs">
+      <DependentUpon>Component.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modeling\Fault.cs" />
+    <Compile Include="Modeling\IComponent.cs" />
+    <Compile Include="Modeling\Model.cs" />
+    <Compile Include="Modeling\OccurrencePatternAttribute.cs" />
+    <Compile Include="Modeling\OverflowBehavior.cs" />
+    <Compile Include="Modeling\PersistentAttribute.cs" />
+    <Compile Include="Modeling\PortBinding.cs" />
+    <Compile Include="Modeling\PortInfo.cs" />
+    <Compile Include="Modeling\ProvidedAttribute.cs" />
+    <Compile Include="Modeling\RequiredAttribute.cs" />
+    <Compile Include="Modeling\RootComponent.cs" />
+    <Compile Include="Modeling\SharedComponentsException.cs" />
+    <Compile Include="Modeling\TransientAttribute.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Simulation\ComponentExtensions.cs" />
+    <Compile Include="Simulation\Simulator.cs" />
+    <Compile Include="Utilities\Assert.cs" />
+    <Compile Include="Utilities\Log.cs" />
+    <Compile Include="Utilities\LogEntry.cs" />
+    <Compile Include="Utilities\LogType.cs" />
+    <Compile Include="Utilities\ReflectionExtensions.cs" />
+    <Compile Include="Utilities\Requires.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

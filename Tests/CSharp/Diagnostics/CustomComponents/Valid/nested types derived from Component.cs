@@ -23,7 +23,7 @@
 namespace Tests.Diagnostics.CustomComponents.Valid
 {
 	using System;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	internal class X2
 	{

@@ -23,7 +23,7 @@
 namespace Tests.Diagnostics.PortKinds.Valid
 {
 	using System;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	internal interface R1
 	{
@@ -61,18 +61,11 @@ namespace Tests.Diagnostics.PortKinds.Valid
 
 	internal class R7 : IComponent
 	{
+		public dynamic RequiredPorts { get; private set; }
+		public dynamic ProvidedPorts { get; private set; }
+
 		public void Update()
 		{
-		}
-
-		public dynamic RequiredPorts
-		{
-			get { return null; }
-		}
-
-		public dynamic ProvidedPorts
-		{
-			get { return null; }
 		}
 
 		private void M()
@@ -88,14 +81,7 @@ namespace Tests.Diagnostics.PortKinds.Valid
 		{
 		}
 
-		public dynamic RequiredPorts
-		{
-			get { return null; }
-		}
-
-		public dynamic ProvidedPorts
-		{
-			get { return null; }
-		}
+		public dynamic RequiredPorts { get; private set; }
+		public dynamic ProvidedPorts { get; private set; }
 	}
 }

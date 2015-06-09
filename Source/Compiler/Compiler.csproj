@@ -47,7 +47,7 @@
       <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Common.1.0.0-rc2\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
       <Private>True</Private>
     </Reference>
-	<Reference Include="QuickGraph, Version=3.6.61114.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
+    <Reference Include="QuickGraph, Version=3.6.61114.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Dependencies\QuickGraph.dll</HintPath>
     </Reference>
@@ -106,7 +106,6 @@
     </Reference>
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Reflection.Metadata, Version=1.0.18.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\Dependencies\Packages\System.Reflection.Metadata.1.0.18-beta\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
       <Private>True</Private>
@@ -160,19 +159,14 @@
     <Compile Include="Roslyn\Syntax\SyntaxTreeExtensions.cs" />
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.cs" />
     <Compile Include="Roslyn\Syntax\Visibility.cs" />
-    <Compile Include="Utilities\Assert.cs" />
-    <Compile Include="Utilities\Log.cs" />
-    <Compile Include="Utilities\LogEntry.cs" />
-    <Compile Include="Utilities\LogType.cs" />
-    <Compile Include="Utilities\Requires.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">
-      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
-      <Name>SafetySharp</Name>
+    <ProjectReference Include="..\Runtime\Runtime.csproj">
+      <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
+      <Name>Runtime</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

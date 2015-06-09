@@ -98,7 +98,7 @@ module internal Scm =
         | StepComp of Comp
         | StepFault of Fault
         
-    type internal OverflowBehavior = SafetySharp.Modeling.OverflowBehavior
+    type internal OverflowBehavior = SafetySharp.Runtime.Modeling.OverflowBehavior
 
     type internal Type =
         | BoolType

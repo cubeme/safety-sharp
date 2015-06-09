@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.Required
 {
 	using System;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	internal partial class In6 : Component
 	{
@@ -34,19 +34,19 @@ namespace Tests.Normalization.Ports.Required
 
 	internal partial class Out6 : Component
 	{
-		[SafetySharp.Modeling.RequiredAttribute()]
+		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public void M(int a) => this.__portField0__(a);
 		
-		[SafetySharp.Modeling.RequiredAttribute()]
+		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField1__")]
+		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField1__")]
 		public void M(int a, decimal b) => this.__portField1__(a, b);
 
-		[SafetySharp.Modeling.RequiredAttribute()]
+		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField2__")]
+		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField2__")]
 		public void M(int a, decimal b, bool c) => this.__portField2__(a, b, c);
 	}
 

@@ -28,10 +28,10 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
+	using Runtime.Modeling;
 
 	/// <summary>
 	///     Ensures that no instances of the <see cref="PortBinding" /> class are created explicitly.

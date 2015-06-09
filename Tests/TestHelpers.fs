@@ -37,7 +37,7 @@ open System.Reflection
 open System.Runtime.CompilerServices
 open SafetySharp
 open SafetySharp.Models
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 open SafetySharp.Reflection
 open Microsoft.FSharp.Reflection
 open NUnit.Framework

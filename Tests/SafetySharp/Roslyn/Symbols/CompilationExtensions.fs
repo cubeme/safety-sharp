@@ -28,7 +28,7 @@ open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Compiler.Roslyn.Symbols
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 
 [<TestFixture>]
 module ``GetTypeSymbol methods`` =

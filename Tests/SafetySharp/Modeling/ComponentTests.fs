@@ -29,7 +29,9 @@ open System.Reflection
 open NUnit.Framework
 open Modeling
 open SafetySharp
-open SafetySharp.Modeling
+open SafetySharp.Models
+open SafetySharp.Runtime.Modeling
+open SafetySharp.Runtime.Analysis
 open Mono.Cecil
 
 type private TestEnum =
@@ -48,14 +50,14 @@ module ``SetInitialValues method`` =
     let ``throws when initial values is null`` () =
         let component' = FieldComponent<int>()
         let field = createFieldExpression<int> component' "_field"
-        raisesArgumentNullException "initialValues" (fun () -> component'.SetInitialValues (field, (null : int array)) |> ignore)
+        raisesArgumentNullException "values" (fun () -> component'.SetInitialValues (field, (null : int array)) |> ignore)
 
     [<Test>]
     let ``throws when initial values is empty`` () =
         let component' = FieldComponent<int>()
         let field = createFieldExpression<int> component' "_field"
         let values : int array = [||]
-        raisesArgumentException "initialValues" (fun () -> component'.SetInitialValues (field, values) |> ignore)
+        raisesArgumentException "values" (fun () -> component'.SetInitialValues (field, values) |> ignore)
 
     [<Test>]
     let ``throws when the component metadata has already been finalized`` () =
@@ -79,7 +81,7 @@ module ``SetInitialValues method`` =
     [<Test>]
     let ``throws when undefined enum value is passed`` () =
         let component' = FieldComponent<TestEnum> ()
-        raisesArgumentException "initialValues" (fun () -> component'.SetInitialValues (createFieldExpression<TestEnum> component' "_field", enum<TestEnum> 177) |> ignore)
+        raisesArgumentException "values" (fun () -> component'.SetInitialValues (createFieldExpression<TestEnum> component' "_field", enum<TestEnum> 177) |> ignore)
 
     [<Test>]
     let ``does not throw when initial values are set multiple times for the same field`` () =
@@ -107,11 +109,11 @@ module ``SetInitialValues method`` =
 [<TestFixture>]
 module ``FinalizeMetadata method`` =
     [<Test>]
-    let ``throws when the metadata has already been finalized`` () =
+    let ``does not throw when the metadata has already been finalized`` () =
         let component' = EmptyComponent ()
         component'.FinalizeMetadata ()
 
-        raisesInvalidOpException (fun () -> component'.FinalizeMetadata () |> ignore)
+        nothrow (fun () -> component'.FinalizeMetadata () |> ignore)
 
     [<Test>]
     let ``updates the IsMetadataFinalized property`` () =
@@ -295,7 +297,7 @@ module ``Bindings property`` =
     [<Test>]
     let ``returns empty list for component without bindings`` () =
         bindings "class X : Component { void M() {} extern void N(); }"
-        component'.Bindings =? []
+        component'.Bindings |> Seq.toList =? []
 
     [<Test>]
     let ``returns delayed port binding of a component`` () =
@@ -303,10 +305,10 @@ module ``Bindings property`` =
         component'.Bindings.Length =? 1
         component'.Bindings.[0].Kind =? BindingKind.Delayed
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[0].TargetPort.Component =? (component' :> obj)
+        component'.Bindings.[0].TargetPort.Component =? (component' :> IComponent)
         component'.Bindings.[0].TargetPort.Method.Name =? "N"
         component'.Bindings.[0].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[0].SourcePort.Component =? (component' :> obj)
+        component'.Bindings.[0].SourcePort.Component =? (component' :> IComponent)
         component'.Bindings.[0].SourcePort.Method.Name =? "M"
 
     [<Test>]
@@ -315,10 +317,10 @@ module ``Bindings property`` =
         component'.Bindings.Length =? 1
         component'.Bindings.[0].Kind =? BindingKind.Instantaneous
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[0].TargetPort.Component =? (component' :> obj)
+        component'.Bindings.[0].TargetPort.Component =? (component' :> IComponent)
         component'.Bindings.[0].TargetPort.Method.Name =? "N"
         component'.Bindings.[0].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[0].SourcePort.Component =? (component' :> obj)
+        component'.Bindings.[0].SourcePort.Component =? (component' :> IComponent)
         component'.Bindings.[0].SourcePort.Method.Name =? "M"
 
     [<Test>]
@@ -327,17 +329,17 @@ module ``Bindings property`` =
         component'.Bindings.Length =? 2
         component'.Bindings.[0].Kind =? BindingKind.Instantaneous
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> IComponent)
         component'.Bindings.[0].TargetPort.Method.Name =? "N"
         component'.Bindings.[0].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[1] :> obj)
+        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[1] :> IComponent)
         component'.Bindings.[0].SourcePort.Method.Name =? "M"
         component'.Bindings.[1].Kind =? BindingKind.Delayed
         component'.Bindings.[1].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[1].TargetPort.Component =? (component'.Subcomponents.[1] :> obj)
+        component'.Bindings.[1].TargetPort.Component =? (component'.Subcomponents.[1] :> IComponent)
         component'.Bindings.[1].TargetPort.Method.Name =? "N"
         component'.Bindings.[1].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[1].SourcePort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[1].SourcePort.Component =? (component'.Subcomponents.[0] :> IComponent)
         component'.Bindings.[1].SourcePort.Method.Name =? "M"
 
     [<Test>]
@@ -346,17 +348,17 @@ module ``Bindings property`` =
         component'.Bindings.Length =? 2
         component'.Bindings.[0].Kind =? BindingKind.Delayed
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> IComponent)
         component'.Bindings.[0].TargetPort.Method.Name =? "N"
         component'.Bindings.[0].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[0] :> IComponent)
         component'.Bindings.[0].SourcePort.Method.Name =? "M"
         component'.Bindings.[1].Kind =? BindingKind.Delayed
         component'.Bindings.[1].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[1].TargetPort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[1].TargetPort.Component =? (component'.Subcomponents.[0] :> IComponent)
         component'.Bindings.[1].TargetPort.Method.Name =? "N"
         component'.Bindings.[1].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[1].SourcePort.Component =? (component'.Subcomponents.[1] :> obj)
+        component'.Bindings.[1].SourcePort.Component =? (component'.Subcomponents.[1] :> IComponent)
         component'.Bindings.[1].SourcePort.Method.Name =? "M"
 
 [<TestFixture>]
@@ -392,21 +394,21 @@ module ``Subcomponents property`` =
         let component' = FieldComponent<int> 3
         component'.FinalizeMetadata ()
 
-        component'.Subcomponents =? []
+        component'.Subcomponents |> Seq.toList =? []
 
     [<Test>]
     let ``ignores null subcomponents`` () =
         let component' = OneSubcomponent ()
         component'.FinalizeMetadata ()
 
-        component'.Subcomponents =? []
+        component'.Subcomponents |> Seq.toList =? []
 
     [<Test>]
     let ``is empty when component has no subcomponents`` () =
         let component' = EmptyComponent ()
         component'.FinalizeMetadata ()
 
-        component'.Subcomponents =? []
+        component'.Subcomponents |> Seq.toList =? []
 
     [<Test>]
     let ``contains single subcomponent`` () =
@@ -414,7 +416,7 @@ module ``Subcomponents property`` =
         let component' = OneSubcomponent (subcomponent)
         component'.FinalizeMetadata ()
 
-        component'.Subcomponents =? [subcomponent]
+        component'.Subcomponents |> Seq.toList =? [subcomponent]
 
     [<Test>]
     let ``contains multiple subcomponents`` () =
@@ -423,7 +425,7 @@ module ``Subcomponents property`` =
         let component' = TwoSubcomponents (subcomponent1, subcomponent2)
         component'.FinalizeMetadata ()
 
-        component'.Subcomponents =? [subcomponent1; subcomponent2]
+        component'.Subcomponents |> Seq.toList =? [subcomponent1; subcomponent2]
 
     [<Test>]
     let ``contains named subcomponents`` () =

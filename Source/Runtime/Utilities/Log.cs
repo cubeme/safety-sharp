@@ -20,7 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Utilities
+using System;
+
+namespace SafetySharp.Runtime.Utilities
 {
 	using System;
 	using System.Diagnostics;
@@ -31,7 +33,7 @@ namespace SafetySharp.Compiler.Utilities
 	///     debug-time only informational messages. The <see cref="Logged" /> event is raised whenever a <see cref="LogEntry" /> has
 	///     been generated.
 	/// </summary>
-	public static class Log
+	internal static class Log
 	{
 		/// <summary>
 		///     Initializes the type.

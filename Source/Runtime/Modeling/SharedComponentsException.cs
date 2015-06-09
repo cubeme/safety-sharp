@@ -20,17 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Runtime.Modeling
+{
+	using System;
 
-/// Controls the semantics of the assignment operator when the assigned value lies outside the variable's range.
-type OverflowBehavior =
+	/// <summary>
+	///     Raised when a component is found in multiple locations of a component tree.
+	/// </summary>
+	public class SharedComponentsException : Exception
+	{
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="components">The shared components that were found in multiple locations of the component tree.</param>
+		public SharedComponentsException(Component[] components)
+			: base("One or more components have been found in multiple locations of the component tree. " +
+				   "Check the 'Components' property of this exception instance for the shared component instances.")
+		{
+			Components = components;
+		}
 
-    /// Indicates that an exception is thrown when a value outside the range of the variable is assigned during
-    /// simulation. During model-checking, however, the precise behavior of this overflow behavior is undefined.
-    | Error = 0
-
-    /// Indicates the assigned value is clamped to the variable's minimum or maximum value.
-    | Clamp = 1
-
-    /// Indicates the assigned value wraps around if it underflows or overflows the variable's range.
-    | WrapAround = 2
+		/// <summary>
+		///     Gets the component instances that were found in multiple locations of a component tree.
+		/// </summary>
+		public Component[] Components { get; private set; }
+	}
+}

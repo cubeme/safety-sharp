@@ -32,8 +32,8 @@ module internal CilToSsm =
     open System.IO
     open System.Reflection
     open SafetySharp
-    open SafetySharp.Modeling
-    open SafetySharp.Modeling.CompilerServices
+    open SafetySharp.Runtime.Modeling
+    open SafetySharp.Runtime.CompilerServices
     open SafetySharp.Reflection
     open Cil
     open Ssm
@@ -545,7 +545,7 @@ module internal CilToSsm =
         List.map transform
 
     /// Transforms the given fault.
-    let transformFault (metadata : MetadataProvider) (resolver : GenericResolver) (f : Modeling.Fault) =
+    let transformFault (metadata : MetadataProvider) (resolver : GenericResolver) (f : Runtime.Modeling.Fault) =
         let faultType = metadata.GetTypeReference(f).Resolve ()
         { Fault.Name = f.GetType().Name
           Fault.Methods = transformMethods metadata f faultType resolver }
@@ -566,10 +566,10 @@ module internal CilToSsm =
                 Methods = transformed.Methods @ (transformMethods metadata c t resolver) }
 
         { transform (metadata.GetTypeReference c) with 
-            Subs = c.Subcomponents |> List.map (transformType metadata)
-            Bindings = transformBindings metadata c.Bindings
-            Faults = c.Faults |> List.map (transformFault metadata resolver) }
+            Subs = c.Subcomponents |> Seq.map (transformType metadata) |> Seq.toList
+            Bindings = transformBindings metadata (c.Bindings |> Seq.toList)
+            Faults = c.Faults |> Seq.map (transformFault metadata resolver) |> Seq.toList }
         
     /// Transforms the given model instance to a SSM model.
     let transformModel (model : Model) =
-        transformType model.MetadataProvider model.SynthesizedRoot
+        transformType (model.GetMetadataProvider ()) model.SynthesizedRoot

@@ -26,7 +26,7 @@ open System
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
@@ -38,7 +38,8 @@ module ``Port signatures`` =
         let csharpCode = sprintf "class %s : Component { %s } class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" className methodDefinition
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model |> SsmLowering.lowerSignatures
+        let metadataProvider = model.GetMetadataProvider ()
+        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model metadataProvider |> SsmLowering.lowerSignatures
         root.Subs.[0]
 
     let private transformMethod methodDefinition= 

@@ -24,7 +24,7 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	internal class W2 : Component
 	{

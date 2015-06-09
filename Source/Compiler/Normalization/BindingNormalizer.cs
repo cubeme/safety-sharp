@@ -29,10 +29,10 @@ namespace SafetySharp.Compiler.Normalization
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
+	using Runtime.Modeling;
 
 	/// <summary>
 	///     Replaces all port binding assignments with constructor invocations of <see cref="PortBinding" />.

@@ -34,7 +34,7 @@ namespace SafetySharp.Compiler
 	using Microsoft.CodeAnalysis.MSBuild;
 	using Normalization;
 	using Roslyn;
-	using Utilities;
+	using Runtime.Utilities;
 
 	/// <summary>
 	///     Compiles a S# modeling project authored in C# to a S# modeling assembly.
@@ -289,7 +289,7 @@ namespace SafetySharp.Compiler
 		{
 			var resources = new[]
 			{
-				new ResourceDescription(Reflection.EmbeddedAssembly, () => embeddedAssembly, true)
+				new ResourceDescription(ReflectionExtensions.EmbeddedAssembly, () => embeddedAssembly, true)
 			};
 
 			var emitResult = compilation.Emit(assemblyPath, Path.ChangeExtension(assemblyPath, ".pdb"), manifestResources: resources);

@@ -136,6 +136,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Source\Runtime\Runtime.csproj">
+      <Name>Runtime</Name>
+      <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">
       <Name>SafetySharp</Name>
       <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>

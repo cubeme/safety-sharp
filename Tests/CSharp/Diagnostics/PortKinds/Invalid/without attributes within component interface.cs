@@ -24,7 +24,7 @@ namespace Tests.Diagnostics.PortKinds.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	[Diagnostic(DiagnosticIdentifier.UnmarkedInterfacePort, 32, 14, 1, "Tests.Diagnostics.PortKinds.Invalid.W1.M()")]
 	internal interface W1 : IComponent

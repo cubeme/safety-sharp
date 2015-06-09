@@ -25,7 +25,7 @@ namespace Utilities.Assert
 open System
 open System.Linq
 open NUnit.Framework
-open SafetySharp.Compiler.Utilities
+open SafetySharp.Runtime.Utilities
 
 [<TestFixture>]
 module ``That method`` =

@@ -28,7 +28,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Utilities;
+	using Runtime.Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="MethodDeclarationSyntax" /> instances.

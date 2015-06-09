@@ -55,7 +55,7 @@ module internal Sam =
     type internal Var =
         | Var of string
         
-    type internal OverflowBehavior = SafetySharp.Modeling.OverflowBehavior
+    type internal OverflowBehavior = SafetySharp.Runtime.Modeling.OverflowBehavior
 
     type internal Val = 
         /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.

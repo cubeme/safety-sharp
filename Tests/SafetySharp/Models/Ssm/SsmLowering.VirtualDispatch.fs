@@ -26,7 +26,7 @@ open System
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
@@ -37,7 +37,8 @@ module ``Virtual dispatch`` =
         let csharpCode = sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" csharpCode
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model
+        let metadataProvider = model.GetMetadataProvider ()
+        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model metadataProvider
         root.Subs.[0]
 
     let private transformMethod csharpCode= 

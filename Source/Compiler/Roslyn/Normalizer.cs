@@ -28,8 +28,8 @@ namespace SafetySharp.Compiler.Roslyn
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Runtime.Utilities;
 	using Syntax;
-	using Utilities;
 
 	/// <summary>
 	///     A base class for C# normalizers that normalize certain C# language features.

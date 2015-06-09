@@ -24,7 +24,7 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	internal class W9
 	{
@@ -33,12 +33,13 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 	[Diagnostic(DiagnosticIdentifier.CustomComponent, 34, 20, 3, "Tests.Diagnostics.CustomComponents.Invalid.W10")]
 	internal class W10 : W9, IComponent
 	{
+		public dynamic RequiredPorts { get; private set; }
+
+		public dynamic ProvidedPorts { get; private set; }
+
 		public void Update()
 		{
 			throw new NotImplementedException();
 		}
-
-		public dynamic RequiredPorts { get; private set; }
-		public dynamic ProvidedPorts { get; private set; }
 	}
 }

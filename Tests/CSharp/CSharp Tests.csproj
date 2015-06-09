@@ -10,7 +10,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Tests</RootNamespace>
-    <AssemblyName>CS Tests</AssemblyName>
+    <AssemblyName>SafetySharp.CSharpTests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>74fe3d13</NuGetPackageImportStamp>
@@ -252,9 +252,9 @@
       <Project>{8823091c-387f-4f4d-abcd-8f71d1528cbb}</Project>
       <Name>Compiler</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">
-      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
-      <Name>SafetySharp</Name>
+    <ProjectReference Include="..\..\Source\Runtime\Runtime.csproj">
+      <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
+      <Name>Runtime</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

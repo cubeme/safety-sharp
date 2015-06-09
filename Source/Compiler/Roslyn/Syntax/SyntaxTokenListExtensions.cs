@@ -26,7 +26,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Utilities;
+	using Runtime.Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="SyntaxTokenList" /> instances.

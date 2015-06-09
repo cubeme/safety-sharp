@@ -25,7 +25,8 @@ namespace SafetySharp.Analysis
 open System
 open System.Threading
 open SafetySharp
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
+open SafetySharp.Runtime.Simulation
 
 /// Indicates the current state of a S# model simulation.
 type SimulationState =
@@ -50,7 +51,7 @@ type Simulator (model : Model) =
     member private this.ExecuteStep () =
         // TODO: Respect explicit component scheduling
         let rec update (c : Component) =
-            c.Subcomponents |> List.iter update
+            c.Subcomponents |> Seq.iter update
             //c.UpdateFaults ()
             c.Update ()
 
@@ -110,8 +111,8 @@ type RealTimeSimulator (model : Model, stepDelay : int) =
         this.ChangeState SimulationState.Stopped
 
         let rec reset (c : Component) =
-            c.Subcomponents |> List.iter reset
-            c.Reset ()
+            c.Subcomponents |> Seq.iter reset
+           // c.Reset ()
 
         reset model.SynthesizedRoot
         modelChangedEvent.Trigger (this, EventArgs.Empty)
@@ -132,7 +133,7 @@ type RealTimeSimulator (model : Model, stepDelay : int) =
     member private this.ExecuteStep () =
         // TODO: Respect explicit component scheduling
         let rec update (c : Component) =
-            c.Subcomponents |> List.iter update
+            c.Subcomponents |> Seq.iter update
             //c.UpdateFaults ()
             c.Update ()
 

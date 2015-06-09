@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Bindings.Components
 {
 	using System;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	internal class X12 : Component
 	{
@@ -53,12 +53,12 @@ namespace Tests.Normalization.Bindings.Components
 	{
 		private Out12()
 		{
-			Bind(new SafetySharp.Modeling.PortBinding(
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(N)),
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M))));
-			//Bind(new SafetySharp.Modeling.PortBinding(
-			//	SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(((X12)this).N)),
-			//	SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M))));
+			Bind(new SafetySharp.Runtime.Modeling.PortBinding(
+				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(N)),
+				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M))));
+			//Bind(new SafetySharp.Runtime.Modeling.PortBinding(
+			//	SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(((X12)this).N)),
+			//	SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M))));
 		}
 
 		public new extern void N();

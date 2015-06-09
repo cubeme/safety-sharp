@@ -23,13 +23,13 @@
 namespace SafetySharp.Compiler.Analyzers
 {
 	using System;
+	using System.ComponentModel;
 	using System.Linq;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Roslyn;
 	using Roslyn.Syntax;
 

@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.Provided
 {
 	using System;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	internal partial class In1 : Component
 	{
@@ -76,10 +76,10 @@ namespace Tests.Normalization.Ports.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private delegate void __PortDelegate0__();
 
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
+		[SafetySharp.Runtime.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public void M1() => this.__portField0__();
 
 		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
@@ -89,10 +89,10 @@ namespace Tests.Normalization.Ports.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private delegate void __PortDelegate1__();
 
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation1__")]
+		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
+		[SafetySharp.Runtime.CompilerServices.PortBehaviorAttribute("__DefaultImplementation1__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Modeling.BackingFieldAttribute("__portField1__")]
+		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField1__")]
 		protected internal void M3() => this.__portField1__();
 	}
 
@@ -107,10 +107,10 @@ namespace Tests.Normalization.Ports.Provided
 			[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 			private delegate void __PortDelegate0__();
 
-			[SafetySharp.Modeling.ProvidedAttribute()]
-			[SafetySharp.Modeling.DefaultImplementationAttribute("__DefaultImplementation0__")]
+			[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
+			[SafetySharp.Runtime.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-			[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
+			[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
 			internal void M2() => this.__portField0__();
 		}
 	}

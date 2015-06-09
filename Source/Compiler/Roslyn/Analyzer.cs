@@ -29,7 +29,7 @@ namespace SafetySharp.Compiler.Roslyn
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Utilities;
+	using Runtime.Utilities;
 
 	/// <summary>
 	///     A base class for S# code analyzers.

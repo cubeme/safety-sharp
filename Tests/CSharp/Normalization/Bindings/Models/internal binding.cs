@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Bindings.Models
 {
 	using System;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	internal class X1 : Component
 	{
@@ -46,9 +46,9 @@ namespace Tests.Normalization.Bindings.Models
 	{
 		private Out1(X1 x1, X1 x2)
 		{
-			Bind(new SafetySharp.Modeling.PortBinding(
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x1.N)),
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x2.M))))
+			Bind(new SafetySharp.Runtime.Modeling.PortBinding(
+				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x1.N)),
+				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x2.M))))
 				.Delayed();
 		}
 	}

@@ -26,7 +26,7 @@ namespace SafetySharp.Models
 module internal SsmToScm =
     open SafetySharp
     open SafetySharp.Models
-    open SafetySharp.Modeling
+    open SafetySharp.Runtime.Modeling
 
     /// Maps the given SSM type to a SCM type.
     let private mapType (t : Ssm.Type) : Scm.Type =
@@ -212,7 +212,8 @@ module internal SsmToScm =
           Source = { ProvPort = Scm.ProvPort b.SourcePort; Comp = getComp b.SourceComp }
           Kind = match b.Kind with 
                  | BindingKind.Instantaneous -> Scm.Instantaneous 
-                 | BindingKind.Delayed       -> Scm.Delayed }
+                 | BindingKind.Delayed       -> Scm.Delayed
+                 | _                         -> invalidOp "Unsupported binding kind." }
 
     /// Transforms the given (lowered) SSM model to a SCM model.
     let rec transform (c : Ssm.Comp) : Scm.CompDecl = {

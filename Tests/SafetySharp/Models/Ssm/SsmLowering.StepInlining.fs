@@ -26,7 +26,7 @@ open System
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
@@ -36,7 +36,8 @@ module ``Step inlining`` =
         let csharpCode = sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" csharpCode
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model |> SsmLowering.lowerBaseSteps
+        let metadataProvider = model.GetMetadataProvider ()
+        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model metadataProvider |> SsmLowering.lowerBaseSteps
         let c = root.Subs.[0]
         let steps = c.Methods |> List.filter (fun m -> m.Kind = Step)
         steps.Length =? 1

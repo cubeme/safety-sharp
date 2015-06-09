@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,33 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Utilities
+namespace SafetySharp.Runtime.CompilerServices
 {
 	using System;
+	using Utilities;
 
 	/// <summary>
-	///     Identifies the type of information provided by a <see cref="LogEntry" />.
+	///     When applied to a provided port, indicates the method that implements the behavior of the port.
 	/// </summary>
-	public enum LogType
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+	public sealed class PortBehaviorAttribute : Attribute
 	{
 		/// <summary>
-		///     The <see cref="LogEntry" /> describes a fatal error.
+		///     Initializes a new instance.
 		/// </summary>
-		Fatal,
+		/// <param name="methodName">The name of the marked port's behavior method.</param>
+		public PortBehaviorAttribute(string methodName)
+		{
+			Requires.NotNull(methodName, () => methodName);
+			MethodName = methodName;
+		}
 
 		/// <summary>
-		///     The <see cref="LogEntry" /> describes an error.
+		///     Gets the name of the marked port's behavior method.
 		/// </summary>
-		Error,
-
-		/// <summary>
-		///     The <see cref="LogEntry" /> describes a warning.
-		/// </summary>
-		Warning,
-
-		/// <summary>
-		///     The <see cref="LogEntry" /> provides an informational message.
-		/// </summary>
-		Info
+		public string MethodName { get; private set; }
 	}
 }

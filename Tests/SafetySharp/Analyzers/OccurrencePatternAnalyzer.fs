@@ -25,7 +25,7 @@ namespace Analyzers
 open System
 open System.Linq
 open NUnit.Framework
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 open SafetySharp.Compiler.Analyzers
 open SafetySharp.Compiler.Roslyn.Syntax
 open SafetySharp.Compiler.Roslyn.Symbols
@@ -46,7 +46,7 @@ module ``Occurrence pattern`` =
 
     let noEffect fault location =
         warningDiagnostic DiagnosticIdentifier.OccurrencePatternHasNoEffect (1, location) (1, location + 1) 
-            "Occurrence patterns have no effect on classes not derived from 'SafetySharp.Modeling.Fault'."
+            "Occurrence patterns have no effect on classes not derived from 'SafetySharp.Runtime.Modeling.Fault'."
 
     [<Test>]
     let ``non-fault class without an occurrence pattern is valid`` () =

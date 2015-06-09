@@ -27,9 +27,9 @@ namespace SafetySharp.Compiler.Analyzers
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
+	using Runtime.Modeling;
 
 	/// <summary>
 	///     Ensures that a fault declaration is marked with exactly one <see cref="OccurrencePatternAttribute" />.

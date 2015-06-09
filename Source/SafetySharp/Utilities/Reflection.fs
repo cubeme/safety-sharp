@@ -27,40 +27,11 @@ open System.Collections.Generic
 open System.Collections.Immutable
 open System.Reflection
 open SafetySharp
+open SafetySharp.Runtime.Utilities
 open Mono.Cecil
 
 /// Provides helper functions for working with the reflection APIs.
 module internal Reflection =
-
-    /// The name of the resource that stores the embedded original S# assembly.
-    [<Literal>]
-    let EmbeddedAssembly = "OriginalAssembly"
-
-    /// Gets all members of the given object recursively, going up the inheritance chain; unfortunately, the reflection APIs
-    /// do not return private members of base classes, even with BindingFlags.FlattenHierarchy.
-    let rec private getMembers selector (typeInfo : Type) (inheritanceRoot : Type) = seq {
-        if typeInfo.BaseType <> null && typeInfo.BaseType <> inheritanceRoot then
-            yield! getMembers selector typeInfo.BaseType inheritanceRoot
-        
-        let flags = BindingFlags.Static ||| BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
-        yield! selector typeInfo flags
-    }
-
-    /// Gets all fields declared by the given type or one of its base types up to the given root of the inheritance hierarchy.
-    let getFields typeInfo inheritanceRoot = 
-        getMembers (fun t b -> t.GetFields b) typeInfo inheritanceRoot
-
-    /// Gets all properties declared by the given type or one of its base types up to the given root of the inheritance hierarchy.
-    let getProperties typeInfo inheritanceRoot = 
-        getMembers (fun t b -> t.GetProperties b) typeInfo inheritanceRoot
-
-    /// Gets all methods declared by the given type or one of its base types up to the given root of the inheritance hierarchy.
-    let getMethods typeInfo inheritanceRoot = 
-        getMembers (fun t b -> t.GetMethods b) typeInfo inheritanceRoot
-
-    /// Gets a value indicating whether the given member info is marked with an instance of the given attribute.
-    let hasAttribute<'T> (info : MemberInfo) =
-        info.GetCustomAttribute (typeof<'T>, false) <> null
 
     /// Gets the given type's method that implements the given interface method.
     let private getImplementingMethod (typeInfo : Type) (interfaceMethod : MethodInfo) =
@@ -154,7 +125,7 @@ module internal Reflection =
                 parameters.AssemblyResolver <- this
 
                 let assembly = 
-                    use stream = assembly.GetManifestResourceStream EmbeddedAssembly
+                    use stream = assembly.GetManifestResourceStream ReflectionExtensions.EmbeddedAssembly
                     if stream = null then
                         AssemblyDefinition.ReadAssembly (assembly.Location, parameters)
                     else
@@ -204,7 +175,7 @@ module internal Reflection =
             let manglingStart = methodName.IndexOf Renaming.InheritanceToken
             let unmangledPart = if manglingStart = -1 then methodName else methodName.Substring (0, manglingStart)
 
-            getMethods t typeof<obj>
+            ReflectionExtensions.GetMethods(t, typeof<obj>)
             |> Seq.filter (fun m -> m.Name.StartsWith unmangledPart)
             |> Seq.map (fun m -> (m, typeDefinition.Module.Import(m).Resolve ()))
             |> Seq.find (fun (info, definition) -> Renaming.getUniqueMethodName definition = methodName)

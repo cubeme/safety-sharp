@@ -24,7 +24,7 @@ namespace Tests.Diagnostics.PortKinds.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
 	[Diagnostic(DiagnosticIdentifier.UpdateMethodMarkedAsPort, 33, 30, 6, "Tests.Diagnostics.PortKinds.Invalid.Q1.Update()")]
 	internal class Q1 : Component

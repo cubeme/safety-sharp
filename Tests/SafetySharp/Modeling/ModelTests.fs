@@ -27,17 +27,17 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 open Modeling
 
 [<TestFixture>]
 module ``FinalizeMetadata method`` =
     [<Test>]
-    let ``throws when the metadata has already been finalized`` () =
+    let ``does not throw when the metadata has already been finalized`` () =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
 
-        raisesInvalidOpException (fun () -> model.FinalizeMetadata () |> ignore)
+        nothrow (fun () -> model.FinalizeMetadata () |> ignore)
 
     [<Test>]
     let ``throws when no root has been set`` () =
@@ -141,7 +141,7 @@ module ``Components property`` =
         let model = TestModel component3
         model.FinalizeMetadata ()
 
-        model.Components =? [component3; component1; component2]
+        model.Components |> Seq.toList =? [component3; component1; component2]
 
     [<Test>]
     let ``does not contain non-component objects`` () =
@@ -151,7 +151,7 @@ module ``Components property`` =
         let model = TestModel component3
         model.FinalizeMetadata ()
 
-        model.Components =? [component3; component1; component2]
+        model.Components |> Seq.toList =? [component3; component1; component2]
 
     [<Test>]
     let ``does not contain null-components`` () =
@@ -159,7 +159,7 @@ module ``Components property`` =
         let model = TestModel component'
         model.FinalizeMetadata ()
 
-        model.Components =? [component']
+        model.Components |> Seq.toList =? [component']
 
     [<Test>]
     let ``contains roots`` () =
@@ -168,7 +168,7 @@ module ``Components property`` =
         let model = TestModel (component1, component2)
         model.FinalizeMetadata ()
 
-        model.Components =? [component1; component2]
+        model.Components |> Seq.toList =? [component1; component2]
 
     [<Test>]
     let ``contains all components of linear hierarchy with two levels`` () =
@@ -177,7 +177,7 @@ module ``Components property`` =
         let model = TestModel component2
         model.FinalizeMetadata ()
 
-        model.Components =? [component2; component1]
+        model.Components |> Seq.toList =? [component2; component1]
 
     [<Test>]
     let ``contains all components of linear hierarchy with four levels`` () =
@@ -188,7 +188,7 @@ module ``Components property`` =
         let model = TestModel component4
         model.FinalizeMetadata ()
 
-        model.Components =? [component4; component3; component2; component1]
+        model.Components |> Seq.toList =? [component4; component3; component2; component1]
 
     [<Test>]
     let ``contains all components of complex hierarchy`` () =
@@ -201,7 +201,7 @@ module ``Components property`` =
         let model = TestModel component6
         model.FinalizeMetadata ()
 
-        model.Components =? [component6; component4; component1; component3; component2; component5]
+        model.Components |> Seq.toList =? [component6; component4; component1; component3; component2; component5]
 
     [<Test>]
     let ``all contained components have finalized metadata`` () =
@@ -213,7 +213,7 @@ module ``Components property`` =
         let model = TestModel (component4, component5)
         model.FinalizeMetadata ()
 
-        model.Components |> List.iter (fun component' -> component'.IsMetadataFinalized =? true)
+        model.Components |> Seq.toList |> List.iter (fun component' -> component'.IsMetadataFinalized =? true)
 
     [<Test>]
     let ``all contained components have their tree path and subcomponent index encoded in their name`` () =
@@ -232,7 +232,7 @@ module ``Components property`` =
                 String.Join (".", fields |> List.map (fun (name, idx) -> fsharpSubcomponentName name idx))
                 |> sprintf "R.%s%i@%i.%s" rootName rootIndex rootIndex
         
-        model.Components |> List.map (fun component' -> component'.Name) =?
+        model.Components |> Seq.toList |> List.map (fun component' -> component'.Name) =?
         [name "OneSubcomponent" 0 []; name "OneSubcomponent" 0 [("_component", 0)]; 
          name "TwoSubcomponents" 1 []; name "TwoSubcomponents" 1 [("_component1", 0)]; 
          name "TwoSubcomponents" 1 [("_component2", 1)]; 
@@ -251,7 +251,7 @@ module ``Roots property`` =
         let model = TestModel (component')
         model.FinalizeMetadata ()
 
-        model.Roots =? [component']
+        model.Roots |> Seq.toList =? [component']
 
     [<Test>]
     let ``contains multiple top-level components`` () =
@@ -261,7 +261,7 @@ module ``Roots property`` =
         let model = TestModel (component1, component2, component3)
         model.FinalizeMetadata ()
 
-        model.Roots =? [component1; component2; component3]
+        model.Roots |> Seq.toList =? [component1; component2; component3]
 
     [<Test>]
     let ``does not contain nested components`` () =
@@ -270,7 +270,7 @@ module ``Roots property`` =
         let model = TestModel component2
         model.FinalizeMetadata ()
 
-        model.Roots =? [component2]
+        model.Roots |> Seq.toList =? [component2]
 
     [<Test>]
     let ``contained roots have unique names`` () =
@@ -297,18 +297,20 @@ module ``Bind method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let model = TestModel (EmptyComponent ())
-        raisesArgumentNullException "binding" (fun () -> model.Bind null |> ignore)
+        raisesArgumentNullException "portBinding" (fun () -> model.Bind null |> ignore)
 
     [<Test>]
     let ``throws when metadata has already been finalized`` () =
-        let model = TestModel (EmptyComponent ())
+        let csharpCode = sprintf "class TestModel : Model { public TestModel() { SetRootComponents(new X()); } } class X : Component { public void M() {} }"
+        let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        raisesInvalidOpException (fun () -> model.Bind (PortBinding (PortInfo (null, null), PortInfo(null, null))) |> ignore)
+        let action = Delegate.CreateDelegate (typeof<Action>, model.Roots.[0], model.Roots.[0].GetType().GetMethods().[0])
+        raisesInvalidOpException (fun () -> model.Bind (PortBinding (PortInfo.MethodPort action, PortInfo.MethodPort action)) |> ignore)
 
     [<Test>]
     let ``returns empty list for model without bindings`` () =
         bindings "class X : Component { void M() {} extern void N(); }" "" "new X()"
-        component'.Bindings =? []
+        component'.Bindings |> Seq.toList =? []
 
     [<Test>]
     let ``returns delayed port binding of a component`` () =
@@ -316,10 +318,10 @@ module ``Bind method`` =
         component'.Bindings.Length =? 1
         component'.Bindings.[0].Kind =? BindingKind.Delayed
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> IComponent)
         component'.Bindings.[0].TargetPort.Method.Name =? "N"
         component'.Bindings.[0].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[0] :> IComponent)
         component'.Bindings.[0].SourcePort.Method.Name =? "M"
 
     [<Test>]
@@ -328,10 +330,10 @@ module ``Bind method`` =
         component'.Bindings.Length =? 1
         component'.Bindings.[0].Kind =? BindingKind.Instantaneous
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> IComponent)
         component'.Bindings.[0].TargetPort.Method.Name =? "N"
         component'.Bindings.[0].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[0] :> IComponent)
         component'.Bindings.[0].SourcePort.Method.Name =? "M"
 
     [<Test>]
@@ -340,15 +342,15 @@ module ``Bind method`` =
         component'.Bindings.Length =? 2
         component'.Bindings.[0].Kind =? BindingKind.Instantaneous
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0].Subcomponents.[0] :> obj)
+        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0].Subcomponents.[0] :> IComponent)
         component'.Bindings.[0].TargetPort.Method.Name =? "N"
         component'.Bindings.[0].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[0].Subcomponents.[1] :> obj)
+        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[0].Subcomponents.[1] :> IComponent)
         component'.Bindings.[0].SourcePort.Method.Name =? "M"
         component'.Bindings.[1].Kind =? BindingKind.Delayed
         component'.Bindings.[1].TargetPort.IsRequiredPort =? true
-        component'.Bindings.[1].TargetPort.Component =? (component'.Subcomponents.[0].Subcomponents.[1] :> obj)
+        component'.Bindings.[1].TargetPort.Component =? (component'.Subcomponents.[0].Subcomponents.[1] :> IComponent)
         component'.Bindings.[1].TargetPort.Method.Name =? "N"
         component'.Bindings.[1].SourcePort.IsRequiredPort =? false
-        component'.Bindings.[1].SourcePort.Component =? (component'.Subcomponents.[0].Subcomponents.[0] :> obj)
+        component'.Bindings.[1].SourcePort.Component =? (component'.Subcomponents.[0].Subcomponents.[0] :> IComponent)
         component'.Bindings.[1].SourcePort.Method.Name =? "M"

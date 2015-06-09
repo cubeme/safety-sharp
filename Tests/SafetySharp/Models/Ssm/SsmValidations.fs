@@ -26,7 +26,7 @@ open System
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
-open SafetySharp.Modeling
+open SafetySharp.Runtime.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
@@ -105,13 +105,13 @@ module ``Invalid bindings`` =
 
     [<Test>]
     let ``binding with non-subcomponent is invalid`` () =
-        check [Delayed] ["Y1"] ["X0.z"] ["Y1"] ["N"] ["M"]
+        check [BindingKind.Delayed] ["Y1"] ["X0.z"] ["Y1"] ["N"] ["M"]
           "class Z : Component { public void N() {} }
            class X : Component { Z z; public X(Z z) { this.z = z; } }
            class Y : Component { extern void M(); public Y(Z z) { Bind(RequiredPorts.M = z.ProvidedPorts.N).Delayed(); } }
            class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new X(z), new Y(z)); } }"
 
-        check [Delayed] ["Y1"] ["Y1"] ["X0.z"] ["M"] ["N"]
+        check [BindingKind.Delayed] ["Y1"] ["Y1"] ["X0.z"] ["M"] ["N"]
           "class Z : Component { public extern void N(); }
            class X : Component { Z z; public X(Z z) { this.z = z; } }
            class Y : Component { void M() {} public Y(Z z) { Bind(z.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }
@@ -223,13 +223,13 @@ module ``Ambiguous required port bindings`` =
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by the same component`` () =
-        check [[("X0", "M", "X0", "N"); ("X0", "M", "X0", "R")]] [Instantaneous; Delayed] ["X0"; "X0"]
+        check [[("X0", "M", "X0", "N"); ("X0", "M", "X0", "R")]] [BindingKind.Instantaneous; BindingKind.Delayed] ["X0"; "X0"]
           "class X : Component { extern void M(); void N() {} void R() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N); Bind(RequiredPorts.M = ProvidedPorts.R).Delayed(); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by different components`` () =
-        check [["Y0.x", "M", "Y0", "N"; "Y0.x", "M", "Y0.x", "N"]] [Instantaneous; Delayed] ["Y0"; "Y0.x"]
+        check [["Y0.x", "M", "Y0", "N"; "Y0.x", "M", "Y0.x", "N"]] [BindingKind.Instantaneous; BindingKind.Delayed] ["Y0"; "Y0.x"]
           "class X : Component { public extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
            class Y : Component { X x = new X(); void N() {} public Y() { Bind(x.RequiredPorts.M = ProvidedPorts.N); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
@@ -237,7 +237,7 @@ module ``Ambiguous required port bindings`` =
     [<Test>]
     let ``invalid when multiple ports are bound ambiguously`` () =
         check [[("X0", "N", "X0", "A"); ("X0", "N", "X0", "B")]; [("X0", "M", "X0", "A"); ("X0", "M", "X0", "B")]] 
-          [Delayed; Instantaneous; Delayed; Instantaneous] ["X0"; "X0"; "X0"; "X0"]
+          [BindingKind.Delayed; BindingKind.Instantaneous; BindingKind.Delayed; BindingKind.Instantaneous] ["X0"; "X0"; "X0"; "X0"]
           "class X : Component { 
                 extern void N();
                 extern void M();
@@ -257,7 +257,8 @@ module ``Cyclic control flow`` =
     let private transform csharpCode =
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        (model, CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model)
+        let metadataProvider = model.GetMetadataProvider ()
+        (model, CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model metadataProvider)
 
     let private check componentNames portNames csharpCode =
         let (model, ssm) = transform csharpCode

@@ -20,47 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Utilities
+namespace SafetySharp.Runtime.Modeling
 {
 	using System;
-	using JetBrains.Annotations;
 
 	/// <summary>
-	///     Represents a log entry, describing fatal errors, non-fatal errors, or warnings as well as providing debugging
-	///     information and other informational messages.
+	///     When applied to a method or property of a <see cref="Component" /> class or an
+	///     <see cref="IComponent" /> interface, marks the method or property as a provided port.
 	/// </summary>
-	public struct LogEntry
+	public class ProvidedAttribute : Attribute
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="logType">The type of the log entry.</param>
-		/// <param name="message">The non-empty message of the log entry.</param>
-		internal LogEntry(LogType logType, [NotNull] string message)
-			: this()
-		{
-			Requires.InRange(logType, () => logType);
-			Requires.NotNull(message, () => message);
-
-			LogType = logType;
-			Message = message;
-			Time = DateTime.Now;
-		}
-
-		/// <summary>
-		///     Gets the type of the log entry.
-		/// </summary>
-		public LogType LogType { get; private set; }
-
-		/// <summary>
-		///     Gets the message of the log entry.
-		/// </summary>
-		[NotNull]
-		public string Message { get; private set; }
-
-		/// <summary>
-		///     Gets the date and time of the creation of the log entry.
-		/// </summary>
-		public DateTime Time { get; private set; }
 	}
 }

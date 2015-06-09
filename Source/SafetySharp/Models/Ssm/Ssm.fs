@@ -135,7 +135,7 @@ module internal Ssm =
 
     /// Indicates the kind of a binding.
     type internal BindingKind = 
-        Modeling.BindingKind
+        Runtime.Modeling.BindingKind
 
     /// Represents a port binding.
     type internal Binding = {

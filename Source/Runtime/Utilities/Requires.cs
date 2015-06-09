@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Utilities
+namespace SafetySharp.Runtime.Utilities
 {
 	using System;
 	using System.Collections;
@@ -31,7 +31,7 @@ namespace SafetySharp.Compiler.Utilities
 	/// <summary>
 	///     Defines a set of helper functions that should be used to assert preconditions of functions.
 	/// </summary>
-	public static class Requires
+	internal static class Requires
 	{
 		/// <summary>
 		///     Throws an <see cref="ArgumentNullException" /> if <paramref name="argument" /> of reference type
@@ -235,6 +235,27 @@ namespace SafetySharp.Compiler.Utilities
 		}
 
 		/// <summary>
+		///     Throws an <see cref="ArgumentException" /> if <paramref name="condition" /> is <c>false</c>.
+		/// </summary>
+		/// <param name="condition">The condition that, if <c>false</c>, causes the exception to be raised.</param>
+		/// <param name="argumentName">
+		///     A lambda expression of the form <c>() => argument</c> that is used to deduce the name of the
+		///     index argument as it appears in the source code.
+		/// </param>
+		/// <param name="message">A message providing further details about the assertion.</param>
+		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
+		[DebuggerHidden, StringFormatMethod("message"), ContractAnnotation("condition: false => halt")]
+		public static void That<T>(bool condition, [NotNull] Expression<Func<T>> argumentName,
+								   [NotNull] string message, params object[] parameters)
+		{
+			NotNullOrWhitespace(message, () => message);
+			NotNull(argumentName, () => argumentName);
+
+			if (!condition)
+				throw new ArgumentException(String.Format(message, parameters), GetArgumentName(argumentName));
+		}
+
+		/// <summary>
 		///     Throws an <see cref="InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
 		/// </summary>
 		/// <param name="condition">The condition that, if <c>false</c>, causes the exception to be raised.</param>
@@ -247,6 +268,14 @@ namespace SafetySharp.Compiler.Utilities
 
 			if (!condition)
 				throw new InvalidOperationException(String.Format(message, parameters));
+		}
+
+		/// <summary>
+		///     Throws a <see cref="NotSupportedException" /> indicating that a lifted version of the method should be called instead.
+		/// </summary>
+		public static void LiftedCall()
+		{
+			throw new NotSupportedException("This method is not supported by the S# runtime. Call a lifted overload of the method instead.");
 		}
 
 		/// <summary>

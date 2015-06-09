@@ -20,7 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Utilities
+using System;
+
+namespace SafetySharp.Runtime.Utilities
 {
 	using System;
 	using System.Collections;
@@ -30,7 +32,7 @@ namespace SafetySharp.Compiler.Utilities
 	/// <summary>
 	///     Defines a set of helper functions for assertions
 	/// </summary>
-	public static class Assert
+	internal static class Assert
 	{
 		/// <summary>
 		///     Throws an <see cref="InvalidOperationException" /> if <paramref name="obj" /> is not <c>null</c>.
