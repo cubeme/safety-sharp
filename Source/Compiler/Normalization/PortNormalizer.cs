@@ -210,7 +210,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			// Create the private port implementation method
 			var methodName = IdentifierNameSynthesizer.ToSynthesizedName("DefaultImplementation" + _portCount);
-			var portImplementationName = SyntaxFactory.Identifier(methodName);
+			var portImplementationName = SyntaxFactory.Identifier(methodName).WithTrivia(originalDeclaration.Identifier);
 			var portImplementation = originalDeclaration.WithIdentifier(portImplementationName);
 			portImplementation = portImplementation.WithAccessibility(Accessibility.Private).WithExplicitInterfaceSpecifier(null);
 

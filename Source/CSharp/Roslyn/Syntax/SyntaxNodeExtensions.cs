@@ -431,7 +431,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 			var lineDirective = String.IsNullOrWhiteSpace(filePath)
 				? SyntaxFactory.LineDirectiveTrivia(lineToken, true).NormalizeWhitespace()
 				: SyntaxFactory.LineDirectiveTrivia(lineToken, SyntaxFactory.Literal(filePath), true).NormalizeWhitespace();
-			return SyntaxFactory.Trivia(lineDirective);
+			return SyntaxFactory.Trivia(lineDirective.WithLeadingNewLines(1));
 		}
 
 		/// <summary>

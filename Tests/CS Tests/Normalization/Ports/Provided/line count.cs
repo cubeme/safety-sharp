@@ -31,7 +31,8 @@ namespace Tests.Normalization.Ports.Provided
 		public 
 			int
 
-			M1(
+			M1
+			(
 				int x
 			)
 		{
@@ -47,7 +48,7 @@ namespace Tests.Normalization.Ports.Provided
 		{
 			return 1;
 		}
-#line 41
+#line 42
 	}
 
 	partial class Out1

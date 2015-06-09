@@ -31,7 +31,8 @@ namespace Tests.Normalization.Ports.Required
 		internal 
 			extern
 
-			int M(
+			int M
+			(
 			int 
 			x);
 	}
@@ -43,7 +44,7 @@ namespace Tests.Normalization.Ports.Required
 		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.Modeling.BackingFieldAttribute("__portField0__")]
 		internal int M(int x) => this.__portField0__(x);
-#line 37
+#line 38
 	}
 
 	partial class Out1
