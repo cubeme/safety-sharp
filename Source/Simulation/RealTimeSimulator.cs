@@ -178,18 +178,6 @@ namespace SafetySharp.Simulation
 		}
 
 		/// <summary>
-		///     Runs the simulation in non-real-time mode for the given <paramref name="timeSpan" />.
-		/// </summary>
-		/// <param name="timeSpan">The time span that should be simulated.</param>
-		public void Simulate(TimeSpan timeSpan)
-		{
-			Requires.That(State == SimulationState.Stopped, "Expected the simulation to be stopped.");
-
-			for (var i = 0; i < timeSpan.TotalSeconds; ++i)
-				ExecuteStep();
-		}
-
-		/// <summary>
 		///     Executes the next step of the simulation.
 		/// </summary>
 		private void ExecuteStep()
