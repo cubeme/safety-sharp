@@ -225,11 +225,3 @@ let normalizeNewLines (str : string) =
 let methodName = Renaming.makeUniqueMethodName
 let fieldName = Renaming.makeUniqueFieldName
 
-
-let internal addLogEventHandlerForXUnit<'state> (output:Xunit.Abstractions.ITestOutputHelper) : SafetySharp.Workflow.EndogenousWorkflowFunction<'state> = 
-    let behavior (wfState:SafetySharp.Workflow.WorkflowState<'state>) =
-        do wfState.LogEvent.Publish.Add (
-            fun text -> output.WriteLine text
-        )
-        (),wfState
-    SafetySharp.Workflow.WorkflowFunction(behavior)

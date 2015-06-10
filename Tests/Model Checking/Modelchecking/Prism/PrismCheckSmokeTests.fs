@@ -30,6 +30,15 @@ open SafetySharp.Workflow
 
 type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
     
+
+    static member internal addLogEventHandlerForXUnit<'state> (output:Xunit.Abstractions.ITestOutputHelper) : SafetySharp.Workflow.EndogenousWorkflowFunction<'state> = 
+        let behavior (wfState:SafetySharp.Workflow.WorkflowState<'state>) =
+            do wfState.LogEvent.Publish.Add (
+                fun text -> output.WriteLine text
+            )
+            (),wfState
+        SafetySharp.Workflow.WorkflowFunction(behavior)
+
     static member testdataAll = TestCases.SamSmokeTests.smoketestsAll
     static member testdataDeterministic = TestCases.SamSmokeTests.smoketestsDeterministic        
         
@@ -44,7 +53,7 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
         let inputFile = """../../Examples/SAM/""" + testname
         
         let smokeTestWithGwamWorkflow = workflow {
-                do! addLogEventHandlerForXUnit (xunitOutput)
+                do! PrismCheckSmokeTests.addLogEventHandlerForXUnit (xunitOutput)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
@@ -75,7 +84,7 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
         let inputFile = """../../Examples/SAM/""" + testname
         
         let smokeTestWithGwamWorkflow = workflow {
-                do! addLogEventHandlerForXUnit (xunitOutput)
+                do! PrismCheckSmokeTests.addLogEventHandlerForXUnit (xunitOutput)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
@@ -106,7 +115,7 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
         let inputFile = """../../Examples/SAM/""" + testname
         
         let smokeTestWithGwamWorkflow = workflow {
-                do! addLogEventHandlerForXUnit (xunitOutput)
+                do! PrismCheckSmokeTests.addLogEventHandlerForXUnit (xunitOutput)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
