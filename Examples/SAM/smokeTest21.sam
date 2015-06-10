@@ -2,14 +2,14 @@
 globals {
   vfault1 : bool = false;
   vfault2 : bool = false;
-  vgvar1 : int = 0;
+  vgvar1 : int<0..100,clamp on overrun> = 0;
   vgvar2 : bool = false;
-  vgvar3 : int = 58;
-  vgvar4 : int = 59;
-  vgvar5 : int = 1;
-  vgvar6 : int = 0;
-  vgvar7 : int = 60;
-  vgvar8 : int = 1;
+  vgvar3 : int<0..100,clamp on overrun> = 58;
+  vgvar4 : int<0..100,clamp on overrun> = 59;
+  vgvar5 : int<0..100,clamp on overrun> = 1;
+  vgvar6 : int<0..100,clamp on overrun> = 0;
+  vgvar7 : int<0..100,clamp on overrun> = 60;
+  vgvar8 : int<0..100,clamp on overrun> = 1;
 }
 
 locals {

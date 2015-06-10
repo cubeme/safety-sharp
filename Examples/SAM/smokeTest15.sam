@@ -1,6 +1,6 @@
 globals {
-	i : int = 0;
-	j : int = 2048;
+	i : int<0..604,clamp on overrun> = 0;
+	j : int<0..3000,clamp on overrun> = 2048;
 }
 locals {
 }

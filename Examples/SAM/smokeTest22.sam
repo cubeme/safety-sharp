@@ -1,5 +1,5 @@
 globals {
-  vgvar6 : int = 0;
+  vgvar6 : int<0..10,clamp on overrun> = 1;
 }
 
 locals {

@@ -1,6 +1,6 @@
 globals {
-	x : int = 0;
-	y : int = 8;
+	x : int<0..40,clamp on overrun> = 0;
+	y : int<0..40,clamp on overrun> = 8;
 }
 locals {
 }

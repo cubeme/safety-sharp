@@ -1,5 +1,5 @@
 globals {
-	i : int = 1;
+	i : int<0..20,clamp on overrun> = 1;
 }
 locals {
 	j : int;
