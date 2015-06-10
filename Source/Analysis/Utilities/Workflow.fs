@@ -33,6 +33,7 @@ module internal Workflow =
         StepNumber : int list;
         StepName : string list;
         Log : string list;
+        LogEvent : Event<string>;
         CancellationToken : System.Threading.CancellationToken option; //https://msdn.microsoft.com/de-de/library/dd997364(v=vs.110).aspx
         Tainted : bool; // Use tainted to indicate, if a function changed something. Do not compare states, because now it is obvious, what happens, when a mutable changes
     }
@@ -42,12 +43,13 @@ module internal Workflow =
         member this.CurrentStepName = this.StepName.Head
     
     
-    let workflowState_emptyInit : WorkflowState<unit> =
+    let workflowState_emptyInit () : WorkflowState<unit> =
         {
             WorkflowState.State = ();
             WorkflowState.StepNumber = [];
             WorkflowState.StepName = [];
             WorkflowState.Log = [];
+            WorkflowState.LogEvent = new Event<string>();
             WorkflowState.CancellationToken = None;
             WorkflowState.Tainted = false;
         }
@@ -57,6 +59,7 @@ module internal Workflow =
             WorkflowState.StepNumber = [];
             WorkflowState.StepName = [];
             WorkflowState.Log = [];
+            WorkflowState.LogEvent = new Event<string>();
             WorkflowState.CancellationToken = None;
             WorkflowState.Tainted = false;
         }
@@ -120,6 +123,7 @@ module internal Workflow =
                     WorkflowState.StepNumber = wfState.StepNumber;
                     WorkflowState.StepName = wfState.StepName;
                     WorkflowState.Log = wfState.Log;
+                    WorkflowState.LogEvent = wfState.LogEvent;
                     WorkflowState.CancellationToken = wfState.CancellationToken;
                     WorkflowState.Tainted = true;
                 }
@@ -130,12 +134,13 @@ module internal Workflow =
     let logEntry<'state> (entry:string) : EndogenousWorkflowFunction<'state> =
         let behavior (wfState:WorkflowState<'state>) =
             do printfn "%s" entry
+            do wfState.LogEvent.Trigger entry
             let newWfState =
                 { wfState with
                     WorkflowState.Log = entry :: wfState.Log;
                     // WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
                 }
-            (),newWfState            
+            (),newWfState
         WorkflowFunction(behavior)
 
     let trackSteps_NextStep<'state> (stepName:string) : EndogenousWorkflowFunction<'state> = 
@@ -160,7 +165,7 @@ module internal Workflow =
             (),newWfState            
         WorkflowFunction(behavior)
                 
-    let trackSteps_CreateSubstepAndEnter<'state,'traceableOfOrigin,'traceableOfModel> (stepName:string) : EndogenousWorkflowFunction<'state> = 
+    let trackSteps_CreateSubstepAndEnter<'state> (stepName:string) : EndogenousWorkflowFunction<'state> = 
         let behavior (wfState:WorkflowState<'state>) =
             let newWfState =
                 { wfState with
@@ -174,7 +179,7 @@ module internal Workflow =
             (),newWfState
         WorkflowFunction(behavior)
 
-    let trackSteps_LeaveSubstep<'state,'traceableOfOrigin,'traceableOfModel> () : EndogenousWorkflowFunction<'state> = 
+    let trackSteps_LeaveSubstep<'state> () : EndogenousWorkflowFunction<'state> = 
         let behavior (wfState:WorkflowState<'state>) =
             let newWfState =
                 { wfState with
@@ -186,7 +191,7 @@ module internal Workflow =
         WorkflowFunction(behavior)
 
 
-    let iterateToFixpoint<'state,'traceableOfOrigin,'traceableOfModel> ( (WorkflowFunction(functionToIterate)) : EndogenousWorkflowFunction<'state>) : EndogenousWorkflowFunction<'state> =
+    let iterateToFixpoint<'state,'traceableOfOrigin> ( (WorkflowFunction(functionToIterate)) : EndogenousWorkflowFunction<'state>) : EndogenousWorkflowFunction<'state> =
         let adjust_tainted_and_call (wfState:WorkflowState<'state>) : (bool*WorkflowState<'state>) =
             // 1) Tainted is set to false
             // 2) function is called
@@ -248,25 +253,25 @@ module internal Workflow =
     let runWorkflow_getResultAndWfState<'newState,'returnType>
                 (WorkflowFunction s:(WorkflowFunction<unit,'newState,'returnType>)) =
         // no cancellation token
-        let result,newWfState = s workflowState_emptyInit
+        let result,newWfState = s (workflowState_emptyInit ())
         (result,newWfState)
                               
     let runWorkflow_getResult<'newState,'returnType>
                 (WorkflowFunction s:(WorkflowFunction<unit,'newState,'returnType>)) =
         // no cancellation token
-        let result,newWfState = s workflowState_emptyInit
+        let result,newWfState = s (workflowState_emptyInit ())
         result
         
     let runWorkflow_getState<'newState,'returnType>
                 (WorkflowFunction s:(WorkflowFunction<unit,'newState,'returnType>)) =
         // no cancellation token
-        let result,newWfState = s workflowState_emptyInit
+        let result,newWfState = s (workflowState_emptyInit ())
         newWfState.State
           
     let runWorkflow_getWfState<'newState,'returnType>
                 (WorkflowFunction s:(WorkflowFunction<unit,'newState,'returnType>)) =
         // no cancellation token
-        let result,newWfState = s workflowState_emptyInit
+        let result,newWfState = s (workflowState_emptyInit ())
         newWfState
           
     let runWorkflowState_getState<'oldState,'newState,'returnType>

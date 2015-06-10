@@ -23,17 +23,19 @@
 namespace SafetySharp.Modelchecking
     
 open Xunit
+open Xunit.Abstractions
 
-module PrismCheckSmokeTests =
-    open SafetySharp.Models
-    open SafetySharp.Workflow
+open SafetySharp.Models
+open SafetySharp.Workflow
+
+type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
     
-    let testdataAll = TestCases.SamSmokeTests.smoketestsAll
-    let testdataDeterministic = TestCases.SamSmokeTests.smoketestsDeterministic        
+    static member testdataAll = TestCases.SamSmokeTests.smoketestsAll
+    static member testdataDeterministic = TestCases.SamSmokeTests.smoketestsDeterministic        
         
     [<Theory>]
     [<MemberData("testdataDeterministic")>]
-    let ``check smoke tests with gwam fast method`` (testname:string) =    
+    member this.``check smoke tests with gwam fast method`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
             let newDirectory = "../../Examples/Prism/TransformedSamWithGwamFast"
@@ -42,6 +44,7 @@ module PrismCheckSmokeTests =
         let inputFile = """../../Examples/SAM/""" + testname
         
         let smokeTestWithGwamWorkflow = workflow {
+                do! addLogEventHandlerForXUnit (xunitOutput)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
@@ -57,13 +60,13 @@ module PrismCheckSmokeTests =
         let runSmokeTest (inputFile) =
             SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
         let output = runSmokeTest inputFile
-        printf "%s" output
+        do xunitOutput.WriteLine (sprintf "%s" output)
         ()
 
         
     [<Theory>]
     [<MemberData("testdataAll")>]
-    let ``check smoke tests with gwam method`` (testname:string) =    
+    member this.``check smoke tests with gwam method`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
             let newDirectory = "../../Examples/Prism/TransformedSamWithGwam"
@@ -72,6 +75,7 @@ module PrismCheckSmokeTests =
         let inputFile = """../../Examples/SAM/""" + testname
         
         let smokeTestWithGwamWorkflow = workflow {
+                do! addLogEventHandlerForXUnit (xunitOutput)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
@@ -87,13 +91,13 @@ module PrismCheckSmokeTests =
         let runSmokeTest (inputFile) =
             SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
         let output = runSmokeTest inputFile
-        printf "%s" output
+        do xunitOutput.WriteLine (sprintf "%s" output)
         ()
 
 
     [<Theory>]
     [<MemberData("testdataAll")>]
-    let ``check smoke tests with plain method`` (testname:string) =    
+    member this.``check smoke tests with plain method`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
             let newDirectory = "../../Examples/Prism/TransformedSamWithPlain"
@@ -102,6 +106,7 @@ module PrismCheckSmokeTests =
         let inputFile = """../../Examples/SAM/""" + testname
         
         let smokeTestWithGwamWorkflow = workflow {
+                do! addLogEventHandlerForXUnit (xunitOutput)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
@@ -116,5 +121,5 @@ module PrismCheckSmokeTests =
         let runSmokeTest (inputFile) =
             SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
         let output = runSmokeTest inputFile
-        printf "%s" output
+        do xunitOutput.WriteLine (sprintf "%s" output)
         ()
