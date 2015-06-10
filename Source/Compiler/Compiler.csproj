@@ -125,7 +125,7 @@
     <Compile Include="Analyzers\RecursionAnalyzer.cs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.cs" />
-    <Compile Include="Normalization\AssemblyAttributeNormalizer.cs" />
+    <Compile Include="Normalization\SafetySharpAttributeNormalizer.cs" />
     <Compile Include="Normalization\BindingNormalizer.cs" />
     <Compile Include="Normalization\DebugInfoNormalizer.cs" />
     <Compile Include="Normalization\PartialNormalizer.cs" />

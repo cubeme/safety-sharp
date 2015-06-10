@@ -126,7 +126,7 @@ module internal Reflection =
                 parameters.AssemblyResolver <- this
 
                 let assembly = 
-                    let attribute = assembly.GetCustomAttribute<SafetySharpAssemblyAttribute> ()
+                    let attribute = assembly.GetCustomAttribute<SafetySharpAttribute> ()
                     if attribute = null then
                         AssemblyDefinition.ReadAssembly (assembly.Location, parameters)
                     else

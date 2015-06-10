@@ -47,7 +47,7 @@
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
     <Compile Include="CompilerServices\LiftExpressionAttribute.cs" />
     <Compile Include="CompilerServices\PortBehaviorAttribute.cs" />
-    <Compile Include="CompilerServices\SafetySharpAssemblyAttribute.cs" />
+    <Compile Include="CompilerServices\SafetySharpAttribute.cs" />
     <Compile Include="Modeling\BindingKind.cs" />
     <Compile Include="Modeling\Model.Immutability.cs">
       <DependentUpon>Model.cs</DependentUpon>

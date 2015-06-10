@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,30 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CompilerServices
+namespace SafetySharp.Compiler.Normalization
 {
 	using System;
-	using Utilities;
+	using System.Text;
+	using CompilerServices;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Roslyn;
 
 	/// <summary>
-	///     When applied to an assembly, indicates that the assembly is supported by the S# runtime.
+	///     Adds the <see cref="SafetySharpAttribute" /> to the compilation.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
-	public sealed class SafetySharpAssemblyAttribute : Attribute
+	public sealed class SafetySharpAttributeNormalizer : Normalizer
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     The name of the resource that stores the embedded original S# assembly.
 		/// </summary>
-		/// <param name="resourceName">The name of the resource that stores the embedded original S# assembly.</param>
-		public SafetySharpAssemblyAttribute(string resourceName)
-		{
-			Requires.NotNullOrWhitespace(resourceName, () => resourceName);
-			ResourceName = resourceName;
-		}
+		public const string EmbeddedAssembly = "S# Assembly";
 
 		/// <summary>
-		///     Gets the name of the resource that stores the embedded original S# assembly.
+		///     Normalizes the <see cref="Compilation" />.
 		/// </summary>
-		public string ResourceName { get; private set; }
+		protected override Compilation Normalize()
+		{
+			var code = String.Format("[assembly: {0}(\"{1}\")]", typeof(SafetySharpAttribute).FullName, EmbeddedAssembly);
+			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code, path: Guid.NewGuid().ToString(), encoding: Encoding.UTF8);
+
+			return Compilation.AddSyntaxTrees(syntaxTree);
+		}
 	}
 }

@@ -270,7 +270,7 @@ namespace SafetySharp.Compiler
 		private Compilation NormalizeSimulationCode([NotNull] Compilation compilation)
 		{
 			compilation = ApplyNormalizer<DebugInfoNormalizer>(compilation);
-			compilation = ApplyNormalizer<AssemblyAttributeNormalizer>(compilation);
+			compilation = ApplyNormalizer<SafetySharpAttributeNormalizer>(compilation);
 			compilation = ApplyNormalizer<PartialNormalizer>(compilation);
 			compilation = ApplyNormalizer<LiftedExpressionNormalizer>(compilation);
 			compilation = ApplyNormalizer<PortNormalizer>(compilation);
@@ -291,7 +291,7 @@ namespace SafetySharp.Compiler
 		{
 			var resources = new[]
 			{
-				new ResourceDescription(AssemblyAttributeNormalizer.EmbeddedAssembly, () => embeddedAssembly, true)
+				new ResourceDescription(SafetySharpAttributeNormalizer.EmbeddedAssembly, () => embeddedAssembly, true)
 			};
 
 			var emitResult = compilation.Emit(assemblyPath, Path.ChangeExtension(assemblyPath, ".pdb"), manifestResources: resources);
