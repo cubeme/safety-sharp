@@ -249,9 +249,27 @@ module internal StochasticProgramGraphToPrism =
             else
                 spg.Variables |> generateInitCondition  |> (translateExpression prismIdentifiers) |> Some
         
+        
+        let stateToNumber : Map<Spg.State,Prism.Constant> =
+            let statecounter = ref 0
+            let createVariableForState (state:Spg.State) =
+                statecounter := statecounter.Value + 1
+                Prism.Integer(statecounter.Value)
+            spg.States |> Set.toList |> List.map (fun state -> (state,createVariableForState state) ) |> Map.ofList
+        let stateVariableIdentifier =
+            {Prism.Identifier.Name = "spgState"}
+        let stateVariable =
+            {
+                VariableDeclaration.Name = stateVariableIdentifier
+                VariableDeclaration.Type =
+                    let _from = Prism.Expression.Constant(Prism.Integer(1))
+                    let _to= Prism.Expression.Constant(Prism.Integer(stateToNumber.Count))
+                    Prism.VariableDeclarationType.IntRange(_from,_to)
+                VariableDeclaration.InitialValue = 
+                    Some(Prism.Expression.Constant(stateToNumber.Item spg.InitialState)  )
+            }
 
         let (globalVariables,forwardTrace) =
-            // TODO: Add StateVariables
             let transformVarDecl (varDecl:VarDecl) : (Prism.VariableDeclaration*(Traceable*Prism.Traceable)) =
                 let variableDeclaration =
                     {
@@ -264,8 +282,11 @@ module internal StochasticProgramGraphToPrism =
                                 None
                     }
                 (variableDeclaration,(Tsam.Traceable.Traceable(varDecl.Var),variableDeclaration.Name.Name))
-            spg.Variables |> List.map transformVarDecl
-                          |> List.unzip
+            let globalVariables,forwardTrace =
+                spg.Variables |> List.map transformVarDecl
+                              |> List.unzip
+            let globalVariablesWithStateVariable = stateVariable::globalVariables
+            (globalVariablesWithStateVariable,forwardTrace)
 
         
         let transformAction (var:Tsam.Var,expr:Tsam.Expr) : (Prism.Identifier * Prism.Expression) =
@@ -274,20 +295,24 @@ module internal StochasticProgramGraphToPrism =
             (varToWrite,expr)
 
         let transformDeterministicTransition (transition:DeterministicTransition) : Prism.Command =
-            // TODO: Add State to Guard. Update State Variables
             let transformedGuard =
+                let stateGuard = Expression.BinaryEquals(Expression.Variable(stateVariableIdentifier),Prism.Expression.Constant(stateToNumber.Item transition.FromState))
                 match transition.Guard with
-                    | None -> Expression.Constant(Constant.Boolean(true))
-                    | Some (guard) -> translateExpression prismIdentifiers guard
+                    | None ->
+                        stateGuard
+                    | Some (guard) ->
+                        let guardExpr = translateExpression prismIdentifiers guard
+                        Expression.BinaryConjunction(stateGuard,guardExpr)                        
             let quantifiedUpdateOfVariables =
+                let stateAssignment = (stateVariableIdentifier,Prism.Expression.Constant(stateToNumber.Item transition.ToState))
                 let transformedAction : (Prism.Expression * Prism.DeterministicUpdateOfVariables) list =
                     let probability = probForSure
                     match transition.Action with
                         | Some (action) ->                            
                             let assignment = action |> transformAction
-                            [(probability,[assignment])]  // we only have one element, because we handle the deterministic case with probability 1.0. Currently Action has also only one Element
+                            [(probability,[stateAssignment;assignment])]  // we only have one element, because we handle the deterministic case with probability 1.0. Currently Action has also only one Element + State Assignment
                         | None ->
-                            [(probability,[])]
+                            [(probability,[stateAssignment])]
                 transformedAction
             {
                 Prism.Command.Action = Prism.CommandAction.NoActionLabel;
@@ -296,20 +321,24 @@ module internal StochasticProgramGraphToPrism =
             }
 
         let transformStochasticTransition (transition:StochasticTransition) : Prism.Command =
-            // TODO: Add State to Guard. Update State Variables
             let transformedGuard =
+                let stateGuard = Expression.BinaryEquals(Expression.Variable(stateVariableIdentifier),Prism.Expression.Constant(stateToNumber.Item transition.FromState))
                 match transition.Guard with
-                    | None -> Expression.Constant(Constant.Boolean(true))
-                    | Some (guard) -> translateExpression prismIdentifiers guard
+                    | None ->
+                        stateGuard
+                    | Some (guard) ->
+                        let guardExpr = translateExpression prismIdentifiers guard
+                        Expression.BinaryConjunction(stateGuard,guardExpr)         
             let quantifiedUpdateOfVariables =
                 let transformOption (option:StochasticOption) : (Prism.Expression * Prism.DeterministicUpdateOfVariables) =
+                    let stateAssignment = (stateVariableIdentifier,Prism.Expression.Constant(stateToNumber.Item option.ToState))
                     let probability = translateExpression prismIdentifiers (option.Probability)
                     match option.Action with
                         | Some (action) ->                            
                             let assignment = action |> transformAction
-                            (probability,[assignment])
+                            (probability,[stateAssignment;assignment])
                         | None ->
-                            (probability,[])
+                            (probability,[stateAssignment])
                 let transformedOptions = transition.Options |> List.map transformOption
                 transformedOptions
             {
