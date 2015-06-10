@@ -176,7 +176,7 @@ module internal TsamToSpg =
                     connectionStatesToProgramGraphs |> List.map newEntryForConnection |> Set.ofList
                 let stochasticProgramGraphWithSubProgramGraphsAndConnections =
                     { stochasticProgramGraphWithSubProgramGraphs with
-                        DeterministicTransitions = Set.union alreadyCollected.DeterministicTransitions connectionsToSubProgramGraphs
+                        DeterministicTransitions = Set.union stochasticProgramGraphWithSubProgramGraphs.DeterministicTransitions connectionsToSubProgramGraphs
                     }
                 stochasticProgramGraphWithSubProgramGraphsAndConnections
             | Stm.Stochastic (choiceSid,stochasticChoices) ->
@@ -214,7 +214,7 @@ module internal TsamToSpg =
                     }
                 let stochasticProgramGraphWithSubProgramGraphsAndConnections =
                     { stochasticProgramGraphWithSubProgramGraphs with
-                        StochasticTransitions = alreadyCollected.StochasticTransitions.Add stochasticTransition
+                        StochasticTransitions = stochasticProgramGraphWithSubProgramGraphs.StochasticTransitions.Add stochasticTransition
                     }
                 stochasticProgramGraphWithSubProgramGraphsAndConnections
 
