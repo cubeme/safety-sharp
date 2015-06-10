@@ -527,6 +527,7 @@ module internal CilToSsm =
     /// Transforms all methods of the given type to an SSM method with structured control flow.
     let private transformMethods (metadata : MetadataProvider) (o : obj) (t : TypeDefinition) (resolver : GenericResolver) =
         t.GetMethods()
+        |> Seq.filter (fun m -> not m.HasOverrides || m.Overrides |> Seq.forall (fun m -> m.DeclaringType.FullName <> "SafetySharp.Modeling.IComponent"))
         |> Seq.map (transformMethod metadata o resolver)
         |> List.ofSeq
 
