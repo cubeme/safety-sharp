@@ -29,7 +29,7 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that a fault declaration is marked with exactly one <see cref="OccurrencePatternAttribute" />.

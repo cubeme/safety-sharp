@@ -26,7 +26,7 @@ open System
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 open SafetySharp.Reflection
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
@@ -1468,7 +1468,7 @@ module Methods =
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [ExprStm (CallExpr (methodName "Update" 1 0, "SafetySharp.Runtime.Modeling.Component", [], [], VoidType, [], false)); RetStm None]
+                    Body = SeqStm [ExprStm (CallExpr (methodName "Update" 1 0, "SafetySharp.Modeling.Component", [], [], VoidType, [], false)); RetStm None]
                     Kind = Step
                 }
                 {

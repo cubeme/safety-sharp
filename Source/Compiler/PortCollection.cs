@@ -28,7 +28,7 @@ namespace SafetySharp.Compiler
 	using System.Linq;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
-	using Runtime.Utilities;
+	using SafetySharp.Utilities;
 
 	/// <summary>
 	///     Represents a set of ports with the same name.

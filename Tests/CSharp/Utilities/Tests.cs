@@ -36,8 +36,8 @@ namespace Tests.Utilities
 	using SafetySharp.Compiler;
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Compiler.Normalization;
-	using SafetySharp.Runtime.Modeling;
-	using SafetySharp.Runtime.Utilities;
+	using SafetySharp.Modeling;
+	using SafetySharp.Utilities;
 	using Xunit.Abstractions;
 
 	/// <summary>

@@ -23,7 +23,7 @@
 namespace Tests.Diagnostics.PortKinds.Valid
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	internal class E1
 	{

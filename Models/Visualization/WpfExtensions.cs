@@ -22,16 +22,16 @@
 
 namespace Visualization
 {
-    using System.Windows;
+	using System.Windows;
 
-    /// <summary>
-    ///   Provides extension methods for use with WPF.
-    /// </summary>
-    internal static class WpfExtensions
-    {
-        public static Visibility ToVisibility(this bool value)
-        {
-            return value ? Visibility.Visible : Visibility.Collapsed;
-        }
-    }
+	/// <summary>
+	///   Provides extension methods for use with WPF.
+	/// </summary>
+	internal static class WpfExtensions
+	{
+		public static Visibility ToVisibility(this bool value)
+		{
+			return value ? Visibility.Visible : Visibility.Collapsed;
+		}
+	}
 }

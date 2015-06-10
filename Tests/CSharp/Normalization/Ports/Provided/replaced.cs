@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.Provided
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	internal partial class X : Component
 	{
@@ -58,10 +58,10 @@ namespace Tests.Normalization.Ports.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private delegate int __PortDelegate0__(int x);
 
-		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
-		[SafetySharp.Runtime.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public new int M(int x) => this.__portField0__(x);
 	}
 }

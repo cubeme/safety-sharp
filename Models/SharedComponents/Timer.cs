@@ -22,7 +22,7 @@
 
 namespace SharedComponents
 {
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	/// <summary>
 	///   Represents a timer that signals a timeout.

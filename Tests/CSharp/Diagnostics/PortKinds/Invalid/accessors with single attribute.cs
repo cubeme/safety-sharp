@@ -24,7 +24,7 @@ namespace Tests.Diagnostics.PortKinds.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	[Diagnostic(DiagnosticIdentifier.PortPropertyAccessor, 35, 13, 3, "Tests.Diagnostics.PortKinds.Invalid.Y1.M.get")]
 	internal class Y1 : Component

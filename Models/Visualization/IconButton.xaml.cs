@@ -22,37 +22,37 @@
 
 namespace Visualization
 {
-    using System.Windows;
-    using System.Windows.Media;
+	using System.Windows;
+	using System.Windows.Media;
 
-    public partial class IconButton
-    {
-        public static readonly DependencyProperty IconProperty = DependencyProperty.Register(
-            "Icon", typeof(Visual), typeof(IconButton), new PropertyMetadata(default(Visual)));
+	public partial class IconButton
+	{
+		public static readonly DependencyProperty IconProperty = DependencyProperty.Register(
+			"Icon", typeof(Visual), typeof(IconButton), new PropertyMetadata(default(Visual)));
 
-        public static readonly RoutedEvent ClickedEvent = EventManager.RegisterRoutedEvent(
-            "Clicked", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(IconButton));
+		public static readonly RoutedEvent ClickedEvent = EventManager.RegisterRoutedEvent(
+			"Clicked", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(IconButton));
 
-        public IconButton()
-        {
-            InitializeComponent();
-        }
+		public IconButton()
+		{
+			InitializeComponent();
+		}
 
-        public Visual Icon
-        {
-            get { return (Visual)GetValue(IconProperty); }
-            set { SetValue(IconProperty, value); }
-        }
+		public Visual Icon
+		{
+			get { return (Visual)GetValue(IconProperty); }
+			set { SetValue(IconProperty, value); }
+		}
 
-        public event RoutedEventHandler Clicked
-        {
-            add { AddHandler(ClickedEvent, value); }
-            remove { RemoveHandler(ClickedEvent, value); }
-        }
+		public event RoutedEventHandler Clicked
+		{
+			add { AddHandler(ClickedEvent, value); }
+			remove { RemoveHandler(ClickedEvent, value); }
+		}
 
-        private void OnClicked(object sender, RoutedEventArgs e)
-        {
-            RaiseEvent(new RoutedEventArgs(ClickedEvent));
-        }
-    }
+		private void OnClicked(object sender, RoutedEventArgs e)
+		{
+			RaiseEvent(new RoutedEventArgs(ClickedEvent));
+		}
+	}
 }

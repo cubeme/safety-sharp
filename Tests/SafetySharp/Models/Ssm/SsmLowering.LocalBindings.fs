@@ -26,7 +26,7 @@ open System
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
@@ -102,7 +102,7 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (MemberExpr (Field ("R.X0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 1 0, "SafetySharp.Runtime.Modeling.Component", [], [], VoidType, [], false))); RetStm None]
+                            Body = SeqStm [ExprStm (MemberExpr (Field ("R.X0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 1 0, "SafetySharp.Modeling.Component", [], [], VoidType, [], false))); RetStm None]
                         }
                     ]
             }

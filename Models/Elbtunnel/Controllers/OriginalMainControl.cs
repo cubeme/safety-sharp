@@ -22,9 +22,7 @@
 
 namespace Elbtunnel.Controllers
 {
-	using System;
-	using System.Runtime.InteropServices;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 	using Sensors;
 	using SharedComponents;
 
@@ -133,5 +131,5 @@ namespace Elbtunnel.Controllers
 			if (_count == 0)
 				_timer.Stop();
 		}
-    }
+	}
 }

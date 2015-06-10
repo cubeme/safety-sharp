@@ -25,7 +25,7 @@ namespace Models.Ssm.CilToSsm
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 

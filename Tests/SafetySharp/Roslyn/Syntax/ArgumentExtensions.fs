@@ -1,5 +1,5 @@
 ﻿// The MIT License (MIT)
-// open SafetySharp.Runtime.Modeling
+// open SafetySharp.Modeling
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,7 +28,7 @@ open System.Runtime.CompilerServices
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Runtime.CompilerServices
+open SafetySharp.CompilerServices
 open SafetySharp.Compiler.Roslyn.Syntax
 open SafetySharp.Compiler.Roslyn.Symbols
 

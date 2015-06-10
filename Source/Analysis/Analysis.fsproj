@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>18dfc311-4633-4b22-ab2f-ff42901c6438</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>SafetySharp</RootNamespace>
+    <AssemblyName>SafetySharp.Analysis</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
+    <Name>SafetySharp</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>..\..\Binaries\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>..\..\Binaries\Release</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>..\..\Binaries\Release\SafetySharp.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(VisualStudioVersion)' == '11.0'">
+      <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')">
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets')">
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+  <Import Project="$(FSharpTargetsPath)" />
+  <ItemGroup>
+    <Compile Include="Utilities\Exceptions.fs" />
+    <Compile Include="Utilities\FileSystem.fs" />
+    <Compile Include="Utilities\StructuredWriter.fs" />
+    <Compile Include="Utilities\Reflection.fs" />
+    <Compile Include="Utilities\FreshNameGenerator.fs" />
+    <Compile Include="Utilities\Workflow.fs" />
+    <Compile Include="Utilities\GenericParsers.fs" />
+    <Compile Include="Utilities\ITracing.fs" />
+    <Compile Include="Utilities\GraphvizDot\DotAst.fs" />
+    <Compile Include="Utilities\GraphvizDot\DotToString.fs" />
+    <Compile Include="Models\Ssm\Modeling.fs" />
+    <Compile Include="Models\Ssm\Cil.fs" />
+    <Compile Include="Models\Ssm\Ssm.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.fs" />
+    <Compile Include="Models\Ssm\SsmLowering.fs" />
+    <Compile Include="Models\Ssm\SsmValidation.fs" />
+    <Compile Include="Models\Ssm\SsmToCSharp.fs" />
+    <Compile Include="Models\Scm\Scm.fs" />
+    <Compile Include="Models\Scm\ScmVerificationElements.fs" />
+    <Compile Include="Models\Scm\ScmHelpers.fs" />
+    <Compile Include="Models\Scm\ScmTracer.fs" />
+    <Compile Include="Models\Scm\ScmParser.fs" />
+    <Compile Include="Models\Scm\ScmToString.fs" />
+    <Compile Include="Models\Scm\ScmConsistencyCheck.fs" />
+    <Compile Include="Models\Scm\ScmRewriter\ScmRewriterBase.fs" />
+    <Compile Include="Models\Scm\ScmRewriter\ScmRewriterNormalize.fs" />
+    <Compile Include="Models\Scm\ScmRewriter\ScmRewriterLevelUp.fs" />
+    <Compile Include="Models\Scm\ScmRewriter\ScmRewriterConvertFaults.fs" />
+    <Compile Include="Models\Scm\ScmRewriter\ScmRewriterConvertDelayedBindings.fs" />
+    <Compile Include="Models\Scm\ScmRewriter\ScmRewriterInlineBehavior.fs" />
+    <Compile Include="Models\Scm\ScmRewriter\ScmRewriterFlattenModel.fs" />
+    <Compile Include="Models\Sam\Sam.fs" />
+    <Compile Include="Models\Sam\SamHelpers.fs" />
+    <Compile Include="Models\Sam\SamTracer.fs" />
+    <Compile Include="Models\Sam\SamParser.fs" />
+    <Compile Include="Models\Sam\SamToString.fs" />
+    <Compile Include="Models\Sam\SamConsistencyCheck.fs" />
+    <Compile Include="Models\Sam\SamRewriter\SamRewriterSimplifyBlocks.fs" />
+    <Compile Include="Models\Sam\SamRewriter\SamRewriterChangeIdentifier.fs" />
+    <Compile Include="Models\Tsam\Tsam.fs" />
+    <Compile Include="Models\Tsam\TsamHelpers.fs" />
+    <Compile Include="Models\Tsam\TsamTracer.fs" />
+    <Compile Include="Models\Tsam\TsamToString.fs" />
+    <Compile Include="Models\Tsam\SamToTsam.fs" />
+    <Compile Include="Models\Tsam\TsamChangeIdentifier.fs" />
+    <Compile Include="Models\Tsam\TsamPassiveFormFS01.fs" />
+    <Compile Include="Models\Tsam\TsamPassiveFormGCFK09.fs" />
+    <Compile Include="Models\Spg\Spg.fs" />
+    <Compile Include="Models\Spg\SpgToDot.fs" />
+    <Compile Include="Models\Spg\SpgTracer.fs" />
+    <Compile Include="Models\Spg\TsamToSpg.fs" />
+    <Compile Include="Models\Transformations\SsmToScm.fs" />
+    <Compile Include="Models\Transformations\ScmToSam.fs" />
+    <Compile Include="Models\Transformations\TsamToDot.fs" />
+    <Compile Include="Analysis\Checks\WellDefinedGuardedCommands.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcWeakestPrecondition.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcStrongestPostcondition.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcGuardWithAssignmentModel.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcGuardWithAssignmentModelFast.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcTransitionSystemAsRelationExpr.fs" />
+    <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
+    <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
+    <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />
+    <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParseGeneric.fs" />
+    <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParseCommon.fs" />
+    <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParseInput.fs" />
+    <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParseOutput.fs" />
+    <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParsingResult.fs" />
+    <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2AstToString.fs" />
+    <Compile Include="Analysis\Smt-Solving\Z3\Z3Ast.fs" />
+    <Compile Include="Analysis\Smt-Solving\Z3\Z3Predefined.fs" />
+    <Compile Include="Analysis\Smt-Solving\Z3\Z3AstToString.fs" />
+    <Compile Include="Analysis\Smt-Solving\Z3\Z3Parser.fs" />
+    <Compile Include="Analysis\Smt-Solving\Z3\Z3Execute.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaOperators.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAst.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTypedefs.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaToString.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTransform.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\SpinExecute.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PanInterpretResult.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvOperators.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvAst.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvAstHelpers.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvCommands.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvToString.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvCommandsToString.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvInterpretResult.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvExecute.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvTransform.fs" />
+    <Compile Include="Analysis\Modelchecking\Prism\PrismAst.fs" />
+    <Compile Include="Analysis\Modelchecking\Prism\PrismAstHelpers.fs" />
+    <Compile Include="Analysis\Modelchecking\Prism\PrismCommands.fs" />
+    <Compile Include="Analysis\Modelchecking\Prism\PrismToString.fs" />
+    <Compile Include="Analysis\Modelchecking\Prism\PrismCommandsToString.fs" />
+    <Compile Include="Analysis\Modelchecking\Prism\PrismInterpretResult.fs" />
+    <Compile Include="Analysis\Modelchecking\Prism\PrismExecute.fs" />
+    <Compile Include="Analysis\Modelchecking\Prism\PrismTransform.fs" />
+    <Compile Include="Analysis\Modelchecking\Boogie\BoogieSimplifiedAst.fs" />
+    <Compile Include="Analysis\Modelchecking\Boogie\BoogieToString.fs" />
+    <Compile Include="Analysis\Modelchecking\Boogie\BoogieExecute.fs" />
+    <Compile Include="Analysis\Modelchecking\Boogie\BoogieTransform.fs" />
+    <Compile Include="Analysis\Stochastic\UnitsOfMeasurement.fs" />
+    <Compile Include="Analysis\Stochastic\DiscreteDistributions.fs" />
+    <Compile Include="Analysis\Stochastic\ContinuousDistributions.fs" />
+    <Compile Include="Analysis\Stochastic\FailureRate.fs" />
+    <Compile Include="Analysis\Techniques\AtStepInvariant.fs" />
+    <Compile Include="Analysis\Techniques\AtReachable.fs" />
+    <Compile Include="Analysis\Techniques\AtLtlFormula.fs" />
+    <Compile Include="Analysis\Techniques\AtDccaLtl.fs" />
+    <Compile Include="Analysis\Techniques\AtDccaCtl.fs" />
+    <Compile Include="Analysis\Techniques\AtDccaPruning.fs" />
+    <Compile Include="Analysis\Techniques\AtDccaFastBdd.fs" />
+    <Compile Include="Analysis\Techniques\AtOrderedDccaFastBdd.fs" />
+    <Compile Include="Analysis\Techniques\AtProbabilisticFullModel.fs" />
+    <Compile Include="Analysis\Techniques\AtContract.fs" />
+    <Compile Include="Analysis\Techniques\AtMethodsCalled.fs" />
+    <Compile Include="Analysis\SpinModelChecker.fs" />
+    <Compile Include="Analysis\MemberAccess.fs" />
+    <Compile Include="AssemblyInfo.fs" />
+    <Content Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FParsec">
+      <HintPath>..\..\Dependencies\Packages\FParsec.1.0.1\lib\net40-client\FParsec.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FParsecCS">
+      <HintPath>..\..\Dependencies\Packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FSharp.Core">
+      <HintPath>..\..\Dependencies\Packages\FSharp.Core.3.1.2.1\lib\net40\FSharp.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\..\Dependencies\Packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Mono.Cecil.Rocks">
+      <HintPath>..\..\Dependencies\Packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.Rocks.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="QuickGraph">
+      <HintPath>..\..\Dependencies\QuickGraph.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\Dependencies\Packages\System.Collections.Immutable.1.1.33-beta\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Modeling\Modeling.csproj">
+      <Name>Modeling</Name>
+      <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

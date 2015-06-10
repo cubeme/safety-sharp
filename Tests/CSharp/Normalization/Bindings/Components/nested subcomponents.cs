@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Bindings.Components
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	internal interface I6 : IComponent
 	{
@@ -55,9 +55,9 @@ namespace Tests.Normalization.Bindings.Components
 
 		private Out6()
 		{
-			Bind(new SafetySharp.Runtime.Modeling.PortBinding(
-				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(X().i.N)),
-				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(X().i.M))))
+			Bind(new SafetySharp.Modeling.PortBinding(
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(X().i.N)),
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(X().i.M))))
 				.Delayed();
 		}
 

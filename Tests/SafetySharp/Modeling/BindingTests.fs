@@ -27,7 +27,7 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 open Modeling
 
 [<TestFixture>]

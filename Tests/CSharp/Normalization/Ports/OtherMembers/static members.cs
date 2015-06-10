@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.OtherMembers
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	internal class In5 : Component
 	{

@@ -28,7 +28,7 @@ open NUnit.Framework
 open SafetySharp.Compiler.Analyzers
 open SafetySharp.Compiler.Roslyn.Syntax
 open SafetySharp.Compiler.Roslyn.Symbols
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 
 [<TestFixture>]
 module ``PortBinding instantiations`` =

@@ -26,7 +26,7 @@ namespace Tests.Utilities.AssertTests
 	using Shouldly;
 	using Utilities;
 	using Xunit;
-	using Assert = SafetySharp.Runtime.Utilities.Assert;
+	using Assert = SafetySharp.Utilities.Assert;
 
 	public class IsNotNullMethod : Tests
 	{

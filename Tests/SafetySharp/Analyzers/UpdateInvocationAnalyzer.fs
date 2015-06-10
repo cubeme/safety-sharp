@@ -25,7 +25,7 @@ namespace Analyzers
 open System
 open System.Linq
 open NUnit.Framework
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 open SafetySharp.Compiler.Analyzers
 open SafetySharp.Compiler.Roslyn.Syntax
 open SafetySharp.Compiler.Roslyn.Symbols
@@ -61,23 +61,23 @@ module ``Update method invocation`` =
     [<Test>]
     let ``Update call in non-Update method is invalid`` () =
         getDiagnostic "class X : Component { public override void Update() {} void Q() { Update(); } }" =? diagnostic 66 8 "X"
-        getDiagnostic "class X : Component { public override void Update() {} void Q() { base.Update(); } }" =? diagnostic 66 13 "SafetySharp.Runtime.Modeling.Component"
+        getDiagnostic "class X : Component { public override void Update() {} void Q() { base.Update(); } }" =? diagnostic 66 13 "SafetySharp.Modeling.Component"
         getDiagnostic "class Y : Component { public override void Update() {} } class X : Component { void Q(Y y) { y.Update(); } }" =? diagnostic 93 10 "Y"
-        getDiagnostic "class X : Component { void Q() { Update(); } }" =? diagnostic 33 8 "SafetySharp.Runtime.Modeling.Component" 
-        getDiagnostic "class Y : Component {} class X : Component { void Q(Y y) { y.Update(); } }" =? diagnostic 59 10 "SafetySharp.Runtime.Modeling.Component"
+        getDiagnostic "class X : Component { void Q() { Update(); } }" =? diagnostic 33 8 "SafetySharp.Modeling.Component" 
+        getDiagnostic "class Y : Component {} class X : Component { void Q(Y y) { y.Update(); } }" =? diagnostic 59 10 "SafetySharp.Modeling.Component"
 
     [<Test>]
     let ``Update call in getter is invalid`` () =
         getDiagnostic "class X : Component { public override void Update() {} int Q { get { Update(); return 1; } } }" =? diagnostic 69 8 "X" 
-        getDiagnostic "class X : Component { public override void Update() {} int Q { get { base.Update(); return 1; } } }" =? diagnostic 69 13 "SafetySharp.Runtime.Modeling.Component" 
+        getDiagnostic "class X : Component { public override void Update() {} int Q { get { base.Update(); return 1; } } }" =? diagnostic 69 13 "SafetySharp.Modeling.Component" 
         getDiagnostic "class Y : Component { public override void Update() {} } class X : Component { Y y; int Q { get { y.Update(); return 1; } } }" =? diagnostic 98 10 "Y"
-        getDiagnostic "class X : Component { int Q { get { Update(); return 1; } } }" =? diagnostic 36 8 "SafetySharp.Runtime.Modeling.Component" 
-        getDiagnostic "class Y : Component {} class X : Component { Y y; int Q { get { y.Update(); return 1; } } }" =? diagnostic 64 10 "SafetySharp.Runtime.Modeling.Component"
+        getDiagnostic "class X : Component { int Q { get { Update(); return 1; } } }" =? diagnostic 36 8 "SafetySharp.Modeling.Component" 
+        getDiagnostic "class Y : Component {} class X : Component { Y y; int Q { get { y.Update(); return 1; } } }" =? diagnostic 64 10 "SafetySharp.Modeling.Component"
 
     [<Test>]
     let ``Update call in setter is invalid`` () =
         getDiagnostic "class X : Component { public override void Update() {} int Q { set { Update(); } } }" =? diagnostic 69 8 "X" 
-        getDiagnostic "class X : Component { public override void Update() {} int Q { set { base.Update(); } } }" =? diagnostic 69 13 "SafetySharp.Runtime.Modeling.Component" 
+        getDiagnostic "class X : Component { public override void Update() {} int Q { set { base.Update(); } } }" =? diagnostic 69 13 "SafetySharp.Modeling.Component" 
         getDiagnostic "class Y : Component { public override void Update() {} } class X : Component { Y y; int Q { set { y.Update(); } } }" =? diagnostic 98 10 "Y"
-        getDiagnostic "class X : Component { int Q { set { Update(); } } }" =? diagnostic 36 8 "SafetySharp.Runtime.Modeling.Component" 
-        getDiagnostic "class Y : Component {} class X : Component { Y y; int Q { set { y.Update(); } } }" =? diagnostic 64 10 "SafetySharp.Runtime.Modeling.Component"
+        getDiagnostic "class X : Component { int Q { set { Update(); } } }" =? diagnostic 36 8 "SafetySharp.Modeling.Component" 
+        getDiagnostic "class Y : Component {} class X : Component { Y y; int Q { set { y.Update(); } } }" =? diagnostic 64 10 "SafetySharp.Modeling.Component"

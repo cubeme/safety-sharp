@@ -252,9 +252,13 @@
       <Project>{8823091c-387f-4f4d-abcd-8f71d1528cbb}</Project>
       <Name>Compiler</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Source\Runtime\Runtime.csproj">
+    <ProjectReference Include="..\..\Source\Modeling\Modeling.csproj">
       <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
-      <Name>Runtime</Name>
+      <Name>Modeling</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Source\Simulation\Simulation.csproj">
+      <Project>{1b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
+      <Name>Simulation</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

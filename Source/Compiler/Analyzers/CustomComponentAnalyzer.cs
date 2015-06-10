@@ -29,7 +29,7 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that no class implements <see cref="IComponent" /> without being derived from <see cref="Component" />.

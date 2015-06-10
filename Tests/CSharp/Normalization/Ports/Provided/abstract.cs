@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.Provided
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	internal abstract partial class In1 : Component
 	{
@@ -38,7 +38,7 @@ namespace Tests.Normalization.Ports.Provided
 		[Provided]
 		public abstract void M1();
 
-		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
+		[SafetySharp.Modeling.ProvidedAttribute()]
 		public abstract void M2();
 	}
 }

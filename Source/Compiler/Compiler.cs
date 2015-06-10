@@ -34,7 +34,8 @@ namespace SafetySharp.Compiler
 	using Microsoft.CodeAnalysis.MSBuild;
 	using Normalization;
 	using Roslyn;
-	using Runtime.Utilities;
+	using SafetySharp.Utilities;
+	using Log = Utilities.Log;
 
 	/// <summary>
 	///     Compiles a S# modeling project authored in C# to a S# modeling assembly.

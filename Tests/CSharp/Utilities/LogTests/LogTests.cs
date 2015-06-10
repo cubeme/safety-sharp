@@ -23,7 +23,7 @@
 namespace Tests.Utilities.LogTests
 {
 	using System;
-	using SafetySharp.Runtime.Utilities;
+	using SafetySharp.Compiler.Utilities;
 	using Shouldly;
 	using Xunit;
 

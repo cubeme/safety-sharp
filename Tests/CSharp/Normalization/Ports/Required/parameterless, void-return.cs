@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.Required
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	internal partial class In1 : Component
 	{
@@ -37,34 +37,34 @@ namespace Tests.Normalization.Ports.Required
 
 	internal partial class Out1 : Component
 	{
-		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
+		[SafetySharp.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public void M1() => this.__portField0__();
 
-		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
+		[SafetySharp.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField1__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField1__")]
 		internal void M2() => this.__portField1__();
 
-		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
+		[SafetySharp.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField2__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField2__")]
 		protected internal void M3() => this.__portField2__();
 
-		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
+		[SafetySharp.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField3__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField3__")]
 		protected void M4() => this.__portField3__();
 
-		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
+		[SafetySharp.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField4__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField4__")]
 		private void M5() => this.__portField4__();
 
-		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
+		[SafetySharp.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField5__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField5__")]
 		void M6() => this.__portField5__();
 	}
 

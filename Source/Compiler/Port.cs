@@ -26,7 +26,7 @@ namespace SafetySharp.Compiler
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Roslyn.Symbols;
-	using Runtime.Utilities;
+	using SafetySharp.Utilities;
 
 	/// <summary>
 	///     Represents a port.

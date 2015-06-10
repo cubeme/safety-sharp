@@ -30,8 +30,8 @@ open NUnit.Framework
 open Modeling
 open SafetySharp
 open SafetySharp.Models
-open SafetySharp.Runtime.Modeling
-open SafetySharp.Runtime.Analysis
+open SafetySharp.Modeling
+open SafetySharp.Analysis
 open Mono.Cecil
 
 type private TestEnum =

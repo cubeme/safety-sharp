@@ -120,9 +120,17 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\Runtime\Runtime.csproj">
+    <ProjectReference Include="..\..\Source\Analysis\Analysis.fsproj">
+      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
+      <Name>Analysis</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Source\Modeling\Modeling.csproj">
       <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
-      <Name>Runtime</Name>
+      <Name>Modeling</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Source\Simulation\Simulation.csproj">
+      <Project>{1b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
+      <Name>Simulation</Name>
     </ProjectReference>
     <ProjectReference Include="..\PressureTank\PressureTank.csproj">
       <Project>{2834343c-5d3a-4673-9f58-f869f4e3cc01}</Project>

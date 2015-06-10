@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.Provided
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
 	internal partial class In1 : Component
@@ -68,10 +68,10 @@ namespace Tests.Normalization.Ports.Provided
 		/// Some documentation.
 		/// </summary>
 		// test
-		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
-		[SafetySharp.Runtime.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public int M1() => this.__portField0__(); /* test */
 	}
 }

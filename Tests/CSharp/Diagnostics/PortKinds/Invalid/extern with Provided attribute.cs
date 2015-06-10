@@ -24,7 +24,7 @@ namespace Tests.Diagnostics.PortKinds.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	[Diagnostic(DiagnosticIdentifier.ExternProvidedPort, 33, 29, 1, "Tests.Diagnostics.PortKinds.Invalid.H1.M()")]
 	internal class H1 : Component

@@ -27,7 +27,7 @@ open System.Linq
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 open SafetySharp.Compiler.Roslyn.Syntax
 
 [<TestFixture>]

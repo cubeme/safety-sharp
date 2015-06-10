@@ -25,7 +25,7 @@ namespace Analyzers
 open System
 open System.Linq
 open NUnit.Framework
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 open SafetySharp.Compiler.Analyzers
 open SafetySharp.Compiler.Roslyn
 open SafetySharp.Compiler.Roslyn.Syntax
@@ -62,8 +62,8 @@ module ``Port references`` =
         getDiagnostic "namespace Y { class X : Component { X x { get; set; } X() { var y = x.RequiredPorts.Xyz; } } }" =? reqUnknown 84 "Y.X" "Xyz"
         getDiagnostic "namespace Y { class X : Component { X x() { return null; } X() { var y = x().RequiredPorts.Xyz; } } }" =? reqUnknown 91 "Y.X" "Xyz"
         getDiagnostic "class Y : Component { } class X : Component { extern void Xyz(); X(Y y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 98 "Y" "Xyz"
-        getDiagnostic "class X : Component { X(Component y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 63 "SafetySharp.Runtime.Modeling.Component" "Xyz"
-        getDiagnostic "class X : Component { X(IComponent y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 64 "SafetySharp.Runtime.Modeling.IComponent" "Xyz"
+        getDiagnostic "class X : Component { X(Component y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 63 "SafetySharp.Modeling.Component" "Xyz"
+        getDiagnostic "class X : Component { X(IComponent y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 64 "SafetySharp.Modeling.IComponent" "Xyz"
         getDiagnostic "interface I : IComponent {} class X : Component { extern void Xyz(); X(I y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 102 "I" "Xyz"
 
     [<Test>]
@@ -90,8 +90,8 @@ module ``Port references`` =
         getDiagnostic "namespace Y { class X : Component { X x { get; set; } X() { var y = x.ProvidedPorts.Xyz; } } }" =? provUnknown 84 "Y.X" "Xyz"
         getDiagnostic "namespace Y { class X : Component { X x() { return null; } X() { var y = x().ProvidedPorts.Xyz; } } }" =? provUnknown 91 "Y.X" "Xyz"
         getDiagnostic "class Y : Component { } class X : Component { void Xyz() {} X(Y y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 93 "Y" "Xyz"
-        getDiagnostic "class X : Component { X(Component y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 63 "SafetySharp.Runtime.Modeling.Component" "Xyz"
-        getDiagnostic "class X : Component { X(IComponent y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 64 "SafetySharp.Runtime.Modeling.IComponent" "Xyz"
+        getDiagnostic "class X : Component { X(Component y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 63 "SafetySharp.Modeling.Component" "Xyz"
+        getDiagnostic "class X : Component { X(IComponent y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 64 "SafetySharp.Modeling.IComponent" "Xyz"
         getDiagnostic "interface I : IComponent {} class X : Component { void Xyz() {} X(I y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 97 "I" "Xyz"
 
     [<Test>]

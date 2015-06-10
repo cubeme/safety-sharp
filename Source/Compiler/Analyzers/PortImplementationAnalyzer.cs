@@ -29,7 +29,7 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that the port kind of an interface implementing method or property matches the port kind of the

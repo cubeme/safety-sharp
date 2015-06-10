@@ -42,7 +42,7 @@ open SafetySharp.Compiler.Roslyn
 open SafetySharp.Compiler.Analyzers
 open SafetySharp.Compiler
 open SafetySharp.Compiler.Normalization
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 
 /// Raised when a C# compilation problem occurred.
 type CompilationException (message : string) =
@@ -75,7 +75,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     let mutable (assembly : Assembly) = null
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 
-    let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using System; using SafetySharp.Runtime.Modeling; using SafetySharp.Runtime.CompilerServices;\n" + csharpCode)
+    let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using System; using SafetySharp.Modeling; using SafetySharp.CompilerServices;\n" + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
     let assemblyPath = Path.Combine (Environment.CurrentDirectory, sprintf "tmp_%s.dll" (Guid.NewGuid().ToString ()))

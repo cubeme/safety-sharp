@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.Required
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
 	internal partial class In1 : Component
@@ -44,9 +44,9 @@ namespace Tests.Normalization.Ports.Required
 		/// Some documentation.
 		/// </summary>
 		// test
-		[SafetySharp.Runtime.Modeling.RequiredAttribute()]
+		[SafetySharp.Modeling.RequiredAttribute()]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		internal int M() => this.__portField0__(); /* test */
 #line 37
 	}

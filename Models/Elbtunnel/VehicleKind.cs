@@ -22,13 +22,13 @@
 
 namespace Elbtunnel
 {
-    /// <summary>
-    ///   Identifies the kind of a vehicle.
-    /// </summary>
-    public enum VehicleKind
-    {
-        PassengerCar,
-        Truck,
-        OverheightTruck
-    }
+	/// <summary>
+	///   Identifies the kind of a vehicle.
+	/// </summary>
+	public enum VehicleKind
+	{
+		PassengerCar,
+		Truck,
+		OverheightTruck
+	}
 }

@@ -5,7 +5,7 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compiler", "Source\Compiler\Compiler.csproj", "{8823091C-387F-4F4D-ABCD-8F71D1528CBB}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp", "Source\SafetySharp\SafetySharp.fsproj", "{18DFC311-4633-4B22-AB2F-FF42901C6438}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis", "Source\Analysis\Analysis.fsproj", "{18DFC311-4633-4B22-AB2F-FF42901C6438}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp Tests", "Tests\SafetySharp\SafetySharp Tests.fsproj", "{ACDBA456-3B21-480D-B739-DCC7EAE6D233}"
 EndProject
@@ -17,7 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{C5F3E2
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp Tests", "Tests\CSharp\CSharp Tests.csproj", "{EC9C05C6-0E59-4DE3-AFE4-1D44B5A512A1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runtime", "Source\Runtime\Runtime.csproj", "{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "Source\Modeling\Modeling.csproj", "{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simulation", "Source\Simulation\Simulation.csproj", "{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +51,10 @@ Global
 		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,5 +66,6 @@ Global
 		{38BAA192-42C4-44C2-AD10-AB8EABF7BADD} = {17ADA692-CD6C-4F50-84FD-008F09179BC8}
 		{EC9C05C6-0E59-4DE3-AFE4-1D44B5A512A1} = {17ADA692-CD6C-4F50-84FD-008F09179BC8}
 		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37} = {C5F3E271-22DA-4FD8-A830-7E0A8BFD430F}
+		{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37} = {C5F3E271-22DA-4FD8-A830-7E0A8BFD430F}
 	EndGlobalSection
 EndGlobal

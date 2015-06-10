@@ -27,7 +27,7 @@ open System.Linq
 open NUnit.Framework
 open Mono.Cecil
 open SafetySharp.Reflection
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 

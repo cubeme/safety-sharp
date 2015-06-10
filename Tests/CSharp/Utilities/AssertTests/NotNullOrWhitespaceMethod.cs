@@ -24,7 +24,7 @@ namespace Tests.Utilities.AssertTests
 {
 	using System;
 	using Xunit;
-	using Assert = SafetySharp.Runtime.Utilities.Assert;
+	using Assert = SafetySharp.Utilities.Assert;
 
 	public class NotNullOrWhitespaceMethod : Tests
 	{

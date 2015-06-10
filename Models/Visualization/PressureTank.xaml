@@ -12,8 +12,8 @@
             <Setter Property="Fill">
                 <Setter.Value>
                     <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-                        <GradientStop Color="#FF930101" Offset="0"/>
-                        <GradientStop Color="#FFFF0404" Offset="1"/>
+                        <GradientStop Color="#FF930101" Offset="0" />
+                        <GradientStop Color="#FFFF0404" Offset="1" />
                     </LinearGradientBrush>
                 </Setter.Value>
             </Setter>
@@ -101,9 +101,9 @@
                 </Rectangle.OpacityMask>
             </Rectangle>
             <Rectangle x:Name="TankRupture" Height="359.773" Canvas.Left="351.568" Canvas.Top="-4.602" Width="84.667"
-                       Style="{StaticResource FailureIndicator}" >
+                       Style="{StaticResource FailureIndicator}">
                 <Rectangle.Effect>
-                    <DropShadowEffect BlurRadius="20"/>
+                    <DropShadowEffect BlurRadius="20" />
                 </Rectangle.Effect>
             </Rectangle>
             <TextBlock x:Name="PressureLevel" Canvas.Left="352.253" TextWrapping="NoWrap" Width="70" TextAlignment="Center" Text="100%"

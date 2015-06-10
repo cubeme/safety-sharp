@@ -27,7 +27,7 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
-open SafetySharp.Runtime.Utilities
+open SafetySharp.Utilities
 
 [<AutoOpen>]
 module Helpers =

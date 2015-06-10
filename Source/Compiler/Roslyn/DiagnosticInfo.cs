@@ -27,7 +27,7 @@ namespace SafetySharp.Compiler.Roslyn
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Runtime.Utilities;
+	using SafetySharp.Utilities;
 
 	/// <summary>
 	///     Represents a diagnostic produced by a <see cref="Analyzer" />, providing information about errors and

@@ -28,7 +28,7 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that a method or property marked with the <see cref="ProvidedAttribute" /> is not <c>extern</c>.

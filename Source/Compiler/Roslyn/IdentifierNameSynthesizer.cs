@@ -24,7 +24,7 @@ namespace SafetySharp.Compiler.Roslyn
 {
 	using System;
 	using Microsoft.CodeAnalysis;
-	using Runtime.Utilities;
+	using SafetySharp.Utilities;
 
 	/// <summary>
 	///     Synthesizes unique variable or type identifier names for specific locations within a C# <see cref="SyntaxTree" />.

@@ -33,7 +33,7 @@ namespace SafetySharp.Compiler.Analyzers
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that bindings resolve to a unique pair of bound ports.

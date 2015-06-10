@@ -32,7 +32,7 @@ namespace SafetySharp.Compiler.Normalization
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Replaces all port binding assignments with constructor invocations of <see cref="PortBinding" />.

@@ -159,14 +159,17 @@
     <Compile Include="Roslyn\Syntax\SyntaxTreeExtensions.cs" />
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.cs" />
     <Compile Include="Roslyn\Syntax\Visibility.cs" />
+    <Compile Include="Utilities\Log.cs" />
+    <Compile Include="Utilities\LogEntry.cs" />
+    <Compile Include="Utilities\LogType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Runtime\Runtime.csproj">
+    <ProjectReference Include="..\Modeling\Modeling.csproj">
       <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
-      <Name>Runtime</Name>
+      <Name>Modeling</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

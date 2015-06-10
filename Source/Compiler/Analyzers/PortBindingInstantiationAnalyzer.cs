@@ -31,7 +31,7 @@ namespace SafetySharp.Compiler.Analyzers
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that no instances of the <see cref="PortBinding" /> class are created explicitly.

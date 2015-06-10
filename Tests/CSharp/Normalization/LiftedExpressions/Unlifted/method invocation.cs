@@ -23,7 +23,7 @@
 namespace Tests.Normalization.LiftedExpressions.Unlifted
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	public class In1 : Component
 	{

@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Ports.Required
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	interface I1 : IComponent
 	{
@@ -56,10 +56,10 @@ namespace Tests.Normalization.Ports.Required
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
 		private delegate int __PortDelegate0__();
 
-		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
-		[SafetySharp.Runtime.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
+		[SafetySharp.Modeling.ProvidedAttribute()]
+		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.Runtime.CompilerServices.BackingFieldAttribute("__portField0__")]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		int Tests.Normalization.Ports.Required.I1.M() => this.__portField0__();
 	}
 }

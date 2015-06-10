@@ -24,7 +24,7 @@ namespace Tests.Diagnostics.PortKinds.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	[Diagnostic(DiagnosticIdentifier.AmbiguousPortKind, 33, 22, 1, "Tests.Diagnostics.PortKinds.Invalid.A1.M()")]
 	internal class A1 : Component

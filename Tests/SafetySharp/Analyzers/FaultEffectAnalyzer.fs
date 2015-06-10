@@ -25,7 +25,7 @@ namespace Analyzers
 open System
 open System.Linq
 open NUnit.Framework
-open SafetySharp.Runtime.Modeling
+open SafetySharp.Modeling
 open SafetySharp.Compiler.Analyzers
 open SafetySharp.Compiler.Roslyn.Syntax
 open SafetySharp.Compiler.Roslyn.Symbols

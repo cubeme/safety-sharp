@@ -22,7 +22,7 @@
 
 namespace PressureTank
 {
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 	using SharedComponents;
 
 	/// <summary>
@@ -118,7 +118,7 @@ namespace PressureTank
 				_timer.Start();
 				_pump.Enable();
 				_state = State.Filling;
-			} 
+			}
 		}
 	}
-} 
+}

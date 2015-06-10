@@ -33,8 +33,8 @@ namespace SafetySharp.Compiler.Normalization
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using Runtime.CompilerServices;
-	using Runtime.Modeling;
+	using SafetySharp.CompilerServices;
+	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Replaces all port declarations within a component with a matching delegate type, a field of that
@@ -48,8 +48,8 @@ namespace SafetySharp.Compiler.Normalization
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] 
 	///         d f;
 	///         [DebuggerHidden]
-	///    		[SafetySharp.Runtime.Modeling.RequiredAttribute()] 
-	///         [SafetySharp.Runtime.Modeling.BackingFieldAttribute("f")] 
+	///    		[SafetySharp.Modeling.RequiredAttribute()] 
+	///         [SafetySharp.Modeling.BackingFieldAttribute("f")] 
 	///         public void MyMethod(int a, double b) => f(a, b);
 	///    		
 	/// 		private extern bool MyProperty { get; set; } // TODO!
@@ -80,9 +80,9 @@ namespace SafetySharp.Compiler.Normalization
 	///         d f;
 	///         private void __MyMethod__(int a, double b) { ... }
 	///         [DebuggerHidden]
-	///    		[SafetySharp.Runtime.Modeling.ProvidedAttribute()]
-	///         [SafetySharp.Runtime.Modeling.BackingFieldAttribute("f")] 
-	///         [SafetySharp.Runtime.Modeling.PortBehavior("__MyMethod__")]
+	///    		[SafetySharp.Modeling.ProvidedAttribute()]
+	///         [SafetySharp.Modeling.BackingFieldAttribute("f")] 
+	///         [SafetySharp.Modeling.PortBehavior("__MyMethod__")]
 	///         public void MyMethod(int a, double b) => f(a, b);
 	///   	</code>
 	/// </summary>

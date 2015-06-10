@@ -23,7 +23,7 @@
 namespace Tests.Normalization.Bindings.Components
 {
 	using System;
-	using SafetySharp.Runtime.Modeling;
+	using SafetySharp.Modeling;
 
 	partial class In8 : Component
 	{
@@ -54,16 +54,16 @@ namespace Tests.Normalization.Bindings.Components
 	{
 		private Out8(Out8 x, Out8 y)
 		{
-			Bind(new SafetySharp.Runtime.Modeling.PortBinding(
-				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x.N)),
-				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(y.M))));
+			Bind(new SafetySharp.Modeling.PortBinding(
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x.N)),
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(y.M))));
 		}
 
 		private Out8(Out8 x)
 		{
-			Bind(new SafetySharp.Runtime.Modeling.PortBinding(
-				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate1__)(x.Q)),
-				SafetySharp.Runtime.Modeling.PortInfo.MethodPort((__BindingDelegate1__)(x.P))))
+			Bind(new SafetySharp.Modeling.PortBinding(
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate1__)(x.Q)),
+				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate1__)(x.P))))
 				.Delayed();
 		}
 

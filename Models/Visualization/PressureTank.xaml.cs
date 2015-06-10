@@ -26,7 +26,7 @@ namespace Visualization
 	using System.Windows;
 	using System.Windows.Media.Animation;
 	using global::PressureTank;
-	using SafetySharp.Runtime.Simulation;
+	using SafetySharp.Simulation;
 	using SharedComponents;
 
 	public partial class PressureTank

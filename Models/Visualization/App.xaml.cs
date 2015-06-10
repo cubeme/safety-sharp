@@ -22,15 +22,15 @@
 
 namespace Visualization
 {
-    using System.Globalization;
-    using System.Threading;
+	using System.Globalization;
+	using System.Threading;
 
-    public partial class App
-    {
-        public App()
-        {
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-        }
-    }
+	public partial class App
+	{
+		public App()
+		{
+			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+			Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+		}
+	}
 }

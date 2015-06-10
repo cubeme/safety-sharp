@@ -28,8 +28,8 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Runtime.CompilerServices;
-	using Runtime.Utilities;
+	using SafetySharp.CompilerServices;
+	using SafetySharp.Utilities;
 	using Symbols;
 
 	/// <summary>
