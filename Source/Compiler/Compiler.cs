@@ -35,7 +35,7 @@ namespace SafetySharp.Compiler
 	using Normalization;
 	using Roslyn;
 	using SafetySharp.Utilities;
-	using Log = Utilities.Log;
+	using Utilities;
 
 	/// <summary>
 	///     Compiles a S# modeling project authored in C# to a S# modeling assembly.
@@ -270,6 +270,7 @@ namespace SafetySharp.Compiler
 		private Compilation NormalizeSimulationCode([NotNull] Compilation compilation)
 		{
 			compilation = ApplyNormalizer<DebugInfoNormalizer>(compilation);
+			compilation = ApplyNormalizer<AssemblyAttributeNormalizer>(compilation);
 			compilation = ApplyNormalizer<PartialNormalizer>(compilation);
 			compilation = ApplyNormalizer<LiftedExpressionNormalizer>(compilation);
 			compilation = ApplyNormalizer<PortNormalizer>(compilation);
@@ -290,7 +291,7 @@ namespace SafetySharp.Compiler
 		{
 			var resources = new[]
 			{
-				new ResourceDescription(ReflectionExtensions.EmbeddedAssembly, () => embeddedAssembly, true)
+				new ResourceDescription(AssemblyAttributeNormalizer.EmbeddedAssembly, () => embeddedAssembly, true)
 			};
 
 			var emitResult = compilation.Emit(assemblyPath, Path.ChangeExtension(assemblyPath, ".pdb"), manifestResources: resources);

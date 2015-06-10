@@ -61,8 +61,23 @@ namespace SafetySharp.Compiler.Roslyn
 			Requires.NotNull(compilation, () => compilation);
 
 			Compilation = compilation;
+			return Normalize();
+		}
 
-			foreach (var syntaxTree in compilation.SyntaxTrees)
+		/// <summary>
+		///     Normalizes the <see cref="Compilation" />.
+		/// </summary>
+		protected virtual Compilation Normalize()
+		{
+			return NormalizeSyntaxTrees();
+		}
+
+		/// <summary>
+		///     Normalizes all syntax trees of the <see cref="Compilation" />.
+		/// </summary>
+		protected Compilation NormalizeSyntaxTrees()
+		{
+			foreach (var syntaxTree in Compilation.SyntaxTrees)
 			{
 				_syntaxTree = syntaxTree;
 

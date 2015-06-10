@@ -28,6 +28,7 @@ open System.Collections.Immutable
 open System.Reflection
 open SafetySharp
 open SafetySharp.Utilities
+open SafetySharp.CompilerServices
 open Mono.Cecil
 
 /// Provides helper functions for working with the reflection APIs.
@@ -125,11 +126,15 @@ module internal Reflection =
                 parameters.AssemblyResolver <- this
 
                 let assembly = 
-                    use stream = assembly.GetManifestResourceStream ReflectionExtensions.EmbeddedAssembly
-                    if stream = null then
+                    let attribute = assembly.GetCustomAttribute<SafetySharpAssemblyAttribute> ()
+                    if attribute = null then
                         AssemblyDefinition.ReadAssembly (assembly.Location, parameters)
                     else
-                        AssemblyDefinition.ReadAssembly (stream, parameters)
+                        use stream = assembly.GetManifestResourceStream attribute.ResourceName
+                        if stream = null then
+                            AssemblyDefinition.ReadAssembly (assembly.Location, parameters)
+                        else
+                            AssemblyDefinition.ReadAssembly (stream, parameters)
 
                 loadedAssemblies.Add (name, assembly)
                 assembly

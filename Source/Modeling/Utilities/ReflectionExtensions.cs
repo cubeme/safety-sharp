@@ -33,11 +33,6 @@ namespace SafetySharp.Utilities
 	internal static class ReflectionExtensions
 	{
 		/// <summary>
-		///     The name of the resource that stores the embedded original S# assembly.
-		/// </summary>
-		public const string EmbeddedAssembly = "OriginalAssembly";
-
-		/// <summary>
 		///     Gets all members of the <paramref name="type" /> recursively, going up the inheritance chain.
 		/// </summary>
 		/// <remarks>
