@@ -20,16 +20,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.Analysis
+namespace SafetySharp.Runtime.Simulation
 {
 	using System;
 	using Modeling;
+	using Utilities;
 
-	public class Spin
+	/// <summary>
+	///     Provides extension methods for simulating <see cref="Model" /> instances.
+	/// </summary>
+	internal static class ModelExtensions
 	{
-		public Spin(Model model)
+		/// <summary>
+		///     Executes a simulation step of the <paramref name="model" />.
+		/// </summary>
+		/// <param name="model">The model that should be executed.</param>
+		// TODO: Respect explicit component scheduling
+		internal static void ExecuteStep(this Model model)
 		{
-			model.FinalizeMetadata();
+			Requires.NotNull(model, () => model);
+
+			Action<Component> update = null;
+			update = component =>
+			{
+				foreach (var subcomponent in component.Subcomponents)
+					update(subcomponent);
+
+				component.Update();
+			};
+
+			update(model.SynthesizedRoot);
+		}
+
+		/// <summary>
+		///     Resets the model to its initial state.
+		/// </summary>
+		/// <param name="model">The model that should be reset.</param>
+		internal static void Reset(this Model model)
+		{
+			Requires.NotNull(model, () => model);
+
+			Action<Component> reset = null;
+			reset = component =>
+			{
+				foreach (var subcomponent in component.Subcomponents)
+					reset(subcomponent);
+
+				component.Reset();
+			};
+
+			reset(model.SynthesizedRoot);
 		}
 	}
 }

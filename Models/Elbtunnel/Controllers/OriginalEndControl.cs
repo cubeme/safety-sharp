@@ -22,7 +22,7 @@
 
 namespace Elbtunnel.Controllers
 {
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
     using Sensors;
     using SharedComponents;
 

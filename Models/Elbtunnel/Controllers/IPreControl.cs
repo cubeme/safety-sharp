@@ -22,7 +22,7 @@
 
 namespace Elbtunnel.Controllers
 {
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
 
     /// <summary>
     ///   A common interface for different pre-control implementations.

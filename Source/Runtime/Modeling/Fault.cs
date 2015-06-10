@@ -120,7 +120,7 @@ namespace SafetySharp.Runtime.Modeling
 				Requires.That(affectedMethod != null, "Unable to find affected method for fault effect '{0}'.", faultEffect);
 
 				var field = affectedMethod.GetCustomAttribute<BackingFieldAttribute>().GetFieldInfo(affectedMethod.DeclaringType);
-				var faultEffectDelegate = Delegate.CreateDelegate(field.FieldType, this, affectedMethod);
+				var faultEffectDelegate = Delegate.CreateDelegate(field.FieldType, this, faultEffect);
 
 				var parameters = affectedMethod.GetParameters().Select(p => Expression.Parameter(p.ParameterType, p.Name)).ToArray();
 				var fault = Expression.Constant(this);

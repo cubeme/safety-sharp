@@ -27,7 +27,7 @@ namespace SafetySharp.Runtime.Simulation
 	using Utilities;
 
 	/// <summary>
-	///     Provides extension methods for analyzing <see cref="Component" /> instances.
+	///     Provides extension methods for simulating <see cref="Component" /> instances.
 	/// </summary>
 	public static class ComponentExtensions
 	{

@@ -23,8 +23,39 @@
 namespace SafetySharp.Runtime.Simulation
 {
 	using System;
+	using Modeling;
+	using Utilities;
 
-	public class Simulator
+	/// <summary>
+	///     Simulates a S# model for debugging or testing purposes.
+	/// </summary>
+	public sealed class Simulator
 	{
+		/// <summary>
+		///     The model that is simulated.
+		/// </summary>
+		private readonly Model _model;
+
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="model">The model that should be simulated.</param>
+		public Simulator(Model model)
+		{
+			Requires.NotNull(model, () => model);
+
+			_model = model;
+			_model.FinalizeMetadata();
+		}
+
+		/// <summary>
+		///     Runs the simulation for the <paramref name="timeSpan" />.
+		/// </summary>
+		/// <param name="timeSpan">The time span that should be simulated.</param>
+		public void Simulate(TimeSpan timeSpan)
+		{
+			for (var i = 0; i < timeSpan.TotalSeconds; ++i)
+				_model.ExecuteStep();
+		}
 	}
 }

@@ -22,7 +22,7 @@
 
 namespace Elbtunnel.Environment
 {
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
 
     /// <summary>
     ///   Represents an overheight vehicle that is not allowed to enter the tunnel on the left lane.

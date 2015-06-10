@@ -24,7 +24,6 @@ namespace SafetySharp.Runtime.Modeling
 {
 	using System;
 	using System.Diagnostics;
-	using System.Reflection;
 	using Utilities;
 
 	partial class Model
@@ -43,15 +42,9 @@ namespace SafetySharp.Runtime.Modeling
 		}
 
 		/// <summary>
-		///     Finalizes the component's metadata, disallowing any future metadata modifications.
+		///     Finalizes the models's metadata, disallowing any future metadata modifications.
 		/// </summary>
-		/// <param name="parent">The parent component of the component.</param>
-		/// <param name="name">The name of the component.</param>
-		/// <param name="slot">
-		///     The slot of the component, i.e., the zero-based index within the parent component's subcomponent list.
-		/// </param>
-		/// <param name="field">The field of the parent component that stores the component instance.</param>
-		internal void FinalizeMetadata(Component parent = null, string name = "", int slot = -1, FieldInfo field = null)
+		internal void FinalizeMetadata()
 		{
 			if (_isSealed)
 				return;
@@ -61,21 +54,21 @@ namespace SafetySharp.Runtime.Modeling
 		}
 
 		/// <summary>
-		///     Ensures that the component's metadata has not yet been sealed.
+		///     Ensures that the model's metadata has not yet been sealed.
 		/// </summary>
 		[DebuggerHidden]
 		internal void RequiresNotSealed()
 		{
-			Requires.That(!_isSealed, "Modifications of the component's metadata are only allowed during model initialization.");
+			Requires.That(!_isSealed, "Modifications of the model's metadata are only allowed during model initialization.");
 		}
 
 		/// <summary>
-		///     Ensures that the component's metadata has been sealed.
+		///     Ensures that the model's metadata has been sealed.
 		/// </summary>
 		[DebuggerHidden]
 		internal void RequiresIsSealed()
 		{
-			Requires.That(_isSealed, "Cannot access the component's metadata during model initialization.");
+			Requires.That(_isSealed, "Cannot access the model's metadata during model initialization.");
 		}
 	}
 }

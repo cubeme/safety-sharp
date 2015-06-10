@@ -22,7 +22,7 @@
 
 namespace Elbtunnel.Sensors
 {
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
 
     /// <summary>
     ///   A common interface for sensors that detect vehicles.

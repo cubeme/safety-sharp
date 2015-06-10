@@ -22,68 +22,62 @@
 
 namespace PressureTank
 {
-    using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Modeling;
 
-    /// <summary>
-    ///   Represents the sensor that monitors the pressure within the pressure tank.
-    /// </summary>
-    public class Sensor : Component
-    {
-        /// <summary>
-        ///   The pressure level the sensor is watching for.
-        /// </summary>
-        private readonly int _triggerPressure;
+	/// <summary>
+	///   Represents the sensor that monitors the pressure within the pressure tank.
+	/// </summary>
+	public class Sensor : Component
+	{
+		/// <summary>
+		///   The pressure level the sensor is watching for.
+		/// </summary>
+		private readonly int _triggerPressure;
 
-        /// <summary>
-        ///   Initializes a new instance.
-        /// </summary>
-        /// <param name="triggerPressure">The pressure level the sensor should be watching for.</param>
-        public Sensor(int triggerPressure)
-        {
-            _triggerPressure = triggerPressure;
-        }
+		/// <summary>
+		///   Initializes a new instance.
+		/// </summary>
+		/// <param name="triggerPressure">The pressure level the sensor should be watching for.</param>
+		public Sensor(int triggerPressure)
+		{
+			_triggerPressure = triggerPressure;
+		}
 
-        /// <summary>
-        ///   Senses the physical pressure level within the tank.
-        /// </summary>
-        // TODO: Consider using a property once supported by S#.
-        public extern int CheckPhysicalPressure();
+		/// <summary>
+		///   Senses the physical pressure level within the tank.
+		/// </summary>
+		// TODO: Consider using a property once supported by S#.
+		public extern int CheckPhysicalPressure();
 
-        /// <summary>
-        ///   Gets a value indicating whether the triggering pressure level has been reached or exceeded.
-        /// </summary>
-        // TODO: Consider using a property once supported by S#.
-        public bool IsFull
-			
-			(
-			
-			) => CheckPhysicalPressure
-			
-			() >= _triggerPressure; 
+		/// <summary>
+		///   Gets a value indicating whether the triggering pressure level has been reached or exceeded.
+		/// </summary>
+		// TODO: Consider using a property once supported by S#.
+		public bool IsFull() => CheckPhysicalPressure() >= _triggerPressure;
 
-        /// <summary>
-        ///   Gets a value indicating whether the tank is empty.
-        /// </summary>
-        // TODO: Consider using a property once supported by S#.
-        public bool IsEmpty() => CheckPhysicalPressure() == 0;
+		/// <summary>
+		///   Gets a value indicating whether the tank is empty.
+		/// </summary>
+		// TODO: Consider using a property once supported by S#.
+		public bool IsEmpty() => CheckPhysicalPressure() == 0;
 
-        /// <summary>
-        ///   Represents a failure mode that prevents the sensor from triggering when the tank has reached or exceeded its
-        ///   maximum allowed pressure level.
-        /// </summary>
-        [Transient]
-        public class SuppressIsFull : Fault
-        {
-            public bool IsFull() => false;
-        }
+		/// <summary>
+		///   Represents a failure mode that prevents the sensor from triggering when the tank has reached or exceeded its
+		///   maximum allowed pressure level.
+		/// </summary>
+		[Transient]
+		public class SuppressIsFull : Fault
+		{
+			public bool IsFull() => false;
+		}
 
-        /// <summary>
-        ///   Represents a failure mode that prevents the sensor from triggering when the tank has become empty.
-        /// </summary>
-        [Transient]
-        public class SuppressIsEmpty : Fault
-        {
-            public bool IsEmpty() => false;
-        }
-    }
+		/// <summary>
+		///   Represents a failure mode that prevents the sensor from triggering when the tank has become empty.
+		/// </summary>
+		[Transient]
+		public class SuppressIsEmpty : Fault
+		{
+			public bool IsEmpty() => false;
+		}
+	}
 }

@@ -22,7 +22,7 @@
 
 namespace Elbtunnel.Environment
 {
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
 
     /// <summary>
     ///   Represents a collection of vehicles.

@@ -22,7 +22,7 @@
 
 namespace Elbtunnel.Environment
 {
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
 
     /// <summary>
     ///   A common interface for vehciles using the tunnel.

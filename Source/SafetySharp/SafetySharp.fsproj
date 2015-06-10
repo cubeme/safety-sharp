@@ -170,7 +170,6 @@
     <Compile Include="Analysis\Techniques\AtContract.fs" />
     <Compile Include="Analysis\Techniques\AtMethodsCalled.fs" />
     <Compile Include="Analysis\SpinModelChecker.fs" />
-    <Compile Include="Analysis\Simulation.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Content Include="app.config" />
   </ItemGroup>

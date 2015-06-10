@@ -20,31 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel.Controllers
+namespace SafetySharp.Runtime.Simulation
 {
-    using SafetySharp.Runtime.Modeling;
+	using System;
 
-    /// <summary>
-    ///   A common interface for different main-control implementations.
-    /// </summary>
-    public interface IMainControl : IComponent
-    {
-        /// <summary>
-        ///   Indicates whether an vehicle leaving the main-control area on the right lane has been detected.
-        /// </summary>
-        [Provided]
-        bool IsVehicleLeavingOnRightLane();
+	/// <summary>
+	///     Indicates the current state of a S# model simulation.
+	/// </summary>
+	public enum SimulationState
+	{
+		/// <summary>
+		///     Indicates that the simulation is currently not running.
+		/// </summary>
+		Stopped,
 
-        /// <summary>
-        ///   Indicates whether an vehicle leaving the main-control area on the left lane has been detected.
-        /// </summary>
-        [Provided]
-        bool IsVehicleLeavingOnLeftLane();
+		/// <summary>
+		///     Indicates that the simulation is currently paused and can be resumed.
+		/// </summary>
+		Paused,
 
-        /// <summary>
-        ///   Gets the number of vehicles that entered the height control area during the current system step.
-        /// </summary>
-        [Required]
-        int GetNumberOfEnteringVehicles();
-    }
+		/// <summary>
+		///     Indicates that the simulation is currently running.
+		/// </summary>
+		Running
+	}
 }

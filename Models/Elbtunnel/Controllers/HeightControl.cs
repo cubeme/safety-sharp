@@ -23,7 +23,7 @@
 namespace Elbtunnel.Controllers
 {
     using Actuators;
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
 
     /// <summary>
     ///   Represents the height control of the Elbtunnel.

@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compiler", "..\Source\Compi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Visualization", "Visualization\Visualization.csproj", "{C0ED19A4-1362-49E4-9721-AAFCF012710A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runtime", "..\Source\Runtime\Runtime.csproj", "{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{C0ED19A4-1362-49E4-9721-AAFCF012710A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0ED19A4-1362-49E4-9721-AAFCF012710A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0ED19A4-1362-49E4-9721-AAFCF012710A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -63,5 +69,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{18DFC311-4633-4B22-AB2F-FF42901C6438} = {9CC25B95-7099-4C11-BAA7-FB9B50E7E899}
 		{8823091C-387F-4F4D-ABCD-8F71D1528CBB} = {9CC25B95-7099-4C11-BAA7-FB9B50E7E899}
+		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37} = {9CC25B95-7099-4C11-BAA7-FB9B50E7E899}
 	EndGlobalSection
 EndGlobal

@@ -22,7 +22,7 @@
 
 namespace Elbtunnel.Sensors
 {
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
 
     /// <summary>
     ///   Represents an overhead detector that detects overheight vehicles and non-overheight trucks for a specific

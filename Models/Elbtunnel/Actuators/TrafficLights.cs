@@ -22,7 +22,7 @@
 
 namespace Elbtunnel.Actuators
 {
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
 
     /// <summary>
     ///   Represents the traffic lights at the entrance of the tunnel that indicate whether the tunnel is closed.

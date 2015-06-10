@@ -22,7 +22,7 @@
 
 namespace Elbtunnel.Sensors
 {
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Modeling;
 
     /// <summary>
     ///   Represents a light barrier that detects overheight vehicles at a specific position on any of the lanes.

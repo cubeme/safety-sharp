@@ -48,13 +48,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">
-      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
-      <Name>SafetySharp</Name>
-    </ProjectReference>
+    <Analyzer Include="..\..\Binaries\Debug\SafetySharp.Compiler.exe" />
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\..\Binaries\Debug\SafetySharp.Compiler.exe" />
+    <ProjectReference Include="..\..\Source\Runtime\Runtime.csproj">
+      <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
+      <Name>Runtime</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">

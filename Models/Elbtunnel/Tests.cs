@@ -28,8 +28,8 @@ namespace Elbtunnel
     using Controllers;
     using Environment;
     using NUnit.Framework;
-    using SafetySharp.Analysis;
-    using SafetySharp.Modeling;
+    using SafetySharp.Runtime.Analysis;
+    using SafetySharp.Runtime.Modeling;
     using Sensors;
 
     [TestFixture]
@@ -89,10 +89,10 @@ namespace Elbtunnel
         [Test]
         public void FirstTest()
         {
-            var watch = new Stopwatch();
-            watch.Start();
-            var spin = new SpinModelChecker(_model);
-            Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
+//            var watch = new Stopwatch();
+//            watch.Start();
+//            var spin = new SpinModelChecker(_model);
+//            Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
         }
     }
 }
