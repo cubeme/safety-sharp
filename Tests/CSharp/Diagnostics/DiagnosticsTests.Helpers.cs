@@ -40,6 +40,7 @@ namespace Tests.Diagnostics
 	using Utilities;
 	using Xunit.Abstractions;
 
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
 	public class DiagnosticAttribute : Attribute
 	{
 		[UsedImplicitly]
@@ -111,21 +112,22 @@ namespace Tests.Diagnostics
 				foreach (var typeDeclaration in syntaxTree.Descendants<BaseTypeDeclarationSyntax>())
 				{
 					var symbol = typeDeclaration.GetTypeSymbol(semanticModel);
-					var attribute = symbol.GetAttributes<DiagnosticAttribute>(semanticModel).FirstOrDefault();
+					foreach (var attribute in symbol.GetAttributes<DiagnosticAttribute>(semanticModel))
+					{
+						if (attribute == null)
+							continue;
 
-					if (attribute == null)
-						continue;
+						var id = (DiagnosticIdentifier)attribute.ConstructorArguments[0].Value;
+						var line = (int)attribute.ConstructorArguments[1].Value;
+						var column = (int)attribute.ConstructorArguments[2].Value;
+						var length = (int)attribute.ConstructorArguments[3].Value;
+						var arguments = attribute.ConstructorArguments[4].Values.Select(v => v.Value).ToArray();
 
-					var id = (DiagnosticIdentifier)attribute.ConstructorArguments[0].Value;
-					var line = (int)attribute.ConstructorArguments[1].Value;
-					var column = (int)attribute.ConstructorArguments[2].Value;
-					var length = (int)attribute.ConstructorArguments[3].Value;
-					var arguments = attribute.ConstructorArguments[4].Values.Select(v => v.Value).ToArray();
+						var start = syntaxTree.GetText().Lines[line - 1].Start + column - 1;
+						var location = Location.Create(syntaxTree, new TextSpan(start, length));
 
-					var start = syntaxTree.GetText().Lines[line - 1].Start + column - 1;
-					var location = Location.Create(syntaxTree, new TextSpan(start, length));
-
-					yield return analyzer.GetDiagnosticInfo(id).CreateDiagnostic(location, arguments);
+						yield return analyzer.GetDiagnosticInfo(id).CreateDiagnostic(location, arguments);
+					}
 				}
 			}
 		}

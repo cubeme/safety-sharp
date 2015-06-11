@@ -20,37 +20,91 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.Bindings.Models.Valid
 {
 	using System;
-	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class DiagnosticsTests : Tests
+	internal class X2 : Component
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
+		public extern void N();
+		public extern void N(int i);
+	}
+
+	internal class X3 : X2
+	{
+		public void M()
 		{
-			CheckDiagnostics<BindingAnalyzer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
+		public void M(int i)
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
+		}
+	}
+
+	internal class M2 : Model
+	{
+		private X2 x;
+
+		private M2()
+		{
+			Bind(x.RequiredPorts.N = (Action)x.ProvidedPorts.M);
+		}
+	}
+
+	internal class X4 : Component
+	{
+		public extern void N();
+		public extern void N(int i);
+	}
+
+	internal class X5 : X4
+	{
+		public void M()
+		{
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
+		public void M(int i)
 		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
+		}
+	}
+
+	internal class M3 : Model
+	{
+		private X5 x;
+
+		private M3()
+		{
+			Bind(x.RequiredPorts.N = (Action<int>)x.ProvidedPorts.M);
+		}
+	}
+
+	internal delegate void D1(ref int i);
+
+	internal class X6 : Component
+	{
+		public extern void N();
+		public extern void N(ref int i);
+	}
+
+	internal class X7 : X6
+	{
+		public void M()
+		{
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
+		public void M(ref int i)
 		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
+		}
+	}
+
+	internal class M4 : Model
+	{
+		private X7 x;
+
+		private M4()
+		{
+			Bind(x.RequiredPorts.N = (D1)x.ProvidedPorts.M);
 		}
 	}
 }

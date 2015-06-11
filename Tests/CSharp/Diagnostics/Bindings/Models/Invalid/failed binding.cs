@@ -20,37 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.Bindings.Models.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class DiagnosticsTests : Tests
+	internal class X1 : Component
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
+		public void M()
 		{
-			CheckDiagnostics<BindingAnalyzer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
-		{
-			CheckDiagnostics<EnumAnalyzer>(code);
-		}
+		public extern void N(int i);
+	}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
-		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
+	[Diagnostic(DiagnosticIdentifier.BindingFailure, 48, 18, 37, "'Tests.Diagnostics.Bindings.Models.Invalid.X1.N(int)'",
+		"'Tests.Diagnostics.Bindings.Models.Invalid.X1.M()'")]
+	[Diagnostic(DiagnosticIdentifier.BindingFailure, 49, 18, 37, "'Tests.Diagnostics.Bindings.Models.Invalid.X1.N(int)'",
+		"'Tests.Diagnostics.Bindings.Models.Invalid.X1.M()'")]
+	internal class M5 : Model
+	{
+		private X1 x;
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
+		private M5()
 		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
+			Bind(x.RequiredPorts.N = x.ProvidedPorts.M);
+			Bind(x.RequiredPorts.N = x.ProvidedPorts.M).Delayed();
 		}
 	}
 }

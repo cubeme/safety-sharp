@@ -20,37 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.Bindings.Components.Valid
 {
 	using System;
-	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class DiagnosticsTests : Tests
+	internal class X1 : Component
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
+		private X1()
 		{
-			CheckDiagnostics<BindingAnalyzer>(code);
+			Bind(RequiredPorts.N = ProvidedPorts.M);
+			Bind(RequiredPorts.N = ProvidedPorts.M).Delayed();
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
+		private void M()
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
-		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
-
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
-		}
+		private extern void N();
 	}
 }

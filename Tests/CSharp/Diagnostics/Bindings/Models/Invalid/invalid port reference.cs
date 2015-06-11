@@ -20,37 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.Bindings.Models.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class DiagnosticsTests : Tests
+	[Diagnostic(DiagnosticIdentifier.ExpectedPortReference, 36, 18, 1)]
+	internal class M3 : Model
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
-		{
-			CheckDiagnostics<BindingAnalyzer>(code);
-		}
+		private readonly dynamic x;
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
+		private M3()
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
+			Bind(x = x.ProvidedPorts.X);
 		}
+	}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
-		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
+	[Diagnostic(DiagnosticIdentifier.ExpectedPortReference, 48, 38, 17)]
+	internal class M4 : Model
+	{
+		private IComponent x;
+		private dynamic y;
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
+		private M4()
 		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
+			Bind(x.RequiredPorts.y = y.ProvidedPorts.X);
 		}
 	}
 }

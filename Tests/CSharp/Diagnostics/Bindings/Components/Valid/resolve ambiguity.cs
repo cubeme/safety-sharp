@@ -20,37 +20,76 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.Bindings.Components.Valid
 {
 	using System;
-	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class DiagnosticsTests : Tests
+	internal class Y1 : Component
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
+		protected extern void N();
+		public extern void N(int i);
+	}
+
+	internal class X16 : Y1
+	{
+		private X16()
 		{
-			CheckDiagnostics<BindingAnalyzer>(code);
+			Bind(RequiredPorts.N = (Action)ProvidedPorts.M);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
+		private void M()
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
+		private void M(int i)
 		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
+		}
+	}
+
+	internal class Y2 : Component
+	{
+		protected extern void N();
+		public extern void N(int i);
+	}
+
+	internal class X17 : Y2
+	{
+		private X17()
+		{
+			Bind(RequiredPorts.N = (Action<int>)ProvidedPorts.M);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
+		private void M()
 		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
+		}
+
+		private void M(int i)
+		{
+		}
+	}
+
+	internal delegate void D1(ref int i);
+
+	internal class Y3 : Component
+	{
+		protected extern void N();
+		public extern void N(ref int i);
+	}
+
+	internal class X18 : Y3
+	{
+		private X18()
+		{
+			Bind(RequiredPorts.N = (D1)ProvidedPorts.M);
+		}
+
+		private void M()
+		{
+		}
+
+		private void M(ref int i)
+		{
 		}
 	}
 }

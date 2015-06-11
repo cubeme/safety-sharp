@@ -142,6 +142,36 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Diagnostics\Bindings\Components\Invalid\ambiguous.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Invalid\inaccessible candidates.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Invalid\failed binding.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Invalid\invalid port reference.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Invalid\delegate-cast, no compatible ports.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Invalid\non-delegate cast.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Invalid\no port assignment.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\inaccessible ambiguous candidates.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\required port replaced by provided.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\replaced provided port.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\provided port replaced by required.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\replaced required port.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\overridden required port.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\overridden provided port.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\Update method.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\many parentheses.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\resolve ambiguity.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\multiple candidates.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\no candidates.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\same name, different kind.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\same name.cs" />
+    <Compile Include="Diagnostics\Bindings\Components\Valid\single candidate.cs" />
+    <Compile Include="Diagnostics\Bindings\Models\Invalid\ambiguous.cs" />
+    <Compile Include="Diagnostics\Bindings\Models\Invalid\failed binding.cs" />
+    <Compile Include="Diagnostics\Bindings\Models\Invalid\invalid port reference.cs" />
+    <Compile Include="Diagnostics\Bindings\Models\Invalid\non-delegate type.cs" />
+    <Compile Include="Diagnostics\Bindings\Models\Invalid\no port assignment.cs" />
+    <Compile Include="Diagnostics\Bindings\Models\Valid\resolve ambiguity.cs" />
+    <Compile Include="Diagnostics\Bindings\Models\Valid\inaccessible ambiguous candidates.cs" />
+    <Compile Include="Diagnostics\Bindings\Models\Valid\single candidate.cs" />
     <Compile Include="Diagnostics\CustomComponents\Invalid\nested base types not derived from Component.cs" />
     <Compile Include="Diagnostics\CustomComponents\Invalid\inherited type not derived from Component.cs" />
     <Compile Include="Diagnostics\CustomComponents\Invalid\base type not derived from Component.cs" />
