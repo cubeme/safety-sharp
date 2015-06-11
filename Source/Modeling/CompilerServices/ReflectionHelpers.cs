@@ -20,26 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CompilerServices
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.Immutable;
+	using System.Reflection;
 
 	/// <summary>
-	///     Represents the synthesized root of the component hierarchy created by a model.
+	///     Provides helper methods for reflection scenarios.
 	/// </summary>
-	public class RootComponent : Component
+	public static class ReflectionHelpers
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="subcomponents">The subcomponents of the component.</param>
-		/// <param name="bindings">The port bindings of the component.</param>
-		internal RootComponent(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
-			: base(subcomponents, bindings)
+		public static FieldInfo GetField(Type type, string fieldName)
 		{
-			FinalizeMetadata(null, SynthesizedRootName);
+			return null;
+		}
+
+		public static MethodInfo GetMethod(Type type, string name, Type[] arguments, Type returnValue, Type[] typeParams)
+		{
+			return null;
 		}
 	}
 }

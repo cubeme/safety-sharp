@@ -20,49 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.Immutable;
-	using CompilerServices;
-	using Runtime;
-	using Utilities;
+	using Modeling;
 
 	/// <summary>
-	///     Represents a S# component.
+	///     Represents the immutable metadata of a S# <see cref="OccurrencePattern" /> instance.
 	/// </summary>
-	public abstract partial class Component : IComponent
+	public sealed partial class OccurrenceInfo
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		/// Initializes a new instance.
 		/// </summary>
-		protected Component()
+		/// <param name="fault"></param>
+		public OccurrenceInfo(Fault fault)
 		{
-			MetadataProvider.ComponentBuilders.Add(this, new ComponentInfo.Builder(this));
-			InitializeProvidedPorts();
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		///     Initializes a new instance.
+		///     Gets the fault that is affected by the occurrence pattern.
 		/// </summary>
-		/// <param name="subcomponents">The subcomponents of the component.</param>
-		/// <param name="bindings">The port bindings of the component.</param>
-		internal Component(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
-			: this()
-		{
-			Requires.That(!subcomponents.IsDefault, "Expected some subcomponents.");
-			Requires.NotNull(bindings, () => bindings);
-
-			_subcomponents = subcomponents;
-			_bindings = bindings;
-		}
-
-		/// <summary>
-		///     Updates the internal state of the component.
-		/// </summary>
-		public virtual void Update()
-		{
-		}
+		public Fault Fault { get; private set; }
 	}
 }

@@ -24,6 +24,7 @@ namespace SafetySharp.Modeling
 {
 	using System;
 	using System.Diagnostics;
+	using Runtime;
 	using Utilities;
 
 	partial class Model

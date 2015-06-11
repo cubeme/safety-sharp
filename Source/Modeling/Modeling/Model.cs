@@ -26,6 +26,7 @@ namespace SafetySharp.Modeling
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
 	using System.Linq;
+	using Runtime;
 	using Utilities;
 
 	/// <summary>

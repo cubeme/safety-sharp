@@ -20,49 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.Immutable;
-	using CompilerServices;
-	using Runtime;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Represents a S# component.
+	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
 	/// </summary>
-	public abstract partial class Component : IComponent
+	public sealed partial class FaultInfo
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		protected Component()
+		/// <param name="component">The component affected by the fault.</param>
+		/// <param name="fault">The fault the metadata is provided for.</param>
+		public FaultInfo(Component component, Fault fault)
 		{
-			MetadataProvider.ComponentBuilders.Add(this, new ComponentInfo.Builder(this));
-			InitializeProvidedPorts();
+			Requires.NotNull(component, () => component);
+			Requires.NotNull(fault, () => fault);
+
+			Component = component;
+			Fault = fault;
 		}
 
 		/// <summary>
-		///     Initializes a new instance.
+		///     Gets the component affected by the fault.
 		/// </summary>
-		/// <param name="subcomponents">The subcomponents of the component.</param>
-		/// <param name="bindings">The port bindings of the component.</param>
-		internal Component(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
-			: this()
-		{
-			Requires.That(!subcomponents.IsDefault, "Expected some subcomponents.");
-			Requires.NotNull(bindings, () => bindings);
-
-			_subcomponents = subcomponents;
-			_bindings = bindings;
-		}
+		public Component Component { get; private set; }
 
 		/// <summary>
-		///     Updates the internal state of the component.
+		///     Gets the fault the metadata is provided for.
 		/// </summary>
-		public virtual void Update()
-		{
-		}
+		public Fault Fault { get; set; }
 	}
 }

@@ -25,6 +25,7 @@ namespace SafetySharp.Models
 open Mono.Cecil
 open SafetySharp
 open SafetySharp.Modeling
+open SafetySharp.Runtime
 open SafetySharp.Reflection
 
 [<AutoOpen>]

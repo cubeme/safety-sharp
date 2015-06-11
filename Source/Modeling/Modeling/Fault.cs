@@ -27,6 +27,7 @@ namespace SafetySharp.Modeling
 	using System.Linq.Expressions;
 	using System.Reflection;
 	using CompilerServices;
+	using Runtime;
 	using Utilities;
 
 	/// <summary>
@@ -39,6 +40,8 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		protected Fault()
 		{
+			MetadataProvider.FaultBuilders.Add(this, new FaultInfo.Builder(this));
+
 			OccurrencePattern = GetType().GetCustomAttribute<OccurrencePatternAttribute>();
 			Requires.That(OccurrencePattern != null, "Expected fault to be marked with an instance of '{0}'.",
 				typeof(OccurrencePatternAttribute).FullName);

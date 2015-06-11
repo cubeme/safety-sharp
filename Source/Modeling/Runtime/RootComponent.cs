@@ -20,49 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
-	using CompilerServices;
-	using Runtime;
-	using Utilities;
+	using Modeling;
 
 	/// <summary>
-	///     Represents a S# component.
+	///     Represents the synthesized root of the component hierarchy created by a model.
 	/// </summary>
-	public abstract partial class Component : IComponent
+	public sealed class RootComponent : Component
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		protected Component()
-		{
-			MetadataProvider.ComponentBuilders.Add(this, new ComponentInfo.Builder(this));
-			InitializeProvidedPorts();
-		}
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="subcomponents">The subcomponents of the component.</param>
 		/// <param name="bindings">The port bindings of the component.</param>
-		internal Component(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
-			: this()
+		internal RootComponent(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
+			: base(subcomponents, bindings)
 		{
-			Requires.That(!subcomponents.IsDefault, "Expected some subcomponents.");
-			Requires.NotNull(bindings, () => bindings);
-
-			_subcomponents = subcomponents;
-			_bindings = bindings;
-		}
-
-		/// <summary>
-		///     Updates the internal state of the component.
-		/// </summary>
-		public virtual void Update()
-		{
+			FinalizeMetadata(null, SynthesizedRootName);
 		}
 	}
 }

@@ -23,46 +23,25 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using CompilerServices;
 	using Runtime;
-	using Utilities;
 
 	/// <summary>
-	///     Represents a S# component.
+	///     Represents a base class for all fault occurrence patterns.
 	/// </summary>
-	public abstract partial class Component : IComponent
+	public abstract class OccurrencePattern
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		protected Component()
+		protected OccurrencePattern()
 		{
-			MetadataProvider.ComponentBuilders.Add(this, new ComponentInfo.Builder(this));
-			InitializeProvidedPorts();
+			MetadataProvider.OccurrencePatternBuilders.Add(this, new OccurrenceInfo.Builder(this));
 		}
 
 		/// <summary>
-		///     Initializes a new instance.
+		///     Updates the occurrence state. Returns <c>true</c> to indicate that the fault is occurring.
 		/// </summary>
-		/// <param name="subcomponents">The subcomponents of the component.</param>
-		/// <param name="bindings">The port bindings of the component.</param>
-		internal Component(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
-			: this()
-		{
-			Requires.That(!subcomponents.IsDefault, "Expected some subcomponents.");
-			Requires.NotNull(bindings, () => bindings);
-
-			_subcomponents = subcomponents;
-			_bindings = bindings;
-		}
-
-		/// <summary>
-		///     Updates the internal state of the component.
-		/// </summary>
-		public virtual void Update()
-		{
-		}
+		public abstract bool Update();
 	}
 }

@@ -20,49 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Collections.Immutable;
-	using CompilerServices;
-	using Runtime;
-	using Utilities;
+	using Modeling;
 
 	/// <summary>
-	///     Represents a S# component.
+	///     Represents the immutable metadata of a S# <see cref="Component" /> instance.
 	/// </summary>
-	public abstract partial class Component : IComponent
+	public sealed partial class ComponentInfo
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     Gets the faults affecting the component.
 		/// </summary>
-		protected Component()
-		{
-			MetadataProvider.ComponentBuilders.Add(this, new ComponentInfo.Builder(this));
-			InitializeProvidedPorts();
-		}
+		public ImmutableArray<FaultInfo> Faults { get; private set; }
 
 		/// <summary>
-		///     Initializes a new instance.
+		///     Gets the <see cref="Component" /> instance the metadata is provided for.
 		/// </summary>
-		/// <param name="subcomponents">The subcomponents of the component.</param>
-		/// <param name="bindings">The port bindings of the component.</param>
-		internal Component(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
-			: this()
-		{
-			Requires.That(!subcomponents.IsDefault, "Expected some subcomponents.");
-			Requires.NotNull(bindings, () => bindings);
-
-			_subcomponents = subcomponents;
-			_bindings = bindings;
-		}
+		public Component Component { get; private set; }
 
 		/// <summary>
-		///     Updates the internal state of the component.
+		///     Gets the user-friendly name of the component.
 		/// </summary>
-		public virtual void Update()
-		{
-		}
+		public string Name { get; private set; }
 	}
 }

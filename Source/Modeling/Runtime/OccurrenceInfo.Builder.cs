@@ -20,49 +20,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.Immutable;
-	using CompilerServices;
-	using Runtime;
+	using System.Linq.Expressions;
+	using System.Reflection;
+	using Modeling;
 	using Utilities;
 
-	/// <summary>
-	///     Represents a S# component.
-	/// </summary>
-	public abstract partial class Component : IComponent
+	partial class OccurrenceInfo
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     Represents a mutable builder for <see cref="OccurrenceInfo" /> instances.
 		/// </summary>
-		protected Component()
+		public class Builder
 		{
-			MetadataProvider.ComponentBuilders.Add(this, new ComponentInfo.Builder(this));
-			InitializeProvidedPorts();
-		}
+			private readonly OccurrencePattern _occurrencePattern = null;
 
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="subcomponents">The subcomponents of the component.</param>
-		/// <param name="bindings">The port bindings of the component.</param>
-		internal Component(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
-			: this()
-		{
-			Requires.That(!subcomponents.IsDefault, "Expected some subcomponents.");
-			Requires.NotNull(bindings, () => bindings);
+			internal Builder(OccurrencePattern c)
+			{
+			}
 
-			_subcomponents = subcomponents;
-			_bindings = bindings;
-		}
+			public void WithUpdateMethod(MethodInfo method, Func<Expression> createBody = null)
+			{
+			}
 
-		/// <summary>
-		///     Updates the internal state of the component.
-		/// </summary>
-		public virtual void Update()
-		{
+			public void WithField(FieldInfo field)
+			{
+			}
+
+			/// <summary>
+			///     Creates an immutable <see cref="OccurrenceInfo" /> instance from the current state of the builder and makes it available
+			///     to S#'s <see cref="MetadataProvider" />.
+			/// </summary>
+			/// <param name="fault">The fault that is affected by the occurrence pattern.</param>
+			internal OccurrenceInfo RegisterMetadata(Fault fault)
+			{
+				Requires.NotNull(fault, () => fault);
+
+				var info = new OccurrenceInfo(fault);
+				MetadataProvider.OccurrencePatterns.Add(_occurrencePattern, info);
+				MetadataProvider.OccurrencePatternBuilders.Remove(_occurrencePattern);
+
+				return info;
+			}
 		}
 	}
 }
