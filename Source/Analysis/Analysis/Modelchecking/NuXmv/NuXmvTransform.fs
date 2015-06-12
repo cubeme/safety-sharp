@@ -49,30 +49,97 @@ open SafetySharp.Models.SamSimplifyBlocks
 open SafetySharp.Analysis.VerificationCondition
 
 
-type internal NuXmvVariables = {
-    VarToNuXmvIdentifier: Map<Tsam.Var,NuXmvIdentifier>;
-    VarToNuXmvComplexIdentifier: Map<Tsam.Var,NuXmv.ComplexIdentifier>;
-}
-    with    
-        member this.generateNuXmvIdentifier (var:Tsam.Var) : (NuXmvVariables) =
-            let nuXmvIdentifier = {NuXmvIdentifier.Name=var.getName}
-            let nuXmvComplexIdentifier = NuXmv.ComplexIdentifier.NameComplexIdentifier(nuXmvIdentifier)
-            let newState=
-                { this with
-                    NuXmvVariables.VarToNuXmvIdentifier = this.VarToNuXmvIdentifier.Add (var,nuXmvIdentifier)
-                    NuXmvVariables.VarToNuXmvComplexIdentifier = this.VarToNuXmvComplexIdentifier.Add (var,nuXmvComplexIdentifier)
-                }
-            newState
+
+module internal GenericToNuXmv =
+
+    type internal NuXmvVariables = {
+        VarToNuXmvIdentifier: Map<Tsam.Var,NuXmvIdentifier>;
+        VarToNuXmvComplexIdentifier: Map<Tsam.Var,NuXmv.ComplexIdentifier>;
+    }
+        with    
+            member this.generateNuXmvIdentifier (var:Tsam.Var) : (NuXmvVariables) =
+                let nuXmvIdentifier = {NuXmvIdentifier.Name=var.getName}
+                let nuXmvComplexIdentifier = NuXmv.ComplexIdentifier.NameComplexIdentifier(nuXmvIdentifier)
+                let newState=
+                    { this with
+                        NuXmvVariables.VarToNuXmvIdentifier = this.VarToNuXmvIdentifier.Add (var,nuXmvIdentifier)
+                        NuXmvVariables.VarToNuXmvComplexIdentifier = this.VarToNuXmvComplexIdentifier.Add (var,nuXmvComplexIdentifier)
+                    }
+                newState
+                
+    let rec translateExpression (virtualNextVarToVar:Map<Tsam.Var,Tsam.Var>,nuXmvVariables:NuXmvVariables) (expr:Tsam.Expr) : NuXmvBasicExpression =
+        match expr with
+            | Tsam.Expr.Literal (_val) ->
+                match _val with
+                    | Tsam.Val.BoolVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.BooleanConstant(_val))
+                    | Tsam.Val.NumbVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.IntegerConstant(_val))
+                    | Tsam.Val.RealVal _ -> failwith "No support in SMV for real values, yet."
+                    | Tsam.Val.ProbVal _ -> failwith "No support in SMV for probabilities, yet."
+            | Tsam.Expr.Read (_var) ->
+                match virtualNextVarToVar.TryFind _var with
+                    | None ->
+                        NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
+                    | Some(originalValue) ->
+                        // here we have a virtual value. We want a next(originalValue) instead
+                        NuXmvBasicExpression.BasicNextExpression(NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item originalValue))
+            | Tsam.Expr.ReadOld (_var) ->            
+                match virtualNextVarToVar.TryFind _var with
+                    | None ->
+                        NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
+                    | Some(originalValue) ->
+                        failwith "This should never occur. The source program never includes virtual var. The only parts, which use a virtual var, should use it in combination with Read()!"
+            | Tsam.Expr.UExpr (expr,uop) ->
+                let operator =
+                    match uop with
+                        | Tsam.UOp.Not -> NuXmv.UnaryOperator.LogicalNot
+                NuXmvBasicExpression.UnaryExpression(operator,translateExpression (virtualNextVarToVar,nuXmvVariables) expr)
+            | Tsam.Expr.BExpr (left, bop, right) ->
+                let operator =
+                    match bop with
+                        | Tsam.BOp.Add -> NuXmv.BinaryOperator.IntegerAddition
+                        | Tsam.BOp.Subtract -> NuXmv.BinaryOperator.IntegerSubtraction
+                        | Tsam.BOp.Multiply -> NuXmv.BinaryOperator.IntegerMultiplication
+                        | Tsam.BOp.Divide -> NuXmv.BinaryOperator.IntegerDivision
+                        | Tsam.BOp.Modulo -> NuXmv.BinaryOperator.IntegerRemainder
+                        | Tsam.BOp.And -> NuXmv.BinaryOperator.LogicalAnd
+                        | Tsam.BOp.Or -> NuXmv.BinaryOperator.LogicalOr
+                        | Tsam.BOp.Implies -> NuXmv.BinaryOperator.LogicalImplies
+                        | Tsam.BOp.Equals -> NuXmv.BinaryOperator.Equality //TODO: For Binary Left and Right NuXmv.BinaryOperator.LogicalEquivalence should be better
+                        | Tsam.BOp.NotEquals -> NuXmv.BinaryOperator.Inequality //TODO: For Binary Left and Right NuXmv.BinaryOperator.Xor should be better
+                        | Tsam.BOp.Less -> NuXmv.BinaryOperator.LessThan
+                        | Tsam.BOp.LessEqual -> NuXmv.BinaryOperator.LessEqual
+                        | Tsam.BOp.Greater -> NuXmv.BinaryOperator.GreaterThan
+                        | Tsam.BOp.GreaterEqual -> NuXmv.BinaryOperator.GreaterEqual
+                NuXmvBasicExpression.BinaryExpression(translateExpression (virtualNextVarToVar,nuXmvVariables) left,operator,translateExpression (virtualNextVarToVar,nuXmvVariables) right)
+                
+    let noVirtualNextVarToVar = Map.empty<Tsam.Var,Tsam.Var>
+
+    open SafetySharp.ITracing
+    
+    type NuXmvTracer<'traceableOfOrigin> = {
+        NuXmvProgram : NuXmvProgram;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> NuXmv.Traceable;
+    }
+        with
+            interface ITracing<NuXmvProgram,'traceableOfOrigin,NuXmv.Traceable,NuXmvTracer<'traceableOfOrigin>> with
+                member this.getModel = this.NuXmvProgram
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> NuXmv.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> NuXmv.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : NuXmv.Traceable list = []
 
 
 module internal VcTransitionRelationToNuXmv =
+    open GenericToNuXmv
     
     open TransitionSystemAsRelationExpr
 
     // Extension methods only valid here
     type NuXmvVariables with                
         static member initial (transitionSystem:TransitionSystem) (nameGenerator:NameGenerator) =
-            // * create a nuXmv identifier for each global var
+            // * create a nuXmv identifier for each input and global var
             let nuXmvKeywords: Set<string> = Set.empty<string>
             let variablesToAdd =
                 let _globalVars = transitionSystem.Globals |> List.map (fun varDecl -> varDecl.Var)
@@ -132,51 +199,6 @@ module internal VcTransitionRelationToNuXmv =
         ivarDecls |> List.map generateDecl
                   |> ModuleElement.IVarDeclaration
     
-    let rec translateExpression (virtualNextVarToVar:Map<Tsam.Var,Tsam.Var>,nuXmvVariables:NuXmvVariables) (expr:Tsam.Expr) : NuXmvBasicExpression =
-        match expr with
-            | Tsam.Expr.Literal (_val) ->
-                match _val with
-                    | Tsam.Val.BoolVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.BooleanConstant(_val))
-                    | Tsam.Val.NumbVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.IntegerConstant(_val))
-                    | Tsam.Val.RealVal _ -> failwith "No support in SMV for real values, yet."
-                    | Tsam.Val.ProbVal _ -> failwith "No support in SMV for probabilities, yet."
-            | Tsam.Expr.Read (_var) ->
-                match virtualNextVarToVar.TryFind _var with
-                    | None ->
-                        NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
-                    | Some(originalValue) ->
-                        // here we have a virtual value. We want a next(originalValue) instead
-                        NuXmvBasicExpression.BasicNextExpression(NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item originalValue))
-            | Tsam.Expr.ReadOld (_var) ->            
-                match virtualNextVarToVar.TryFind _var with
-                    | None ->
-                        NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
-                    | Some(originalValue) ->
-                        failwith "This should never occur. The source program never includes virtual var. The only parts, which use a virtual var, should use it in combination with Read()!"
-            | Tsam.Expr.UExpr (expr,uop) ->
-                let operator =
-                    match uop with
-                        | Tsam.UOp.Not -> NuXmv.UnaryOperator.LogicalNot
-                NuXmvBasicExpression.UnaryExpression(operator,translateExpression (virtualNextVarToVar,nuXmvVariables) expr)
-            | Tsam.Expr.BExpr (left, bop, right) ->
-                let operator =
-                    match bop with
-                        | Tsam.BOp.Add -> NuXmv.BinaryOperator.IntegerAddition
-                        | Tsam.BOp.Subtract -> NuXmv.BinaryOperator.IntegerSubtraction
-                        | Tsam.BOp.Multiply -> NuXmv.BinaryOperator.IntegerMultiplication
-                        | Tsam.BOp.Divide -> NuXmv.BinaryOperator.IntegerDivision
-                        | Tsam.BOp.Modulo -> NuXmv.BinaryOperator.IntegerRemainder
-                        | Tsam.BOp.And -> NuXmv.BinaryOperator.LogicalAnd
-                        | Tsam.BOp.Or -> NuXmv.BinaryOperator.LogicalOr
-                        | Tsam.BOp.Implies -> NuXmv.BinaryOperator.LogicalImplies
-                        | Tsam.BOp.Equals -> NuXmv.BinaryOperator.Equality //TODO: For Binary Left and Right NuXmv.BinaryOperator.LogicalEquivalence should be better
-                        | Tsam.BOp.NotEquals -> NuXmv.BinaryOperator.Inequality //TODO: For Binary Left and Right NuXmv.BinaryOperator.Xor should be better
-                        | Tsam.BOp.Less -> NuXmv.BinaryOperator.LessThan
-                        | Tsam.BOp.LessEqual -> NuXmv.BinaryOperator.LessEqual
-                        | Tsam.BOp.Greater -> NuXmv.BinaryOperator.GreaterThan
-                        | Tsam.BOp.GreaterEqual -> NuXmv.BinaryOperator.GreaterEqual
-                NuXmvBasicExpression.BinaryExpression(translateExpression (virtualNextVarToVar,nuXmvVariables) left,operator,translateExpression (virtualNextVarToVar,nuXmvVariables) right)
-
 
 
     let generateGlobalVarInitialisations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : ModuleElement =
@@ -225,21 +247,6 @@ module internal VcTransitionRelationToNuXmv =
 
         
     open SafetySharp.Workflow
-    open SafetySharp.ITracing
-    
-    type NuXmvTracer<'traceableOfOrigin> = {
-        NuXmvProgram : NuXmvProgram;
-        TraceablesOfOrigin : 'traceableOfOrigin list;
-        ForwardTracer : 'traceableOfOrigin -> NuXmv.Traceable;
-    }
-        with
-            interface ITracing<NuXmvProgram,'traceableOfOrigin,NuXmv.Traceable,NuXmvTracer<'traceableOfOrigin>> with
-                member this.getModel = this.NuXmvProgram
-                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
-                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
-                member this.getForwardTracer : ('traceableOfOrigin -> NuXmv.Traceable) = this.ForwardTracer
-                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> NuXmv.Traceable)) = {this with ForwardTracer=forwardTracer}
-                member this.getTraceables : NuXmv.Traceable list = []
     
     let transformTsareToNuXmvWorkflow<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<TransitionSystemTracer<'traceableOfOrigin>,NuXmvTracer<'traceableOfOrigin>> = workflow {
@@ -258,14 +265,199 @@ module internal VcTransitionRelationToNuXmv =
         do! updateState transformed
     }   
     
-module internal ScmToNuXmv =
 
+module internal StochasticProgramGraphToNuXmv =
+    open GenericToNuXmv
+    open SafetySharp.Models.Spg
+
+    
+    // Extension methods only valid here
+    type NuXmvVariables with                
+        static member initial (spg:StochasticProgramGraph) (nameGenerator:NameGenerator) =
+            // * create a nuXmv identifier for each var
+            let nuXmvKeywords: Set<string> = Set.empty<string>
+            let variablesToAdd = spg.Variables |> List.map (fun varDecl -> varDecl.Var)
+            let takenVariableNames = variablesToAdd |> List.map (fun varDecl -> varDecl.getName) |> Set.ofList
+            let initialState =
+                {
+                    NuXmvVariables.VarToNuXmvIdentifier = Map.empty<Tsam.Var,NuXmvIdentifier>;
+                    NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<Tsam.Var,NuXmv.ComplexIdentifier>;
+                }
+                    
+            let generateAndAddToList (state:NuXmvVariables) (variableToAdd:Tsam.Var): (NuXmvVariables) =
+                let (newState) = state.generateNuXmvIdentifier variableToAdd
+                newState
+            Seq.fold generateAndAddToList (initialState) variablesToAdd
+            
+    let generateGlobalVarDeclarations (spg:StochasticProgramGraph) (nuXmvVariables:NuXmvVariables) : ModuleElement =
+        let varDecls = spg.Variables
+        let generateDecl (varDecl:Spg.VarDecl) : TypedIdentifier =
+            let _type = match varDecl.Type with
+                            | Sam.Type.BoolType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.BooleanTypeSpecifier)
+                            | Sam.Type.IntType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerTypeSpecifier)
+                            //| SamType.Decimal -> failwith "NotImplementedYet"
+                            | Sam.Type.RangedIntType (_from,_to,_) ->
+                                let _from = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _from))
+                                let _to = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _to))
+                                TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerRangeTypeSpecifier(_from,_to))
+                            | Sam.Type.RealType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.RealTypeSpecifier)
+                            | Sam.Type.RangedRealType _ -> failwith "No support in NuXmv for ranged real values, yet."
+            let _variable = nuXmvVariables.VarToNuXmvIdentifier.Item varDecl.Var
+            {
+                TypedIdentifier.Identifier = _variable ;
+                TypedIdentifier.TypeSpecifier = _type ;
+            }
+        varDecls |> List.map generateDecl
+                 |> ModuleElement.VarDeclaration
+      
+
+    let generateGlobalVarInitialisations (spg:StochasticProgramGraph) (nuXmvVariables:NuXmvVariables) : ModuleElement =
+        let generateInitExpr (varDecl:Spg.VarDecl) : Spg.Expr =
+            let generatePossibleValues (initialValue : Tsam.Val) : Spg.Expr =
+                let assignVar = varDecl.Var
+                let assignExpr = Spg.Expr.Literal(initialValue)
+                let operator = Tsam.BOp.Equals
+                Expr.BExpr(Expr.Read(assignVar),operator,assignExpr)
+            varDecl.Init |> List.map generatePossibleValues
+                         |> TsamHelpers.createOredExpr
+        spg.Variables
+            |> List.map generateInitExpr
+            |> TsamHelpers.createAndedExpr
+            |> translateExpression (noVirtualNextVarToVar,nuXmvVariables)
+            |> ModuleElement.InitConstraint
+
+    let generateStateVariable (spg:StochasticProgramGraph) : (NuXmvBasicExpression*Map<Spg.State,NuXmvBasicExpression>*ModuleElement*ModuleElement) = //StateVariable * StateToExpression-Map * Decl-ModuleElement * Init-ModuleElement
+        let statecounter = ref 0
+        let stateToStateExpression : Map<Spg.State,NuXmvBasicExpression> =
+            let createVariableForState (state:Spg.State) =
+                statecounter := statecounter.Value + 1
+                NuXmvBasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint statecounter.Value))
+            spg.States |> Set.toList |> List.map (fun state -> (state,createVariableForState state) ) |> Map.ofList
+        let stateVariableIdentifier =
+            {NuXmvIdentifier.Name = "spgState"}
+        let stateVariableExpression = NuXmvBasicExpression.ComplexIdentifierExpression(ComplexIdentifier.NameComplexIdentifier(stateVariableIdentifier))
+        let stateVarDeclElement =
+            let typeSpecifier = 
+                let _from = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint 1))
+                let _to = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint statecounter.Value))
+                TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerRangeTypeSpecifier(_from,_to))
+            let stateVarDecl =   
+                {
+                    TypedIdentifier.Identifier = stateVariableIdentifier ;
+                    TypedIdentifier.TypeSpecifier = typeSpecifier ;
+                }
+            ModuleElement.VarDeclaration([stateVarDecl])
+        let stateVarInitElement = 
+            let stateEqualsInitStateExpr =
+                NuXmvBasicExpression.BinaryExpression(stateVariableExpression,NuXmv.BinaryOperator.Equality,stateToStateExpression.Item spg.InitialState)                
+            ModuleElement.InitConstraint(stateEqualsInitStateExpr)
+        (stateVariableExpression,stateToStateExpression,stateVarDeclElement,stateVarInitElement)
+
+
+    let generateTransRelation (nuXmvVariables:NuXmvVariables)
+                              (stateVariableExpr:NuXmvBasicExpression, stateToExpressionMap:Map<Spg.State,NuXmvBasicExpression>)
+                              (transition:Spg.DeterministicTransition)
+                        : ModuleElement =
+        let transformAction (_var,_expr) : NuXmvBasicExpression =
+            let _nextVar = NuXmvBasicExpression.BasicNextExpression(NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var))
+            let transformedExpr = translateExpression (noVirtualNextVarToVar,nuXmvVariables) _expr
+            NuXmvBasicExpression.BinaryExpression(_nextVar,NuXmv.BinaryOperator.Equality,transformedExpr)
+        let transformedGuard =
+            let stateGuard =
+                let fromState = stateToExpressionMap.Item transition.FromState
+                NuXmvBasicExpression.BinaryExpression(stateVariableExpr,NuXmv.BinaryOperator.Equality,fromState)
+            match transition.Guard with
+                | None ->
+                    stateGuard
+                | Some (guard) ->
+                    let guardExpr = translateExpression (noVirtualNextVarToVar,nuXmvVariables) guard
+                    NuXmvBasicExpression.BinaryExpression(stateGuard,BinaryOperator.LogicalAnd,guardExpr)
+        let updateOfVariables =
+            let stateAssignment =
+                let nextState = NuXmvBasicExpression.BasicNextExpression(stateVariableExpr)
+                let toState = stateToExpressionMap.Item transition.ToState
+                NuXmvBasicExpression.BinaryExpression(nextState,NuXmv.BinaryOperator.Equality,toState)
+            let transformedAction : NuXmvBasicExpression =
+                match transition.Action with
+                    | Some (action) ->                            
+                        let assignment = action |> transformAction
+                        NuXmvBasicExpression.BinaryExpression(stateAssignment,BinaryOperator.LogicalAnd,assignment)  // Currently Action has also only one Element + State Assignment
+                    | None ->
+                        stateAssignment
+            transformedAction
+        let transExpression =
+            NuXmvBasicExpression.BinaryExpression(transformedGuard,BinaryOperator.LogicalAnd,updateOfVariables)
+        ModuleElement.TransConstraint(transExpression)
+
+    
+    let transformConfiguration (spg:StochasticProgramGraph) : NuXmvProgram * Map<Tsam.Traceable,NuXmvTraceable> =
+        // create the nuXmvVariables: Keeps the association between the post value variable and the current value variable
+        // (the post variable value is purely "virtual". It will be replaced by "next(currentValue)" )
+        let nuXmvVariables = NuXmvVariables.initial spg SafetySharp.FreshNameGenerator.namegenerator_c_like
+                                
+        // declare globals variables. 
+        let globalVarModuleElement =
+            //globals
+            generateGlobalVarDeclarations spg nuXmvVariables
+            //locals
+                
+        // initialize globals (INIT)
+        let globalVarInitialisations = generateGlobalVarInitialisations spg nuXmvVariables
+        
+        let stateVariableExpression,stateToStateExpression,stateVarDeclElement,stateVarInitElement =
+            generateStateVariable spg
+
+        // program loop (TRANS)
+        assert (spg.StochasticTransitions.IsEmpty)
+        let transRelations  = spg.DeterministicTransitions |> Set.toList |> List.map (generateTransRelation nuXmvVariables (stateVariableExpression,stateToStateExpression))
+        
+        let systemModule =
+            {
+                NuXmvModuleDeclaration.Identifier = {NuXmvIdentifier.Name = "main" };
+                NuXmvModuleDeclaration.ModuleParameters = [];
+                NuXmvModuleDeclaration.ModuleElements = [globalVarModuleElement;globalVarInitialisations;stateVarDeclElement;stateVarInitElement] @ transRelations;
+            }
+        let transformedConfiguration =
+            {
+                NuXmvProgram.Modules = [systemModule];
+                NuXmvProgram.Specifications = [];
+            }
+        let tracing =
+            nuXmvVariables.VarToNuXmvIdentifier
+                |> Map.toList
+                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),ComplexIdentifier.NameComplexIdentifier({Identifier.Name= _nuxmv.Name}) ))
+                |> Map.ofList
+        (transformedConfiguration,tracing)
+
+        
+    open SafetySharp.Workflow
+    open SafetySharp.Models.SpgTracer
+
+    let transformProgramGraphToNuXmvWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<StochasticProgramGraphTracer<'traceableOfOrigin>,NuXmvTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let (transformedTs,forwardTraceInClosure) = transformConfiguration (state.ProgramGraph)
+        let tracer (oldValue:'traceableOfOrigin) =
+            let beforeTransform = state.ForwardTracer oldValue
+            forwardTraceInClosure.Item beforeTransform
+        let transformed =
+            {
+                NuXmvTracer.NuXmvProgram = transformedTs;
+                NuXmvTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                NuXmvTracer.ForwardTracer = tracer;
+            }
+        do! updateState transformed
+    }   
+
+
+
+module internal ScmToNuXmv =
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmMutable
     open SafetySharp.Analysis.VerificationCondition
                 
     let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state>> ()
-                        : ExogenousWorkflowFunction<'state,VcTransitionRelationToNuXmv.NuXmvTracer<'traceableOfOrigin>> = workflow {
+                        : ExogenousWorkflowFunction<'state,GenericToNuXmv.NuXmvTracer<'traceableOfOrigin>> = workflow {
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
         let reservedNames = Set.empty<string>

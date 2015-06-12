@@ -5,7 +5,9 @@ VisualStudioVersion = 14.0.22823.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Scripts", "Scripts\Scripts.fsproj", "{1E1DB325-F0DF-40F8-B70E-5B1DA0810DE9}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp", "..\..\..\Source\SafetySharp\SafetySharp.fsproj", "{18DFC311-4633-4B22-AB2F-FF42901C6438}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis", "..\..\..\Source\Analysis\Analysis.fsproj", "{18DFC311-4633-4B22-AB2F-FF42901C6438}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "..\..\..\Source\Modeling\Modeling.csproj", "{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

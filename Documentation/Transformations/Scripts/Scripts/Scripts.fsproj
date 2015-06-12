@@ -63,7 +63,7 @@
     <None Include="TsamDemonstrateWithSmokeTest10.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Source\SafetySharp\SafetySharp.fsproj">
+    <ProjectReference Include="..\..\..\..\Source\Analysis\Analysis.fsproj">
       <Name>SafetySharp</Name>
       <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
       <Private>True</Private>
