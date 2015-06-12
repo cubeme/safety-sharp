@@ -20,47 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Faults
 {
 	using System;
-	using Modeling;
-	using Utilities;
+	using SafetySharp.Modeling;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
-	/// </summary>
-	public sealed partial class FaultInfo
+	// TODO: Implement tests once component ports are implemented
+	public class X2 : TestComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(ComponentInfo component, Fault fault)
-		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
+		private readonly F _fault = new F();
 
-			Component = component;
-			Fault = fault;
+		public X2()
+		{
+			GetBuilder().WithFault(_fault);
 		}
 
-		/// <summary>
-		///     Gets the component affected by the fault.
-		/// </summary>
-		public ComponentInfo Component { get; private set; }
-
-		/// <summary>
-		///     Gets the fault the metadata is provided for.
-		/// </summary>
-		public Fault Fault { get; set; }
-
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
+		protected override void Check()
 		{
-			get { return Fault.GetType().Name; }
+			Metadata.Faults.Length.ShouldBe(1);
+			CheckFault(_fault);
+		}
+
+		public void M()
+		{
+		}
+
+		[Transient]
+		private class F : Fault
+		{
+			public void M()
+			{
+			}
 		}
 	}
 }

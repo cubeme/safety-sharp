@@ -24,6 +24,7 @@ namespace Tests.Utilities
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.Immutable;
 	using System.IO;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
@@ -38,6 +39,7 @@ namespace Tests.Utilities
 	using SafetySharp.Compiler.Normalization;
 	using SafetySharp.Modeling;
 	using SafetySharp.Utilities;
+	using Shouldly;
 	using Xunit.Abstractions;
 
 	/// <summary>
@@ -103,6 +105,9 @@ namespace Tests.Utilities
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(DynamicAttribute).Assembly))
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(Component).Assembly))
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(DiagnosticAttribute).Assembly))
+				.AddReferences(MetadataReference.CreateFromAssembly(typeof(DiagnosticIdentifier).Assembly))
+				.AddReferences(MetadataReference.CreateFromAssembly(typeof(Should).Assembly))
+				.AddReferences(MetadataReference.CreateFromAssembly(typeof(ImmutableArray).Assembly))
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(DiagnosticIdentifier).Assembly))
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(BindingNormalizer).Assembly));
 

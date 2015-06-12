@@ -20,47 +20,52 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Fields
 {
 	using System;
-	using Modeling;
-	using Utilities;
+	using SafetySharp.CompilerServices;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
-	/// </summary>
-	public sealed partial class FaultInfo
+	internal class X8 : TestComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(ComponentInfo component, Fault fault)
-		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
+		private readonly E _w = E.A;
+		private readonly int _x = 1;
+		private readonly double _y = 2;
+		private readonly bool _z = false;
 
-			Component = component;
-			Fault = fault;
+		public X8()
+		{
+			var fx = ReflectionHelpers.GetField(typeof(X8), typeof(int), "_x");
+			var fy = ReflectionHelpers.GetField(typeof(X8), typeof(double), "_y");
+			var fz = ReflectionHelpers.GetField(typeof(X8), typeof(bool), "_z");
+			var fw = ReflectionHelpers.GetField(typeof(X8), typeof(E), "_w");
+
+			GetBuilder().WithField(fx);
+			GetBuilder().WithField(fy);
+			GetBuilder().WithField(fz);
+			GetBuilder().WithField(fw);
+
+			GetBuilder().WithInitialValues(fx, _x, -1, 0);
+			GetBuilder().WithInitialValues(fy, _y, -1.0, 0.0);
+			GetBuilder().WithInitialValues(fz, true, _z);
+			GetBuilder().WithInitialValues(fw, _w, E.B, E.D);
 		}
 
-		/// <summary>
-		///     Gets the component affected by the fault.
-		/// </summary>
-		public ComponentInfo Component { get; private set; }
-
-		/// <summary>
-		///     Gets the fault the metadata is provided for.
-		/// </summary>
-		public Fault Fault { get; set; }
-
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
+		protected override void Check()
 		{
-			get { return Fault.GetType().Name; }
+			Metadata.Fields.Length.ShouldBe(4);
+			CheckField(typeof(int), "_x", 1, -1, 0);
+			CheckField(typeof(double), "_y", 2.0, -1.0, 0.0);
+			CheckField(typeof(bool), "_z", true, false);
+			CheckField(typeof(E), "_w", E.A, E.B, E.D);
+		}
+
+		private enum E
+		{
+			A,
+			B,
+			C,
+			D
 		}
 	}
 }

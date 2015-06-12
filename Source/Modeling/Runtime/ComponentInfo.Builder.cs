@@ -40,7 +40,7 @@ namespace SafetySharp.Runtime
 		public class Builder
 		{
 			private readonly Component _component;
-			private readonly List<FaultInfo> _faults = new List<FaultInfo>();
+			private readonly List<FaultInfo.Builder> _faults = new List<FaultInfo.Builder>();
 			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
 			private readonly List<MethodInfo> _requiredPorts = new List<MethodInfo>();
 			private readonly List<FieldInfo> _subcomponents = new List<FieldInfo>();
@@ -63,8 +63,10 @@ namespace SafetySharp.Runtime
 			public void WithField(FieldInfo field)
 			{
 				Requires.NotNull(field, () => field);
-				Requires.That(field.DeclaringType == _component.GetType(), () => field, "The field is not declared by the component.");
 				Requires.That(!_fields.ContainsKey(field), () => field, "The field has already been added.");
+				Requires.That(field.FieldType == typeof(int) || field.FieldType == typeof(bool) ||
+							  field.FieldType == typeof(double) || field.FieldType.IsEnum, () => field,
+					"Invalid field type: Only 'bool', 'int', 'double', and enumerations are supported.");
 
 				_fields.Add(field, null);
 			}
@@ -94,7 +96,6 @@ namespace SafetySharp.Runtime
 			public void WithSubcomponent(FieldInfo field)
 			{
 				Requires.NotNull(field, () => field);
-				Requires.That(field.DeclaringType == _component.GetType(), () => field, "The subcomponent is not declared by the component.");
 				Requires.That(!_subcomponents.Contains(field), () => field, "The subcomponent has already been added.");
 				Requires.That(typeof(IComponent).IsAssignableFrom(field.FieldType), () => field, "The subcomponent must implement '{0}'.",
 					typeof(IComponent).FullName);
@@ -112,7 +113,7 @@ namespace SafetySharp.Runtime
 				Requires.NotNull(fault, () => fault);
 				Requires.That(!_faults.Any(f => f.Fault is T), () => fault, "The fault has already been added.");
 
-				_faults.Add(MetadataBuilders.GetBuilder(fault).FinalizeMetadata(_component));
+				_faults.Add(MetadataBuilders.GetBuilder(fault));
 			}
 
 			/// <summary>
@@ -126,7 +127,6 @@ namespace SafetySharp.Runtime
 			public void WithProvidedPort(MethodInfo providedPort, MethodInfo basePort = null, Func<Expression> createBody = null)
 			{
 				Requires.NotNull(providedPort, () => providedPort);
-				Requires.That(providedPort.DeclaringType == _component.GetType(), () => providedPort, "The port is not declared by the component.");
 			}
 
 			/// <summary>
@@ -135,7 +135,6 @@ namespace SafetySharp.Runtime
 			public void WithRequiredPort(MethodInfo requiredPort)
 			{
 				Requires.NotNull(requiredPort, () => requiredPort);
-				Requires.That(requiredPort.DeclaringType == _component.GetType(), () => requiredPort, "The port is not declared by the component.");
 				Requires.That(!_requiredPorts.Contains(requiredPort), () => requiredPort, "The port has already been added.");
 
 				_requiredPorts.Add(requiredPort);
@@ -150,7 +149,6 @@ namespace SafetySharp.Runtime
 			public void WithBehavior(MethodInfo behavior, Func<Expression> createBody = null)
 			{
 				Requires.NotNull(behavior, () => behavior);
-				Requires.That(behavior.DeclaringType == _component.GetType(), () => behavior, "The behavior is not declared by the component.");
 			}
 
 			/// <summary>
@@ -188,8 +186,10 @@ namespace SafetySharp.Runtime
 				{
 					Component = _component,
 					Name = _name,
-					Faults = _faults.ToImmutableArray()
 				};
+
+				info.Fields = _fields.Select(field => new ComponentFieldInfo(info, field.Key, field.Value)).ToImmutableArray();
+				info.Faults = _faults.Select(fault => fault.FinalizeMetadata(info)).ToImmutableArray();
 
 				MetadataProvider.Components.Add(_component, info);
 				MetadataProvider.ComponentBuilders.Remove(_component);

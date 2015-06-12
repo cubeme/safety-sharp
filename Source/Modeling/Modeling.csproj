@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
+    <Compile Include="Runtime\ComponentFieldInfo.cs" />
     <Compile Include="Runtime\ComponentInfo.Builder.cs">
       <DependentUpon>ComponentInfo.cs</DependentUpon>
     </Compile>
@@ -104,6 +105,7 @@
     <Compile Include="CompilerServices\ReflectionHelpers.cs" />
     <Compile Include="Runtime\MetadataProvider.cs" />
     <Compile Include="Utilities\Assert.cs" />
+    <Compile Include="Utilities\ReferenceEqualityComparer.cs" />
     <Compile Include="Utilities\ReflectionExtensions.cs" />
     <Compile Include="Utilities\Requires.cs" />
   </ItemGroup>

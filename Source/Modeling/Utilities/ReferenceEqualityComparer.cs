@@ -20,47 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace SafetySharp.Utilities
 {
 	using System;
-	using Modeling;
-	using Utilities;
+	using System.Collections.Generic;
+	using System.Runtime.CompilerServices;
 
 	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
+	///     An equality comparer that compares objects for reference equality.
 	/// </summary>
-	public sealed partial class FaultInfo
+	/// <typeparam name="T">The type of objects to compare.</typeparam>
+	internal sealed class ReferenceEqualityComparer<T> : IEqualityComparer<T>
+		where T : class
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     Gets the default instance of the <see cref="ReferenceEqualityComparer{T}" /> class.
 		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(ComponentInfo component, Fault fault)
-		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
+		public static readonly ReferenceEqualityComparer<T> Instance = new ReferenceEqualityComparer<T>();
 
-			Component = component;
-			Fault = fault;
+		/// <inheritdoc />
+		public bool Equals(T left, T right)
+		{
+			return ReferenceEquals(left, right);
 		}
 
-		/// <summary>
-		///     Gets the component affected by the fault.
-		/// </summary>
-		public ComponentInfo Component { get; private set; }
-
-		/// <summary>
-		///     Gets the fault the metadata is provided for.
-		/// </summary>
-		public Fault Fault { get; set; }
-
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
+		/// <inheritdoc />
+		public int GetHashCode(T value)
 		{
-			get { return Fault.GetType().Name; }
+			return RuntimeHelpers.GetHashCode(value);
 		}
 	}
 }

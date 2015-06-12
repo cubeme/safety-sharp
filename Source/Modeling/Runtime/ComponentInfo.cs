@@ -37,6 +37,11 @@ namespace SafetySharp.Runtime
 		public ImmutableArray<FaultInfo> Faults { get; private set; }
 
 		/// <summary>
+		///     Gets the fields declared by the component.
+		/// </summary>
+		public ImmutableArray<ComponentFieldInfo> Fields { get; private set; }
+
+		/// <summary>
 		///     Gets the <see cref="Component" /> instance the metadata is provided for.
 		/// </summary>
 		public Component Component { get; private set; }

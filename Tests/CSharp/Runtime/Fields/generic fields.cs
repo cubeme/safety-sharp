@@ -20,47 +20,61 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Fields
 {
 	using System;
-	using Modeling;
-	using Utilities;
+	using SafetySharp.CompilerServices;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
-	/// </summary>
-	public sealed partial class FaultInfo
+	internal abstract class X14<T1, T2> : TestComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(ComponentInfo component, Fault fault)
-		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
+		public readonly T1 _x;
+		public readonly T2 _y;
 
-			Component = component;
-			Fault = fault;
+		protected X14(T1 v1, T2 v2)
+		{
+			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X14<T1, T2>), typeof(T1), "_x"));
+			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X14<T1, T2>), typeof(T2), "_y"));
+
+			_x = v1;
+			_y = v2;
+		}
+	}
+
+	internal class X15 : X14<int, bool>
+	{
+		public X15()
+			: base(1, true)
+		{
 		}
 
-		/// <summary>
-		///     Gets the component affected by the fault.
-		/// </summary>
-		public ComponentInfo Component { get; private set; }
-
-		/// <summary>
-		///     Gets the fault the metadata is provided for.
-		/// </summary>
-		public Fault Fault { get; set; }
-
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
+		protected override void Check()
 		{
-			get { return Fault.GetType().Name; }
+			Metadata.Fields.Length.ShouldBe(2);
+			CheckField(typeof(int), "_x", 1);
+			CheckField(typeof(bool), "_y", true);
+		}
+	}
+
+	internal class X16 : X14<double, X16.E>
+	{
+		public enum E
+		{
+			A,
+			B,
+			C
+		}
+
+		public X16()
+			: base(4.2, E.B)
+		{
+		}
+
+		protected override void Check()
+		{
+			Metadata.Fields.Length.ShouldBe(2);
+			CheckField(typeof(double), "_x", 4.2);
+			CheckField(typeof(E), "_y", E.B);
 		}
 	}
 }

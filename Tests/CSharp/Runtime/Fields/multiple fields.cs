@@ -20,47 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Fields
 {
 	using System;
-	using Modeling;
-	using Utilities;
+	using SafetySharp.CompilerServices;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
-	/// </summary>
-	public sealed partial class FaultInfo
+	internal class X9 : TestComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(ComponentInfo component, Fault fault)
-		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
+		private readonly E _w = E.A;
+		private readonly int _x = 0;
+		private readonly double _y = 0;
+		private readonly bool _z = false;
 
-			Component = component;
-			Fault = fault;
+		public X9()
+		{
+			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X9), typeof(int), "_x"));
+			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X9), typeof(double), "_y"));
+			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X9), typeof(bool), "_z"));
+			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X9), typeof(E), "_w"));
 		}
 
-		/// <summary>
-		///     Gets the component affected by the fault.
-		/// </summary>
-		public ComponentInfo Component { get; private set; }
-
-		/// <summary>
-		///     Gets the fault the metadata is provided for.
-		/// </summary>
-		public Fault Fault { get; set; }
-
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
+		protected override void Check()
 		{
-			get { return Fault.GetType().Name; }
+			Metadata.Fields.Length.ShouldBe(4);
+			CheckField(typeof(int), "_x", _x);
+			CheckField(typeof(double), "_y", _y);
+			CheckField(typeof(bool), "_z", _z);
+			CheckField(typeof(E), "_w", _w);
+		}
+
+		private enum E
+		{
+			A
 		}
 	}
 }

@@ -35,7 +35,6 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public class Builder
 		{
-			private readonly Fault _fault;
 			private OccurrenceInfo _occurrencePattern;
 
 			/// <summary>
@@ -45,8 +44,13 @@ namespace SafetySharp.Runtime
 			internal Builder(Fault fault)
 			{
 				Requires.NotNull(fault, () => fault);
-				_fault = fault;
+				Fault = fault;
 			}
+
+			/// <summary>
+			///     Gets the fault the metadata is built for.
+			/// </summary>
+			public Fault Fault { get; private set; }
 
 			/// <summary>
 			///     Adds the <paramref name="faultEffect" /> to the fault's metadata. The <paramref name="createBody" /> must not be
@@ -68,7 +72,7 @@ namespace SafetySharp.Runtime
 			public void WithOccurrencePattern(OccurrenceInfo occurrencePattern)
 			{
 				Requires.NotNull(occurrencePattern, () => occurrencePattern);
-				Requires.That(occurrencePattern.Fault == _fault, () => occurrencePattern, "The occurrence pattern affects another fault.");
+				Requires.That(occurrencePattern.Fault == Fault, () => occurrencePattern, "The occurrence pattern affects another fault.");
 
 				_occurrencePattern = occurrencePattern;
 			}
@@ -78,13 +82,13 @@ namespace SafetySharp.Runtime
 			///     to S#'s <see cref="MetadataProvider" />.
 			/// </summary>
 			/// <param name="component">The component that is affected by the fault.</param>
-			internal FaultInfo FinalizeMetadata(Component component)
+			internal FaultInfo FinalizeMetadata(ComponentInfo component)
 			{
 				Requires.NotNull(component, () => component);
 
-				var info = new FaultInfo(component, _fault);
-				MetadataProvider.Faults.Add(_fault, info);
-				MetadataProvider.FaultBuilders.Remove(_fault);
+				var info = new FaultInfo(component, Fault);
+				MetadataProvider.Faults.Add(Fault, info);
+				MetadataProvider.FaultBuilders.Remove(Fault);
 
 				return info;
 			}

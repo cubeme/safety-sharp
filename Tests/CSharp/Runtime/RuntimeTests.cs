@@ -20,47 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime
 {
 	using System;
-	using Modeling;
 	using Utilities;
+	using Xunit;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
-	/// </summary>
-	public sealed partial class FaultInfo
+	public partial class RuntimeTests : Tests
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(ComponentInfo component, Fault fault)
+		[Theory, MemberData("DiscoverTests", "Fields")]
+		public void Fields(string test, string code)
 		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
-
-			Component = component;
-			Fault = fault;
+			Check(code);
 		}
 
-		/// <summary>
-		///     Gets the component affected by the fault.
-		/// </summary>
-		public ComponentInfo Component { get; private set; }
-
-		/// <summary>
-		///     Gets the fault the metadata is provided for.
-		/// </summary>
-		public Fault Fault { get; set; }
-
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
+		[Theory, MemberData("DiscoverTests", "Faults")]
+		public void Faults(string test, string code)
 		{
-			get { return Fault.GetType().Name; }
+			Check(code);
 		}
 	}
 }

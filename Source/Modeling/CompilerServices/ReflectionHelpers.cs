@@ -23,21 +23,70 @@
 namespace SafetySharp.CompilerServices
 {
 	using System;
+	using System.Linq;
 	using System.Reflection;
+	using Utilities;
 
 	/// <summary>
 	///     Provides helper methods for reflection scenarios.
 	/// </summary>
 	public static class ReflectionHelpers
 	{
-		public static FieldInfo GetField(Type type, string fieldName)
+		private const BindingFlags Flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly;
+
+		/// <summary>
+		///     Gets the instance field called <paramref name="fieldName" /> of type <paramref name="fieldType" /> declared by the
+		///     <paramref name="declaringType" />.
+		/// </summary>
+		/// <param name="declaringType">The type that declares the field.</param>
+		/// <param name="fieldType">The type of the field.</param>
+		/// <param name="fieldName">The name of the field.</param>
+		public static FieldInfo GetField(Type declaringType, Type fieldType, string fieldName)
 		{
-			return null;
+			Requires.NotNull(declaringType, () => declaringType);
+			Requires.NotNull(fieldType, () => fieldType);
+			Requires.NotNullOrWhitespace(fieldName, () => fieldName);
+
+			var field = declaringType
+				.GetFields(Flags)
+				.SingleOrDefault(f => f.Name == fieldName && f.FieldType == fieldType);
+
+			Requires.That(field != null, () => fieldName,
+				"'{0}' does not declare an instance field called '{1}' of type '{2}'.",
+				declaringType.FullName, fieldName, fieldType);
+
+			return field;
 		}
 
-		public static MethodInfo GetMethod(Type type, string name, Type[] arguments, Type returnValue, Type[] typeParams)
+		/// <summary>
+		///     Gets the instance method called <paramref name="methodName" /> declared by the <paramref name="declaringType" />,
+		///     with the signature of the method defined by the <paramref name="argumentTypes" />, <paramref name="returnType" />,
+		///     and <paramref name="typeParams" />.
+		/// </summary>
+		/// <param name="declaringType">The type that declares the method.</param>
+		/// <param name="methodName">The name of the method.</param>
+		/// <param name="argumentTypes">The argument types of the method.</param>
+		/// <param name="returnType">The return type of the method.</param>
+		/// <param name="typeParams"></param>
+		public static MethodInfo GetMethod(Type declaringType, string methodName, Type[] argumentTypes, Type returnType, Type[] typeParams)
 		{
-			return null;
+			Requires.NotNull(declaringType, () => declaringType);
+			Requires.NotNullOrWhitespace(methodName, () => methodName);
+			Requires.NotNull(argumentTypes, () => argumentTypes);
+			Requires.NotNull(returnType, () => returnType);
+			Requires.NotNull(typeParams, () => typeParams);
+
+			var method = declaringType
+				.GetMethods(Flags)
+				.SingleOrDefault(m =>
+					m.Name == methodName &&
+					m.ReturnType == returnType &&
+					m.GetParameters().Select(p => p.ParameterType).SequenceEqual(argumentTypes));
+
+			Requires.That(method != null, "'{0}' does not declare an instance method called '{1}' with the given signature.",
+				declaringType.FullName, methodName);
+
+			return method;
 		}
 	}
 }

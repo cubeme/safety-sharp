@@ -36,37 +36,37 @@ namespace SafetySharp.Runtime
 		///     The currently available <see cref="ComponentInfo.Builder" /> instances.
 		/// </summary>
 		internal static readonly Dictionary<Component, ComponentInfo.Builder> ComponentBuilders =
-			new Dictionary<Component, ComponentInfo.Builder>();
+			new Dictionary<Component, ComponentInfo.Builder>(ReferenceEqualityComparer<Component>.Instance);
 
 		/// <summary>
 		///     The currently available <see cref="FaultInfo.Builder" /> instances.
 		/// </summary>
 		internal static readonly Dictionary<Fault, FaultInfo.Builder> FaultBuilders =
-			new Dictionary<Fault, FaultInfo.Builder>();
+			new Dictionary<Fault, FaultInfo.Builder>(ReferenceEqualityComparer<Fault>.Instance);
 
 		/// <summary>
 		///     The currently available <see cref="OccurrenceInfo.Builder" /> instances.
 		/// </summary>
 		internal static readonly Dictionary<OccurrencePattern, OccurrenceInfo.Builder> OccurrencePatternBuilders =
-			new Dictionary<OccurrencePattern, OccurrenceInfo.Builder>();
+			new Dictionary<OccurrencePattern, OccurrenceInfo.Builder>(ReferenceEqualityComparer<OccurrencePattern>.Instance);
 
 		/// <summary>
 		///     Gets the currently available <see cref="ComponentInfo" /> instances.
 		/// </summary>
 		internal static readonly Dictionary<Component, ComponentInfo> Components =
-			new Dictionary<Component, ComponentInfo>();
+			new Dictionary<Component, ComponentInfo>(ReferenceEqualityComparer<Component>.Instance);
 
 		/// <summary>
 		///     Gets the currently available <see cref="FaultInfo" /> instances.
 		/// </summary>
 		internal static readonly Dictionary<Fault, FaultInfo> Faults =
-			new Dictionary<Fault, FaultInfo>();
+			new Dictionary<Fault, FaultInfo>(ReferenceEqualityComparer<Fault>.Instance);
 
 		/// <summary>
 		///     Gets the currently available <see cref="OccurrenceInfo" /> instances.
 		/// </summary>
 		internal static readonly Dictionary<OccurrencePattern, OccurrenceInfo> OccurrencePatterns =
-			new Dictionary<OccurrencePattern, OccurrenceInfo>();
+			new Dictionary<OccurrencePattern, OccurrenceInfo>(ReferenceEqualityComparer<OccurrencePattern>.Instance);
 
 		/// <summary>
 		///     Gets the <see cref="ComponentInfo" /> instance for the <paramref name="component" /> instance.

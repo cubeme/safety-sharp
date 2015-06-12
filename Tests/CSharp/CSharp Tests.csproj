@@ -226,6 +226,21 @@
     <Compile Include="Normalization\LiftedExpressions\Lifted\method invocation, multiple arguments.cs" />
     <Compile Include="Normalization\LiftedExpressions\Lifted\method invocation, single argument.cs" />
     <Compile Include="Normalization\LiftedExpressions\Lifted\nested invocations.cs" />
+    <Compile Include="Runtime\Faults\single fault, single effect.cs" />
+    <Compile Include="Runtime\Faults\no faults.cs" />
+    <Compile Include="Runtime\Fields\generic fields.cs" />
+    <Compile Include="Runtime\Fields\initial values overridden by derived class.cs" />
+    <Compile Include="Runtime\Fields\multiple initial values.cs" />
+    <Compile Include="Runtime\Fields\initial values, set by constructor.cs" />
+    <Compile Include="Runtime\Fields\initial values, set outside constructor.cs" />
+    <Compile Include="Runtime\Fields\multiple fields.cs" />
+    <Compile Include="Runtime\Fields\inherited field.cs" />
+    <Compile Include="Runtime\Fields\single field.cs" />
+    <Compile Include="Runtime\Fields\no fields.cs" />
+    <Compile Include="Runtime\RuntimeTests.Helpers.cs">
+      <DependentUpon>RuntimeTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Runtime\RuntimeTests.cs" />
     <Compile Include="Utilities\AssertTests\IsNotNullMethod.cs" />
     <Compile Include="Utilities\AssertTests\NotNullOrWhitespaceMethod.cs" />
     <Compile Include="Utilities\AssertTests\IsNullMethod.cs" />

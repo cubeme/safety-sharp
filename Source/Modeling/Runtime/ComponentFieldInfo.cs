@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,44 +23,70 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using Modeling;
+	using System.Collections.Immutable;
+	using System.Reflection;
 	using Utilities;
 
 	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
+	///     Represents the immutable metadata of a S# <see cref="Component" /> instance field.
 	/// </summary>
-	public sealed partial class FaultInfo
+	public sealed class ComponentFieldInfo
 	{
+		private readonly FieldInfo _field;
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(ComponentInfo component, Fault fault)
+		/// <param name="component">The component the field belongs to.</param>
+		/// <param name="field">The field that represents the component field.</param>
+		/// <param name="initialValues">
+		///     The set of initial values. <c>null</c> indicates that the current field value should be used instead.
+		/// </param>
+		internal ComponentFieldInfo(ComponentInfo component, FieldInfo field, object[] initialValues)
 		{
 			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
+			Requires.NotNull(field, () => field);
+
+			_field = field;
 
 			Component = component;
-			Fault = fault;
+			InitialValues = initialValues == null
+				? ImmutableArray.Create(field.GetValue(component.Component))
+				: initialValues.ToImmutableArray();
 		}
 
 		/// <summary>
-		///     Gets the component affected by the fault.
+		///     Gets the name of the field.
+		/// </summary>
+		public string Name
+		{
+			get { return _field.Name; }
+		}
+
+		/// <summary>
+		///     Gets the component the field belongs to.
 		/// </summary>
 		public ComponentInfo Component { get; private set; }
 
 		/// <summary>
-		///     Gets the fault the metadata is provided for.
+		///     Gets the type of the field.
 		/// </summary>
-		public Fault Fault { get; set; }
+		public Type Type
+		{
+			get { return _field.FieldType; }
+		}
 
 		/// <summary>
-		///     Gets the name of the fault.
+		///     Gets the field's set of initial values.
 		/// </summary>
-		public string Name
+		public ImmutableArray<object> InitialValues { get; private set; }
+
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
 		{
-			get { return Fault.GetType().Name; }
+			return String.Format("{0} {1} = {2}", Type.FullName, Name, String.Join(", ", InitialValues));
 		}
 	}
 }

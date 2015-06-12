@@ -20,47 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Fields
 {
 	using System;
-	using Modeling;
-	using Utilities;
+	using SafetySharp.CompilerServices;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
-	/// </summary>
-	public sealed partial class FaultInfo
+	internal abstract class X12 : TestComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(ComponentInfo component, Fault fault)
-		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
+		public readonly int _x;
 
-			Component = component;
-			Fault = fault;
+		protected X12()
+		{
+			var field = ReflectionHelpers.GetField(typeof(X12), typeof(int), "_x");
+
+			GetBuilder().WithField(field);
+			GetBuilder().WithInitialValues(field, 1, 2, 3);
+		}
+	}
+
+	internal class X13 : X12
+	{
+		public X13()
+		{
+			GetBuilder().WithInitialValues(ReflectionHelpers.GetField(typeof(X12), typeof(int), "_x"), 88, 22);
 		}
 
-		/// <summary>
-		///     Gets the component affected by the fault.
-		/// </summary>
-		public ComponentInfo Component { get; private set; }
-
-		/// <summary>
-		///     Gets the fault the metadata is provided for.
-		/// </summary>
-		public Fault Fault { get; set; }
-
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
+		protected override void Check()
 		{
-			get { return Fault.GetType().Name; }
+			Metadata.Fields.Length.ShouldBe(1);
+			CheckField(typeof(int), "_x", 88, 22);
 		}
 	}
 }
