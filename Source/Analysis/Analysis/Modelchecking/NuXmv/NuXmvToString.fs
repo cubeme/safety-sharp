@@ -375,11 +375,11 @@ module internal NuXmvToString =
             | InitConstraint (expression:SimpleExpression) ->
                 // Chapter 2.3.5 INIT Constraint p 27
                 let content = exportSimpleExpression expression
-                sprintf "\tINIT\n%s" content
+                sprintf "\tINIT\n\t\t%s" content
             | InvarConstraint (expression:SimpleExpression) ->
                 // Chapter 2.3.6 INVAR Constraint p 27
                 let content = exportSimpleExpression expression
-                sprintf "\tINVAR\n%s" content
+                sprintf "\tINVAR\n\t\t%s" content
             | TransConstraint (expression:NextExpression) ->
                 // Chapter 2.3.7 TRANS Constraint p 28                
                 let content = exportSimpleExpression expression

@@ -357,7 +357,7 @@ module internal StochasticProgramGraphToNuXmv =
     let generateTransRelation (nuXmvVariables:NuXmvVariables)
                               (stateVariableExpr:NuXmvBasicExpression, stateToExpressionMap:Map<Spg.State,NuXmvBasicExpression>)
                               (transition:Spg.DeterministicTransition)
-                        : ModuleElement =
+                        : NuXmvBasicExpression =
         let transformAction (_var,_expr) : NuXmvBasicExpression =
             let _nextVar = NuXmvBasicExpression.BasicNextExpression(NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var))
             let transformedExpr = translateExpression (noVirtualNextVarToVar,nuXmvVariables) _expr
@@ -387,7 +387,7 @@ module internal StochasticProgramGraphToNuXmv =
             transformedAction
         let transExpression =
             NuXmvBasicExpression.BinaryExpression(transformedGuard,BinaryOperator.LogicalAnd,updateOfVariables)
-        ModuleElement.TransConstraint(transExpression)
+        transExpression        
 
     
     let transformConfiguration (spg:StochasticProgramGraph) : NuXmvProgram * Map<Tsam.Traceable,NuXmvTraceable> =
@@ -409,13 +409,17 @@ module internal StochasticProgramGraphToNuXmv =
 
         // program loop (TRANS)
         assert (spg.StochasticTransitions.IsEmpty)
-        let transRelations  = spg.DeterministicTransitions |> Set.toList |> List.map (generateTransRelation nuXmvVariables (stateVariableExpression,stateToStateExpression))
+        let transRelation  =
+            spg.DeterministicTransitions |> Set.toList
+                                         |> List.map (generateTransRelation nuXmvVariables (stateVariableExpression,stateToStateExpression))
+                                         |> NuXmvAstHelpers.concatenateWithOr
+                                         |> ModuleElement.TransConstraint
         
         let systemModule =
             {
                 NuXmvModuleDeclaration.Identifier = {NuXmvIdentifier.Name = "main" };
                 NuXmvModuleDeclaration.ModuleParameters = [];
-                NuXmvModuleDeclaration.ModuleElements = [globalVarModuleElement;globalVarInitialisations;stateVarDeclElement;stateVarInitElement] @ transRelations;
+                NuXmvModuleDeclaration.ModuleElements = [globalVarModuleElement;globalVarInitialisations;stateVarDeclElement;stateVarInitElement;transRelation];
             }
         let transformedConfiguration =
             {
