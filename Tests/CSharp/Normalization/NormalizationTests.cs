@@ -23,6 +23,7 @@
 namespace Tests.Normalization
 {
 	using System;
+	using Microsoft.CodeAnalysis;
 	using SafetySharp.Compiler.Normalization;
 	using Utilities;
 	using Xunit;
@@ -30,25 +31,25 @@ namespace Tests.Normalization
 	public partial class NormalizationTests : Tests
 	{
 		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Ports")]
-		public void Ports(string test, string code)
+		public void Ports(string test, SyntaxTree code)
 		{
 			CheckNormalization<PortNormalizer>(code);
 		}
 
 		[Theory(DisplayName = ""), MemberData("DiscoverTests", "LiftedExpressions")]
-		public void LiftedExpressions(string test, string code)
+		public void LiftedExpressions(string test, SyntaxTree code)
 		{
 			CheckNormalization<LiftedExpressionNormalizer>(code);
 		}
 
 		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
+		public void Bindings(string test, SyntaxTree code)
 		{
 			CheckNormalization<BindingNormalizer>(code);
 		}
 
 		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Partial")]
-		public void Partial(string test, string code)
+		public void Partial(string test, SyntaxTree code)
 		{
 			CheckNormalization<PartialNormalizer>(code);
 		}

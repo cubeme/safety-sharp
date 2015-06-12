@@ -28,13 +28,14 @@ namespace SafetySharp.Compiler
 	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
+	using System.Reflection;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Microsoft.CodeAnalysis.Editing;
 	using Microsoft.CodeAnalysis.MSBuild;
 	using Normalization;
 	using Roslyn;
-	using SafetySharp.Utilities;
 	using Utilities;
 
 	/// <summary>
@@ -48,17 +49,18 @@ namespace SafetySharp.Compiler
 		private static ImmutableArray<DiagnosticAnalyzer> _analyzers;
 
 		/// <summary>
-		///     Indicates whether the compiler is used to compile test code.
+		///     The error reporter used by the compiler.
 		/// </summary>
-		private readonly bool _testing;
+		private readonly IErrorReporter _log;
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="testing">Indicates whether the compile is used to compile test code.</param>
-		public Compiler(bool testing)
+		/// <param name="errorReporter">The error reporter used by the compiler.</param>
+		public Compiler(IErrorReporter errorReporter)
 		{
-			_testing = testing;
+			Requires.NotNull(errorReporter, () => errorReporter);
+			_log = errorReporter;
 		}
 
 		/// <summary>
@@ -108,7 +110,7 @@ namespace SafetySharp.Compiler
 			var workspace = MSBuildWorkspace.Create(msBuildProperties);
 			var project = workspace.OpenProjectAsync(projectFile).Result;
 
-			return Compile(project, project.OutputFilePath, runSSharpDiagnostics: true);
+			return Compile(project, project.OutputFilePath);
 		}
 
 		/// <summary>
@@ -116,30 +118,62 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		/// <param name="project">The project that should be compiled.</param>
 		/// <param name="outputPath">The output path of the compiled assembly.</param>
-		/// <param name="runSSharpDiagnostics">Indicates whether S#-specific diagnostics should be run.</param>
-		public bool Compile([NotNull] Project project, [NotNull] string outputPath, bool runSSharpDiagnostics)
+		public bool Compile([NotNull] Project project, [NotNull] string outputPath)
 		{
 			Requires.NotNull(project, () => project);
 			Requires.NotNullOrWhitespace(outputPath, () => outputPath);
 
 			var compilation = project.GetCompilationAsync().Result;
 
-			if (!Diagnose(compilation, runSSharpDiagnostics))
-				return false;
-
-			var optimizedCompilation = compilation.WithOptions(compilation.Options.WithOptimizationLevel(OptimizationLevel.Release));
-			var originalAssembly = EmitToStream(optimizedCompilation);
-			if (originalAssembly == null)
+			if (!Diagnose(compilation, true))
 				return false;
 
 			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
 			var options = compilation.Options.WithSpecificDiagnosticOptions(diagnosticOptions);
+			compilation = compilation.WithOptions(options);
+			var optimizedCompilation = compilation.WithOptions(compilation.Options.WithOptimizationLevel(OptimizationLevel.Release));
+
+			byte[] assembly;
+			try
+			{
+				byte[] pdb;
+				EmitInMemory(optimizedCompilation, out assembly, out pdb);
+			}
+			catch (CompilationException)
+			{
+				return false;
+			}
+
+			var syntaxGenerator = SyntaxGenerator.GetGenerator(project.Solution.Workspace, LanguageNames.CSharp);
+			compilation = NormalizeSimulationCode(compilation, syntaxGenerator);
+			OutputCode(compilation, "Simulation");
+
+			return Emit(compilation, outputPath, assembly);
+		}
+
+		/// <summary>
+		///     Compiles and loads the S# <paramref name="project" />.
+		/// </summary>
+		/// <param name="project">The project that should be compiled.</param>
+		public Assembly Compile([NotNull] Project project)
+		{
+			Requires.NotNull(project, () => project);
+
+			var compilation = project.GetCompilationAsync().Result;
+
+			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
+			var options = compilation.Options.WithSpecificDiagnosticOptions(diagnosticOptions);
+			var syntaxGenerator = SyntaxGenerator.GetGenerator(project.Solution.Workspace, LanguageNames.CSharp);
+
+			if (!Diagnose(compilation, true))
+				throw new CompilationException();
 
 			compilation = compilation.WithOptions(options);
-			compilation = NormalizeSimulationCode(compilation);
+			compilation = NormalizeSimulationCode(compilation, syntaxGenerator);
 
-			originalAssembly.Position = 0;
-			return Emit(compilation, outputPath, originalAssembly);
+			byte[] assembly, pdb;
+			EmitInMemory(compilation, out assembly, out pdb);
+			return Assembly.Load(assembly, pdb);
 		}
 
 		/// <summary>
@@ -148,21 +182,21 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		/// <param name="diagnostic">The diagnostic that should be reported.</param>
 		/// <param name="errorsOnly">Indicates whether error diagnostics should be reported exclusively.</param>
-		private static void Report(Diagnostic diagnostic, bool errorsOnly)
+		private void Report(Diagnostic diagnostic, bool errorsOnly)
 		{
 			switch (diagnostic.Severity)
 			{
 				case DiagnosticSeverity.Error:
-					Log.Error("{0}", diagnostic);
+					_log.Error("{0}", diagnostic);
 					break;
 				case DiagnosticSeverity.Warning:
 					if (!errorsOnly)
-						Log.Warn("{0}", diagnostic);
+						_log.Warn("{0}", diagnostic);
 					break;
 				case DiagnosticSeverity.Info:
 				case DiagnosticSeverity.Hidden:
 					if (!errorsOnly)
-						Log.Info("{0}", diagnostic);
+						_log.Info("{0}", diagnostic);
 					break;
 				default:
 					Assert.NotReached("Unknown diagnostic severity.");
@@ -177,7 +211,7 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		/// <param name="diagnostics">The diagnostics that should be reported.</param>
 		/// <param name="errorsOnly">Indicates whether error diagnostics should be reported exclusively.</param>
-		private static bool Report([NotNull] IEnumerable<Diagnostic> diagnostics, bool errorsOnly)
+		private bool Report([NotNull] IEnumerable<Diagnostic> diagnostics, bool errorsOnly)
 		{
 			var containsError = false;
 			foreach (var diagnostic in diagnostics)
@@ -196,7 +230,7 @@ namespace SafetySharp.Compiler
 		/// <param name="message">The message of the diagnostic that should be reported.</param>
 		/// <param name="formatArgs">The format arguments of the message.</param>
 		[StringFormatMethod("message")]
-		private static bool ReportError([NotNull] string identifier, [NotNull] string message, params object[] formatArgs)
+		private bool ReportError([NotNull] string identifier, [NotNull] string message, params object[] formatArgs)
 		{
 			identifier = DiagnosticInfo.Prefix + identifier;
 			message = String.Format(message, formatArgs);
@@ -214,11 +248,8 @@ namespace SafetySharp.Compiler
 		/// <param name="compilation">The compilation containing the code that should be output.</param>
 		/// <param name="path">The target path the code should be output to.</param>
 		[Conditional("DEBUG")]
-		private void OutputCode([NotNull] Compilation compilation, [NotNull] string path)
+		private static void OutputCode([NotNull] Compilation compilation, [NotNull] string path)
 		{
-			if (_testing)
-				return;
-
 			path = Path.Combine("obj", path);
 			Directory.CreateDirectory(path);
 
@@ -255,28 +286,30 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		/// <typeparam name="T">The type of the normalizer that should be applied to <paramref name="compilation" />.</typeparam>
 		/// <param name="compilation">The compilation that should be normalized.</param>
+		/// <param name="syntaxGenerator">The syntax generator that the normalizer should use to generate syntax nodes.</param>
 		[NotNull]
-		private static Compilation ApplyNormalizer<T>([NotNull] Compilation compilation)
+		private static Compilation ApplyNormalizer<T>([NotNull] Compilation compilation, [NotNull] SyntaxGenerator syntaxGenerator)
 			where T : Normalizer, new()
 		{
-			return new T().Normalize(compilation);
+			return new T().Normalize(compilation, syntaxGenerator);
 		}
 
 		/// <summary>
 		///     Applies the required normalizations to the simulation code.
 		/// </summary>
 		/// <param name="compilation">The compilation that should be normalized.</param>
+		/// <param name="syntaxGenerator">The syntax generator that the normalizers should use to generate syntax nodes.</param>
 		[NotNull]
-		private Compilation NormalizeSimulationCode([NotNull] Compilation compilation)
+		private static Compilation NormalizeSimulationCode([NotNull] Compilation compilation, [NotNull]SyntaxGenerator syntaxGenerator)
 		{
-			compilation = ApplyNormalizer<DebugInfoNormalizer>(compilation);
-			compilation = ApplyNormalizer<SafetySharpAttributeNormalizer>(compilation);
-			compilation = ApplyNormalizer<PartialNormalizer>(compilation);
-			compilation = ApplyNormalizer<LiftedExpressionNormalizer>(compilation);
-			compilation = ApplyNormalizer<PortNormalizer>(compilation);
-			compilation = ApplyNormalizer<BindingNormalizer>(compilation);
+			compilation = ApplyNormalizer<DebugInfoNormalizer>(compilation, syntaxGenerator);
+			compilation = ApplyNormalizer<SafetySharpAttributeNormalizer>(compilation, syntaxGenerator);
+			compilation = ApplyNormalizer<PartialNormalizer>(compilation, syntaxGenerator);
+			compilation = ApplyNormalizer<LiftedExpressionNormalizer>(compilation, syntaxGenerator);
+			compilation = ApplyNormalizer<PortNormalizer>(compilation, syntaxGenerator);
+			compilation = ApplyNormalizer<BindingNormalizer>(compilation, syntaxGenerator);
+			compilation = ApplyNormalizer<MetadataNormalizer>(compilation, syntaxGenerator);
 
-			OutputCode(compilation, "Simulation");
 			return compilation;
 		}
 
@@ -286,12 +319,12 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		/// <param name="compilation">The compilation containing the code that should be emitted.</param>
 		/// <param name="assemblyPath">The target path of the assembly that should be emitted.</param>
-		/// <param name="embeddedAssembly">The stream of the assembly that should be embedded.</param>
-		private static bool Emit([NotNull] Compilation compilation, [NotNull] string assemblyPath, [NotNull] Stream embeddedAssembly)
+		/// <param name="assembly">The in-memory assembly that should be embedded.</param>
+		private bool Emit([NotNull] Compilation compilation, [NotNull] string assemblyPath, [NotNull] byte[] assembly)
 		{
 			var resources = new[]
 			{
-				new ResourceDescription(SafetySharpAttributeNormalizer.EmbeddedAssembly, () => embeddedAssembly, true)
+				new ResourceDescription(SafetySharpAttributeNormalizer.EmbeddedAssembly, () => new MemoryStream(assembly), true)
 			};
 
 			var emitResult = compilation.Emit(assemblyPath, Path.ChangeExtension(assemblyPath, ".pdb"), manifestResources: resources);
@@ -303,18 +336,26 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
-		///     Returns the stream of the emitted code for the <paramref name="compilation" />.
+		///     Emitts the code for the <paramref name="compilation" /> in-memory.
 		/// </summary>
 		/// <param name="compilation">The compilation containing the code that should be emitted.</param>
-		private static MemoryStream EmitToStream([NotNull] Compilation compilation)
+		/// <param name="peBytes">Returns the compiled assembly.</param>
+		/// <param name="pdbBytes">The returns the compiled program database.</param>
+		private void EmitInMemory([NotNull] Compilation compilation, out byte[] peBytes, out byte[] pdbBytes)
 		{
-			var stream = new MemoryStream();
-			var emitResult = compilation.Emit(stream);
-			if (emitResult.Success)
-				return stream;
+			using (var peStream = new MemoryStream())
+			using (var pdbStream = new MemoryStream())
+			{
+				var emitResult = compilation.Emit(peStream, pdbStream);
+				if (!emitResult.Success)
+				{
+					Report(emitResult.Diagnostics, true);
+					throw new CompilationException();
+				}
 
-			Report(emitResult.Diagnostics, true);
-			return null;
+				peBytes = peStream.ToArray();
+				pdbBytes = pdbStream.ToArray();
+			}
 		}
 	}
 }

@@ -25,12 +25,12 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	using System;
 	using System.Linq;
 	using System.Linq.Expressions;
+	using CompilerServices;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using SafetySharp.CompilerServices;
-	using SafetySharp.Utilities;
 	using Symbols;
+	using Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="ArgumentSyntax" /> instances.
@@ -143,7 +143,13 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 
 			for (var node = argument.Parent; node != null; node = node.Parent)
 			{
-				if (node is InvocationExpressionSyntax || node is ObjectCreationExpressionSyntax || node is ConstructorInitializerSyntax)
+				var isInvocation =
+					node is InvocationExpressionSyntax ||
+					node is ObjectCreationExpressionSyntax ||
+					node is ConstructorInitializerSyntax ||
+					node is ElementAccessExpressionSyntax;
+
+				if (isInvocation)
 					return node;
 			}
 
@@ -168,17 +174,20 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var invocation = argument.GetInvocationExpression();
-			var methodSymbol = invocation.GetReferencedSymbol<IMethodSymbol>(semanticModel);
+			var methodSymbol = invocation.GetReferencedSymbol(semanticModel) as IMethodSymbol;
+			var propertySymbol = invocation.GetReferencedSymbol(semanticModel) as IPropertySymbol;
+			var parameterSymbols = methodSymbol != null ? methodSymbol.Parameters : propertySymbol.Parameters;
 
 			// If this is a named argument, simply look up the parameter symbol by name.
 			if (argument.NameColon != null)
-				return methodSymbol.Parameters.Single(parameter => parameter.Name == argument.NameColon.Name.Identifier.ValueText);
+				return parameterSymbols.Single(parameter => parameter.Name == argument.NameColon.Name.Identifier.ValueText);
 
 			// Otherwise, get the corresponding invocation or object creation expression and match the argument.
 			var arguments = default(SeparatedSyntaxList<ArgumentSyntax>);
 			var invocationExpression = invocation as InvocationExpressionSyntax;
 			var objectCreationExpression = invocation as ObjectCreationExpressionSyntax;
 			var constructorInitializer = invocation as ConstructorInitializerSyntax;
+			var elementAccessExpression = invocation as ElementAccessExpressionSyntax;
 
 			if (invocationExpression != null)
 				arguments = invocationExpression.ArgumentList.Arguments;
@@ -186,6 +195,8 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 				arguments = objectCreationExpression.ArgumentList.Arguments;
 			else if (constructorInitializer != null)
 				arguments = constructorInitializer.ArgumentList.Arguments;
+			else if (elementAccessExpression != null)
+				arguments = elementAccessExpression.ArgumentList.Arguments;
 			else
 				Assert.NotReached("Expected an invocation expression or an object creation expression.");
 
@@ -193,9 +204,9 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 			{
 				// If this is a method with a params parameter at the end, we might have more arguments than parameters. In that case,
 				// return the parameter symbol for the params parameter if the argument exceeds the parameter count.
-				if (i >= methodSymbol.Parameters.Length)
+				if (i >= parameterSymbols.Length)
 				{
-					var lastParameter = methodSymbol.Parameters[methodSymbol.Parameters.Length - 1];
+					var lastParameter = parameterSymbols[methodSymbol.Parameters.Length - 1];
 					if (lastParameter.IsParams)
 						return lastParameter;
 
@@ -203,7 +214,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 				}
 
 				if (arguments[i] == argument)
-					return methodSymbol.Parameters[i];
+					return parameterSymbols[i];
 			}
 
 			Assert.NotReached("Unable to determine parameter symbol for argument '{0}'.", argument);

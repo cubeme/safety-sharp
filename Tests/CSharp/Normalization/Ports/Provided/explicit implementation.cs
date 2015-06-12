@@ -57,7 +57,7 @@ namespace Tests.Normalization.Ports.Required
 		private delegate int __PortDelegate0__();
 
 		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		int Tests.Normalization.Ports.Required.I1.M() => this.__portField0__();

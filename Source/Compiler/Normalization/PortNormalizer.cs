@@ -27,14 +27,14 @@ namespace SafetySharp.Compiler.Normalization
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
+	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using SafetySharp.CompilerServices;
-	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Replaces all port declarations within a component with a matching delegate type, a field of that
@@ -91,29 +91,29 @@ namespace SafetySharp.Compiler.Normalization
 		/// <summary>
 		///     Represents the [CompilerGenerated] attribute syntax.
 		/// </summary>
-		private static readonly AttributeListSyntax CompilerGeneratedAttribute =
+		private static readonly AttributeListSyntax _compilerGeneratedAttribute =
 			SyntaxBuilder.Attribute(typeof(CompilerGeneratedAttribute).FullName).WithTrailingSpace();
 
 		/// <summary>
 		///     Represents the [DebuggerHidden] attribute syntax.
 		/// </summary>
-		private static readonly AttributeListSyntax DebuggerHiddenAttribute =
+		private static readonly AttributeListSyntax _debuggerHiddenAttribute =
 			SyntaxBuilder.Attribute(typeof(DebuggerHiddenAttribute).FullName).WithTrailingSpace();
 
 		/// <summary>
 		///     Represents the [Required] attribute syntax.
 		/// </summary>
-		private static readonly AttributeListSyntax RequiredAttribute = SyntaxBuilder.Attribute(typeof(RequiredAttribute).FullName);
+		private static readonly AttributeListSyntax _requiredAttribute = SyntaxBuilder.Attribute(typeof(RequiredAttribute).FullName);
 
 		/// <summary>
 		///     Represents the [Provided] attribute syntax.
 		/// </summary>
-		private static readonly AttributeListSyntax ProvidedAttribute = SyntaxBuilder.Attribute(typeof(ProvidedAttribute).FullName);
+		private static readonly AttributeListSyntax _providedAttribute = SyntaxBuilder.Attribute(typeof(ProvidedAttribute).FullName);
 
 		/// <summary>
 		///     Represents the [DebuggerBrowsable(DebuggerBrowsableState.Never)] attribute syntax.
 		/// </summary>
-		private static readonly AttributeListSyntax BrowsableAttribute = SyntaxBuilder.Attribute(
+		private static readonly AttributeListSyntax _browsableAttribute = SyntaxBuilder.Attribute(
 			typeof(DebuggerBrowsableAttribute).FullName,
 			SyntaxFactory.ParseExpression("System.Diagnostics.DebuggerBrowsableState.Never"));
 
@@ -141,7 +141,7 @@ namespace SafetySharp.Compiler.Normalization
 			var normalizedClass = base.VisitClassDeclaration(classDeclaration);
 
 			if (_generatedMembers.Count > 0)
-				AddCompilationUnit(classDeclaration.GeneratePartWithMembers(SemanticModel, _generatedMembers));
+				AddMembers(classDeclaration.GetTypeSymbol(SemanticModel), _generatedMembers.ToArray());
 
 			_generatedMembers = generatedMembers;
 			_portCount = portCount;
@@ -188,7 +188,7 @@ namespace SafetySharp.Compiler.Normalization
 			if (!methodDeclaration.HasAttribute<RequiredAttribute>(SemanticModel))
 			{
 				methodDeclaration = methodDeclaration.RemoveTrivia();
-				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(RequiredAttribute.WithTrailingSpace()));
+				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(_requiredAttribute.WithTrailingSpace()));
 			}
 
 			// Remove the 'extern' keyword from the method
@@ -197,7 +197,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			// Add the [DebuggerHidden] attribute if it is not already present
 			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))
-				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(DebuggerHiddenAttribute));
+				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(_debuggerHiddenAttribute));
 
 			// Replace the method's body and ensure that we don't modify the line count of the containing type
 			methodDeclaration = AddBackingFieldAttribute(methodDeclaration);
@@ -235,7 +235,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			// Add the [Provided] attribute if it is not already present
 			if (!methodDeclaration.HasAttribute<ProvidedAttribute>(SemanticModel))
-				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(ProvidedAttribute.WithTrailingSpace()));
+				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(_providedAttribute.WithTrailingSpace()));
 
 			// Replace the method's body and ensure that we don't modify the line count of the containing type
 			// We don't change abstract methods, however, except for adding the [Provided] attribute, if necessary
@@ -244,12 +244,12 @@ namespace SafetySharp.Compiler.Normalization
 
 			// Add the [PortBehavior] attribute
 			var behaviorArgument = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", methodName));
-			var behaviorAttribute = SyntaxBuilder.Attribute(typeof(PortBehaviorAttribute).FullName, behaviorArgument);
+			var behaviorAttribute = SyntaxBuilder.Attribute(typeof(MethodBehaviorAttribute).FullName, behaviorArgument);
 			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(behaviorAttribute));
 
 			// Add the [DebuggerHidden] attribute if it is not already present
 			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))
-				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(DebuggerHiddenAttribute));
+				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(_debuggerHiddenAttribute));
 
 			methodDeclaration = AddBackingFieldAttribute(methodDeclaration);
 			methodDeclaration = ReplaceBodyWithDelegateInvocation(methodDeclaration);
@@ -287,7 +287,7 @@ namespace SafetySharp.Compiler.Normalization
 		{
 			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
 			var methodDelegate = methodSymbol.GetSynthesizedDelegateDeclaration(GetDelegateName());
-			methodDelegate = methodDelegate.AddAttributeLists(CompilerGeneratedAttribute);
+			methodDelegate = methodDelegate.AddAttributeLists(_compilerGeneratedAttribute);
 
 			return methodDelegate;
 		}
@@ -299,7 +299,7 @@ namespace SafetySharp.Compiler.Normalization
 		private FieldDeclarationSyntax CreateField(DelegateDeclarationSyntax methodDelegate)
 		{
 			return SyntaxBuilder.Field(GetFieldName(), methodDelegate.Identifier.ValueText, Visibility.Private,
-				BrowsableAttribute, CompilerGeneratedAttribute).AsSingleLine();
+				_browsableAttribute, _compilerGeneratedAttribute).AsSingleLine();
 		}
 
 		/// <summary>

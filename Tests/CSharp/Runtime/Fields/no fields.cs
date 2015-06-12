@@ -29,7 +29,7 @@ namespace Tests.Runtime.Fields
 	{
 		protected override void Check()
 		{
-			Metadata.Fields.ShouldBeEmpty();
+			Metadata.Fields.Length.ShouldBe(0);
 		}
 	}
 }

@@ -226,9 +226,14 @@
     <Compile Include="Normalization\LiftedExpressions\Lifted\method invocation, multiple arguments.cs" />
     <Compile Include="Normalization\LiftedExpressions\Lifted\method invocation, single argument.cs" />
     <Compile Include="Normalization\LiftedExpressions\Lifted\nested invocations.cs" />
+    <Compile Include="Runtime\Behaviors\generic component.cs" />
+    <Compile Include="Runtime\Behaviors\multiple overrides.cs" />
+    <Compile Include="Runtime\Behaviors\indirect override.cs" />
+    <Compile Include="Runtime\Behaviors\direct override.cs" />
+    <Compile Include="Runtime\Behaviors\default behavior.cs" />
     <Compile Include="Runtime\Faults\single fault, single effect.cs" />
     <Compile Include="Runtime\Faults\no faults.cs" />
-    <Compile Include="Runtime\Fields\generic fields.cs" />
+    <Compile Include="Runtime\Fields\generic component.cs" />
     <Compile Include="Runtime\Fields\initial values overridden by derived class.cs" />
     <Compile Include="Runtime\Fields\multiple initial values.cs" />
     <Compile Include="Runtime\Fields\initial values, set by constructor.cs" />
@@ -237,6 +242,13 @@
     <Compile Include="Runtime\Fields\inherited field.cs" />
     <Compile Include="Runtime\Fields\single field.cs" />
     <Compile Include="Runtime\Fields\no fields.cs" />
+    <Compile Include="Runtime\ProvidedPorts\no ports.cs" />
+    <Compile Include="Runtime\ProvidedPorts\single port.cs" />
+    <Compile Include="Runtime\RequiredPorts\inherited port.cs" />
+    <Compile Include="Runtime\RequiredPorts\multiple ports.cs" />
+    <Compile Include="Runtime\RequiredPorts\generic component.cs" />
+    <Compile Include="Runtime\RequiredPorts\single port.cs" />
+    <Compile Include="Runtime\RequiredPorts\no ports.cs" />
     <Compile Include="Runtime\RuntimeTests.Helpers.cs">
       <DependentUpon>RuntimeTests.cs</DependentUpon>
     </Compile>
@@ -244,7 +256,6 @@
     <Compile Include="Utilities\AssertTests\IsNotNullMethod.cs" />
     <Compile Include="Utilities\AssertTests\NotNullOrWhitespaceMethod.cs" />
     <Compile Include="Utilities\AssertTests\IsNullMethod.cs" />
-    <Compile Include="Utilities\LogTests\LogTests.cs" />
     <None Include="Normalization\LiftedExpressions\Lifted\line break preservation.cs" />
     <Compile Include="Normalization\LiftedExpressions\Lifted\object creation.cs" />
     <Compile Include="Normalization\LiftedExpressions\Unlifted\object creation.cs" />
@@ -288,6 +299,7 @@
     <None Include="Normalization\Ports\Provided\line count.cs" />
     <None Include="Normalization\Ports\Required\line count.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utilities\CSharpErrorReporter.cs" />
     <Compile Include="Utilities\CSharpException.cs" />
     <Compile Include="Utilities\TestException.cs" />
     <Compile Include="Utilities\Tests.cs" />

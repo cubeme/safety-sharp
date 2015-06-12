@@ -27,6 +27,7 @@ namespace Tests.Utilities
 	using System.Collections.Immutable;
 	using System.IO;
 	using System.Linq;
+	using System.Reflection;
 	using System.Runtime.CompilerServices;
 	using System.Text;
 	using Diagnostics;
@@ -135,6 +136,37 @@ namespace Tests.Utilities
 		}
 
 		/// <summary>
+		///     Compiles the <paramref name="compilation" /> with the S# compiler and returns the resulting assembly that has been
+		///     loaded into the app domain.
+		/// </summary>
+		/// <param name="compilation">The compilation that should be compiled.</param>
+		protected Assembly CompileSafetySharp(Compilation compilation)
+		{
+			using (var workspace = new AdhocWorkspace())
+			{
+				var project = workspace
+					.AddProject(compilation.AssemblyName, LanguageNames.CSharp)
+					.AddMetadataReferences(compilation.References)
+					.WithCompilationOptions(compilation.Options);
+
+				foreach (var syntaxTree in compilation.SyntaxTrees)
+					project = project.AddDocument(Guid.NewGuid().ToString(), syntaxTree.GetRoot().GetText(Encoding.UTF8)).Project;
+
+				var errorReporter = new CSharpErrorReporter(_output);
+				var compiler = new Compiler(errorReporter);
+
+				try
+				{
+					return compiler.Compile(project);
+				}
+				catch (CompilationException e)
+				{
+					throw new TestException(e.Message);
+				}
+			}
+		}
+
+		/// <summary>
 		///     Appends <paramref name="diagnostic" /> to the <paramref name="builder" />.
 		/// </summary>
 		/// <param name="builder">The builder the diagnostic should be appended to.</param>
@@ -174,8 +206,9 @@ namespace Tests.Utilities
 					? Path.GetFileNameWithoutExtension(file)
 					: String.Format("[{0}] {1}", prefix.Substring(1), Path.GetFileNameWithoutExtension(file));
 				var code = File.ReadAllText(file).Replace("\t", "    ");
+				var syntaxTree = SyntaxFactory.ParseSyntaxTree(code, path: file, encoding: Encoding.UTF8);
 
-				yield return new object[] { testName, code };
+				yield return new object[] { testName, syntaxTree };
 			}
 		}
 

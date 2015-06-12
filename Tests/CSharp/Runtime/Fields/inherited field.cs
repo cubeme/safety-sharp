@@ -23,27 +23,16 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
-	using SafetySharp.CompilerServices;
 	using Shouldly;
 
 	internal abstract class X10 : TestComponent
 	{
 		public readonly int _x = 11;
-
-		protected X10()
-		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X10), typeof(int), "_x"));
-		}
 	}
 
 	internal class X11 : X10
 	{
 		private new readonly int _x = 17;
-
-		public X11()
-		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X11), typeof(int), "_x"));
-		}
 
 		protected override void Check()
 		{

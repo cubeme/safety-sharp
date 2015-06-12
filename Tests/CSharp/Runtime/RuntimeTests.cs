@@ -23,19 +23,38 @@
 namespace Tests.Runtime
 {
 	using System;
+	using Microsoft.CodeAnalysis;
 	using Utilities;
 	using Xunit;
 
 	public partial class RuntimeTests : Tests
 	{
 		[Theory, MemberData("DiscoverTests", "Fields")]
-		public void Fields(string test, string code)
+		public void Fields(string test, SyntaxTree code)
 		{
 			Check(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Faults")]
-		public void Faults(string test, string code)
+		public void Faults(string test, SyntaxTree code)
+		{
+			Check(code);
+		}
+
+		[Theory, MemberData("DiscoverTests", "Behaviors")]
+		public void Behaviors(string test, SyntaxTree code)
+		{
+			Check(code);
+		}
+
+		[Theory, MemberData("DiscoverTests", "RequiredPorts")]
+		public void RequiredPorts(string test, SyntaxTree code)
+		{
+			Check(code);
+		}
+
+		[Theory, MemberData("DiscoverTests", "ProvidedPorts")]
+		public void ProvidedPorts(string test, SyntaxTree code)
 		{
 			Check(code);
 		}

@@ -23,17 +23,11 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
-	using SafetySharp.CompilerServices;
 	using Shouldly;
 
 	internal class X2 : TestComponent
 	{
 		private readonly int _x = 0;
-
-		public X2()
-		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X2), typeof(int), "_x"));
-		}
 
 		protected override void Check()
 		{
@@ -46,11 +40,6 @@ namespace Tests.Runtime.Fields
 	{
 		private readonly double _x = 0;
 
-		public X3()
-		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X3), typeof(double), "_x"));
-		}
-
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(1);
@@ -62,11 +51,6 @@ namespace Tests.Runtime.Fields
 	{
 		private readonly bool _x = false;
 
-		public X4()
-		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X4), typeof(bool), "_x"));
-		}
-
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(1);
@@ -77,11 +61,6 @@ namespace Tests.Runtime.Fields
 	internal class X5 : TestComponent
 	{
 		private readonly E _x = E.A;
-
-		public X5()
-		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X5), typeof(E), "_x"));
-		}
 
 		protected override void Check()
 		{

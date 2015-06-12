@@ -83,7 +83,7 @@ namespace Tests.Normalization.Ports.Provided
 		private delegate int __PortDelegate0__(int x);
 
 		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public virtual int M(int x) => this.__portField0__(x);
@@ -99,7 +99,7 @@ namespace Tests.Normalization.Ports.Provided
 		private delegate int __PortDelegate0__(int x);
 
 		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public override int M(int x) => this.__portField0__(x);
@@ -115,7 +115,7 @@ namespace Tests.Normalization.Ports.Provided
 		private delegate int __PortDelegate0__(int x);
 
 		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public sealed override int M(int x) => this.__portField0__(x);

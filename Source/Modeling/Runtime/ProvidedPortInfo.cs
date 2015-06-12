@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,61 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.Fields
+namespace SafetySharp.Runtime
 {
 	using System;
-	using SafetySharp.CompilerServices;
-	using Shouldly;
+	using System.Reflection;
+	using Modeling;
 
-	internal abstract class X14<T1, T2> : TestComponent
+	/// <summary>
+	///     Represents the the immutable metadata of a provided port of a S# <see cref="Component" />.
+	/// </summary>
+	public sealed class ProvidedPortInfo : BehaviorInfo
 	{
-		public readonly T1 _x;
-		public readonly T2 _y;
-
-		protected X14(T1 v1, T2 v2)
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="component">The component the method belongs to.</param>
+		/// <param name="port">The method that represents the component's port.</param>
+		/// <param name="basePort">The overridden base port, if any.</param>
+		/// <param name="createBody">The callback that should be used to retrieve the body of the port.</param>
+		public ProvidedPortInfo(ComponentInfo component, MethodInfo port, MethodInfo basePort = null, CreateBodyCallback createBody = null)
+			: base(component, port, basePort, createBody)
 		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X14<T1, T2>), typeof(T1), "_x"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X14<T1, T2>), typeof(T2), "_y"));
-
-			_x = v1;
-			_y = v2;
-		}
-	}
-
-	internal class X15 : X14<int, bool>
-	{
-		public X15()
-			: base(1, true)
-		{
-		}
-
-		protected override void Check()
-		{
-			Metadata.Fields.Length.ShouldBe(2);
-			CheckField(typeof(int), "_x", 1);
-			CheckField(typeof(bool), "_y", true);
-		}
-	}
-
-	internal class X16 : X14<double, X16.E>
-	{
-		public enum E
-		{
-			A,
-			B,
-			C
-		}
-
-		public X16()
-			: base(4.2, E.B)
-		{
-		}
-
-		protected override void Check()
-		{
-			Metadata.Fields.Length.ShouldBe(2);
-			CheckField(typeof(double), "_x", 4.2);
-			CheckField(typeof(E), "_y", E.B);
 		}
 	}
 }

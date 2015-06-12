@@ -92,7 +92,7 @@ namespace Tests.Normalization.Ports.Provided
 		private delegate void __PortDelegate0__();
 
 		[Provided]
-		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation0__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute()]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
 		public void M1() => this.__portField0__();
@@ -106,7 +106,7 @@ namespace Tests.Normalization.Ports.Provided
 
 		[DebuggerHidden]
 		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation1__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation1__")]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField1__")]
 		internal void M2() => this.__portField1__();
 
@@ -120,7 +120,7 @@ namespace Tests.Normalization.Ports.Provided
 		[DebuggerHidden]
 		[DebuggerStepThrough]
 		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation2__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation2__")]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField2__")]
 		protected internal void M3() => this.__portField2__();
 
@@ -133,7 +133,7 @@ namespace Tests.Normalization.Ports.Provided
 
 		[DebuggerHidden, DebuggerStepThrough]
 		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.PortBehaviorAttribute("__DefaultImplementation3__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation3__")]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField3__")]
 		protected void M4() => this.__portField3__();
 	}

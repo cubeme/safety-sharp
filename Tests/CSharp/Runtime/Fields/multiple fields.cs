@@ -23,7 +23,6 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
-	using SafetySharp.CompilerServices;
 	using Shouldly;
 
 	internal class X9 : TestComponent
@@ -32,14 +31,6 @@ namespace Tests.Runtime.Fields
 		private readonly int _x = 0;
 		private readonly double _y = 0;
 		private readonly bool _z = false;
-
-		public X9()
-		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X9), typeof(int), "_x"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X9), typeof(double), "_y"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X9), typeof(bool), "_z"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X9), typeof(E), "_w"));
-		}
 
 		protected override void Check()
 		{

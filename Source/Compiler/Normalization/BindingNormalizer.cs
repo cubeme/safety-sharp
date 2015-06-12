@@ -29,10 +29,10 @@ namespace SafetySharp.Compiler.Normalization
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Replaces all port binding assignments with constructor invocations of <see cref="PortBinding" />.
@@ -73,7 +73,7 @@ namespace SafetySharp.Compiler.Normalization
 			_delegates.Clear();
 
 			if (delegates.Length > 0)
-				AddCompilationUnit(classDeclaration.GeneratePartWithMembers(SemanticModel, delegates));
+				AddMembers(classDeclaration.GetTypeSymbol(SemanticModel), delegates);
 
 			return normalizedClassDeclaration;
 		}

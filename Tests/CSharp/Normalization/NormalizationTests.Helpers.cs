@@ -31,6 +31,7 @@ namespace Tests.Normalization
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Microsoft.CodeAnalysis.Editing;
 	using SafetySharp.Compiler.Roslyn;
 	using SafetySharp.Compiler.Roslyn.Symbols;
 	using SafetySharp.Compiler.Roslyn.Syntax;
@@ -58,11 +59,9 @@ namespace Tests.Normalization
 		{
 		}
 
-		private void CheckNormalization<T>(string code)
+		private void CheckNormalization<T>(SyntaxTree syntaxTree)
 			where T : Normalizer, new()
 		{
-			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code);
-
 			// Ensure that there are no C# errors
 			var compilation = CreateCompilation(syntaxTree);
 
@@ -100,8 +99,10 @@ namespace Tests.Normalization
 				: expectedOutputs.Select(t => (BaseTypeDeclarationSyntax)t.Accept(renamer)).ToArray();
 
 			// Normalize the input
+			var workspace = new AdhocWorkspace();
+			var syntaxGenerator = SyntaxGenerator.GetGenerator(workspace, LanguageNames.CSharp);
 			var normalizer = new T();
-			compilation = normalizer.Normalize(compilation);
+			compilation = normalizer.Normalize(compilation, syntaxGenerator);
 
 			// Compare the results
 			var actualOutputs = compilation

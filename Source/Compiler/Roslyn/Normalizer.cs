@@ -28,8 +28,9 @@ namespace SafetySharp.Compiler.Roslyn
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using SafetySharp.Utilities;
+	using Microsoft.CodeAnalysis.Editing;
 	using Syntax;
+	using Utilities;
 
 	/// <summary>
 	///     A base class for C# normalizers that normalize certain C# language features.
@@ -52,15 +53,23 @@ namespace SafetySharp.Compiler.Roslyn
 		protected SemanticModel SemanticModel { get; private set; }
 
 		/// <summary>
+		///     Gets the syntax generator that the normalizer can use to generate syntax nodes.
+		/// </summary>
+		protected SyntaxGenerator Syntax { get; private set; }
+
+		/// <summary>
 		///     Normalizes the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation that should be normalized.</param>
+		/// <param name="syntaxGenerator">The syntax generator that the normalizer should use to generate syntax nodes.</param>
 		[NotNull]
-		public Compilation Normalize([NotNull] Compilation compilation)
+		public Compilation Normalize([NotNull] Compilation compilation, [NotNull] SyntaxGenerator syntaxGenerator)
 		{
 			Requires.NotNull(compilation, () => compilation);
 
+			Syntax = syntaxGenerator;
 			Compilation = compilation;
+
 			return Normalize();
 		}
 
@@ -118,6 +127,55 @@ namespace SafetySharp.Compiler.Roslyn
 			var syntaxTree = _syntaxTree.WithRoot(compilationUnit.NormalizeWhitespace()).WithFilePath(path);
 
 			Compilation = Compilation.AddSyntaxTrees(syntaxTree);
+		}
+
+		/// <summary>
+		///     Adds a compilation unit containing a part of the partial <paramref name="type" /> containing the
+		///     <paramref name="members" />.
+		/// </summary>
+		/// <param name="type">The type the part should be declared for.</param>
+		/// <param name="members">The members that should be added to the class.</param>
+		protected void AddMembers([NotNull] INamedTypeSymbol type, [NotNull] params MemberDeclarationSyntax[] members)
+		{
+			Requires.NotNull(type, () => type);
+			Requires.NotNull(members, () => members);
+
+			var generatedClass = SyntaxFactory
+				.ClassDeclaration(type.Name)
+				//.WithTypeParameterList(classDeclaration.TypeParameterList)
+				.WithMembers(SyntaxFactory.List(members))
+				.WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PartialKeyword)));
+
+			CompilationUnitSyntax compilationUnit;
+
+			if (type.ContainingType != null)
+			{
+				generatedClass = SyntaxFactory
+					.ClassDeclaration(type.ContainingType.Name)
+					//.WithTypeParameterList(classDeclaration.Ancestors().OfType<ClassDeclarationSyntax>().First().TypeParameterList)
+					.WithMembers(SyntaxFactory.SingletonList((MemberDeclarationSyntax)generatedClass))
+					.WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PartialKeyword)));
+			}
+
+			if (type.ContainingNamespace != null && !type.ContainingNamespace.IsGlobalNamespace)
+			{
+				var namespaceName = SyntaxFactory.ParseName(type.ContainingNamespace.ToDisplayString());
+				var namespaceDeclaration = SyntaxFactory
+					.NamespaceDeclaration(namespaceName)
+					.WithMembers(SyntaxFactory.SingletonList((MemberDeclarationSyntax)generatedClass));
+
+				compilationUnit = SyntaxFactory
+					.CompilationUnit()
+					.WithMembers(SyntaxFactory.SingletonList((MemberDeclarationSyntax)namespaceDeclaration));
+			}
+			else
+			{
+				compilationUnit = SyntaxFactory
+					.CompilationUnit()
+					.WithMembers(SyntaxFactory.SingletonList((MemberDeclarationSyntax)generatedClass));
+			}
+
+			AddCompilationUnit(compilationUnit);
 		}
 	}
 }

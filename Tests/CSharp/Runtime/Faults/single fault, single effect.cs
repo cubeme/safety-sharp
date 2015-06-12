@@ -31,11 +31,6 @@ namespace Tests.Runtime.Faults
 	{
 		private readonly F _fault = new F();
 
-		public X2()
-		{
-			GetBuilder().WithFault(_fault);
-		}
-
 		protected override void Check()
 		{
 			Metadata.Faults.Length.ShouldBe(1);

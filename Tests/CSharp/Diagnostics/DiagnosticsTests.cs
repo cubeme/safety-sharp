@@ -23,6 +23,7 @@
 namespace Tests.Diagnostics
 {
 	using System;
+	using Microsoft.CodeAnalysis;
 	using SafetySharp.Compiler.Analyzers;
 	using Utilities;
 	using Xunit;
@@ -30,25 +31,25 @@ namespace Tests.Diagnostics
 	public partial class DiagnosticsTests : Tests
 	{
 		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, string code)
+		public void Bindings(string test, SyntaxTree code)
 		{
 			CheckDiagnostics<BindingAnalyzer>(code);
 		}
 
 		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, string code)
+		public void Enums(string test, SyntaxTree code)
 		{
 			CheckDiagnostics<EnumAnalyzer>(code);
 		}
 
 		[Theory(DisplayName = ""), MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, string code)
+		public void CustomComponents(string test, SyntaxTree code)
 		{
 			CheckDiagnostics<CustomComponentAnalyzer>(code);
 		}
 
 		[Theory(DisplayName = ""), MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, string code)
+		public void PortKinds(string test, SyntaxTree code)
 		{
 			CheckDiagnostics<PortKindAnalyzer>(code);
 		}

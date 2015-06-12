@@ -47,6 +47,21 @@ namespace SafetySharp.Runtime
 		public Component Component { get; private set; }
 
 		/// <summary>
+		///     Gets the behaviors declared by the component.
+		/// </summary>
+		public ComponentMethodCollection<BehaviorInfo> Behaviors { get; private set; }
+
+		/// <summary>
+		///     Gets the required ports declared by the component.
+		/// </summary>
+		public ComponentMethodCollection<RequiredPortInfo> RequiredPorts { get; private set; }
+
+		/// <summary>
+		///     Gets the provided ports declared by the component.
+		/// </summary>
+		public ComponentMethodCollection<ProvidedPortInfo> ProvidedPorts { get; private set; }
+
+		/// <summary>
 		///     Gets the user-friendly name of the component.
 		/// </summary>
 		public string Name { get; private set; }

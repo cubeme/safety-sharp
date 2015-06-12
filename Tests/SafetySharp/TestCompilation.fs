@@ -35,6 +35,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
+open Microsoft.CodeAnalysis.Editing
 open Mono.Cecil
 open SafetySharp.Compiler.Roslyn.Syntax
 open SafetySharp.Compiler.Roslyn.Symbols
@@ -153,8 +154,8 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
                 ) project
             let project = project.WithCompilationOptions csharpCompilation.Options
             
-            let compiler = Compiler (true)
-            if not <| compiler.Compile (project, assemblyPath, runSSharpDiagnostics) then
+            let compiler = Compiler (ConsoleErrorReporter ())
+            if not <| compiler.Compile (project, assemblyPath) then
                 failed "Assembly compilation failed."
 
             assembly <- Assembly.LoadFile assemblyPath
@@ -393,7 +394,9 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
     static member GetNormalizedSyntaxTreesWithExternAliases (normalizer : Normalizer) csharpCode externAliases =
         let compilation = TestCompilation (csharpCode, [||], externAliases)
-        let syntaxTrees = normalizer.Normalize(compilation.CSharpCompilation).SyntaxTrees
+        use workspace = new AdhocWorkspace ()
+        let syntaxGenerator = SyntaxGenerator.GetGenerator (workspace, LanguageNames.CSharp)
+        let syntaxTrees = normalizer.Normalize(compilation.CSharpCompilation, syntaxGenerator).SyntaxTrees
         
         // Check if the normalized tree is valid C# code
         let compilation = TestCompilation (syntaxTrees |> Seq.fold (fun result tree -> result + (tree.ToString ())) String.Empty, [||], externAliases)

@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,33 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Utilities
+namespace Tests.Utilities
 {
 	using System;
+	using SafetySharp.Compiler;
+	using Xunit.Abstractions;
 
-	/// <summary>
-	///     Identifies the type of information provided by a <see cref="LogEntry" />.
-	/// </summary>
-	internal enum LogType
+	public class CSharpErrorReporter : IErrorReporter
 	{
-		/// <summary>
-		///     The <see cref="LogEntry" /> describes a fatal error.
-		/// </summary>
-		Fatal,
+		private readonly ITestOutputHelper _output;
 
-		/// <summary>
-		///     The <see cref="LogEntry" /> describes an error.
-		/// </summary>
-		Error,
+		public CSharpErrorReporter(ITestOutputHelper output)
+		{
+			_output = output;
+		}
 
-		/// <summary>
-		///     The <see cref="LogEntry" /> describes a warning.
-		/// </summary>
-		Warning,
+		public void Die(string message, params object[] arguments)
+		{
+			_output.WriteLine("{0}", String.Format(message, arguments));
+		}
 
-		/// <summary>
-		///     The <see cref="LogEntry" /> provides an informational message.
-		/// </summary>
-		Info
+		public void Error(string message, params object[] arguments)
+		{
+			_output.WriteLine("{0}", String.Format(message, arguments));
+		}
+
+		public void Warn(string message, params object[] arguments)
+		{
+			_output.WriteLine("{0}", String.Format(message, arguments));
+		}
+
+		public void Info(string message, params object[] arguments)
+		{
+			_output.WriteLine("{0}", String.Format(message, arguments));
+		}
 	}
 }

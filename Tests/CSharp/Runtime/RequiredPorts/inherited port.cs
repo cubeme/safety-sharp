@@ -20,48 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Utilities
+namespace Tests.Runtime.RequiredPorts
 {
 	using System;
-	using JetBrains.Annotations;
-	using SafetySharp.Utilities;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents a log entry, describing fatal errors, non-fatal errors, or warnings as well as providing debugging
-	///     information and other informational messages.
-	/// </summary>
-	internal struct LogEntry
+	internal abstract class X4 : TestComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="logType">The type of the log entry.</param>
-		/// <param name="message">The non-empty message of the log entry.</param>
-		internal LogEntry(LogType logType, [NotNull] string message)
-			: this()
+		public extern bool M(ref int i);
+	}
+
+	internal class X5 : X4
+	{
+		public extern void Q(out int i);
+
+		protected override void Check()
 		{
-			Requires.InRange(logType, () => logType);
-			Requires.NotNull(message, () => message);
+			Metadata.RequiredPorts.Length.ShouldBe(2);
 
-			LogType = logType;
-			Message = message;
-			Time = DateTime.Now;
+			Metadata.RequiredPorts[0].Method.ShouldBe(typeof(X4).GetMethod("M"));
+			Metadata.RequiredPorts[0].Component.Component.ShouldBe(this);
+			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.RequiredPorts[0].CreateBody.ShouldBe(null);
+			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
+			Metadata.RequiredPorts[0].Name.ShouldBe("M");
+
+			Metadata.RequiredPorts[1].Method.ShouldBe(typeof(X5).GetMethod("Q"));
+			Metadata.RequiredPorts[1].Component.Component.ShouldBe(this);
+			Metadata.RequiredPorts[1].BaseMethod.ShouldBe(null);
+			Metadata.RequiredPorts[1].CreateBody.ShouldBe(null);
+			Metadata.RequiredPorts[1].IsOverride.ShouldBe(false);
+			Metadata.RequiredPorts[1].Name.ShouldBe("Q");
 		}
-
-		/// <summary>
-		///     Gets the type of the log entry.
-		/// </summary>
-		public LogType LogType { get; private set; }
-
-		/// <summary>
-		///     Gets the message of the log entry.
-		/// </summary>
-		[NotNull]
-		public string Message { get; private set; }
-
-		/// <summary>
-		///     Gets the date and time of the creation of the log entry.
-		/// </summary>
-		public DateTime Time { get; private set; }
 	}
 }

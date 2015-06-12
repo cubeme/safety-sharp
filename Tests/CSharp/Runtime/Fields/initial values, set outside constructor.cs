@@ -23,7 +23,6 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
-	using SafetySharp.CompilerServices;
 	using Shouldly;
 
 	internal class X6 : TestComponent
@@ -32,14 +31,6 @@ namespace Tests.Runtime.Fields
 		private readonly int _x = 3;
 		private readonly double _y = 5.5;
 		private readonly bool _z = true;
-
-		public X6()
-		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X6), typeof(int), "_x"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X6), typeof(double), "_y"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X6), typeof(bool), "_z"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X6), typeof(E), "_w"));
-		}
 
 		protected override void Check()
 		{

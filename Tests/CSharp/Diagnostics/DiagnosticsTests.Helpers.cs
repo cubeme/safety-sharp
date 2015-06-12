@@ -69,7 +69,7 @@ namespace Tests.Diagnostics
 		{
 		}
 
-		private void CheckDiagnostics<T>(string code)
+		private void CheckDiagnostics<T>(SyntaxTree code)
 			where T : Analyzer, new()
 		{
 			var analyzer = new T();

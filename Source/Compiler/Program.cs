@@ -28,7 +28,6 @@ namespace SafetySharp.Compiler
 	using CommandLine.Text;
 	using JetBrains.Annotations;
 	using SafetySharp.Utilities;
-	using Utilities;
 
 	/// <summary>
 	///     Parses the command line arguments and starts the compilation process.
@@ -57,7 +56,7 @@ namespace SafetySharp.Compiler
 		public string ProjectFile { get; set; }
 
 		/// <summary>
-		///     Gets or sets a value indicating whether all compiler output should be suppressed.
+		///     Gets or sets a value indicating whether all informational compiler output should be suppressed.
 		/// </summary>
 		[Option("silent", Required = false, HelpText = "Suppresses all compiler output except for errors and warnings.")]
 		[UsedImplicitly]
@@ -86,7 +85,7 @@ namespace SafetySharp.Compiler
 		/// <param name="args">The compiler arguments passed via the command line.</param>
 		private int Compile(string[] args)
 		{
-			PrintToConsole();
+			var log = new ConsoleErrorReporter();
 
 			using (var parser = new Parser(c => c.HelpWriter = null))
 			{
@@ -94,92 +93,51 @@ namespace SafetySharp.Compiler
 				// way. If so, output the help screen and successfully terminate the application.
 				if (args.Any(arg => arg == "--help" || arg == "-h"))
 				{
-					Log.Info("{0}", GenerateHelpMessage());
+					log.Info("{0}", GenerateHelpMessage());
 					return 0;
 				}
 
 				// If there was an error parsing the command line, show the help screen and terminate the application.
 				if (!parser.ParseArguments(args, this))
 				{
-					Silent = false;
-					Log.Info("{0}", GenerateHelpMessage());
-					Log.Die("Invalid command line arguments.");
+					log.Info("{0}", GenerateHelpMessage());
+					log.Die("Invalid command line arguments.");
 				}
 			}
 
-			Log.Info("");
+			log.Silent = Silent;
+			log.Info("");
 
-			Log.Info("S# Compiler");
-			Log.Info("Copyright (c) 2014 Institute for Software & Systems Engineering");
+			log.Info("S# Compiler");
+			log.Info("Copyright (c) 2014 Institute for Software & Systems Engineering");
 
-			Log.Info("");
-			Log.Info("This is free software. You may redistribute copies of it under the terms of");
-			Log.Info("the MIT license (see http://opensource.org/licenses/MIT).");
+			log.Info("");
+			log.Info("This is free software. You may redistribute copies of it under the terms of");
+			log.Info("the MIT license (see http://opensource.org/licenses/MIT).");
 
-			Log.Info("");
+			log.Info("");
 
 			// Start the compilation process.
 			try
 			{
-				var compiler = new Compiler(testing: false);
+				var compiler = new Compiler(log);
 				if (!compiler.Compile(ProjectFile, Configuration, Platform))
 					return -1;
 
-				Log.Info("Compilation completed successfully.");
+				log.Info("Compilation completed successfully.");
 				return 0;
 			}
 			catch (Exception e)
 			{
-				Log.Error("A fatal compilation error occurred: {0}", e.Message);
+				log.Error("A fatal compilation error occurred: {0}", e.Message);
 #if DEBUG
-				Log.Error("StackTrace:\n{0}", e.StackTrace);
+				log.Error("StackTrace:\n{0}", e.StackTrace);
 #endif
 				return -1;
 			}
 		}
 
-		/// <summary>
-		///     Wires up the <see cref="Log.Logged" /> event to write all logged messages to the console.
-		/// </summary>
-		private void PrintToConsole()
-		{
-			Log.Logged += entry =>
-			{
-				switch (entry.LogType)
-				{
-					case LogType.Info:
-						if (!Silent)
-							WriteToConsole(ConsoleColor.White, entry.Message);
-						break;
-					case LogType.Warning:
-						WriteToConsole(ConsoleColor.Yellow, entry.Message);
-						break;
-					case LogType.Error:
-						WriteToConsole(ConsoleColor.Red, entry.Message);
-						break;
-					case LogType.Fatal:
-						WriteToConsole(ConsoleColor.Red, entry.Message);
-						break;
-					default:
-						Assert.NotReached();
-						break;
-				}
-			};
-		}
-
-		/// <summary>
-		///     Writes the <paramref name="message" /> to the console using the given <paramref name="color" />.
-		/// </summary>
-		/// <param name="color">The color that should be used to write <paramref name="message" /> to the console.</param>
-		/// <param name="message">The message that should be written to the console.</param>
-		private static void WriteToConsole(ConsoleColor color, [NotNull] string message)
-		{
-			var currentColor = Console.ForegroundColor;
-
-			Console.ForegroundColor = color;
-			Console.WriteLine(message);
-			Console.ForegroundColor = currentColor;
-		}
+		
 
 		/// <summary>
 		///     The entry point to the compiler.
@@ -187,8 +145,6 @@ namespace SafetySharp.Compiler
 		/// <param name="args">The compiler arguments passed via the command line.</param>
 		private static int Main(string[] args)
 		{
-			Log.OnDie += () => Environment.Exit(-1);
-
 			var program = new Program();
 			return program.Compile(args);
 		}

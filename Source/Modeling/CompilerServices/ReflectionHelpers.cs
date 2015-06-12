@@ -60,21 +60,18 @@ namespace SafetySharp.CompilerServices
 
 		/// <summary>
 		///     Gets the instance method called <paramref name="methodName" /> declared by the <paramref name="declaringType" />,
-		///     with the signature of the method defined by the <paramref name="argumentTypes" />, <paramref name="returnType" />,
-		///     and <paramref name="typeParams" />.
+		///     with the signature of the method defined by the <paramref name="argumentTypes" /> and <paramref name="returnType" />.
 		/// </summary>
 		/// <param name="declaringType">The type that declares the method.</param>
 		/// <param name="methodName">The name of the method.</param>
 		/// <param name="argumentTypes">The argument types of the method.</param>
 		/// <param name="returnType">The return type of the method.</param>
-		/// <param name="typeParams"></param>
-		public static MethodInfo GetMethod(Type declaringType, string methodName, Type[] argumentTypes, Type returnType, Type[] typeParams)
+		public static MethodInfo GetMethod(Type declaringType, string methodName, Type[] argumentTypes, Type returnType)
 		{
 			Requires.NotNull(declaringType, () => declaringType);
 			Requires.NotNullOrWhitespace(methodName, () => methodName);
 			Requires.NotNull(argumentTypes, () => argumentTypes);
 			Requires.NotNull(returnType, () => returnType);
-			Requires.NotNull(typeParams, () => typeParams);
 
 			var method = declaringType
 				.GetMethods(Flags)

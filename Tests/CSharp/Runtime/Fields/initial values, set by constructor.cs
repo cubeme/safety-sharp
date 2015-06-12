@@ -23,31 +23,21 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
-	using SafetySharp.CompilerServices;
 	using Shouldly;
 
 	internal class X7 : TestComponent
 	{
+		private readonly E _w;
 		private readonly int _x;
 		private readonly double _y;
 		private readonly bool _z;
-		private readonly E _w;
 
 		public X7()
 		{
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X7), typeof(int), "_x"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X7), typeof(double), "_y"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X7), typeof(bool), "_z"));
-			GetBuilder().WithField(ReflectionHelpers.GetField(typeof(X7), typeof(E), "_w"));
-
 			_x = 17;
 			_y = 3.14;
 			_z = true;
 			_w = E.B;
-		}	private enum E
-		{
-			A,
-			B
 		}
 
 		protected override void Check()
@@ -57,6 +47,12 @@ namespace Tests.Runtime.Fields
 			CheckField(typeof(double), "_y", _y);
 			CheckField(typeof(bool), "_z", _z);
 			CheckField(typeof(E), "_w", _w);
+		}
+
+		private enum E
+		{
+			A,
+			B
 		}
 	}
 }

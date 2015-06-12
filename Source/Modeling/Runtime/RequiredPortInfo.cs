@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,30 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CompilerServices
+namespace SafetySharp.Runtime
 {
 	using System;
-	using Utilities;
+	using System.Reflection;
+	using Modeling;
 
 	/// <summary>
-	///     When applied to a provided port, indicates the method that implements the behavior of the port.
+	///     Represents the the immutable metadata of a required port of a S# <see cref="Component" />.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-	public sealed class PortBehaviorAttribute : Attribute
+	public sealed class RequiredPortInfo : ComponentMethodInfo
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="methodName">The name of the marked port's behavior method.</param>
-		public PortBehaviorAttribute(string methodName)
+		/// <param name="component">The component the method belongs to.</param>
+		/// <param name="port">The method representing the component's port.</param>
+		internal RequiredPortInfo(ComponentInfo component, MethodInfo port)
+			: base(component, port)
 		{
-			Requires.NotNull(methodName, () => methodName);
-			MethodName = methodName;
 		}
-
-		/// <summary>
-		///     Gets the name of the marked port's behavior method.
-		/// </summary>
-		public string MethodName { get; private set; }
 	}
 }

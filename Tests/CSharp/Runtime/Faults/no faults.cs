@@ -29,7 +29,7 @@ namespace Tests.Runtime.Faults
 	{
 		protected override void Check()
 		{
-			Metadata.Faults.ShouldBeEmpty();
+			Metadata.Faults.Length.ShouldBe(0);
 		}
 	}
 }

@@ -26,23 +26,30 @@ namespace Tests.Runtime
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Reflection;
 	using System.Text;
 	using JetBrains.Annotations;
-	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using SafetySharp.Compiler.Roslyn.Syntax;
 	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime;
 	using Utilities;
+	using Xunit.Abstractions;
 
 	public abstract class TestComponent : Component
 	{
 		protected ComponentInfo Metadata { get; private set; }
 
-		protected ComponentInfo.Builder GetBuilder()
+		protected ComponentInfo.Builder Builder
 		{
-			return MetadataBuilders.GetBuilder(this);
+			get { return MetadataBuilders.GetBuilder(this); }
+		}
+
+		protected MethodInfo ComponentUpdatedMethod
+		{
+			get { return typeof(Component).GetMethod("Update"); }
 		}
 
 		public void Check(ComponentInfo metadata)
@@ -58,6 +65,7 @@ namespace Tests.Runtime
 			var hasField = Metadata.Fields.Any(field =>
 				field.Type == fieldType &&
 				field.Name == fieldName &&
+				field.Component.Component == this &&
 				field.InitialValues.SequenceEqual(initialValues));
 
 			if (hasField)
@@ -105,21 +113,31 @@ namespace Tests.Runtime
 
 	partial class RuntimeTests
 	{
-		private static void Check(string code)
+		public RuntimeTests(ITestOutputHelper output)
+			: base(output)
 		{
-			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code);
+		}
+
+		private void Check(SyntaxTree syntaxTree)
+		{
 			var compilation = CreateCompilation(syntaxTree);
 			var semanticModel = compilation.GetSemanticModel(syntaxTree);
 
 			var componentTypes = syntaxTree
 				.Descendants<ClassDeclarationSyntax>()
 				.Select(declaration => declaration.GetTypeSymbol(semanticModel))
-				.Where(symbol => !symbol.IsGenericType && !symbol.IsAbstract)
-				.Select(symbol => symbol.ToDisplayString());
+				.Where(symbol => !symbol.IsGenericType && !symbol.IsAbstract && symbol.ContainingType == null)
+				.Select(symbol => symbol.ToDisplayString())
+				.ToArray();
+
+			if (componentTypes.Length == 0)
+				throw new TestException("Unable to find any testable class declarations.");
+
+			var assembly = CompileSafetySharp(compilation);
 
 			foreach (var componentType in componentTypes)
 			{
-				var type = Type.GetType(componentType);
+				var type = assembly.GetType(componentType);
 				var component = (TestComponent)Activator.CreateInstance(type);
 				var info = MetadataProvider.ComponentBuilders[component].RegisterMetadata();
 				component.Check(info);

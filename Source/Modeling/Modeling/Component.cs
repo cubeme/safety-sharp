@@ -25,7 +25,9 @@ namespace SafetySharp.Modeling
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
+	using System.Diagnostics;
 	using CompilerServices;
+	using JetBrains.Annotations;
 	using Runtime;
 	using Utilities;
 
@@ -34,13 +36,19 @@ namespace SafetySharp.Modeling
 	/// </summary>
 	public abstract partial class Component : IComponent
 	{
+		[UsedImplicitly]
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private Action _updateMethod = null;
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		protected Component()
 		{
-			MetadataProvider.ComponentBuilders.Add(this, new ComponentInfo.Builder(this));
-			InitializeProvidedPorts();
+			var builder = new ComponentInfo.Builder(this);
+			builder.WithBehavior(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
+
+			MetadataProvider.ComponentBuilders.Add(this, builder);
 		}
 
 		/// <summary>
@@ -61,7 +69,18 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Updates the internal state of the component.
 		/// </summary>
+		[BackingField("_updateMethod")]
+		[MethodBehavior("UpdateBehavior")]
 		public virtual void Update()
+		{
+			_updateMethod();
+		}
+
+		/// <summary>
+		///     Empty default behavior of the <see cref="Update" /> method.
+		/// </summary>
+		[UsedImplicitly]
+		private void UpdateBehavior()
 		{
 		}
 	}

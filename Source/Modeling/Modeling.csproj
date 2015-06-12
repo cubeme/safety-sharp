@@ -45,10 +45,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
+    <Compile Include="Runtime\BehaviorInfo.cs" />
     <Compile Include="Runtime\ComponentFieldInfo.cs" />
     <Compile Include="Runtime\ComponentInfo.Builder.cs">
       <DependentUpon>ComponentInfo.cs</DependentUpon>
     </Compile>
+    <Compile Include="Runtime\ComponentMethodCollection.cs" />
+    <Compile Include="Runtime\ComponentMethodInfo.cs" />
+    <Compile Include="Runtime\CreateBodyCallback.cs" />
     <Compile Include="Runtime\FaultInfo.Builder.cs">
       <DependentUpon>FaultInfo.cs</DependentUpon>
     </Compile>
@@ -57,7 +61,7 @@
     <Compile Include="Runtime\OccurrenceInfo.Builder.cs">
       <DependentUpon>OccurrenceInfo.cs</DependentUpon>
     </Compile>
-    <Compile Include="CompilerServices\PortBehaviorAttribute.cs" />
+    <Compile Include="CompilerServices\MethodBehaviorAttribute.cs" />
     <Compile Include="CompilerServices\SafetySharpAttribute.cs" />
     <Compile Include="Modeling\OccurrencePattern.cs" />
     <Compile Include="Runtime\BindingInfo.cs" />
@@ -97,6 +101,8 @@
     <Compile Include="Modeling\PortInfo.cs" />
     <Compile Include="Modeling\ProvidedAttribute.cs" />
     <Compile Include="Modeling\RequiredAttribute.cs" />
+    <Compile Include="Runtime\ProvidedPortInfo.cs" />
+    <Compile Include="Runtime\RequiredPortInfo.cs" />
     <Compile Include="Runtime\RootComponent.cs" />
     <Compile Include="Modeling\SharedComponentsException.cs" />
     <Compile Include="Modeling\TransientAttribute.cs" />

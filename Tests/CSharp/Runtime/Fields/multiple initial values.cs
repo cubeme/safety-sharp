@@ -23,7 +23,6 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
-	using SafetySharp.CompilerServices;
 	using Shouldly;
 
 	internal class X8 : TestComponent
@@ -35,20 +34,10 @@ namespace Tests.Runtime.Fields
 
 		public X8()
 		{
-			var fx = ReflectionHelpers.GetField(typeof(X8), typeof(int), "_x");
-			var fy = ReflectionHelpers.GetField(typeof(X8), typeof(double), "_y");
-			var fz = ReflectionHelpers.GetField(typeof(X8), typeof(bool), "_z");
-			var fw = ReflectionHelpers.GetField(typeof(X8), typeof(E), "_w");
-
-			GetBuilder().WithField(fx);
-			GetBuilder().WithField(fy);
-			GetBuilder().WithField(fz);
-			GetBuilder().WithField(fw);
-
-			GetBuilder().WithInitialValues(fx, _x, -1, 0);
-			GetBuilder().WithInitialValues(fy, _y, -1.0, 0.0);
-			GetBuilder().WithInitialValues(fz, true, _z);
-			GetBuilder().WithInitialValues(fw, _w, E.B, E.D);
+			SetInitialValues(_x, _x, -1, 0);
+			SetInitialValues(_y, _y, -1.0, 0.0);
+			SetInitialValues(_z, true, _z);
+			SetInitialValues(_w, _w, E.B, E.D);
 		}
 
 		protected override void Check()

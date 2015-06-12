@@ -26,7 +26,6 @@ namespace SafetySharp.Runtime
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
 	using System.Linq;
-	using System.Linq.Expressions;
 	using System.Reflection;
 	using CompilerServices;
 	using Modeling;
@@ -39,10 +38,13 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public class Builder
 		{
+			private readonly List<BehaviorInfo> _behaviors = new List<BehaviorInfo>();
 			private readonly Component _component;
-			private readonly List<FaultInfo.Builder> _faults = new List<FaultInfo.Builder>();
+			private readonly List<FaultInfo> _faults = new List<FaultInfo>();
 			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
-			private readonly List<MethodInfo> _requiredPorts = new List<MethodInfo>();
+			private readonly ComponentInfo _info;
+			private readonly List<RequiredPortInfo> _requiredPorts = new List<RequiredPortInfo>();
+			private readonly List<ProvidedPortInfo> _providedPorts = new List<ProvidedPortInfo>();
 			private readonly List<FieldInfo> _subcomponents = new List<FieldInfo>();
 			private string _name;
 
@@ -53,7 +55,9 @@ namespace SafetySharp.Runtime
 			internal Builder(Component component)
 			{
 				Requires.NotNull(component, () => component);
+
 				_component = component;
+				_info = new ComponentInfo { Component = component };
 			}
 
 			/// <summary>
@@ -83,7 +87,7 @@ namespace SafetySharp.Runtime
 				Requires.That(values.Length > 0, () => values, "At least one value must be provided.");
 				Requires.That(_fields.ContainsKey(field), () => field, "The given field is unknown.");
 
-				var typesMatch = values.All(value => value.GetType() == field.FieldType);
+				var typesMatch = Enumerable.All(values, value => value.GetType() == field.FieldType);
 				Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
 
 				_fields[field] = values;
@@ -111,9 +115,9 @@ namespace SafetySharp.Runtime
 				where T : Fault
 			{
 				Requires.NotNull(fault, () => fault);
-				Requires.That(!_faults.Any(f => f.Fault is T), () => fault, "The fault has already been added.");
+				Requires.That(!Enumerable.Any(_faults, f => f.Fault is T), () => fault, "The fault has already been added.");
 
-				_faults.Add(MetadataBuilders.GetBuilder(fault));
+				_faults.Add(MetadataBuilders.GetBuilder(fault).FinalizeMetadata(_info));
 			}
 
 			/// <summary>
@@ -124,9 +128,14 @@ namespace SafetySharp.Runtime
 			/// <param name="providedPort">The provided port that should be added to the component's metadata.</param>
 			/// <param name="basePort">The overridden method of the base type, if any.</param>
 			/// <param name="createBody">The callback that should be used to retrieve the body of the port.</param>
-			public void WithProvidedPort(MethodInfo providedPort, MethodInfo basePort = null, Func<Expression> createBody = null)
+			public void WithProvidedPort(MethodInfo providedPort, MethodInfo basePort = null, CreateBodyCallback createBody = null)
 			{
 				Requires.NotNull(providedPort, () => providedPort);
+				Requires.That(_providedPorts.All(p => p.Method != providedPort), () => providedPort, "The port has already been added.");
+				Requires.That(providedPort.HasAttribute<RequiredAttribute>(), () => providedPort,
+					"The method must be marked with'{0}'.", typeof(RequiredAttribute).FullName);
+
+				_providedPorts.Add(new ProvidedPortInfo(_info, providedPort, basePort, createBody));
 			}
 
 			/// <summary>
@@ -135,20 +144,28 @@ namespace SafetySharp.Runtime
 			public void WithRequiredPort(MethodInfo requiredPort)
 			{
 				Requires.NotNull(requiredPort, () => requiredPort);
-				Requires.That(!_requiredPorts.Contains(requiredPort), () => requiredPort, "The port has already been added.");
+				Requires.That(_requiredPorts.All(p => p.Method != requiredPort), () => requiredPort, "The port has already been added.");
+				Requires.That(requiredPort.HasAttribute<RequiredAttribute>(), () => requiredPort,
+					"The method must be marked with'{0}'.", typeof(RequiredAttribute).FullName);
 
-				_requiredPorts.Add(requiredPort);
+				_requiredPorts.Add(new RequiredPortInfo(_info, requiredPort));
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="behavior" /> to the component's metadata. The <paramref name="createBody" /> must not be
-			///     <c>null</c> if the component is intended to be used with S# analysis techniques.
+			///     Adds the <paramref name="behavior" /> to the component's metadata. If the behavior overrides a behavior declared by
+			///     a base type, the <paramref name="baseBehavior" /> must not be <c>null</c>. The <paramref name="createBody" /> must not
+			///     be <c>null</c> if the component is intended to be used with S# analysis techniques.
 			/// </summary>
 			/// <param name="behavior">The method representing the component's behavior that should be added to the component's metadata.</param>
+			/// <param name="baseBehavior">The overridden behavior of the base type, if any.</param>
 			/// <param name="createBody">The callback that should be used to retrieve the body of the method.</param>
-			public void WithBehavior(MethodInfo behavior, Func<Expression> createBody = null)
+			public void WithBehavior(MethodInfo behavior, MethodInfo baseBehavior = null, CreateBodyCallback createBody = null)
 			{
 				Requires.NotNull(behavior, () => behavior);
+				Requires.That(baseBehavior == null || _behaviors.Any(b => b.Method == baseBehavior), () => baseBehavior,
+					"The base behavior is unknown.");
+
+				_behaviors.Add(new BehaviorInfo(_info, behavior, baseBehavior, createBody));
 			}
 
 			/// <summary>
@@ -182,19 +199,17 @@ namespace SafetySharp.Runtime
 			/// </summary>
 			internal ComponentInfo RegisterMetadata()
 			{
-				var info = new ComponentInfo
-				{
-					Component = _component,
-					Name = _name,
-				};
+				_info.Name = _name;
+				_info.Fields = _fields.Select(field => new ComponentFieldInfo(_info, field.Key, field.Value)).ToImmutableArray();
+				_info.Faults = _faults.ToImmutableArray();
+				_info.Behaviors = new ComponentMethodCollection<BehaviorInfo>(_behaviors);
+				_info.RequiredPorts = new ComponentMethodCollection<RequiredPortInfo>(_requiredPorts);
+				_info.ProvidedPorts = new ComponentMethodCollection<ProvidedPortInfo>(_providedPorts);
 
-				info.Fields = _fields.Select(field => new ComponentFieldInfo(info, field.Key, field.Value)).ToImmutableArray();
-				info.Faults = _faults.Select(fault => fault.FinalizeMetadata(info)).ToImmutableArray();
-
-				MetadataProvider.Components.Add(_component, info);
+				MetadataProvider.Components.Add(_component, _info);
 				MetadataProvider.ComponentBuilders.Remove(_component);
 
-				return info;
+				return _info;
 			}
 		}
 	}

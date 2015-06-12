@@ -27,8 +27,8 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 	using System.Linq;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
-	using SafetySharp.Modeling;
-	using SafetySharp.Utilities;
+	using Modeling;
+	using Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="ITypeSymbol" /> instances.

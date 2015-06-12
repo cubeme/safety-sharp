@@ -125,6 +125,8 @@
     <Compile Include="Analyzers\RecursionAnalyzer.cs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.cs" />
+    <Compile Include="CompilationException.cs" />
+    <Compile Include="Normalization\MetadataNormalizer.cs" />
     <Compile Include="Normalization\SafetySharpAttributeNormalizer.cs" />
     <Compile Include="Normalization\BindingNormalizer.cs" />
     <Compile Include="Normalization\DebugInfoNormalizer.cs" />
@@ -150,7 +152,6 @@
     <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.cs" />
     <Compile Include="Roslyn\Syntax\ArgumentExtensions.cs" />
     <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.cs" />
-    <Compile Include="Roslyn\Syntax\ClassDeclarationExtensions.cs" />
     <Compile Include="Roslyn\Syntax\MemberAccessExpressionExtensions.cs" />
     <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxBuilder.cs" />
@@ -160,9 +161,8 @@
     <Compile Include="Roslyn\Syntax\SyntaxTreeExtensions.cs" />
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.cs" />
     <Compile Include="Roslyn\Syntax\Visibility.cs" />
-    <Compile Include="Utilities\Log.cs" />
-    <Compile Include="Utilities\LogEntry.cs" />
-    <Compile Include="Utilities\LogType.cs" />
+    <Compile Include="IErrorReporter.cs" />
+    <Compile Include="ConsoleErrorReporter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
