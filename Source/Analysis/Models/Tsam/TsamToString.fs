@@ -190,11 +190,3 @@ module internal TsamToString =
         let asString = exportModel (pgm.Pgm)
         do! updateState asString
     }
-    
-    let texFilePackagesInHeader = """
-\usepackage{listings}
-\lstset{
-	frame=single,
-	breaklines=true
-}
-"""

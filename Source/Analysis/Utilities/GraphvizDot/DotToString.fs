@@ -167,17 +167,4 @@ module internal DotToString =
         let asString = exportDigraph labelEditor_keepLabel digraph
         do! updateState asString
     }
-
-    // embedded in html (viz.js)
-
-    // embedded in tex ()
-
-    let texFilePackagesInHeader = """
-\usepackage{tikz}
-\usetikzlibrary{arrows,shapes}
-
-% Needs Python2 and dot2tex
-% You can install dot2tex with "pip install dot2tex" (even on Windows)
-\usepackage{dot2texi}
-"""
     

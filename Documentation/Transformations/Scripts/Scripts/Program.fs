@@ -401,20 +401,100 @@ module TsamToReport =
 
         
     let texOutput : OutputStyleDecorator =
-        let contentDecoration (content:string) = 
-            let texTemplateAsString = """
+        let texTemplateAsString = """
 \documentclass[a4paper, 12pt,titlepage]{scrartcl}
-%s
-%s
+
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes}
+
+%% Needs Python2 and dot2tex
+%% You can install dot2tex with "pip install dot2tex" (even on Windows)
+\usepackage{dot2texi}
+\usepackage{listings}
+\lstset{
+	frame=single,
+	breaklines=true
+}
 \begin{document}
 %s
 \end{document}
 """
+        let sourceDecoratorTemplateAsString = "\n{\\scriptsize\n\\begin{lstlisting}\n%s\n\\end{lstlisting}\n}\n"
+        let graphDecoratorTemplateAsString = "\n\\begin{tikzpicture}[>=latex',scale=0.5]\n\\begin{dot2tex}[dot,tikz,options=-s -tmath]\n%s\\end{dot2tex}.\n\\end{tikzpicture}\n"
+
+        let contentDecoration (content:string) = 
             let texTemplate = Printf.StringFormat<_,string>(texTemplateAsString)
-            sprintf texTemplate (SafetySharp.GraphVizDot.DotToString.texFilePackagesInHeader) (SafetySharp.Models.TsamToString.texFilePackagesInHeader) content        
-        let sectionDecoration (chapterName:string) = sprintf "\\section{%s}\n" chapterName
-        let tsamSourceDecorator (tsamSource:string) = sprintf "\n{\\scriptsize\n\\begin{lstlisting}\n%s\n\\end{lstlisting}\n}\n" tsamSource
-        let graphDecorator (graph:string) = sprintf "\n\\begin{tikzpicture}[>=latex',scale=0.5]\n\\begin{dot2tex}[dot,tikz,options=-s -tmath]\n%s\\end{dot2tex}.\n\\end{tikzpicture}\n" graph
+            sprintf texTemplate content        
+        let sectionDecoration (chapterName:string) =
+            sprintf "\\section{%s}\n" chapterName
+        let tsamSourceDecorator (tsamSource:string) =
+            let sourceDecoratorTemplate = Printf.StringFormat<_,string>(sourceDecoratorTemplateAsString)
+            sprintf sourceDecoratorTemplate tsamSource
+        let graphDecorator (graph:string) =
+            let graphDecoratorTemplate = Printf.StringFormat<_,string>(graphDecoratorTemplateAsString)
+            sprintf graphDecoratorTemplate graph
+        {
+            OutputStyleDecorator.Content = contentDecoration
+            OutputStyleDecorator.Section = sectionDecoration;
+            OutputStyleDecorator.TsamSource = tsamSourceDecorator;
+            OutputStyleDecorator.Graph = graphDecorator;
+        }
+        
+    let generateTexFile = generateFile texOutput
+
+
+    
+    let htmlOutput : OutputStyleDecorator =
+        let htmlTemplateAsString = """<!DOCTYPE html>
+<html>
+  <head>
+    <title>Report</title>
+    <!-- graphviz.js by mdaines from https://github.com/mdaines/viz.js (emscripten version of graphviz)-->
+    <script src="lib/graphviz.js"></script>
+    <script src="lib/codemirror.js"></script>
+    <script src="lib/jquery-2.1.4.min.js"></script>
+
+    <link rel="stylesheet" href="lib/codemirror.css">
+  </head>
+  <body>
+  %s
+  <script type="text/javascript">
+      $(".graph").each(function(index) {
+          var dotSource = $(".graphSource",this).html();
+          var svgPicture = Viz(dotSource, "svg");
+          //console.log(dotSource);
+          $(this).html(svgPicture);
+      } );
+      $(".tsamSource").each(function(index) {
+        CodeMirror.fromTextArea(this);
+      } )
+  </script>
+  </body>
+</html>
+"""
+        let sourceDecoratorTemplateAsString = """
+    <form>
+      <textarea class="tsamSource">%s</textarea>
+    </form>
+"""
+        let graphDecoratorTemplateAsString = """
+    <div class="graph">
+      <script type="text/vnd.graphviz" class="graphSource">
+%s
+      </script>
+    </div>
+"""
+
+        let contentDecoration (content:string) = 
+            let htmlTemplate = Printf.StringFormat<_,string>(htmlTemplateAsString)
+            sprintf htmlTemplate content
+        let sectionDecoration (chapterName:string) = sprintf "    <h2>%s</h2>\n" chapterName
+        let tsamSourceDecorator (tsamSource:string) =
+            let sourceDecoratorTemplate = Printf.StringFormat<_,string>(sourceDecoratorTemplateAsString)
+            sprintf sourceDecoratorTemplate tsamSource
+        let graphDecorator (graph:string) =
+            let graphDecoratorTemplate = Printf.StringFormat<_,string>(graphDecoratorTemplateAsString)
+            sprintf graphDecoratorTemplate graph
         {
             OutputStyleDecorator.Content = contentDecoration
             OutputStyleDecorator.Section = sectionDecoration;
@@ -422,7 +502,7 @@ module TsamToReport =
             OutputStyleDecorator.Graph = graphDecorator;
         }
 
-    let generateTexFile = generateFile texOutput
+    let generateHtmlFile = generateFile htmlOutput
 
 open NUnit.Framework
 
@@ -436,8 +516,10 @@ module TsamToReportTexTest =
     let testWithSmokeTest8 () =        
         let useOnlyStochastic = false
         let path = "../../"
-
+        
         let output = TsamToReport.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest8.tex") (path + "/../../../../Examples/SAM/smokeTest8.sam")
+        printfn "%s" output
+        let output = TsamToReport.generateHtmlFile useOnlyStochastic (path+"/html/smokeTest8.html") (path + "/../../../../Examples/SAM/smokeTest8.sam")
         printfn "%s" output
         ()
 
@@ -445,8 +527,10 @@ module TsamToReportTexTest =
     let testWithSmokeTest9 () =        
         let useOnlyStochastic = false
         let path = "../../"
-
+        
         let output = TsamToReport.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest9.tex") (path + "/../../../../Examples/SAM/smokeTest9.sam")
+        printfn "%s" output
+        let output = TsamToReport.generateHtmlFile useOnlyStochastic (path+"/html/smokeTest9.html") (path + "/../../../../Examples/SAM/smokeTest9.sam")
         printfn "%s" output
         ()
 
@@ -454,8 +538,10 @@ module TsamToReportTexTest =
     let testWithSmokeTest10 () =        
         let useOnlyStochastic = false
         let path = "../../"
-
+        
         let output = TsamToReport.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest10.tex") (path + "/../../../../Examples/SAM/smokeTest10.sam")
+        printfn "%s" output
+        let output = TsamToReport.generateHtmlFile useOnlyStochastic (path+"/html/smokeTest10.html") (path + "/../../../../Examples/SAM/smokeTest10.sam")
         printfn "%s" output
         ()
 
@@ -463,8 +549,10 @@ module TsamToReportTexTest =
     let testWithSmokeTest24 () =        
         let useOnlyStochastic = false
         let path = "../../"
-
+        
         let output = TsamToReport.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest24.tex") (path + "/../../../../Examples/SAM/smokeTest24.sam")
+        printfn "%s" output
+        let output = TsamToReport.generateHtmlFile useOnlyStochastic (path+"/html/smokeTest24.html") (path + "/../../../../Examples/SAM/smokeTest24.sam")
         printfn "%s" output
         ()
 
@@ -472,7 +560,9 @@ module TsamToReportTexTest =
     let testWithSmokeTest25 () =        
         let useOnlyStochastic = false
         let path = "../../"
-
+        
         let output = TsamToReport.generateTexFile useOnlyStochastic (path+"/Tex/smokeTest25.tex") (path + "/../../../../Examples/SAM/smokeTest25.sam")
+        printfn "%s" output
+        let output = TsamToReport.generateHtmlFile useOnlyStochastic (path+"/html/smokeTest25.html") (path + "/../../../../Examples/SAM/smokeTest25.sam")
         printfn "%s" output
         ()
