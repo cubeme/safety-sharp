@@ -1,0 +1,26 @@
+html {
+	margin: 0;
+	padding: 0;
+	}
+body { 
+	line-height: 1.88889;
+	background: #fff; 
+	margin: 40px 40px 0 0; 
+	padding: 0;
+	margin-left: 100px;
+	}
+h2 { 
+	letter-spacing: 1px; 
+	margin-bottom: 0;
+	}
+.graph {
+	margin-left: 50px;
+}
+.tsamSource {
+	border: 1px solid black;
+}
+form {
+	border: 1px solid black;
+	width: 500px;
+	margin-left: 50px;
+}

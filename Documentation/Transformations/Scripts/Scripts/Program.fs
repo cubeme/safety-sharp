@@ -449,6 +449,7 @@ module TsamToReport =
 <html>
   <head>
     <title>Report</title>
+	<link rel="stylesheet" href="css/style.css" type="text/css">
     <!-- graphviz.js by mdaines from https://github.com/mdaines/viz.js (emscripten version of graphviz)-->
     <script src="lib/graphviz.js"></script>
     <script src="lib/codemirror.js"></script>
