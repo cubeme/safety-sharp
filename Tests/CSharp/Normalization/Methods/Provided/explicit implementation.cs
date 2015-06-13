@@ -20,40 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Provided
+namespace Tests.Normalization.Methods.Required
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	internal partial class In1 : Component
+	interface I1 : IComponent
 	{
-		public new void Update()
+		[Provided]
+		int M();
+	}
+	
+	internal partial class In9 : Component, Tests.Normalization.Methods.Required.I1
+	{
+		int Tests.Normalization.Methods.Required.I1.M()
 		{
-			var i = 1 + 2;
+			return 1;
 		}
 	}
 
-	internal partial class Out1 : Component
+	internal partial class Out9 : Component, Tests.Normalization.Methods.Required.I1
 	{
-		private void __DefaultImplementation0__()
+		private int __Behavior0__()
 		{
-			var i = 1 + 2;
+			return 1;
 		}
 	}
 
-	partial class Out1
+	partial class Out9
 	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate0__ __portField0__;
+		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private __Delegate0__ __backingField0__;
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate void __PortDelegate0__();
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate int __Delegate0__();
 
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
-		public new void Update() => this.__portField0__();
+		[SafetySharp.Modeling.ProvidedAttribute]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
+		int Tests.Normalization.Methods.Required.I1.M() => this.__backingField0__();
 	}
 }

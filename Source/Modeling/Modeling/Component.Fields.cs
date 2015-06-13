@@ -30,7 +30,6 @@ namespace SafetySharp.Modeling
 	using System.Linq;
 	using System.Linq.Expressions;
 	using System.Reflection;
-	using CompilerServices;
 	using Utilities;
 
 	partial class Component
@@ -62,11 +61,11 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Sets the initial <paramref name="values" /> of the component's <paramref name="field" />.
 		/// </summary>
-		/// <param name="field">[LiftExpression] The field whose initial values should be set.</param>
+		/// <param name="field">The field whose initial values should be set.</param>
 		/// <param name="values">The initial values of the field.</param>
-		public void SetInitialValues<T>([LiftExpression] T field, params T[] values)
+		protected void SetInitialValues<T>(T field, params T[] values)
 		{
-			Requires.LiftedCall();
+			throw new NotSupportedException("This method cannot be called at runtime. Use the S# compiler to compile the assembly.");
 		}
 
 		/// <summary>

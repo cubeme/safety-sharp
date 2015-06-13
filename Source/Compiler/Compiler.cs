@@ -315,6 +315,7 @@ namespace SafetySharp.Compiler
 			compilation = ApplyNormalizer<SafetySharpAttributeNormalizer>(compilation, syntaxGenerator);
 			compilation = ApplyNormalizer<PartialNormalizer>(compilation, syntaxGenerator);
 			compilation = ApplyNormalizer<LiftedExpressionNormalizer>(compilation, syntaxGenerator);
+			compilation = ApplyNormalizer<InitialValuesNormalizer>(compilation, syntaxGenerator);
 			compilation = ApplyNormalizer<MethodNormalizer>(compilation, syntaxGenerator);
 			compilation = ApplyNormalizer<BindingNormalizer>(compilation, syntaxGenerator);
 			compilation = ApplyNormalizer<MetadataNormalizer>(compilation, syntaxGenerator);

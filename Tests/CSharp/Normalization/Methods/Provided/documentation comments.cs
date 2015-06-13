@@ -20,48 +20,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Provided
+namespace Tests.Normalization.Methods.Provided
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	internal partial class X : Component
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
+	internal partial class In1 : Component
 	{
-		public virtual int M(int x)
+		// test
+		/// <summary>
+		/// Some documentation.
+		/// </summary>
+		// test
+		public int M1()
 		{
-			return x;
-		}
+			return 1;
+		} /* test */
 	}
 
-	internal partial class In1 : X
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
+	internal partial class Out1 : Component
 	{
-		public new int M(int x)
+		// test
+		/// <summary>
+		/// Some documentation.
+		/// </summary>
+		// test
+		private int __Behavior0__()
 		{
-			return x * x;
-		}
-	}
-
-	internal partial class Out1 : X
-	{
-		private int __DefaultImplementation0__(int x)
-		{
-			return x * x;
-		}
+			return 1;
+		} /* test */
+#line 40
 	}
 
 	partial class Out1
 	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate0__ __portField0__;
+		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private __Delegate0__ __backingField0__;
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate int __PortDelegate0__(int x);
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate int __Delegate0__();
 
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
-		public new int M(int x) => this.__portField0__(x);
+		// test
+		/// <summary>
+		/// Some documentation.
+		/// </summary>
+		// test
+		[SafetySharp.Modeling.ProvidedAttribute]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
+		public int M1() => this.__backingField0__(); /* test */
 	}
 }

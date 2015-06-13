@@ -30,25 +30,25 @@ namespace Tests.Diagnostics
 
 	public partial class DiagnosticsTests : Tests
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
+		[Theory, MemberData("DiscoverTests", "Bindings")]
 		public void Bindings(string test, SyntaxTree code)
 		{
 			CheckDiagnostics<BindingAnalyzer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Enums")]
+		[Theory, MemberData("DiscoverTests", "Enums")]
 		public void Enums(string test, SyntaxTree code)
 		{
 			CheckDiagnostics<EnumAnalyzer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "CustomComponents")]
+		[Theory, MemberData("DiscoverTests", "CustomComponents")]
 		public void CustomComponents(string test, SyntaxTree code)
 		{
 			CheckDiagnostics<CustomComponentAnalyzer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "PortKinds")]
+		[Theory, MemberData("DiscoverTests", "PortKinds")]
 		public void PortKinds(string test, SyntaxTree code)
 		{
 			CheckDiagnostics<PortKindAnalyzer>(code);

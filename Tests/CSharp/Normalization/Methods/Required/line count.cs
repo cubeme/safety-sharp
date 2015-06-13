@@ -20,30 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.OtherMembers
+namespace Tests.Normalization.Methods.Required
 {
 	using System;
+	using SafetySharp.Modeling;
 
-	internal class In4
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
+	internal partial class In1 : Component
 	{
-		private int M3 { get; set; }
+		internal 
+			extern
 
-		private extern int M6 { get; set; }
+			int M
+			(
+			int 
+			x);
+	}
 
-		private int M4
-		{
-			get { return 1; }
-		}
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
+	internal partial class Out1 : Component
+	{
+		[SafetySharp.Modeling.RequiredAttribute]
+		[System.Diagnostics.DebuggerHiddenAttribute]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
+		internal int M(int x) => this.__backingField0__(x);
+#line 38
+	}
 
-		private int M5
-		{
-			set { }
-		}
+	partial class Out1
+	{
+		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private __Delegate0__ __backingField0__;
 
-		private extern void M1();
-
-		private void M2()
-		{
-		}
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate int __Delegate0__(int x);
 	}
 }

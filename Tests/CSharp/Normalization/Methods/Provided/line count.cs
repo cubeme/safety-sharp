@@ -20,38 +20,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.OtherMembers
+namespace Tests.Normalization.Methods.Provided
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	internal interface In2 : IComponent
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
+	internal partial class In1 : Component
 	{
-		[Required]
-		int M2 { get; set; }
+		public 
+			int
 
-		[Required]
-		int M3 { get; }
-
-		[Provided]
-		int M4 { set; }
-
-		[Provided]
-		void M1();
+			M1
+			(
+				int x
+			)
+		{
+			return 
+				1;
+		}
 	}
 
-	internal interface In3
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
+	internal partial class Out1 : Component
 	{
-		[Required]
-		int M2 { get; set; }
+		private int __Behavior0__(int x)
+		{
+			return 1;
+		}
+#line 42
+	}
 
-		[Required]
-		int M3 { get; }
+	partial class Out1
+	{
+		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private __Delegate0__ __backingField0__;
 
-		[Provided]
-		int M4 { set; }
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate int __Delegate0__(int x);
 
-		[Provided]
-		void M1();
+		[SafetySharp.Modeling.ProvidedAttribute]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
+		public int M1(int x) => this.__backingField0__(x);
 	}
 }

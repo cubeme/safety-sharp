@@ -23,9 +23,13 @@
 namespace SafetySharp.Compiler.Roslyn.Symbols
 {
 	using System;
+	using CompilerServices;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
-	using SafetySharp.Utilities;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Microsoft.CodeAnalysis.Editing;
+	using Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="IFieldSymbol" /> instances.
@@ -69,6 +73,28 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			Requires.NotNull(semanticModel, () => semanticModel);
 
 			return IsSubcomponentField(fieldSymbol, semanticModel.GetComponentInterfaceSymbol());
+		}
+
+		/// <summary>
+		///     Gets the expression that selects the <paramref name="fieldSymbol" /> at runtime using reflection.
+		/// </summary>
+		/// <param name="fieldSymbol">The field the code should be generated for.</param>
+		/// <param name="compilation">The compilation the field belongs to.</param>
+		/// <param name="syntax">The syntax generator that should be used.</param>
+		[Pure]
+		public static ExpressionSyntax GetRuntimeFieldExpression([NotNull] this IFieldSymbol fieldSymbol, [NotNull] Compilation compilation,
+																 [NotNull] SyntaxGenerator syntax)
+		{
+			Requires.NotNull(fieldSymbol, () => fieldSymbol);
+			Requires.NotNull(compilation, () => compilation);
+			Requires.NotNull(syntax, () => syntax);
+
+			var declaringTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)syntax.TypeExpression(fieldSymbol.ContainingType));
+			var fieldTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)syntax.TypeExpression(fieldSymbol.Type));
+			var nameArg = syntax.LiteralExpression(fieldSymbol.Name);
+			var reflectionHelpersType = syntax.TypeExpression(compilation.GetTypeSymbol(typeof(ReflectionHelpers)));
+			var getFieldMethod = syntax.MemberAccessExpression(reflectionHelpersType, "GetField");
+			return (ExpressionSyntax)syntax.InvocationExpression(getFieldMethod, declaringTypeArg, fieldTypeArg, nameArg);
 		}
 	}
 }

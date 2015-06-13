@@ -20,25 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Provided
+namespace Tests.Normalization.Methods.OtherMembers
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	internal abstract partial class In1 : Component
+	internal class In5 : Component
 	{
-		[Provided]
-		public abstract void M1();
+		private static int M3 { get; set; }
 
-		public abstract void M2();
-	}
+		private static int M4
+		{
+			get { return 1; }
+		}
 
-	internal abstract partial class Out1 : Component
-	{
-		[Provided]
-		public abstract void M1();
+		private static int M5
+		{
+			set { }
+		}
 
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		public abstract void M2();
+		private static extern void M1();
+
+		private static void M2()
+		{
+		}
 	}
 }

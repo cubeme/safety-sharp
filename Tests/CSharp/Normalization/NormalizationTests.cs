@@ -30,25 +30,25 @@ namespace Tests.Normalization
 
 	public partial class NormalizationTests : Tests
 	{
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Ports")]
-		public void Ports(string test, SyntaxTree code)
+		[Theory, MemberData("DiscoverTests", "Methods")]
+		public void Methods(string test, SyntaxTree code)
 		{
 			CheckNormalization<MethodNormalizer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "LiftedExpressions")]
+		[Theory, MemberData("DiscoverTests", "LiftedExpressions")]
 		public void LiftedExpressions(string test, SyntaxTree code)
 		{
 			CheckNormalization<LiftedExpressionNormalizer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Bindings")]
+		[Theory, MemberData("DiscoverTests", "Bindings")]
 		public void Bindings(string test, SyntaxTree code)
 		{
 			CheckNormalization<BindingNormalizer>(code);
 		}
 
-		[Theory(DisplayName = ""), MemberData("DiscoverTests", "Partial")]
+		[Theory, MemberData("DiscoverTests", "Partial")]
 		public void Partial(string test, SyntaxTree code)
 		{
 			CheckNormalization<PartialNormalizer>(code);

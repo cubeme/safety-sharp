@@ -82,10 +82,10 @@ namespace Tests.Normalization.Bindings.Components
 
 	partial class Out8
 	{
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __BindingDelegate0__();
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate int __BindingDelegate1__();
 	}
 }

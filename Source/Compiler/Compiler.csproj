@@ -126,6 +126,7 @@
     <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.cs" />
     <Compile Include="CompilationException.cs" />
+    <Compile Include="Normalization\InitialValuesNormalizer.cs" />
     <Compile Include="Normalization\MetadataNormalizer.cs" />
     <Compile Include="Normalization\SafetySharpAttributeNormalizer.cs" />
     <Compile Include="Normalization\BindingNormalizer.cs" />

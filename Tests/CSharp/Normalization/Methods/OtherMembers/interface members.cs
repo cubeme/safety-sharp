@@ -20,31 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Required
+namespace Tests.Normalization.Methods.OtherMembers
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	internal partial class In1 : Component
+	internal interface In2 : IComponent
 	{
-		public new extern void Update();
+		[Required]
+		int M2 { get; set; }
+
+		[Required]
+		int M3 { get; }
+
+		[Provided]
+		int M4 { set; }
+
+		[Provided]
+		void M1();
 	}
 
-	internal partial class Out1 : Component
+	internal interface In3
 	{
-		[SafetySharp.Modeling.RequiredAttribute()]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
-		public new void Update() => this.__portField0__();
-	}
+		[Required]
+		int M2 { get; set; }
 
-	partial class Out1
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate0__ __portField0__;
+		[Required]
+		int M3 { get; }
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate void __PortDelegate0__();
+		[Provided]
+		int M4 { set; }
+
+		[Provided]
+		void M1();
 	}
 }

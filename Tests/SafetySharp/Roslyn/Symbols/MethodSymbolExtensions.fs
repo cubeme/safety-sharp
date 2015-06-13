@@ -29,6 +29,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Compiler.Roslyn
+open SafetySharp.Compiler.Roslyn.Syntax
 open SafetySharp.Compiler.Roslyn.Symbols
 open SafetySharp.Modeling
 
@@ -120,7 +121,7 @@ module ``GetSynthesizedDelegateDeclaration method`` =
     let synthesize csharpCode methodName =
         let compilation = TestCompilation csharpCode
         let methodSymbol = compilation.FindMethodSymbol "X" methodName
-        methodSymbol.GetSynthesizedDelegateDeclaration(IdentifierNameSynthesizer.ToSynthesizedName "D").ToString ()
+        methodSymbol.GetSynthesizedDelegateDeclaration("D".ToSynthesized ()).ToString ()
 
     [<Test>]
     let ``throws when method symbol is null`` () =

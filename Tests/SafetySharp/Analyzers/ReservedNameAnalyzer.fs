@@ -50,7 +50,7 @@ module ``Rreserved names`` =
 
     [<Test>]
     let ``reserved names are invalid`` () =
-        let invalidName = IdentifierNameSynthesizer.ToSynthesizedName "Name"
+        let invalidName = "Name".ToSynthesized ()
         getDiagnostic (sprintf "enum %s : byte { A }" invalidName) =? diagnostic 5 invalidName
         getDiagnostic (sprintf "enum E : byte { %s }"  invalidName)=? diagnostic 16 invalidName
         getDiagnostic (sprintf "interface %s { void M(int a); int P { get; set; } }"  invalidName)=? diagnostic 10 invalidName
@@ -92,6 +92,6 @@ module ``Rreserved names`` =
     [<Test>]
     let ``reserved names within expressions are valid`` () =
         // Only emits a diagnostic for the declaration of the method parameter, but not for the usages of the parameter.
-        let invalidName = IdentifierNameSynthesizer.ToSynthesizedName "Name"
+        let invalidName = "Name".ToSynthesized ()
         getDiagnostic (sprintf "class X { void M(int %s) { int b = %s + %s; } }" invalidName invalidName invalidName) =? diagnostic 21 invalidName
         getDiagnostic (sprintf "class %s { void M() { var t = typeof(%s); } }" invalidName invalidName) =? diagnostic 6 invalidName

@@ -20,49 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Provided
+namespace Tests.Normalization.Methods.Required
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	internal partial class In1
+	internal partial class In1 : Component
 	{
-		partial class In2 : Component
-		{
-			internal void M2()
-			{
-				var i = 1 + 2;
-			}
-		}
+		public new extern void Update();
 	}
 
-	internal partial class Out1
+	internal partial class Out1 : Component
 	{
-		partial class Out2 : Component
-		{
-			private void __DefaultImplementation0__()
-			{
-				var i = 1 + 2;
-			}
-		}
+		[SafetySharp.Modeling.RequiredAttribute]
+		[System.Diagnostics.DebuggerHiddenAttribute]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
+		public new void Update() => this.__backingField0__();
 	}
 
 	partial class Out1
 	{
-		partial class Out2
-		{
-			[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-			[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-			private __PortDelegate0__ __portField0__;
+		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private __Delegate0__ __backingField0__;
 
-			[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-			private delegate void __PortDelegate0__();
-
-			[SafetySharp.Modeling.ProvidedAttribute()]
-			[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-			[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
-			internal void M2() => this.__portField0__();
-		}
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate void __Delegate0__();
 	}
 }

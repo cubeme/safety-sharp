@@ -123,13 +123,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			foreach (var field in fields)
 			{
-				var declaringTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(type));
-				var fieldTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(field.Type));
-				var nameArg = Syntax.LiteralExpression(field.Name);
-				var reflectionHelpersType = Syntax.TypeExpression(Compilation.GetTypeSymbol(typeof(ReflectionHelpers)));
-				var getFieldMethod = Syntax.MemberAccessExpression(reflectionHelpersType, "GetField");
-				var fieldInfo = Syntax.InvocationExpression(getFieldMethod, declaringTypeArg, fieldTypeArg, nameArg);
-
+				var fieldInfo = field.GetRuntimeFieldExpression(Compilation, Syntax);
 				var methodName = field.Type.TypeKind == TypeKind.TypeParameter ? "WithGenericField" : "WithField";
 				var withFieldMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), methodName);
 				var invocation = Syntax.InvocationExpression(withFieldMethod, fieldInfo);

@@ -47,12 +47,6 @@ namespace SafetySharp.Compiler.Normalization
 	public sealed class BindingNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
-		///     Represents the [CompilerGenerated] attribute syntax.
-		/// </summary>
-		private static readonly AttributeListSyntax CompilerGeneratedAttribute =
-			SyntaxBuilder.Attribute(typeof(CompilerGeneratedAttribute).FullName).WithTrailingSpace();
-
-		/// <summary>
 		///     The delegate types used by the bindings of a component.
 		/// </summary>
 		private readonly List<DelegateDeclarationSyntax> _delegates = new List<DelegateDeclarationSyntax>();
@@ -63,13 +57,27 @@ namespace SafetySharp.Compiler.Normalization
 		private int _bindingCount;
 
 		/// <summary>
+		///     Represents the [CompilerGenerated] attribute syntax.
+		/// </summary>
+		private AttributeListSyntax _compilerGeneratedAttribute;
+
+		/// <summary>
+		///     Normalizes the syntax trees of the <see cref="Compilation" />.
+		/// </summary>
+		protected override Compilation Normalize()
+		{
+			_compilerGeneratedAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(CompilerGeneratedAttribute).FullName);
+			return base.Normalize();
+		}
+
+		/// <summary>
 		///     Normalizes the <paramref name="classDeclaration" />.
 		/// </summary>
 		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
 		{
 			var normalizedClassDeclaration = (ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration);
 
-			var delegates = _delegates.Select(d => (MemberDeclarationSyntax)d.AddAttributeLists(CompilerGeneratedAttribute)).ToArray();
+			var delegates = _delegates.Select(d => (MemberDeclarationSyntax)d.AddAttributeLists(_compilerGeneratedAttribute)).ToArray();
 			_delegates.Clear();
 
 			if (delegates.Length > 0)

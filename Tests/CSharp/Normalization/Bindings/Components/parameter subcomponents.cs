@@ -58,7 +58,7 @@ namespace Tests.Normalization.Bindings.Components
 
 	partial class Out2
 	{
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __BindingDelegate0__(ref int i);
 	}
 }

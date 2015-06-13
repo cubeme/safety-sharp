@@ -20,29 +20,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.OtherMembers
+namespace Tests.Normalization.Methods.Provided
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	internal class In5 : Component
+	internal partial class X : Component
 	{
-		private static int M3 { get; set; }
-
-		private static int M4
+		public virtual int M(int x)
 		{
-			get { return 1; }
+			return x;
 		}
+	}
 
-		private static int M5
+	internal partial class In1 : X
+	{
+		public new int M(int x)
 		{
-			set { }
+			return x * x;
 		}
+	}
 
-		private static extern void M1();
-
-		private static void M2()
+	internal partial class Out1 : X
+	{
+		private int __Behavior0__(int x)
 		{
+			return x * x;
 		}
+	}
+
+	partial class Out1
+	{
+		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private __Delegate0__ __backingField0__;
+
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate int __Delegate0__(int x);
+
+		[SafetySharp.Modeling.ProvidedAttribute]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
+		public new int M(int x) => this.__backingField0__(x);
 	}
 }

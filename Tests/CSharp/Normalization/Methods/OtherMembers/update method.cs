@@ -20,50 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Provided
+namespace Tests.Normalization.Methods.OtherMembers
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class In1 : Component
+	internal partial class In6 : Component
 	{
-		public 
-			int
-
-			M1
-			(
-				int x
-			)
+		public override void Update()
 		{
-			return 
-				1;
+			return;
 		}
 	}
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class Out1 : Component
+	internal partial class Out6 : Component
 	{
-		private int __DefaultImplementation0__(int x)
+		private void __Behavior0__()
 		{
-			return 1;
+			return;
 		}
-#line 42
 	}
 
-	partial class Out1
+	partial class Out6
 	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate0__ __portField0__;
+		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private __Delegate0__ __backingField0__;
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate int __PortDelegate0__(int x);
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate void __Delegate0__();
 
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
-		public int M1(int x) => this.__portField0__(x);
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[System.Diagnostics.DebuggerHiddenAttribute]
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
+		public override void Update() => this.__backingField0__();
 	}
 }

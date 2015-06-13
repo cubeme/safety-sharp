@@ -126,6 +126,20 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
+		///     Normalizes the <paramref name="classDeclaration" />.
+		/// </summary>
+		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
+		{
+			var portCount = _portCount;
+			_portCount = 0;
+
+			classDeclaration = (ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration);
+			_portCount = portCount;
+
+			return classDeclaration;
+		}
+
+		/// <summary>
 		///     Does not normalize methods declared by interfaces.
 		/// </summary>
 		public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax interfaceDeclaration)
@@ -158,8 +172,6 @@ namespace SafetySharp.Compiler.Normalization
 		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
 		private MethodDeclarationSyntax NormalizeExternMethod(MethodDeclarationSyntax methodDeclaration)
 		{
-			++_portCount;
-
 			var originalDeclaration = methodDeclaration;
 			var methodDelegate = CreateDelegate(methodDeclaration);
 			var methodField = CreateField(methodDelegate);
@@ -185,6 +197,7 @@ namespace SafetySharp.Compiler.Normalization
 			methodDeclaration = methodDeclaration.NormalizeWhitespace();
 			methodDeclaration = methodDeclaration.WithTrivia(originalDeclaration);
 
+			++_portCount;
 			AddMembers(originalDeclaration.GetMethodSymbol(SemanticModel).ContainingType, methodField, methodDelegate);
 			return methodDeclaration.EnsureLineCount(originalDeclaration);
 		}
@@ -197,13 +210,12 @@ namespace SafetySharp.Compiler.Normalization
 		/// <param name="attribute">The attribute the generated method should be marked with.</param>
 		private MethodDeclarationSyntax NormalizeMethod(MethodDeclarationSyntax methodDeclaration, Type attribute = null)
 		{
-			++_portCount;
 			var originalDeclaration = methodDeclaration;
 			var methodDelegate = CreateDelegate(methodDeclaration);
 			var methodField = CreateField(methodDelegate);
 
 			// Create the private port implementation method
-			var methodName = ("DefaultImplementation" + _portCount).ToSynthesized();
+			var methodName = ("Behavior" + _portCount).ToSynthesized();
 			var portImplementationName = SyntaxFactory.Identifier(methodName).WithTrivia(originalDeclaration.Identifier);
 			var portImplementation = originalDeclaration.WithIdentifier(portImplementationName);
 			portImplementation = portImplementation.WithAccessibility(Accessibility.Private).WithExplicitInterfaceSpecifier(null);
@@ -247,6 +259,7 @@ namespace SafetySharp.Compiler.Normalization
 			methodDeclaration = ReplaceBodyWithDelegateInvocation(methodDeclaration);
 			methodDeclaration = methodDeclaration.RemoveComments().WithTrivia(originalDeclaration);
 
+			++_portCount;
 			AddMembers(originalDeclaration.GetMethodSymbol(SemanticModel).ContainingType, methodField, methodDelegate, methodDeclaration);
 			return portImplementation.EnsureLineCount(originalDeclaration);
 		}
@@ -256,7 +269,7 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		private string GetDelegateName()
 		{
-			return ("PortDelegate" + _portCount).ToSynthesized();
+			return ("Delegate" + _portCount).ToSynthesized();
 		}
 
 		/// <summary>
@@ -264,7 +277,7 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		private string GetFieldName()
 		{
-			return ("portField" + _portCount).ToSynthesized();
+			return ("backingField" + _portCount).ToSynthesized();
 		}
 
 		/// <summary>

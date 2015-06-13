@@ -20,46 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Ports.Required
+namespace Tests.Normalization.Methods.Provided
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	interface I1 : IComponent
+	internal abstract partial class In1 : Component
 	{
 		[Provided]
-		int M();
-	}
-	
-	internal partial class In9 : Component, Tests.Normalization.Ports.Required.I1
-	{
-		int Tests.Normalization.Ports.Required.I1.M()
-		{
-			return 1;
-		}
+		public abstract void M1();
+
+		public abstract void M2();
 	}
 
-	internal partial class Out9 : Component, Tests.Normalization.Ports.Required.I1
+	internal abstract partial class Out1 : Component
 	{
-		private int __DefaultImplementation0__()
-		{
-			return 1;
-		}
-	}
+		[global::SafetySharp.Modeling.ProvidedAttribute()]
+		public abstract void M1();
 
-	partial class Out9
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private __PortDelegate0__ __portField0__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-		private delegate int __PortDelegate0__();
-
-		[SafetySharp.Modeling.ProvidedAttribute()]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__DefaultImplementation0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute()]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__portField0__")]
-		int Tests.Normalization.Ports.Required.I1.M() => this.__portField0__();
+		[SafetySharp.Modeling.ProvidedAttribute]
+		public abstract void M2();
 	}
 }
