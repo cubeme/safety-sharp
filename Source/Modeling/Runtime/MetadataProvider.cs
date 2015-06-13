@@ -130,7 +130,7 @@ namespace SafetySharp.Runtime
 
 				initialize(type.BaseType);
 
-				var metadataInitialization = type.GetCustomAttribute<MetadataInitializationAttribute>();
+				var metadataInitialization = type.GetCustomAttribute<MetadataAttribute>();
 				if (metadataInitialization != null)
 					metadataInitialization.InitializeMetadata(type, obj);
 			};

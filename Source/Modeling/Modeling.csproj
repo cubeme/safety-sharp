@@ -45,7 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
-    <Compile Include="CompilerServices\MetadataInitializationAttribute.cs" />
+    <Compile Include="CompilerServices\MetadataAttribute.cs" />
     <Compile Include="Runtime\BehaviorInfo.cs" />
     <Compile Include="Runtime\ComponentFieldInfo.cs" />
     <Compile Include="Runtime\ComponentInfo.Builder.cs">

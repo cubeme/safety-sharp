@@ -161,7 +161,20 @@ namespace Tests.Utilities
 				}
 				catch (CompilationException e)
 				{
-					throw new TestException(e.Message);
+					var builder = new StringBuilder();
+					builder.AppendLine(e.Message);
+
+					foreach (var syntaxTree in compiler.Compilation.SyntaxTrees)
+					{
+						builder.AppendLine();
+						builder.AppendLine();
+						builder.AppendLine("=============================================");
+						builder.AppendLine(Path.GetFileName(syntaxTree.FilePath));
+						builder.AppendLine("=============================================");
+						builder.AppendLine(syntaxTree.ToString());
+					}
+
+					throw new TestException("{0}", builder);
 				}
 			}
 		}

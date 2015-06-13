@@ -23,14 +23,8 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
-	using System.Linq;
-	using Shouldly;
 
 	internal class X1 : TestComponent
 	{
-		protected override void Check()
-		{
-			Metadata.Fields.Count().ShouldBe(0);
-		}
 	}
 }

@@ -30,13 +30,13 @@ namespace SafetySharp.CompilerServices
 	///     When applied to a S# type, indicates the method that the S# compiler used to implement the metadata initialization.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
-	public sealed class MetadataInitializationAttribute : Attribute
+	public sealed class MetadataAttribute : Attribute
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="methodName">The name of the metadata initialization method.</param>
-		public MetadataInitializationAttribute(string methodName)
+		public MetadataAttribute(string methodName)
 		{
 			Requires.NotNullOrWhitespace(methodName, () => methodName);
 			MethodName = methodName;

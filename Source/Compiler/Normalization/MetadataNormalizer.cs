@@ -66,7 +66,8 @@ namespace SafetySharp.Compiler.Normalization
 		{
 			var members = GetFieldMetadata(type)
 				.Union(GetRequiredPortMetadata(type))
-				.Union(GetProvidedPortMetadata(type));
+				.Union(GetProvidedPortMetadata(type))
+				.Union(GetUpdateMethodMetadata(type));
 
 			GenerateMetadataMethod(type, members);
 		}
@@ -90,7 +91,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			AddMembers(type, (MethodDeclarationSyntax)methodDeclaration);
 
-			var attribute = Syntax.Attribute(typeof(MetadataInitializationAttribute).FullName, Syntax.LiteralExpression(_metadataMethod));
+			var attribute = Syntax.Attribute(typeof(MetadataAttribute).FullName, Syntax.LiteralExpression(_metadataMethod));
 			AddAttributes(type, (AttributeListSyntax)attribute);
 		}
 
@@ -167,8 +168,34 @@ namespace SafetySharp.Compiler.Normalization
 
 			foreach (var method in methods)
 			{
-				var withRequiredPortMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithProvidedPort");
-				var invocation = Syntax.InvocationExpression(withRequiredPortMethod, GetMethodInfo(method));
+				var withProvidedPort = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithProvidedPort");
+				var overridingMethod = GetMethodInfo(method);
+
+				var invocation = method.OverriddenMethod == null || method.OverriddenMethod.IsAbstract
+					? Syntax.InvocationExpression(withProvidedPort, overridingMethod, GetMethodInfo(method.OverriddenMethod))
+					: Syntax.InvocationExpression(withProvidedPort, overridingMethod);
+
+				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
+			}
+		}
+
+		/// <summary>
+		///     Generates the metadata initialization code for the Update method of the <paramref name="type" />.
+		/// </summary>
+		/// <param name="type">The type that declares the Update method the metadata initialization code should be generated for.</param>
+		private IEnumerable<StatementSyntax> GetUpdateMethodMetadata(INamedTypeSymbol type)
+		{
+			var methods = type
+				.GetMembers()
+				.OfType<IMethodSymbol>()
+				.Where(method => method.IsUpdateMethod(Compilation));
+
+			foreach (var method in methods)
+			{
+				var withBehavior = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithBehavior");
+				var overridingMethod = GetMethodInfo(method);
+				var overriddenMethod = GetMethodInfo(method.OverriddenMethod);
+				var invocation = Syntax.InvocationExpression(withBehavior, overridingMethod, overriddenMethod);
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}

@@ -34,6 +34,7 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	///     Represents a S# component.
 	/// </summary>
+	[Metadata("InitializeMetadata")]
 	public abstract partial class Component : IComponent
 	{
 		[UsedImplicitly]
@@ -45,10 +46,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		protected Component()
 		{
-			var builder = new ComponentInfo.Builder(this);
-			MetadataProvider.ComponentBuilders.Add(this, builder);
-
-			builder.WithBehavior(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
+			MetadataProvider.ComponentBuilders.Add(this, new ComponentInfo.Builder(this));
 			MetadataProvider.InitializeMetadata(this);
 		}
 
@@ -75,6 +73,15 @@ namespace SafetySharp.Modeling
 		public virtual void Update()
 		{
 			_updateMethod();
+		}
+
+		/// <summary>
+		///     Initializes the metadata of the class.
+		/// </summary>
+		[UsedImplicitly]
+		private void InitializeMetadata()
+		{
+			MetadataBuilders.GetBuilder(this).WithBehavior(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
 		}
 
 		/// <summary>

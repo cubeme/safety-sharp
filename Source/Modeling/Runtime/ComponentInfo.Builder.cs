@@ -129,7 +129,7 @@ namespace SafetySharp.Runtime
 				where T : Fault
 			{
 				Requires.NotNull(fault, () => fault);
-				Requires.That(!Enumerable.Any(_faults, f => f.Fault is T), () => fault, "The fault has already been added.");
+				Requires.That(!_faults.Any(f => f.Fault is T), () => fault, "The fault has already been added.");
 
 				_faults.Add(MetadataBuilders.GetBuilder(fault).FinalizeMetadata(_info));
 			}
@@ -148,6 +148,8 @@ namespace SafetySharp.Runtime
 				Requires.That(_providedPorts.All(p => p.Method != providedPort), () => providedPort, "The port has already been added.");
 				Requires.That(providedPort.HasAttribute<ProvidedAttribute>(), () => providedPort,
 					"The method must be marked with'{0}'.", typeof(ProvidedAttribute).FullName);
+				Requires.That(basePort == null || _providedPorts.Any(p => p.Method == basePort), () => _providedPorts,
+					"The base port is unknown.");
 
 				_providedPorts.Add(new ProvidedPortInfo(_info, providedPort, basePort, createBody));
 			}

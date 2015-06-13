@@ -84,6 +84,11 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
+		///     Gets the compilation that has been compiled.
+		/// </summary>
+		public Compilation Compilation { get; private set; }
+
+		/// <summary>
 		///     Compiles the S# modeling project identified by the <paramref name="projectFile" /> for the given
 		///     <paramref name="configuration" /> and <paramref name="platform" />.
 		/// </summary>
@@ -149,6 +154,7 @@ namespace SafetySharp.Compiler
 			compilation = NormalizeSimulationCode(compilation, syntaxGenerator);
 			OutputCode(compilation, "Simulation");
 
+			Compilation = compilation;
 			return Emit(compilation, outputPath, assembly);
 		}
 
@@ -171,11 +177,11 @@ namespace SafetySharp.Compiler
 
 			compilation = compilation.WithOptions(options);
 			compilation = NormalizeSimulationCode(compilation, syntaxGenerator);
-
-			OutputCode(compilation, "testcode");
+			Compilation = compilation;
 
 			byte[] assembly, pdb;
 			EmitInMemory(compilation, out assembly, out pdb);
+
 			return Assembly.Load(assembly, pdb);
 		}
 
@@ -303,7 +309,7 @@ namespace SafetySharp.Compiler
 		/// <param name="compilation">The compilation that should be normalized.</param>
 		/// <param name="syntaxGenerator">The syntax generator that the normalizers should use to generate syntax nodes.</param>
 		[NotNull]
-		private static Compilation NormalizeSimulationCode([NotNull] Compilation compilation, [NotNull]SyntaxGenerator syntaxGenerator)
+		private static Compilation NormalizeSimulationCode([NotNull] Compilation compilation, [NotNull] SyntaxGenerator syntaxGenerator)
 		{
 			compilation = ApplyNormalizer<DebugInfoNormalizer>(compilation, syntaxGenerator);
 			compilation = ApplyNormalizer<SafetySharpAttributeNormalizer>(compilation, syntaxGenerator);
