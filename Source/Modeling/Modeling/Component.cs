@@ -46,9 +46,10 @@ namespace SafetySharp.Modeling
 		protected Component()
 		{
 			var builder = new ComponentInfo.Builder(this);
-			builder.WithBehavior(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
-
 			MetadataProvider.ComponentBuilders.Add(this, builder);
+
+			builder.WithBehavior(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
+			MetadataProvider.InitializeMetadata(this);
 		}
 
 		/// <summary>

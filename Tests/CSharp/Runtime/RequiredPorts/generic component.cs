@@ -23,6 +23,7 @@
 namespace Tests.Runtime.RequiredPorts
 {
 	using System;
+	using System.Linq;
 	using Shouldly;
 
 	internal abstract class X6<T1, T2> : TestComponent
@@ -35,7 +36,7 @@ namespace Tests.Runtime.RequiredPorts
 	{
 		protected override void Check()
 		{
-			Metadata.RequiredPorts.Length.ShouldBe(2);
+			Metadata.RequiredPorts.Count().ShouldBe(2);
 
 			Metadata.RequiredPorts[0].Method.ShouldBe(typeof(X6<int, bool>).GetMethod("M"));
 			Metadata.RequiredPorts[0].Component.Component.ShouldBe(this);

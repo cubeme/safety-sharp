@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,27 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.RequiredPorts
+namespace SafetySharp.Compiler.Roslyn
 {
 	using System;
 	using System.Linq;
-	using System.Reflection;
-	using Shouldly;
+	using Microsoft.CodeAnalysis;
 
-	internal class X2 : TestComponent
+	/// <summary>
+	///     A base class for symbol-based C# normalizers that normalize certain C# language features.
+	/// </summary>
+	public abstract class SymbolNormalizer : Normalizer
 	{
-		private extern void M();
-
-		protected override void Check()
+		/// <summary>
+		///     Normalizes the type symbols declared by the <see cref="Compilation" />.
+		/// </summary>
+		protected override Compilation Normalize()
 		{
-			Metadata.RequiredPorts.Count().ShouldBe(1);
+			foreach (var type in Compilation.GetSymbolsWithName(_ => true, SymbolFilter.Type).OfType<INamedTypeSymbol>())
+				NormalizeTypeSymbol(type);
 
-			Metadata.RequiredPorts[0].Method.ShouldBe(typeof(X2).GetMethod("M", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.RequiredPorts[0].Component.Component.ShouldBe(this);
-			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[0].CreateBody.ShouldBe(null);
-			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[0].Name.ShouldBe("M");
+			return Compilation;
 		}
+
+		/// <summary>
+		///     Normalizes the <paramref name="typeSymbol" />.
+		/// </summary>
+		/// <param name="typeSymbol">The type symbol that should be normalized.</param>
+		protected abstract void NormalizeTypeSymbol(INamedTypeSymbol typeSymbol);
 	}
 }

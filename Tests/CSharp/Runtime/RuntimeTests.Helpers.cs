@@ -31,21 +31,17 @@ namespace Tests.Runtime
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using SafetySharp.Compiler.Roslyn.Symbols;
 	using SafetySharp.Compiler.Roslyn.Syntax;
-	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime;
+	using Shouldly;
 	using Utilities;
 	using Xunit.Abstractions;
 
 	public abstract class TestComponent : Component
 	{
 		protected ComponentInfo Metadata { get; private set; }
-
-		protected ComponentInfo.Builder Builder
-		{
-			get { return MetadataBuilders.GetBuilder(this); }
-		}
 
 		protected MethodInfo ComponentUpdatedMethod
 		{
@@ -55,10 +51,19 @@ namespace Tests.Runtime
 		public void Check(ComponentInfo metadata)
 		{
 			Metadata = metadata;
+			Metadata.Component.ShouldBe(this);
+
 			Check();
 		}
 
-		protected abstract void Check();
+		protected virtual void Check()
+		{
+			Metadata.Fields.Count().ShouldBe(0);
+			Metadata.ProvidedPorts.Count().ShouldBe(0);
+			Metadata.RequiredPorts.Count().ShouldBe(0);
+			Metadata.Faults.Count().ShouldBe(0);
+			Metadata.Behaviors.Count().ShouldBe(1);
+		}
 
 		protected void CheckField(Type fieldType, string fieldName, params object[] initialValues)
 		{
@@ -127,6 +132,7 @@ namespace Tests.Runtime
 				.Descendants<ClassDeclarationSyntax>()
 				.Select(declaration => declaration.GetTypeSymbol(semanticModel))
 				.Where(symbol => !symbol.IsGenericType && !symbol.IsAbstract && symbol.ContainingType == null)
+				.Where(symbol => symbol.IsDerivedFrom(semanticModel.GetTypeSymbol<TestComponent>()))
 				.Select(symbol => symbol.ToDisplayString())
 				.ToArray();
 

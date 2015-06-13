@@ -19,7 +19,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\Binaries\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -30,7 +30,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\Binaries\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -242,6 +242,9 @@
     <Compile Include="Runtime\Fields\inherited field.cs" />
     <Compile Include="Runtime\Fields\single field.cs" />
     <Compile Include="Runtime\Fields\no fields.cs" />
+    <Compile Include="Runtime\Nested\deeply nested.cs" />
+    <Compile Include="Runtime\Nested\nested in generic class.cs" />
+    <Compile Include="Runtime\Nested\nested in non-generic class.cs" />
     <Compile Include="Runtime\ProvidedPorts\no ports.cs" />
     <Compile Include="Runtime\ProvidedPorts\single port.cs" />
     <Compile Include="Runtime\RequiredPorts\inherited port.cs" />

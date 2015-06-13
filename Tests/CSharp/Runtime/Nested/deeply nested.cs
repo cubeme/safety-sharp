@@ -20,27 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.RequiredPorts
+namespace Tests.Runtime.Nested
 {
 	using System;
 	using System.Linq;
-	using System.Reflection;
 	using Shouldly;
 
-	internal class X2 : TestComponent
+	internal class X7<T>
 	{
-		private extern void M();
+		public class A
+		{
+			public class B<U>
+			{
+				public class C
+				{
+					public abstract class Y<S> : TestComponent
+					{
+						public T _x = default(T);
+						public S _y = default(S);
+						public U _z = default(U);
+					}
+				}
+			}
+		}
+	}
 
+	internal class X8 : X7<double>.A.B<int>.C.Y<bool>
+	{
 		protected override void Check()
 		{
-			Metadata.RequiredPorts.Count().ShouldBe(1);
+			Metadata.Fields.Count().ShouldBe(3);
 
-			Metadata.RequiredPorts[0].Method.ShouldBe(typeof(X2).GetMethod("M", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.RequiredPorts[0].Component.Component.ShouldBe(this);
-			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[0].CreateBody.ShouldBe(null);
-			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[0].Name.ShouldBe("M");
+			CheckField(typeof(double), "_x", 0.0);
+			CheckField(typeof(bool), "_y", false);
+			CheckField(typeof(int), "_z", 0);
 		}
 	}
 }

@@ -36,7 +36,7 @@ namespace SafetySharp.Compiler.Normalization
 	/// <summary>
 	///     Adds the metadata initialization code to the various S# types.
 	/// </summary>
-	public sealed class MetadataNormalizer : Normalizer
+	public sealed class MetadataNormalizer : SymbolNormalizer
 	{
 		/// <summary>
 		///     The name of the builder variable.
@@ -46,24 +46,29 @@ namespace SafetySharp.Compiler.Normalization
 		/// <summary>
 		///     The name of the metadata initialization method.
 		/// </summary>
-		private const string MetadataMethod = "InitializeMetadata";
-
-		
+		private readonly string _metadataMethod = IdentifierNameSynthesizer.ToSynthesizedName("InitializeMetadata");
 
 		/// <summary>
-		///     Adds the metadata initialization code to the <paramref name="constructor" />.
+		///     Normalizes the <paramref name="typeSymbol" />.
 		/// </summary>
-		public override SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax constructor)
+		/// <param name="typeSymbol">The type symbol that should be normalized.</param>
+		protected override void NormalizeTypeSymbol(INamedTypeSymbol typeSymbol)
 		{
-			var typeSymbol = constructor.GetMethodSymbol(SemanticModel).ContainingType;
+			if (typeSymbol.IsDerivedFromComponent(Compilation))
+				GenerateComponentMetadata(typeSymbol);
+		}
 
-			if (!typeSymbol.IsDerivedFromComponent(SemanticModel))
-				return base.VisitConstructorDeclaration(constructor);
+		/// <summary>
+		///     Generates the metadata initialization code for the component <paramref name="type" />.
+		/// </summary>
+		/// <param name="type">The component type the code should be generated for.</param>
+		private void GenerateComponentMetadata(INamedTypeSymbol type)
+		{
+			var members = GetFieldMetadata(type)
+				.Union(GetRequiredPortMetadata(type))
+				.Union(GetProvidedPortMetadata(type));
 
-			GenerateComponentMetadata(typeSymbol);
-
-			constructor = (ConstructorDeclarationSyntax)base.VisitConstructorDeclaration(constructor);
-			return constructor; //.WithBody(constructor.Body.WithStatements(statements));
+			GenerateMetadataMethod(type, members);
 		}
 
 		/// <summary>
@@ -73,26 +78,20 @@ namespace SafetySharp.Compiler.Normalization
 		/// <param name="statements">The statements that should be executed by the method.</param>
 		private void GenerateMetadataMethod(INamedTypeSymbol type, IEnumerable<StatementSyntax> statements)
 		{
-			var buildersType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(MetadataBuilders)));
+			var buildersType = Syntax.TypeExpression(Compilation.GetTypeSymbol(typeof(MetadataBuilders)));
 			var getBuilder = Syntax.MemberAccessExpression(buildersType, "GetBuilder");
 			var builderInitializer = Syntax.InvocationExpression(getBuilder, Syntax.ThisExpression());
 			var builderDeclaration = Syntax.LocalDeclarationStatement(BuilderVariableName, builderInitializer).NormalizeWhitespace();
 
 			var methodDeclaration = Syntax.MethodDeclaration(
-				name: IdentifierNameSynthesizer.ToSynthesizedName(MetadataMethod),
+				name: _metadataMethod,
 				accessibility: Accessibility.Private,
 				statements: new[] { builderDeclaration }.Concat(statements));
 
 			AddMembers(type, (MethodDeclarationSyntax)methodDeclaration);
-		}
 
-		/// <summary>
-		///     Generates the metadata initialization code for the component <paramref name="type" />.
-		/// </summary>
-		/// <param name="type">The component type the code should be generated for.</param>
-		private void GenerateComponentMetadata(INamedTypeSymbol type)
-		{
-			GenerateMetadataMethod(type, GetFieldMetadata(type));
+			var attribute = Syntax.Attribute(typeof(MetadataInitializationAttribute).FullName, Syntax.LiteralExpression(_metadataMethod));
+			AddAttributes(type, (AttributeListSyntax)attribute);
 		}
 
 		/// <summary>
@@ -106,7 +105,7 @@ namespace SafetySharp.Compiler.Normalization
 				.OfType<IFieldSymbol>()
 				.Where(field =>
 				{
-					if (field.IsReadOnly || field.IsConst)
+					if (field.IsConst)
 						return false;
 
 					switch (field.Type.SpecialType)
@@ -116,23 +115,100 @@ namespace SafetySharp.Compiler.Normalization
 						case SpecialType.System_Double:
 							return true;
 						default:
-							return false;
+							return field.Type.TypeKind == TypeKind.TypeParameter || field.Type.TypeKind == TypeKind.Enum;
 					}
 				});
 
-			foreach (var fieldSymbol in fields)
+			foreach (var field in fields)
 			{
 				var declaringTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(type));
-				var fieldTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(fieldSymbol.Type));
-				var nameArg = Syntax.LiteralExpression(fieldSymbol.Name);
-				var reflectionHelpersType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(ReflectionHelpers)));
+				var fieldTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(field.Type));
+				var nameArg = Syntax.LiteralExpression(field.Name);
+				var reflectionHelpersType = Syntax.TypeExpression(Compilation.GetTypeSymbol(typeof(ReflectionHelpers)));
 				var getFieldMethod = Syntax.MemberAccessExpression(reflectionHelpersType, "GetField");
 				var fieldInfo = Syntax.InvocationExpression(getFieldMethod, declaringTypeArg, fieldTypeArg, nameArg);
 
-				var withFieldMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithField");
+				var methodName = field.Type.TypeKind == TypeKind.TypeParameter ? "WithGenericField" : "WithField";
+				var withFieldMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), methodName);
 				var invocation = Syntax.InvocationExpression(withFieldMethod, fieldInfo);
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
+		}
+
+		/// <summary>
+		///     Generates the metadata initialization code for all required ports of the <paramref name="type" />.
+		/// </summary>
+		/// <param name="type">The type that declares the required ports the metadata initialization code should be generated for.</param>
+		private IEnumerable<StatementSyntax> GetRequiredPortMetadata(INamedTypeSymbol type)
+		{
+			var methods = type
+				.GetMembers()
+				.OfType<IMethodSymbol>()
+				.Where(method => method.IsRequiredPort(Compilation));
+
+			foreach (var method in methods)
+			{
+				var withRequiredPortMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithRequiredPort");
+				var invocation = Syntax.InvocationExpression(withRequiredPortMethod, GetMethodInfo(method));
+				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
+			}
+		}
+
+		/// <summary>
+		///     Generates the metadata initialization code for all provided ports of the <paramref name="type" />.
+		/// </summary>
+		/// <param name="type">The type that declares the provided ports the metadata initialization code should be generated for.</param>
+		private IEnumerable<StatementSyntax> GetProvidedPortMetadata(INamedTypeSymbol type)
+		{
+			var methods = type
+				.GetMembers()
+				.OfType<IMethodSymbol>()
+				.Where(method => method.IsProvidedPort(Compilation) && !method.IsAbstract);
+
+			foreach (var method in methods)
+			{
+				var withRequiredPortMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithProvidedPort");
+				var invocation = Syntax.InvocationExpression(withRequiredPortMethod, GetMethodInfo(method));
+				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
+			}
+		}
+
+		/// <summary>
+		///     Gets the <see cref="ReflectionHelpers.GetMethod" /> invocation that gets the <paramref name="method" /> using
+		///     reflection.
+		/// </summary>
+		/// <param name="method">The method the code should be created for.</param>
+		private ExpressionSyntax GetMethodInfo(IMethodSymbol method)
+		{
+			var declaringTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(method.ContainingType));
+			var parameters = GetParameterTypeArray(method);
+			var returnType = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(method.ReturnType));
+			var nameArg = Syntax.LiteralExpression(method.Name);
+			var reflectionHelpersType = Syntax.TypeExpression(Compilation.GetTypeSymbol(typeof(ReflectionHelpers)));
+			var getMethodMethod = Syntax.MemberAccessExpression(reflectionHelpersType, "GetMethod");
+			return (ExpressionSyntax)Syntax.InvocationExpression(getMethodMethod, declaringTypeArg, nameArg, parameters, returnType);
+		}
+
+		/// <summary>
+		///     Gets the parameter type array that can be used to retrieve the <paramref name="method" /> via reflection.
+		/// </summary>
+		/// <param name="method">The method the parameter type array should be returned for.</param>
+		private ExpressionSyntax GetParameterTypeArray(IMethodSymbol method)
+		{
+			var typeExpressions = method.Parameters.Select(p =>
+			{
+				var typeofExpression = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(p.Type));
+				if (p.RefKind == RefKind.None)
+					return typeofExpression;
+
+				var makeRefType = Syntax.MemberAccessExpression(typeofExpression, "MakeByRefType");
+				return (ExpressionSyntax)Syntax.InvocationExpression(makeRefType);
+			});
+
+			var arguments = SyntaxFactory.SeparatedList(typeExpressions);
+			var initialize = SyntaxFactory.InitializerExpression(SyntaxKind.ArrayInitializerExpression, arguments);
+			var arrayType = Syntax.ArrayTypeExpression(Syntax.TypeExpression(Compilation.GetTypeSymbol<Type>()));
+			return SyntaxFactory.ArrayCreationExpression((ArrayTypeSyntax)arrayType, initialize);
 		}
 	}
 }

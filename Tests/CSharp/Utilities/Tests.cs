@@ -150,7 +150,7 @@ namespace Tests.Utilities
 					.WithCompilationOptions(compilation.Options);
 
 				foreach (var syntaxTree in compilation.SyntaxTrees)
-					project = project.AddDocument(Guid.NewGuid().ToString(), syntaxTree.GetRoot().GetText(Encoding.UTF8)).Project;
+					project = project.AddDocument(syntaxTree.FilePath, syntaxTree.GetRoot().GetText(Encoding.UTF8)).Project;
 
 				var errorReporter = new CSharpErrorReporter(_output);
 				var compiler = new Compiler(errorReporter);

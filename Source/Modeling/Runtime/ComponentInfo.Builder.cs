@@ -43,8 +43,8 @@ namespace SafetySharp.Runtime
 			private readonly List<FaultInfo> _faults = new List<FaultInfo>();
 			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
 			private readonly ComponentInfo _info;
-			private readonly List<RequiredPortInfo> _requiredPorts = new List<RequiredPortInfo>();
 			private readonly List<ProvidedPortInfo> _providedPorts = new List<ProvidedPortInfo>();
+			private readonly List<RequiredPortInfo> _requiredPorts = new List<RequiredPortInfo>();
 			private readonly List<FieldInfo> _subcomponents = new List<FieldInfo>();
 			private string _name;
 
@@ -70,9 +70,23 @@ namespace SafetySharp.Runtime
 				Requires.That(!_fields.ContainsKey(field), () => field, "The field has already been added.");
 				Requires.That(field.FieldType == typeof(int) || field.FieldType == typeof(bool) ||
 							  field.FieldType == typeof(double) || field.FieldType.IsEnum, () => field,
-					"Invalid field type: Only 'bool', 'int', 'double', and enumerations are supported.");
+					"Invalid field type: Only 'bool', 'int', 'double', and enumeration types are supported.");
 
 				_fields.Add(field, null);
+			}
+
+			/// <summary>
+			///     Adds the <paramref name="field" /> of compile-time generic type to the component's metadata. The field
+			///     is not be added if it is not of a supported field type.
+			/// </summary>
+			/// <param name="field">The field that should be added to the metadata.</param>
+			public void WithGenericField(FieldInfo field)
+			{
+				Requires.NotNull(field, () => field);
+				Requires.That(!_fields.ContainsKey(field), () => field, "The field has already been added.");
+
+				if (field.FieldType == typeof(int) || field.FieldType == typeof(bool) || field.FieldType == typeof(double) || field.FieldType.IsEnum)
+					WithField(field);
 			}
 
 			/// <summary>
@@ -132,8 +146,8 @@ namespace SafetySharp.Runtime
 			{
 				Requires.NotNull(providedPort, () => providedPort);
 				Requires.That(_providedPorts.All(p => p.Method != providedPort), () => providedPort, "The port has already been added.");
-				Requires.That(providedPort.HasAttribute<RequiredAttribute>(), () => providedPort,
-					"The method must be marked with'{0}'.", typeof(RequiredAttribute).FullName);
+				Requires.That(providedPort.HasAttribute<ProvidedAttribute>(), () => providedPort,
+					"The method must be marked with'{0}'.", typeof(ProvidedAttribute).FullName);
 
 				_providedPorts.Add(new ProvidedPortInfo(_info, providedPort, basePort, createBody));
 			}

@@ -86,7 +86,7 @@ namespace SafetySharp.Compiler.Normalization
 	///         public void MyMethod(int a, double b) => f(a, b);
 	///   	</code>
 	/// </summary>
-	public sealed class PortNormalizer : Normalizer
+	public sealed class PortNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
 		///     Represents the [CompilerGenerated] attribute syntax.

@@ -58,5 +58,11 @@ namespace Tests.Runtime
 		{
 			Check(code);
 		}
+
+		[Theory, MemberData("DiscoverTests", "Nested")]
+		public void Nested(string test, SyntaxTree code)
+		{
+			Check(code);
+		}
 	}
 }

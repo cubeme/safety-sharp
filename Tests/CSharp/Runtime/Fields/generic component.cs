@@ -23,12 +23,13 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
+	using System.Linq;
 	using Shouldly;
 
 	internal abstract class X14<T1, T2> : TestComponent
 	{
-		public readonly T1 _x;
-		public readonly T2 _y;
+		public T1 _x;
+		public T2 _y;
 
 		protected X14(T1 v1, T2 v2)
 		{
@@ -46,7 +47,7 @@ namespace Tests.Runtime.Fields
 
 		protected override void Check()
 		{
-			Metadata.Fields.Length.ShouldBe(2);
+			Metadata.Fields.Count().ShouldBe(2);
 			CheckField(typeof(int), "_x", 1);
 			CheckField(typeof(bool), "_y", true);
 		}
@@ -68,7 +69,7 @@ namespace Tests.Runtime.Fields
 
 		protected override void Check()
 		{
-			Metadata.Fields.Length.ShouldBe(2);
+			Metadata.Fields.Count().ShouldBe(2);
 			CheckField(typeof(double), "_x", 4.2);
 			CheckField(typeof(E), "_y", E.B);
 		}

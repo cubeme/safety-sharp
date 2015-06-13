@@ -24,6 +24,8 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Reflection;
+	using CompilerServices;
 	using Modeling;
 	using Utilities;
 
@@ -109,6 +111,31 @@ namespace SafetySharp.Runtime
 				"The metadata for the occurrence pattern is not yet available.");
 
 			return info;
+		}
+
+		/// <summary>
+		///     Initializes <paramref name="obj" />'s S# metadata.
+		/// </summary>
+		/// <param name="obj">The object whose metadata should be initialized.</param>
+		internal static void InitializeMetadata(object obj)
+		{
+			Requires.NotNull(obj, () => obj);
+
+			// The metadata of base types must be initialized first
+			Action<Type> initialize = null;
+			initialize = type =>
+			{
+				if (type == typeof(object))
+					return;
+
+				initialize(type.BaseType);
+
+				var metadataInitialization = type.GetCustomAttribute<MetadataInitializationAttribute>();
+				if (metadataInitialization != null)
+					metadataInitialization.InitializeMetadata(type, obj);
+			};
+
+			initialize(obj.GetType());
 		}
 	}
 }

@@ -23,6 +23,7 @@
 namespace Tests.Runtime.Faults
 {
 	using System;
+	using System.Linq;
 	using SafetySharp.Modeling;
 	using Shouldly;
 
@@ -33,7 +34,7 @@ namespace Tests.Runtime.Faults
 
 		protected override void Check()
 		{
-			Metadata.Faults.Length.ShouldBe(1);
+			Metadata.Faults.Count().ShouldBe(1);
 			CheckFault(_fault);
 		}
 

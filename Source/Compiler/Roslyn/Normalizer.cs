@@ -23,13 +23,13 @@
 namespace SafetySharp.Compiler.Roslyn
 {
 	using System;
-	using System.IO;
+	using System.Linq;
+	using System.Text;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Editing;
-	using Syntax;
 	using Utilities;
 
 	/// <summary>
@@ -38,19 +38,9 @@ namespace SafetySharp.Compiler.Roslyn
 	public abstract class Normalizer : CSharpSyntaxRewriter
 	{
 		/// <summary>
-		///     The syntax tree that is currently being normalized.
+		///     Gets or sets the compilation that is currently being normalized.
 		/// </summary>
-		private SyntaxTree _syntaxTree;
-
-		/// <summary>
-		///     Gets the compilation that is currently being normalized.
-		/// </summary>
-		protected Compilation Compilation { get; private set; }
-
-		/// <summary>
-		///     Gets the semantic model that should be used for semantic analysis during normalization.
-		/// </summary>
-		protected SemanticModel SemanticModel { get; private set; }
+		protected Compilation Compilation { get; set; }
 
 		/// <summary>
 		///     Gets the syntax generator that the normalizer can use to generate syntax nodes.
@@ -76,57 +66,57 @@ namespace SafetySharp.Compiler.Roslyn
 		/// <summary>
 		///     Normalizes the <see cref="Compilation" />.
 		/// </summary>
-		protected virtual Compilation Normalize()
-		{
-			return NormalizeSyntaxTrees();
-		}
-
-		/// <summary>
-		///     Normalizes all syntax trees of the <see cref="Compilation" />.
-		/// </summary>
-		protected Compilation NormalizeSyntaxTrees()
-		{
-			foreach (var syntaxTree in Compilation.SyntaxTrees)
-			{
-				_syntaxTree = syntaxTree;
-
-				var normalizedSyntaxTree = Normalize(syntaxTree);
-				Compilation = Compilation.ReplaceSyntaxTree(syntaxTree, normalizedSyntaxTree);
-			}
-
-			return Compilation;
-		}
-
-		/// <summary>
-		///     Normalizes the <paramref name="syntaxTree" /> of the <see cref="Compilation" />.
-		/// </summary>
-		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
-		protected virtual SyntaxTree Normalize(SyntaxTree syntaxTree)
-		{
-			SemanticModel = Compilation.GetSemanticModel(syntaxTree);
-
-			var root = syntaxTree.GetRoot();
-			var normalizedRoot = Visit(root);
-
-			if (root == normalizedRoot)
-				return syntaxTree;
-
-			return syntaxTree.WithRoot(normalizedRoot);
-		}
+		protected abstract Compilation Normalize();
 
 		/// <summary>
 		///     Adds the <paramref name="compilationUnit" /> to the normalized compilation.
 		/// </summary>
 		/// <param name="compilationUnit">The compilation unit that should be added.</param>
-		protected void AddCompilationUnit([NotNull] CompilationUnitSyntax compilationUnit)
+		/// <param name="fileName">The name of the generated file.</param>
+		protected void AddCompilationUnit([NotNull] CompilationUnitSyntax compilationUnit, string fileName = null)
 		{
 			Requires.NotNull(compilationUnit, () => compilationUnit);
 
-			var originalPath = _syntaxTree.FilePath ?? String.Empty;
-			var path = String.Format("{0}.g.cs{1}", Path.GetFileNameWithoutExtension(originalPath), Guid.NewGuid());
-			var syntaxTree = _syntaxTree.WithRoot(compilationUnit.NormalizeWhitespace()).WithFilePath(path);
+			var path = String.Format("{0}.g.cs{1}", fileName ?? String.Empty, Guid.NewGuid());
+
+			// Ideally, we'd construct the syntax tree from the compilation unit directly instead of printing out the
+			// compilation unit and then parsing it again. However, if we do that, we can no longer use any C# 6 features
+			// in the generated code - probably some Roslyn bug.
+			var options = new CSharpParseOptions();
+			var syntaxTree = SyntaxFactory.ParseSyntaxTree(compilationUnit.NormalizeWhitespace().ToFullString(), options, path, Encoding.UTF8);
 
 			Compilation = Compilation.AddSyntaxTrees(syntaxTree);
+		}
+
+		/// <summary>
+		///     Adds the appropriate namespaces and nested parent classes to <paramref name="type" /> containing the given
+		///     <paramref name="member" /> and adds the generated code to the <see cref="Compilation" />.
+		/// </summary>
+		/// <param name="type">The type the code should be generated for.</param>
+		/// <param name="member">The member that should be added to the generated type.</param>
+		/// <param name="fileName">The name of the generated file.</param>
+		private void AddNamespacedAndNested([NotNull] INamedTypeSymbol type, MemberDeclarationSyntax member, string fileName = null)
+		{
+			fileName = fileName ?? type.ToDisplayString().Replace("<", "{").Replace(">", "}");
+
+			if (type.ContainingType != null)
+			{
+				var generatedClass = (MemberDeclarationSyntax)Syntax.ClassDeclaration(
+					name: type.ContainingType.Name,
+					typeParameters: type.ContainingType.TypeParameters.Select(t => t.Name),
+					modifiers: DeclarationModifiers.Partial,
+					members: new[] { member });
+
+				AddNamespacedAndNested(type.ContainingType, generatedClass, fileName);
+			}
+			else
+			{
+				var code = !type.ContainingNamespace.IsGlobalNamespace
+					? Syntax.NamespaceDeclaration(type.ContainingNamespace.ToDisplayString(), member)
+					: member;
+
+				AddCompilationUnit((CompilationUnitSyntax)Syntax.CompilationUnit(code).NormalizeWhitespace(), fileName);
+			}
 		}
 
 		/// <summary>
@@ -134,48 +124,39 @@ namespace SafetySharp.Compiler.Roslyn
 		///     <paramref name="members" />.
 		/// </summary>
 		/// <param name="type">The type the part should be declared for.</param>
-		/// <param name="members">The members that should be added to the class.</param>
+		/// <param name="members">The members that should be added to the type.</param>
 		protected void AddMembers([NotNull] INamedTypeSymbol type, [NotNull] params MemberDeclarationSyntax[] members)
 		{
 			Requires.NotNull(type, () => type);
 			Requires.NotNull(members, () => members);
 
-			var generatedClass = SyntaxFactory
-				.ClassDeclaration(type.Name)
-				//.WithTypeParameterList(classDeclaration.TypeParameterList)
-				.WithMembers(SyntaxFactory.List(members))
-				.WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PartialKeyword)));
+			var generatedClass = (MemberDeclarationSyntax)Syntax.ClassDeclaration(
+				name: type.Name,
+				typeParameters: type.TypeParameters.Select(t => t.Name),
+				modifiers: DeclarationModifiers.Partial,
+				members: members);
 
-			CompilationUnitSyntax compilationUnit;
+			AddNamespacedAndNested(type, generatedClass);
+		}
 
-			if (type.ContainingType != null)
-			{
-				generatedClass = SyntaxFactory
-					.ClassDeclaration(type.ContainingType.Name)
-					//.WithTypeParameterList(classDeclaration.Ancestors().OfType<ClassDeclarationSyntax>().First().TypeParameterList)
-					.WithMembers(SyntaxFactory.SingletonList((MemberDeclarationSyntax)generatedClass))
-					.WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PartialKeyword)));
-			}
+		/// <summary>
+		///     Adds a compilation unit containing a part of the partial <paramref name="type" />, adding the
+		///     <paramref name="attributes" /> to the type.
+		/// </summary>
+		/// <param name="type">The type the part should be declared for.</param>
+		/// <param name="attributes">The attributes that should be added to the type.</param>
+		protected void AddAttributes([NotNull] INamedTypeSymbol type, [NotNull] AttributeListSyntax attributes)
+		{
+			Requires.NotNull(type, () => type);
+			Requires.NotNull(attributes, () => attributes);
 
-			if (type.ContainingNamespace != null && !type.ContainingNamespace.IsGlobalNamespace)
-			{
-				var namespaceName = SyntaxFactory.ParseName(type.ContainingNamespace.ToDisplayString());
-				var namespaceDeclaration = SyntaxFactory
-					.NamespaceDeclaration(namespaceName)
-					.WithMembers(SyntaxFactory.SingletonList((MemberDeclarationSyntax)generatedClass));
+			var generatedClass = (ClassDeclarationSyntax)Syntax.ClassDeclaration(
+				name: type.Name,
+				typeParameters: type.TypeParameters.Select(t => t.Name),
+				modifiers: DeclarationModifiers.Partial);
 
-				compilationUnit = SyntaxFactory
-					.CompilationUnit()
-					.WithMembers(SyntaxFactory.SingletonList((MemberDeclarationSyntax)namespaceDeclaration));
-			}
-			else
-			{
-				compilationUnit = SyntaxFactory
-					.CompilationUnit()
-					.WithMembers(SyntaxFactory.SingletonList((MemberDeclarationSyntax)generatedClass));
-			}
-
-			AddCompilationUnit(compilationUnit);
+			generatedClass = generatedClass.AddAttributeLists(attributes);
+			AddNamespacedAndNested(type, generatedClass);
 		}
 	}
 }

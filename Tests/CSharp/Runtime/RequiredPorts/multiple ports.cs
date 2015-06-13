@@ -23,6 +23,7 @@
 namespace Tests.Runtime.RequiredPorts
 {
 	using System;
+	using System.Linq;
 	using Shouldly;
 
 	internal class X3 : TestComponent
@@ -33,7 +34,7 @@ namespace Tests.Runtime.RequiredPorts
 
 		protected override void Check()
 		{
-			Metadata.RequiredPorts.Length.ShouldBe(3);
+			Metadata.RequiredPorts.Count().ShouldBe(3);
 
 			Metadata.RequiredPorts[0].Method.ReturnType.ShouldBe(typeof(void));
 			Metadata.RequiredPorts[0].Component.Component.ShouldBe(this);

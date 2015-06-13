@@ -34,7 +34,7 @@ namespace SafetySharp.Compiler.Normalization
 	///     additionally generated code can be easily added without having to consider fixing up line information
 	///     for debugging purposes.
 	/// </summary>
-	public sealed class PartialNormalizer : Normalizer
+	public sealed class PartialNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
 		///     Normalizes the <paramref name="classDeclaration" />.

@@ -20,34 +20,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Normalization
+namespace SafetySharp.Compiler.Roslyn
 {
 	using System;
-	using System.Text;
-	using CompilerServices;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Roslyn;
+	using Syntax;
 
 	/// <summary>
-	///     Adds the <see cref="SafetySharpAttribute" /> to the compilation.
+	///     A base class for syntax-based C# normalizers that normalize certain C# language features.
 	/// </summary>
-	public sealed class SafetySharpAttributeNormalizer : SyntaxNormalizer
+	public abstract class SyntaxNormalizer : Normalizer
 	{
 		/// <summary>
-		///     The name of the resource that stores the embedded original S# assembly.
+		///     Gets the semantic model that should be used for semantic analysis during normalization.
 		/// </summary>
-		public const string EmbeddedAssembly = "S# Assembly";
+		protected SemanticModel SemanticModel { get; private set; }
 
 		/// <summary>
-		///     Normalizes the <see cref="Compilation" />.
+		///     Normalizes the syntax trees of the <see cref="Compilation" />.
 		/// </summary>
 		protected override Compilation Normalize()
 		{
-			var code = String.Format("[assembly: {0}(\"{1}\")]", typeof(SafetySharpAttribute).FullName, EmbeddedAssembly);
-			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code, path: Guid.NewGuid().ToString(), encoding: Encoding.UTF8);
+			foreach (var syntaxTree in Compilation.SyntaxTrees)
+			{
+				var normalizedSyntaxTree = Normalize(syntaxTree);
+				Compilation = Compilation.ReplaceSyntaxTree(syntaxTree, normalizedSyntaxTree);
+			}
 
-			return Compilation.AddSyntaxTrees(syntaxTree);
+			return Compilation;
+		}
+
+		/// <summary>
+		///     Normalizes the <paramref name="syntaxTree" /> of the <see cref="Compilation" />.
+		/// </summary>
+		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
+		protected virtual SyntaxTree Normalize(SyntaxTree syntaxTree)
+		{
+			SemanticModel = Compilation.GetSemanticModel(syntaxTree);
+
+			var root = syntaxTree.GetRoot();
+			var normalizedRoot = Visit(root);
+
+			if (root == normalizedRoot)
+				return syntaxTree;
+
+			return syntaxTree.WithRoot(normalizedRoot);
 		}
 	}
 }

@@ -23,6 +23,7 @@
 namespace Tests.Runtime.Behaviors
 {
 	using System;
+	using System.Linq;
 	using SafetySharp.Modeling;
 	using Shouldly;
 
@@ -38,7 +39,7 @@ namespace Tests.Runtime.Behaviors
 
 		protected override void Check()
 		{
-			Metadata.Behaviors.Length.ShouldBe(2);
+			Metadata.Behaviors.Count().ShouldBe(2);
 
 			Metadata.Behaviors[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
 			Metadata.Behaviors[0].Component.Component.ShouldBe(this);

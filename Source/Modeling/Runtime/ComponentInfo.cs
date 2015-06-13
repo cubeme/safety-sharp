@@ -23,7 +23,7 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections.Immutable;
+	using System.Collections.Generic;
 	using Modeling;
 
 	/// <summary>
@@ -34,12 +34,12 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the faults affecting the component.
 		/// </summary>
-		public ImmutableArray<FaultInfo> Faults { get; private set; }
+		public IEnumerable<FaultInfo> Faults { get; private set; }
 
 		/// <summary>
 		///     Gets the fields declared by the component.
 		/// </summary>
-		public ImmutableArray<ComponentFieldInfo> Fields { get; private set; }
+		public IEnumerable<ComponentFieldInfo> Fields { get; private set; }
 
 		/// <summary>
 		///     Gets the <see cref="Component" /> instance the metadata is provided for.

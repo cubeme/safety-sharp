@@ -44,7 +44,7 @@ namespace SafetySharp.Compiler.Normalization
 	///  		Bind(new PortBinding(PortInfo.RequiredPort((D)c.X, "..."), PortInfo.ProvidedPort((D)Y)));
 	///   	</code>
 	/// </summary>
-	public sealed class BindingNormalizer : Normalizer
+	public sealed class BindingNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
 		///     Represents the [CompilerGenerated] attribute syntax.

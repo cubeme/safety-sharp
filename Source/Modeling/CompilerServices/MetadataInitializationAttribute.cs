@@ -27,38 +27,41 @@ namespace SafetySharp.CompilerServices
 	using Utilities;
 
 	/// <summary>
-	///     When applied to a component method, indicates the field that the S# compiler used to implement the component method.
+	///     When applied to a S# type, indicates the method that the S# compiler used to implement the metadata initialization.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-	public sealed class BackingFieldAttribute : Attribute
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+	public sealed class MetadataInitializationAttribute : Attribute
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="fieldName">The name of the marked component method's backing field.</param>
-		public BackingFieldAttribute(string fieldName)
+		/// <param name="methodName">The name of the metadata initialization method.</param>
+		public MetadataInitializationAttribute(string methodName)
 		{
-			Requires.NotNullOrWhitespace(fieldName, () => fieldName);
-			FieldName = fieldName;
+			Requires.NotNullOrWhitespace(methodName, () => methodName);
+			MethodName = methodName;
 		}
 
 		/// <summary>
-		///     Gets the name of the marked component method's backing field.
+		///     Gets the name of the metadata initialization method.
 		/// </summary>
-		public string FieldName { get; private set; }
+		public string MethodName { get; private set; }
 
 		/// <summary>
-		///     Gets the <see cref="FieldInfo" /> object representing the marked component method's backing field.
+		///     Initializes the metadata of the <paramref name="obj" /> using the metadata initialization method of
+		///     <paramref name="type" />.
 		/// </summary>
-		/// <param name="type">The type that declares the marked component method.</param>
-		public FieldInfo GetFieldInfo(Type type)
+		/// <param name="type">The type that declares the metadata initialization method.</param>
+		/// <param name="obj">The object that should be initialized.</param>
+		public void InitializeMetadata(Type type, object obj)
 		{
 			Requires.NotNull(type, () => type);
+			Requires.NotNull(obj, () => obj);
 
-			var field = type.GetField(FieldName, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic);
-			Requires.That(field != null, "Unable to find backing field '{0}.{1}'.", type.FullName, FieldName);
+			var method = type.GetMethod(MethodName, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic);
+			Requires.That(method != null, "Unable to find the metadata initialization method of type '{0}'.", type.FullName);
 
-			return field;
+			method.Invoke(obj, null);
 		}
 	}
 }

@@ -23,13 +23,9 @@
 namespace Tests.Runtime.ProvidedPorts
 {
 	using System;
-	using Shouldly;
 
 	internal class X1 : TestComponent
 	{
-		protected override void Check()
-		{
-			Metadata.ProvidedPorts.Length.ShouldBe(0);
-		}
+		// Check is performed by the default implementation of TestComponent.Check()
 	}
 }

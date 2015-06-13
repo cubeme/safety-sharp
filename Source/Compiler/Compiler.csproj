@@ -141,6 +141,8 @@
     <Compile Include="Roslyn\Analyzer.cs" />
     <Compile Include="Roslyn\DiagnosticInfo.cs" />
     <Compile Include="Roslyn\IdentifierNameSynthesizer.cs" />
+    <Compile Include="Roslyn\SymbolNormalizer.cs" />
+    <Compile Include="Roslyn\SyntaxNormalizer.cs" />
     <Compile Include="Roslyn\Normalizer.cs" />
     <Compile Include="Roslyn\SideEffectAnalyzer.cs" />
     <Compile Include="Roslyn\Symbols\CompilationExtensions.cs" />

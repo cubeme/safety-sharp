@@ -40,7 +40,7 @@ namespace SafetySharp.Compiler.Normalization
 	///  		M(() => 1 + 2, 4);
 	/// 	</code>
 	/// </summary>
-	public sealed class LiftedExpressionNormalizer : Normalizer
+	public sealed class LiftedExpressionNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
 		///     Lifts the expression represented by <paramref name="argument" />, if necessary.

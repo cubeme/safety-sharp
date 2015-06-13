@@ -23,25 +23,22 @@
 namespace Tests.Runtime.ProvidedPorts
 {
 	using System;
+	using System.Linq;
 	using System.Reflection;
 	using Shouldly;
 
 	internal class X2 : TestComponent
 	{
-		private void M()
-		{
-		}
-
 		protected override void Check()
 		{
-			Metadata.ProvidedPorts.Length.ShouldBe(1);
+			Metadata.ProvidedPorts.Count().ShouldBe(1);
 
-			Metadata.ProvidedPorts[0].Method.ShouldBe(typeof(X2).GetMethod("M", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[0].Method.ShouldBe(typeof(X2).GetMethod("Check", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.ProvidedPorts[0].Component.Component.ShouldBe(this);
 			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[0].CreateBody.ShouldBe(null);
 			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
+			Metadata.ProvidedPorts[0].Name.ShouldBe("Check");
 		}
 	}
 }

@@ -155,7 +155,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
             let project = project.WithCompilationOptions csharpCompilation.Options
             
             let compiler = Compiler (ConsoleErrorReporter ())
-            if not <| compiler.Compile (project, assemblyPath) then
+            if not <| compiler.Compile (project, assemblyPath, runSSharpDiagnostics) then
                 failed "Assembly compilation failed."
 
             assembly <- Assembly.LoadFile assemblyPath

@@ -28,8 +28,8 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using SafetySharp.Modeling;
-	using SafetySharp.Utilities;
+	using Modeling;
+	using Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="IMethodSymbol" /> instances.
@@ -135,10 +135,13 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
 				return false;
 
+			if (IdentifierNameSynthesizer.IsSynthesized(methodSymbol.Name))
+				return false;
+
 			switch (methodSymbol.ContainingType.TypeKind)
 			{
 				case TypeKind.Class:
-					return methodSymbol.IsExtern;
+					return methodSymbol.IsExtern || methodSymbol.HasAttribute<RequiredAttribute>(compilation);
 				case TypeKind.Interface:
 					return methodSymbol.HasAttribute<RequiredAttribute>(compilation);
 				default:
@@ -180,10 +183,15 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
 				return false;
 
+			if (IdentifierNameSynthesizer.IsSynthesized(methodSymbol.Name))
+				return false;
+
 			switch (methodSymbol.ContainingType.TypeKind)
 			{
 				case TypeKind.Class:
-					return !methodSymbol.IsExtern && !methodSymbol.IsUpdateMethod(compilation);
+					return !methodSymbol.IsExtern &&
+						   !methodSymbol.HasAttribute<RequiredAttribute>(compilation) &&
+						   !methodSymbol.IsUpdateMethod(compilation);
 				case TypeKind.Interface:
 					return methodSymbol.HasAttribute<ProvidedAttribute>(compilation);
 				default:

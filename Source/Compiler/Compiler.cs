@@ -118,14 +118,15 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		/// <param name="project">The project that should be compiled.</param>
 		/// <param name="outputPath">The output path of the compiled assembly.</param>
-		public bool Compile([NotNull] Project project, [NotNull] string outputPath)
+		/// <param name="runSafetySharpDiagnostics">Indicates whether the S# diagnostics should be run.</param>
+		public bool Compile([NotNull] Project project, [NotNull] string outputPath, bool runSafetySharpDiagnostics = true)
 		{
 			Requires.NotNull(project, () => project);
 			Requires.NotNullOrWhitespace(outputPath, () => outputPath);
 
 			var compilation = project.GetCompilationAsync().Result;
 
-			if (!Diagnose(compilation, true))
+			if (!Diagnose(compilation, runSafetySharpDiagnostics))
 				return false;
 
 			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
@@ -170,6 +171,8 @@ namespace SafetySharp.Compiler
 
 			compilation = compilation.WithOptions(options);
 			compilation = NormalizeSimulationCode(compilation, syntaxGenerator);
+
+			OutputCode(compilation, "testcode");
 
 			byte[] assembly, pdb;
 			EmitInMemory(compilation, out assembly, out pdb);
@@ -250,7 +253,7 @@ namespace SafetySharp.Compiler
 		[Conditional("DEBUG")]
 		private static void OutputCode([NotNull] Compilation compilation, [NotNull] string path)
 		{
-			path = Path.Combine("obj", path);
+			path = Path.Combine(Path.GetDirectoryName(typeof(Compiler).Assembly.Location), "obj", path);
 			Directory.CreateDirectory(path);
 
 			var index = 0;

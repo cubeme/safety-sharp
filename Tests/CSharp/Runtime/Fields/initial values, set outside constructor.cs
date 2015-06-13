@@ -23,6 +23,7 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
+	using System.Linq;
 	using Shouldly;
 
 	internal class X6 : TestComponent
@@ -34,7 +35,7 @@ namespace Tests.Runtime.Fields
 
 		protected override void Check()
 		{
-			Metadata.Fields.Length.ShouldBe(4);
+			Metadata.Fields.Count().ShouldBe(4);
 			CheckField(typeof(int), "_x", _x);
 			CheckField(typeof(double), "_y", _y);
 			CheckField(typeof(bool), "_z", _z);

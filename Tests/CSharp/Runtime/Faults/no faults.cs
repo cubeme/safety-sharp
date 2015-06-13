@@ -23,13 +23,14 @@
 namespace Tests.Runtime.Faults
 {
 	using System;
+	using System.Linq;
 	using Shouldly;
 
 	public class X1 : TestComponent
 	{
 		protected override void Check()
 		{
-			Metadata.Faults.Length.ShouldBe(0);
+			Metadata.Faults.Count().ShouldBe(0);
 		}
 	}
 }

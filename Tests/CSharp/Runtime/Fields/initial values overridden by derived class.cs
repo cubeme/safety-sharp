@@ -23,11 +23,12 @@
 namespace Tests.Runtime.Fields
 {
 	using System;
+	using System.Linq;
 	using Shouldly;
 
 	internal abstract class X12 : TestComponent
 	{
-		protected readonly int _x;
+		protected int _x;
 
 		protected X12()
 		{
@@ -44,7 +45,7 @@ namespace Tests.Runtime.Fields
 
 		protected override void Check()
 		{
-			Metadata.Fields.Length.ShouldBe(1);
+			Metadata.Fields.Count().ShouldBe(1);
 			CheckField(typeof(int), "_x", 88, 22);
 		}
 	}
