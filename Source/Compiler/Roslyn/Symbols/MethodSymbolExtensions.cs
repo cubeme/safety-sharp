@@ -24,6 +24,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 {
 	using System;
 	using System.Linq;
+	using CompilerServices;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
@@ -97,7 +98,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(compilation, () => compilation);
 
-			return methodSymbol.Overrides(compilation.GetUpdateMethodSymbol());
+			return methodSymbol.Overrides(compilation.GetUpdateMethodSymbol()) && !methodSymbol.HasAttribute<IgnoreAttribute>(compilation);
 		}
 
 		/// <summary>
@@ -112,7 +113,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			return methodSymbol.Overrides(semanticModel.GetUpdateMethodSymbol());
+			return methodSymbol.IsUpdateMethod(semanticModel.Compilation);
 		}
 
 		/// <summary>
@@ -136,6 +137,9 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				return false;
 
 			if (IdentifierNameSynthesizer.IsSynthesized(methodSymbol.Name))
+				return false;
+
+			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
 				return false;
 
 			switch (methodSymbol.ContainingType.TypeKind)
@@ -184,6 +188,9 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				return false;
 
 			if (IdentifierNameSynthesizer.IsSynthesized(methodSymbol.Name))
+				return false;
+
+			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
 				return false;
 
 			switch (methodSymbol.ContainingType.TypeKind)

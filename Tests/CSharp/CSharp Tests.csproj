@@ -245,6 +245,8 @@
     <Compile Include="Runtime\Nested\deeply nested.cs" />
     <Compile Include="Runtime\Nested\nested in generic class.cs" />
     <Compile Include="Runtime\Nested\nested in non-generic class.cs" />
+    <Compile Include="Runtime\ProvidedPorts\inherited port.cs" />
+    <Compile Include="Runtime\ProvidedPorts\multiple ports.cs" />
     <Compile Include="Runtime\ProvidedPorts\no ports.cs" />
     <Compile Include="Runtime\ProvidedPorts\single port.cs" />
     <Compile Include="Runtime\RequiredPorts\inherited port.cs" />

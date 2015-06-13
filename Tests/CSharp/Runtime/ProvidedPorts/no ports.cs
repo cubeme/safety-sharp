@@ -23,9 +23,16 @@
 namespace Tests.Runtime.ProvidedPorts
 {
 	using System;
+	using System.Linq;
+	using SafetySharp.CompilerServices;
+	using Shouldly;
 
 	internal class X1 : TestComponent
 	{
-		// Check is performed by the default implementation of TestComponent.Check()
+		[Ignore]
+		protected override void Check()
+		{
+			Metadata.ProvidedPorts.Count().ShouldBe(0);
+		}
 	}
 }

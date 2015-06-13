@@ -157,26 +157,36 @@ namespace Tests.Utilities
 
 				try
 				{
-					return compiler.Compile(project);
+					var assembly = compiler.Compile(project);
+					Log("{0}", SyntaxTreesToString(compiler.Compilation));
+
+					return assembly;
 				}
 				catch (CompilationException e)
 				{
-					var builder = new StringBuilder();
-					builder.AppendLine(e.Message);
-
-					foreach (var syntaxTree in compiler.Compilation.SyntaxTrees)
-					{
-						builder.AppendLine();
-						builder.AppendLine();
-						builder.AppendLine("=============================================");
-						builder.AppendLine(Path.GetFileName(syntaxTree.FilePath));
-						builder.AppendLine("=============================================");
-						builder.AppendLine(syntaxTree.ToString());
-					}
-
-					throw new TestException("{0}", builder);
+					throw new TestException("{0}\n\n{1}", e.Message, SyntaxTreesToString(compiler.Compilation));
 				}
 			}
+		}
+		/// <summary>
+		/// Gets a string containing the contents of all syntax tress of the <paramref name="compilation"/>.
+		/// </summary>
+		/// <param name="compilation">The compilation whose syntax trees should be written to a string.</param>
+		protected static string SyntaxTreesToString(Compilation compilation)
+		{
+			var builder = new StringBuilder();
+
+			foreach (var syntaxTree in compilation.SyntaxTrees)
+			{
+				builder.AppendLine();
+				builder.AppendLine();
+				builder.AppendLine("=============================================");
+				builder.AppendLine(Path.GetFileName(syntaxTree.FilePath));
+				builder.AppendLine("=============================================");
+				builder.AppendLine(syntaxTree.ToString());
+			}
+
+			return builder.ToString();
 		}
 
 		/// <summary>

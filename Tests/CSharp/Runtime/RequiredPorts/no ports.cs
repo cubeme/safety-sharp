@@ -23,8 +23,14 @@
 namespace Tests.Runtime.RequiredPorts
 {
 	using System;
+	using System.Linq;
+	using Shouldly;
 
 	internal class X1 : TestComponent
 	{
+		protected override void Check()
+		{
+			Metadata.RequiredPorts.Count().ShouldBe(0);
+		}
 	}
 }

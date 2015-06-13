@@ -20,17 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.Faults
+namespace SafetySharp.CompilerServices
 {
 	using System;
-	using System.Linq;
-	using Shouldly;
 
-	public class X1 : TestComponent
+	/// <summary>
+	///     When applied to a method or property, the marked element is ignored by the S# compiler.
+	/// </summary>
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
+	public class IgnoreAttribute : Attribute
 	{
-		protected override void Check()
-		{
-			Metadata.Faults.Count().ShouldBe(0);
-		}
 	}
 }

@@ -20,45 +20,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.RequiredPorts
+namespace Tests.Runtime.ProvidedPorts
 {
 	using System;
 	using System.Linq;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using Shouldly;
 
 	internal class X3 : TestComponent
 	{
-		[Required]
-		internal extern void M();
+		[Provided]
+		internal void M()
+		{
+		}
 
-		protected extern int M(int i);
-		public extern bool M(ref int i);
+		protected int M(int i)
+		{
+			return i;
+		}
 
+		public bool M(ref int i)
+		{
+			return i == 1;
+		}
+
+		[Ignore]
 		protected override void Check()
 		{
-			Metadata.RequiredPorts.Count().ShouldBe(3);
+			Metadata.ProvidedPorts.Count().ShouldBe(3);
 
-			Metadata.RequiredPorts[0].Method.ReturnType.ShouldBe(typeof(void));
-			Metadata.RequiredPorts[0].Component.Component.ShouldBe(this);
-			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[0].CreateBody.ShouldBe(null);
-			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[0].Name.ShouldBe("M");
+			Metadata.ProvidedPorts[0].Method.ReturnType.ShouldBe(typeof(void));
+			Metadata.ProvidedPorts[0].Component.Component.ShouldBe(this);
+			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[0].CreateBody.ShouldBe(null);
+			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
 
-			Metadata.RequiredPorts[1].Method.ReturnType.ShouldBe(typeof(int));
-			Metadata.RequiredPorts[1].Component.Component.ShouldBe(this);
-			Metadata.RequiredPorts[1].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[1].CreateBody.ShouldBe(null);
-			Metadata.RequiredPorts[1].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[1].Name.ShouldBe("M");
+			Metadata.ProvidedPorts[1].Method.ReturnType.ShouldBe(typeof(int));
+			Metadata.ProvidedPorts[1].Component.Component.ShouldBe(this);
+			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[1].CreateBody.ShouldBe(null);
+			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[1].Name.ShouldBe("M");
 
-			Metadata.RequiredPorts[2].Method.ReturnType.ShouldBe(typeof(bool));
-			Metadata.RequiredPorts[2].Component.Component.ShouldBe(this);
-			Metadata.RequiredPorts[2].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[2].CreateBody.ShouldBe(null);
-			Metadata.RequiredPorts[2].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[2].Name.ShouldBe("M");
+			Metadata.ProvidedPorts[2].Method.ReturnType.ShouldBe(typeof(bool));
+			Metadata.ProvidedPorts[2].Component.Component.ShouldBe(this);
+			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[2].CreateBody.ShouldBe(null);
+			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[2].Name.ShouldBe("M");
 		}
 	}
 }

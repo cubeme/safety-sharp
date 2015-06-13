@@ -20,17 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.Faults
+namespace Tests.Runtime.ProvidedPorts
 {
 	using System;
 	using System.Linq;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 
-	public class X1 : TestComponent
+	internal abstract class X4 : TestComponent
 	{
+		public bool M(ref int i)
+		{
+			return i == 2;
+		}
+	}
+
+	internal class X5 : X4
+	{
+		public void Q(out int i)
+		{
+			i = 2;
+		}
+
+		[Ignore]
 		protected override void Check()
 		{
-			Metadata.Faults.Count().ShouldBe(0);
+			Metadata.ProvidedPorts.Count().ShouldBe(2);
+
+			Metadata.ProvidedPorts[0].Method.ShouldBe(typeof(X4).GetMethod("M"));
+			Metadata.ProvidedPorts[0].Component.Component.ShouldBe(this);
+			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[0].CreateBody.ShouldBe(null);
+			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
+
+			Metadata.ProvidedPorts[1].Method.ShouldBe(typeof(X5).GetMethod("Q"));
+			Metadata.ProvidedPorts[1].Component.Component.ShouldBe(this);
+			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[1].CreateBody.ShouldBe(null);
+			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[1].Name.ShouldBe("Q");
 		}
 	}
 }

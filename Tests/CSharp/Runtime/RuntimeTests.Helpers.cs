@@ -56,14 +56,7 @@ namespace Tests.Runtime
 			Check();
 		}
 
-		protected virtual void Check()
-		{
-			Metadata.Fields.Count().ShouldBe(0);
-			Metadata.ProvidedPorts.Count().ShouldBe(0);
-			Metadata.RequiredPorts.Count().ShouldBe(0);
-			Metadata.Faults.Count().ShouldBe(0);
-			Metadata.Behaviors.Count().ShouldBe(1);
-		}
+		protected abstract void Check();
 
 		protected void CheckField(Type fieldType, string fieldName, params object[] initialValues)
 		{

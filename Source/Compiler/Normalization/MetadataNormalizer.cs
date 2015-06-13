@@ -169,11 +169,11 @@ namespace SafetySharp.Compiler.Normalization
 			foreach (var method in methods)
 			{
 				var withProvidedPort = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithProvidedPort");
-				var overridingMethod = GetMethodInfo(method);
+				var port = GetMethodInfo(method);
 
 				var invocation = method.OverriddenMethod == null || method.OverriddenMethod.IsAbstract
-					? Syntax.InvocationExpression(withProvidedPort, overridingMethod, GetMethodInfo(method.OverriddenMethod))
-					: Syntax.InvocationExpression(withProvidedPort, overridingMethod);
+					? Syntax.InvocationExpression(withProvidedPort, port)
+					: Syntax.InvocationExpression(withProvidedPort, port, GetMethodInfo(method.OverriddenMethod));
 
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
