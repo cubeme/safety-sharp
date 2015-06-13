@@ -29,8 +29,8 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using SafetySharp.Utilities;
 	using Symbols;
+	using Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="SyntaxNode" /> instances.
@@ -121,6 +121,27 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 		}
 
 		/// <summary>
+		///     Checks whether the <paramref name="syntaxNode" /> is marked with an attribute of type <paramref name="attributeType" />
+		///     within the context of the <paramref name="semanticModel" />. This method only succeeds if
+		///     <paramref name="syntaxNode" /> declares a symbol.
+		/// </summary>
+		/// <param name="syntaxNode">The syntax node that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		/// <param name="attributeType">The type of the attribute <paramref name="syntaxNode" /> should be marked with.</param>
+		[Pure]
+		public static bool HasAttribute([NotNull] this SyntaxNode syntaxNode, [NotNull] SemanticModel semanticModel, [NotNull] Type attributeType)
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(attributeType, () => attributeType);
+
+			var declaredSymbol = semanticModel.GetDeclaredSymbol(syntaxNode);
+			Assert.NotNull(declaredSymbol, "Unable to determine symbol declared by syntax node '{0}'.", syntaxNode);
+
+			return declaredSymbol.HasAttribute(semanticModel.GetTypeSymbol(attributeType));
+		}
+
+		/// <summary>
 		///     Checks whether the <paramref name="syntaxNode" /> is marked with an attribute of type <typeparamref name="T" /> within
 		///     the context of the <paramref name="semanticModel" />. This method only succeeds if <paramref name="syntaxNode" />
 		///     declares a symbol.
@@ -132,13 +153,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 		public static bool HasAttribute<T>([NotNull] this SyntaxNode syntaxNode, [NotNull] SemanticModel semanticModel)
 			where T : Attribute
 		{
-			Requires.NotNull(syntaxNode, () => syntaxNode);
-			Requires.NotNull(semanticModel, () => semanticModel);
-
-			var declaredSymbol = semanticModel.GetDeclaredSymbol(syntaxNode);
-			Assert.NotNull(declaredSymbol, "Unable to determine symbol declared by syntax node '{0}'.", syntaxNode);
-
-			return declaredSymbol.HasAttribute<T>(semanticModel);
+			return syntaxNode.HasAttribute(semanticModel, typeof(T));
 		}
 
 		/// <summary>

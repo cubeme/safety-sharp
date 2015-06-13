@@ -23,7 +23,6 @@
 namespace SafetySharp.Compiler.Normalization
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
@@ -37,9 +36,8 @@ namespace SafetySharp.Compiler.Normalization
 	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Replaces all port declarations within a component with a matching delegate type, a field of that
-	///     delegate type, and a non-extern method invoking the delegate instance stored in the field.
-	///     For instance:
+	///     Replaces all method declarations within a component with a matching delegate type, a field of that delegate type, and a
+	///     non-extern method invoking the delegate instance stored in the field. For instance:
 	///     <code>
 	///    		public extern void MyMethod(int a, double b);
 	///    		// becomes (on a single line with uniquely generated names):
@@ -86,41 +84,22 @@ namespace SafetySharp.Compiler.Normalization
 	///         public void MyMethod(int a, double b) => f(a, b);
 	///   	</code>
 	/// </summary>
-	public sealed class PortNormalizer : SyntaxNormalizer
+	public sealed class MethodNormalizer : SyntaxNormalizer
 	{
+		/// <summary>
+		///     Represents the [DebuggerBrowsable(DebuggerBrowsableState.Never)] attribute syntax.
+		/// </summary>
+		private AttributeListSyntax _browsableAttribute;
+
 		/// <summary>
 		///     Represents the [CompilerGenerated] attribute syntax.
 		/// </summary>
-		private static readonly AttributeListSyntax _compilerGeneratedAttribute =
-			SyntaxBuilder.Attribute(typeof(CompilerGeneratedAttribute).FullName).WithTrailingSpace();
+		private AttributeListSyntax _compilerGeneratedAttribute;
 
 		/// <summary>
 		///     Represents the [DebuggerHidden] attribute syntax.
 		/// </summary>
-		private static readonly AttributeListSyntax _debuggerHiddenAttribute =
-			SyntaxBuilder.Attribute(typeof(DebuggerHiddenAttribute).FullName).WithTrailingSpace();
-
-		/// <summary>
-		///     Represents the [Required] attribute syntax.
-		/// </summary>
-		private static readonly AttributeListSyntax _requiredAttribute = SyntaxBuilder.Attribute(typeof(RequiredAttribute).FullName);
-
-		/// <summary>
-		///     Represents the [Provided] attribute syntax.
-		/// </summary>
-		private static readonly AttributeListSyntax _providedAttribute = SyntaxBuilder.Attribute(typeof(ProvidedAttribute).FullName);
-
-		/// <summary>
-		///     Represents the [DebuggerBrowsable(DebuggerBrowsableState.Never)] attribute syntax.
-		/// </summary>
-		private static readonly AttributeListSyntax _browsableAttribute = SyntaxBuilder.Attribute(
-			typeof(DebuggerBrowsableAttribute).FullName,
-			SyntaxFactory.ParseExpression("System.Diagnostics.DebuggerBrowsableState.Never"));
-
-		/// <summary>
-		///     The list of members that have been generated during normalization of a class.
-		/// </summary>
-		private List<MemberDeclarationSyntax> _generatedMembers = new List<MemberDeclarationSyntax>();
+		private AttributeListSyntax _debuggerHiddenAttribute;
 
 		/// <summary>
 		///     The number of ports declared by the current component.
@@ -128,29 +107,26 @@ namespace SafetySharp.Compiler.Normalization
 		private int _portCount;
 
 		/// <summary>
-		///     Normalizes the <paramref name="classDeclaration" />.
+		///     Represents the [Required] attribute syntax.
 		/// </summary>
-		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
+		private AttributeListSyntax _requiredAttribute;
+
+		/// <summary>
+		///     Normalizes the syntax trees of the <see cref="Compilation" />.
+		/// </summary>
+		protected override Compilation Normalize()
 		{
-			var generatedMembers = _generatedMembers;
-			var portCount = _portCount;
+			_debuggerHiddenAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(DebuggerHiddenAttribute).FullName);
+			_compilerGeneratedAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(CompilerGeneratedAttribute).FullName);
+			_requiredAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(RequiredAttribute).FullName);
+			_browsableAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(DebuggerBrowsableAttribute).FullName,
+				Syntax.MemberAccessExpression(Syntax.TypeExpression(Compilation.GetTypeSymbol<DebuggerBrowsableState>()), "Never"));
 
-			_generatedMembers = new List<MemberDeclarationSyntax>();
-			_portCount = 0;
-
-			var normalizedClass = base.VisitClassDeclaration(classDeclaration);
-
-			if (_generatedMembers.Count > 0)
-				AddMembers(classDeclaration.GetTypeSymbol(SemanticModel), _generatedMembers.ToArray());
-
-			_generatedMembers = generatedMembers;
-			_portCount = portCount;
-
-			return normalizedClass;
+			return base.Normalize();
 		}
 
 		/// <summary>
-		///     Does not normalize ports declared by interfaces.
+		///     Does not normalize methods declared by interfaces.
 		/// </summary>
 		public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax interfaceDeclaration)
 		{
@@ -165,22 +141,26 @@ namespace SafetySharp.Compiler.Normalization
 			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
 
 			if (methodSymbol.IsRequiredPort(SemanticModel))
-				return NormalizeRequiredPort(methodDeclaration);
+				return NormalizeExternMethod(methodDeclaration);
 
 			if (methodSymbol.IsProvidedPort(SemanticModel))
-				return NormalizeProvidedPort(methodDeclaration);
+				return NormalizeMethod(methodDeclaration, typeof(ProvidedAttribute));
+
+			if (methodSymbol.IsUpdateMethod(SemanticModel))
+				return NormalizeMethod(methodDeclaration);
 
 			return methodDeclaration;
 		}
 
 		/// <summary>
-		///     Normalizes the given required port declaration and adds the generated members to the member list at the given index.
+		///     Normalizes the <paramref name="methodDeclaration" /> and adds the generated members.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
-		private MethodDeclarationSyntax NormalizeRequiredPort(MethodDeclarationSyntax methodDeclaration)
+		private MethodDeclarationSyntax NormalizeExternMethod(MethodDeclarationSyntax methodDeclaration)
 		{
-			var originalDeclaration = methodDeclaration;
+			++_portCount;
 
+			var originalDeclaration = methodDeclaration;
 			var methodDelegate = CreateDelegate(methodDeclaration);
 			var methodField = CreateField(methodDelegate);
 
@@ -205,25 +185,25 @@ namespace SafetySharp.Compiler.Normalization
 			methodDeclaration = methodDeclaration.NormalizeWhitespace();
 			methodDeclaration = methodDeclaration.WithTrivia(originalDeclaration);
 
-			_generatedMembers.Add(methodField);
-			_generatedMembers.Add(methodDelegate);
-
-			++_portCount;
+			AddMembers(originalDeclaration.GetMethodSymbol(SemanticModel).ContainingType, methodField, methodDelegate);
 			return methodDeclaration.EnsureLineCount(originalDeclaration);
 		}
 
 		/// <summary>
-		///     Normalizes the given provided port declaration and adds the generated members to the member list at the given index.
+		///     Normalizes the given <paramref name="methodDeclaration" /> and adds the generated members. The method ensures that the
+		///     normalized method is marked with <paramref name="attribute" />, if non-<c>null</c>.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
-		private MethodDeclarationSyntax NormalizeProvidedPort(MethodDeclarationSyntax methodDeclaration)
+		/// <param name="attribute">The attribute the generated method should be marked with.</param>
+		private MethodDeclarationSyntax NormalizeMethod(MethodDeclarationSyntax methodDeclaration, Type attribute = null)
 		{
+			++_portCount;
 			var originalDeclaration = methodDeclaration;
 			var methodDelegate = CreateDelegate(methodDeclaration);
 			var methodField = CreateField(methodDelegate);
 
 			// Create the private port implementation method
-			var methodName = IdentifierNameSynthesizer.ToSynthesizedName("DefaultImplementation" + _portCount);
+			var methodName = ("DefaultImplementation" + _portCount).ToSynthesized();
 			var portImplementationName = SyntaxFactory.Identifier(methodName).WithTrivia(originalDeclaration.Identifier);
 			var portImplementation = originalDeclaration.WithIdentifier(portImplementationName);
 			portImplementation = portImplementation.WithAccessibility(Accessibility.Private).WithExplicitInterfaceSpecifier(null);
@@ -233,16 +213,27 @@ namespace SafetySharp.Compiler.Normalization
 			var privateKeyword = modifiers[modifiers.IndexOf(SyntaxKind.PrivateKeyword)];
 			portImplementation = portImplementation.WithModifiers(SyntaxTokenList.Create(privateKeyword));
 
-			// Add the [Provided] attribute if it is not already present
-			if (!methodDeclaration.HasAttribute<ProvidedAttribute>(SemanticModel))
-				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(_providedAttribute.WithTrailingSpace()));
+			// Replace all original attributes with their global name, as the required 'usings' are not present in the generated file
+			var attributeSymbols = originalDeclaration.GetMethodSymbol(SemanticModel).GetAttributes();
+			if (attributeSymbols.Length != 0)
+			{
+				var attributes = attributeSymbols.Select(a => (AttributeListSyntax)Syntax.Attribute(a));
+				methodDeclaration = methodDeclaration.WithAttributeLists(SyntaxFactory.List(attributes));
+			}
+
+			// Add the requested attribute if it is not already present
+			if (attribute != null && !originalDeclaration.HasAttribute(SemanticModel, attribute))
+			{
+				var attributeSyntax = (AttributeListSyntax)Syntax.Attribute(attribute.FullName).WithTrailingSpace();
+				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(attributeSyntax));
+			}
 
 			// Replace the method's body and ensure that we don't modify the line count of the containing type
-			// We don't change abstract methods, however, except for adding the [Provided] attribute, if necessary
+			// We don't change abstract methods, however, except for adding the requested attribute, if necessary
 			if (methodDeclaration.Modifiers.IndexOf(SyntaxKind.AbstractKeyword) != -1)
 				return methodDeclaration;
 
-			// Add the [PortBehavior] attribute
+			// Add the [MethodBehavior] attribute
 			var behaviorArgument = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", methodName));
 			var behaviorAttribute = SyntaxBuilder.Attribute(typeof(MethodBehaviorAttribute).FullName, behaviorArgument);
 			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(behaviorAttribute));
@@ -251,15 +242,12 @@ namespace SafetySharp.Compiler.Normalization
 			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))
 				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(_debuggerHiddenAttribute));
 
+			// Add the backing field attribute and replace the method body
 			methodDeclaration = AddBackingFieldAttribute(methodDeclaration);
 			methodDeclaration = ReplaceBodyWithDelegateInvocation(methodDeclaration);
 			methodDeclaration = methodDeclaration.RemoveComments().WithTrivia(originalDeclaration);
 
-			_generatedMembers.Add(methodField);
-			_generatedMembers.Add(methodDelegate);
-			_generatedMembers.Add(methodDeclaration);
-
-			++_portCount;
+			AddMembers(originalDeclaration.GetMethodSymbol(SemanticModel).ContainingType, methodField, methodDelegate, methodDeclaration);
 			return portImplementation.EnsureLineCount(originalDeclaration);
 		}
 
@@ -268,7 +256,7 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		private string GetDelegateName()
 		{
-			return IdentifierNameSynthesizer.ToSynthesizedName("PortDelegate" + _portCount);
+			return ("PortDelegate" + _portCount).ToSynthesized();
 		}
 
 		/// <summary>
@@ -276,7 +264,7 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		private string GetFieldName()
 		{
-			return IdentifierNameSynthesizer.ToSynthesizedName("portField" + _portCount);
+			return ("portField" + _portCount).ToSynthesized();
 		}
 
 		/// <summary>

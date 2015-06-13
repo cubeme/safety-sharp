@@ -27,9 +27,9 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using SafetySharp.Modeling;
-	using SafetySharp.Utilities;
+	using Modeling;
 	using Symbols;
+	using Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="BaseTypeDeclarationSyntax" /> instances.

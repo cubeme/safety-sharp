@@ -46,7 +46,7 @@ namespace SafetySharp.Compiler.Normalization
 		/// <summary>
 		///     The name of the metadata initialization method.
 		/// </summary>
-		private readonly string _metadataMethod = IdentifierNameSynthesizer.ToSynthesizedName("InitializeMetadata");
+		private readonly string _metadataMethod = "InitializeMetadata".ToSynthesized();
 
 		/// <summary>
 		///     Normalizes the <paramref name="typeSymbol" />.

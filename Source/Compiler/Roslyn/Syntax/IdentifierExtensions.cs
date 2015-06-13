@@ -20,24 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Roslyn
+namespace SafetySharp.Compiler.Roslyn.Syntax
 {
 	using System;
 	using Microsoft.CodeAnalysis;
-	using SafetySharp.Utilities;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Utilities;
 
 	/// <summary>
-	///     Synthesizes unique variable or type identifier names for specific locations within a C# <see cref="SyntaxTree" />.
+	///     Provides extension methods for working with <see cref="IdentifierNameSyntax" /> instances as well as
+	///     <see cref="string" /> and <see cref="SyntaxToken" /> instances representing identifiers.
 	/// </summary>
-	public static class IdentifierNameSynthesizer
+	public static class IdentifierExtensions
 	{
 		/// <summary>
 		///     Gets a value indicating whether <paramref name="name" /> is a synthesized name.
 		/// </summary>
 		/// <param name="name">The name that should be checked.</param>
-		public static bool IsSynthesized(string name)
+		public static bool IsSynthesized(this string name)
 		{
 			return name.StartsWith("__") && name.EndsWith("__");
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether <paramref name="name" /> is a synthesized name.
+		/// </summary>
+		/// <param name="name">The name that should be checked.</param>
+		public static bool IsSynthesized(this IdentifierNameSyntax name)
+		{
+			return name.Identifier.ValueText.IsSynthesized();
 		}
 
 		/// <summary>
@@ -53,12 +65,34 @@ namespace SafetySharp.Compiler.Roslyn
 		///     Converts <paramref name="name" /> to a synthesized name.
 		/// </summary>
 		/// <param name="name">The name that should be converted.</param>
-		public static string ToSynthesizedName(string name)
+		public static string ToSynthesized(this string name)
 		{
 			Requires.NotNullOrWhitespace(name, () => name);
 			Requires.ArgumentSatisfies(!IsSynthesized(name), () => name, "The name has already been escaped.");
 
 			return String.Format("__{0}__", name);
+		}
+
+		/// <summary>
+		///     Converts <paramref name="name" /> to a synthesized name.
+		/// </summary>
+		/// <param name="name">The name that should be converted.</param>
+		public static SyntaxToken ToSynthesized(this SyntaxToken name)
+		{
+			Requires.ArgumentSatisfies(!IsSynthesized(name), () => name, "The name has already been escaped.");
+			return SyntaxFactory.Identifier(name.ValueText.ToSynthesized());
+		}
+
+		/// <summary>
+		///     Converts <paramref name="name" /> to a synthesized name.
+		/// </summary>
+		/// <param name="name">The name that should be converted.</param>
+		public static IdentifierNameSyntax ToSynthesized(this IdentifierNameSyntax name)
+		{
+			Requires.NotNull(name, () => name);
+			Requires.ArgumentSatisfies(!IsSynthesized(name), () => name, "The name has already been escaped.");
+
+			return name.WithIdentifier(name.Identifier.ToSynthesized());
 		}
 	}
 }

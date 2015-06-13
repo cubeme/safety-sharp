@@ -30,6 +30,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
+	using Syntax;
 	using Utilities;
 
 	/// <summary>
@@ -136,7 +137,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
 				return false;
 
-			if (IdentifierNameSynthesizer.IsSynthesized(methodSymbol.Name))
+			if (methodSymbol.Name.IsSynthesized())
 				return false;
 
 			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
@@ -187,7 +188,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
 				return false;
 
-			if (IdentifierNameSynthesizer.IsSynthesized(methodSymbol.Name))
+			if (methodSymbol.Name.IsSynthesized())
 				return false;
 
 			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))

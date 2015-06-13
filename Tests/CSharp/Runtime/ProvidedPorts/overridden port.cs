@@ -27,24 +27,27 @@ namespace Tests.Runtime.ProvidedPorts
 	using SafetySharp.CompilerServices;
 	using Shouldly;
 
-	internal abstract class X4 : TestComponent
+	internal abstract class X8 : TestComponent
 	{
-		public bool M(ref int i)
+		public virtual bool M(ref int i)
 		{
 			return i == 2;
 		}
+
+		public abstract bool N(out bool i);
 	}
 
-	internal class X5 : X4
+	internal class X9 : X8
 	{
-		public void Q(out int i)
+		public override bool M(ref int i)
 		{
-			i = 2;
+			return false;
 		}
 
-		public new bool M(ref int i)
+		public override bool N(out bool i)
 		{
-			return i == 2;
+			i = false;
+			return true;
 		}
 
 		[Ignore]
@@ -52,26 +55,26 @@ namespace Tests.Runtime.ProvidedPorts
 		{
 			Metadata.ProvidedPorts.Count().ShouldBe(3);
 
-			Metadata.ProvidedPorts[0].Method.ShouldBe(typeof(X4).GetMethod("M"));
+			Metadata.ProvidedPorts[0].Method.ShouldBe(typeof(X8).GetMethod("M"));
 			Metadata.ProvidedPorts[0].Component.Component.ShouldBe(this);
 			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[0].CreateBody.ShouldBe(null);
 			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
 			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
 
-			Metadata.ProvidedPorts[1].Method.ShouldBe(typeof(X5).GetMethod("Q"));
+			Metadata.ProvidedPorts[1].Method.ShouldBe(typeof(X9).GetMethod("M"));
 			Metadata.ProvidedPorts[1].Component.Component.ShouldBe(this);
-			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(typeof(X8).GetMethod("M"));
 			Metadata.ProvidedPorts[1].CreateBody.ShouldBe(null);
-			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[1].Name.ShouldBe("Q");
+			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(true);
+			Metadata.ProvidedPorts[1].Name.ShouldBe("M");
 
-			Metadata.ProvidedPorts[2].Method.ShouldBe(typeof(X5).GetMethod("M"));
+			Metadata.ProvidedPorts[2].Method.ShouldBe(typeof(X9).GetMethod("N"));
 			Metadata.ProvidedPorts[2].Component.Component.ShouldBe(this);
 			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[2].CreateBody.ShouldBe(null);
 			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[2].Name.ShouldBe("M");
+			Metadata.ProvidedPorts[2].Name.ShouldBe("N");
 		}
 	}
 }
