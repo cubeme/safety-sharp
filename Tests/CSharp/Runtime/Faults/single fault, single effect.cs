@@ -30,12 +30,9 @@ namespace Tests.Runtime.Faults
 	// TODO: Implement tests once component ports are implemented
 	public class X2 : TestComponent
 	{
-		private readonly F _fault = new F();
-
 		protected override void Check()
 		{
 			Metadata.Faults.Count().ShouldBe(1);
-			CheckFault(_fault);
 		}
 
 		public void M()

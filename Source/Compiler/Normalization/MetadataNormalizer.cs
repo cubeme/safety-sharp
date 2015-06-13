@@ -67,7 +67,8 @@ namespace SafetySharp.Compiler.Normalization
 			var members = GetFieldMetadata(type)
 				.Union(GetRequiredPortMetadata(type))
 				.Union(GetProvidedPortMetadata(type))
-				.Union(GetUpdateMethodMetadata(type));
+				.Union(GetUpdateMethodMetadata(type))
+				.Union(GetFaultMetadata(type));
 
 			GenerateMetadataMethod(type, members);
 		}
@@ -196,6 +197,26 @@ namespace SafetySharp.Compiler.Normalization
 				var overridingMethod = GetMethodInfo(method);
 				var overriddenMethod = GetMethodInfo(method.OverriddenMethod);
 				var invocation = Syntax.InvocationExpression(withBehavior, overridingMethod, overriddenMethod);
+				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
+			}
+		}
+
+		/// <summary>
+		///     Generates the metadata initialization code for faults affecting the <paramref name="type" />.
+		/// </summary>
+		/// <param name="type">The type that declares the faults the metadata initialization code should be generated for.</param>
+		private IEnumerable<StatementSyntax> GetFaultMetadata(INamedTypeSymbol type)
+		{
+			var faults = type
+				.GetMembers()
+				.OfType<INamedTypeSymbol>()
+				.Where(fault => fault.IsDerivedFromFault(Compilation));
+
+			foreach (var fault in faults)
+			{
+				var withFault = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithFault");
+				var faultCreationExpression = Syntax.ObjectCreationExpression(fault);
+				var invocation = Syntax.InvocationExpression(withFault, faultCreationExpression);
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}
