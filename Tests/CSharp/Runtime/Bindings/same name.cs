@@ -20,23 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.Behaviors
+namespace Tests.Runtime.Bindings
 {
 	using System;
 	using System.Linq;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 	using Shouldly;
 
-	internal class X1 : TestComponent
+	internal class X19 : Component
 	{
+		public extern void M();
+	}
+
+	internal class X20 : TestComponent
+	{
+		private readonly X19 _y = new X19();
+
+		public X20()
+		{
+			Bind(_y.RequiredPorts.M = ProvidedPorts.M);
+		}
+
+		private void M()
+		{
+		}
+
 		protected override void Check()
 		{
-			Metadata.Behaviors.Count().ShouldBe(1);
-			Metadata.Behaviors[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
-			Metadata.Behaviors[0].Component.Component.ShouldBe(this);
-			Metadata.Behaviors[0].BaseMethod.ShouldBe(null);
-			Metadata.Behaviors[0].IsOverride.ShouldBe(false);
-			Metadata.Behaviors[0].Name.ShouldBe("Update");
+			Metadata.Bindings.Count().ShouldBe(1);
+
+			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(_y.GetComponentInfo().RequiredPorts[0]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
 		}
 	}
 }

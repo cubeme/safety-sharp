@@ -23,6 +23,7 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Reflection;
 	using Modeling;
 
@@ -37,9 +38,17 @@ namespace SafetySharp.Runtime
 		/// <param name="component">The component the method belongs to.</param>
 		/// <param name="port">The method that represents the component's port.</param>
 		/// <param name="basePort">The overridden base port, if any.</param>
-		public ProvidedPortInfo(ComponentInfo component, MethodInfo port, MethodInfo basePort = null)
+		public ProvidedPortInfo(Component component, MethodInfo port, MethodInfo basePort = null)
 			: base(component, port, basePort)
 		{
+		}
+
+		/// <summary>
+		///     Gets the metadata of the required ports that have been bound to the provided port.
+		/// </summary>
+		public IEnumerable<RequiredPortInfo> BoundRequiredPorts
+		{
+			get { throw new NotImplementedException(); }
 		}
 	}
 }

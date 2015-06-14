@@ -65,7 +65,7 @@ namespace SafetySharp.Compiler.Normalization
 			if (fieldSymbol == null)
 				return statement; // TODO: Remove once the expression overload of SetInitialValues is removed
 
-			var fieldInfo = fieldSymbol.GetRuntimeFieldExpression(Compilation, Syntax);
+			var fieldInfo = fieldSymbol.GetRuntimeFieldExpression(Syntax);
 
 			// .WithInitialValues()
 			var withInitialValues = Syntax.MemberAccessExpression(builder, "WithInitialValues");

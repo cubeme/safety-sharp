@@ -29,6 +29,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Microsoft.CodeAnalysis.Editing;
 	using Modeling;
 	using Syntax;
 	using Utilities;
@@ -41,8 +42,8 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> overrides <paramref name="overriddenMethod" />.
 		/// </summary>
-		/// <param name="methodSymbol">The symbol of the method that should be checked.</param>
-		/// <param name="overriddenMethod">The symbol of the method that should be overridden.</param>
+		/// <param name="methodSymbol">The symbol of the methodSymbol that should be checked.</param>
+		/// <param name="overriddenMethod">The symbol of the methodSymbol that should be overridden.</param>
 		[Pure]
 		public static bool Overrides([NotNull] this IMethodSymbol methodSymbol, [NotNull] IMethodSymbol overriddenMethod)
 		{
@@ -64,8 +65,8 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> replaces <paramref name="replacedMethod" />.
 		/// </summary>
-		/// <param name="methodSymbol">The symbol of the method that should be checked.</param>
-		/// <param name="replacedMethod">The symbol of the method that should be replaced.</param>
+		/// <param name="methodSymbol">The symbol of the methodSymbol that should be checked.</param>
+		/// <param name="replacedMethod">The symbol of the methodSymbol that should be replaced.</param>
 		[Pure]
 		public static bool Replaces([NotNull] this IMethodSymbol methodSymbol, [NotNull] IMethodSymbol replacedMethod)
 		{
@@ -88,10 +89,10 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="methodSymbol" /> overrides the <see cref="Component.Update()" /> method within the
+		///     Checks whether <paramref name="methodSymbol" /> overrides the <see cref="Component.Update()" /> methodSymbol within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
-		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsUpdateMethod([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
@@ -103,10 +104,10 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="methodSymbol" /> overrides the <see cref="Component.Update()" /> method within the
+		///     Checks whether <paramref name="methodSymbol" /> overrides the <see cref="Component.Update()" /> methodSymbol within the
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
-		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsUpdateMethod([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
@@ -120,7 +121,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a required port of a S# component or interface.
 		/// </summary>
-		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsRequiredPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
@@ -157,7 +158,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a required port of a S# component or interface.
 		/// </summary>
-		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsRequiredPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
@@ -171,7 +172,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a provided port of a S# component or interface.
 		/// </summary>
-		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsProvidedPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
@@ -210,7 +211,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a provided port of a S# component or interface.
 		/// </summary>
-		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsProvidedPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
@@ -225,7 +226,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		///     Checks whether <paramref name="methodSymbol" /> represents a built-in operator of the <see cref="int" />,
 		///     <see cref="bool" />, or <see cref="decimal" /> types.
 		/// </summary>
-		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsBuiltInOperator([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
@@ -242,7 +243,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		///     Returns a <see cref="DelegateDeclarationSyntax" /> for a delegate that can be used to invoke
 		///     <paramref name="methodSymbol" />.
 		/// </summary>
-		/// <param name="methodSymbol">The method the delegate should be synthesized for.</param>
+		/// <param name="methodSymbol">The methodSymbol the delegate should be synthesized for.</param>
 		/// <param name="name">An name of the synthesized delegate.</param>
 		[Pure]
 		public static DelegateDeclarationSyntax GetSynthesizedDelegateDeclaration([NotNull] this IMethodSymbol methodSymbol, [NotNull] string name)
@@ -291,8 +292,8 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether the two <see cref="IMethodSymbol" />s are signature-compatible.
 		/// </summary>
-		/// <param name="methodSymbol1">The first method symbol that should be checked.</param>
-		/// <param name="methodSymbol2">The second method symbol that should be checked.</param>
+		/// <param name="methodSymbol1">The first methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol2">The second methodSymbol symbol that should be checked.</param>
 		public static bool IsSignatureCompatibleTo([NotNull] this IMethodSymbol methodSymbol1, [NotNull] IMethodSymbol methodSymbol2)
 		{
 			Requires.NotNull(methodSymbol1, () => methodSymbol1);
@@ -306,6 +307,50 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				   && methodSymbol1.Parameters
 								   .Zip(methodSymbol2.Parameters, (p1, p2) => p1.Type.Equals(p2.Type) && p1.RefKind == p2.RefKind)
 								   .All(b => b);
+		}
+
+		/// <summary>
+		///     Gets the expression that selects the <paramref name="methodSymbol" /> at runtime using reflection.
+		/// </summary>
+		/// <param name="methodSymbol">The methodSymbol the code should be created for.</param>
+		/// <param name="syntaxGenerator">The syntax generator that should be used.</param>
+		public static ExpressionSyntax GetRuntimeMethodExpression([NotNull] this IMethodSymbol methodSymbol,
+																  [NotNull] SyntaxGenerator syntaxGenerator)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);
+
+			var declaringTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)syntaxGenerator.TypeExpression(methodSymbol.ContainingType));
+			var parameters = GetParameterTypeArray(methodSymbol, syntaxGenerator);
+			var returnType = SyntaxFactory.TypeOfExpression((TypeSyntax)syntaxGenerator.TypeExpression(methodSymbol.ReturnType));
+			var nameArg = syntaxGenerator.LiteralExpression(methodSymbol.Name);
+			var reflectionHelpersType = SyntaxFactory.ParseTypeName(typeof(ReflectionHelpers).FullName);
+			var getMethodMethod = syntaxGenerator.MemberAccessExpression(reflectionHelpersType, "GetMethod");
+			return (ExpressionSyntax)syntaxGenerator.InvocationExpression(getMethodMethod, declaringTypeArg, nameArg, parameters, returnType);
+		}
+
+		/// <summary>
+		///     Gets the parameter type array that can be used to retrieve the <paramref name="methodSymbol" /> via reflection.
+		/// </summary>
+		/// <param name="methodSymbol">The method the parameter type array should be returned for.</param>
+		/// <param name="syntaxGenerator">The syntax generator that should be used.</param>
+		private static ExpressionSyntax GetParameterTypeArray([NotNull] this IMethodSymbol methodSymbol,
+															  [NotNull] SyntaxGenerator syntaxGenerator)
+		{
+			var typeExpressions = methodSymbol.Parameters.Select(p =>
+			{
+				var typeofExpression = SyntaxFactory.TypeOfExpression((TypeSyntax)syntaxGenerator.TypeExpression(p.Type));
+				if (p.RefKind == RefKind.None)
+					return typeofExpression;
+
+				var makeRefType = syntaxGenerator.MemberAccessExpression(typeofExpression, "MakeByRefType");
+				return (ExpressionSyntax)syntaxGenerator.InvocationExpression(makeRefType);
+			});
+
+			var arguments = SyntaxFactory.SeparatedList(typeExpressions);
+			var initialize = SyntaxFactory.InitializerExpression(SyntaxKind.ArrayInitializerExpression, arguments);
+			var arrayType = syntaxGenerator.ArrayTypeExpression(SyntaxFactory.ParseTypeName(typeof(Type).FullName));
+			return SyntaxFactory.ArrayCreationExpression((ArrayTypeSyntax)arrayType, initialize);
 		}
 	}
 }

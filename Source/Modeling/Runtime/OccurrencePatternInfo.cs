@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,23 +23,44 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Reflection;
 	using Modeling;
+	using Utilities;
 
 	/// <summary>
-	///     Represents the the immutable metadata of a step method of a S# <see cref="Component" />.
+	///     Represents the immutable metadata of a S# <see cref="OccurrencePattern" /> instance.
 	/// </summary>
-	public sealed class StepMethodInfo : BehaviorInfo
+	public sealed partial class OccurrencePatternInfo
 	{
+		/// <summary>
+		///     The fault that is affected by the occurrence pattern.
+		/// </summary>
+		private readonly Fault _fault;
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="component">The component the method belongs to.</param>
-		/// <param name="stepMethod">The method that represents the component's step method.</param>
-		/// <param name="baseStepMethod">The overridden base step method, if any.</param>
-		public StepMethodInfo(Component component, MethodInfo stepMethod, MethodInfo baseStepMethod = null)
-			: base(component, stepMethod, baseStepMethod)
+		/// <param name="occurrencePattern"></param>
+		/// <param name="fault"></param>
+		internal OccurrencePatternInfo(OccurrencePattern occurrencePattern, Fault fault)
 		{
+			Requires.NotNull(occurrencePattern, () => occurrencePattern);
+			Requires.NotNull(fault, () => fault);
+
+			_fault = fault;
+			OccurrencePattern = occurrencePattern;
 		}
+
+		/// <summary>
+		///     Gets the metadata of the fault that is affected by the occurrence pattern.
+		/// </summary>
+		public FaultInfo Fault
+		{
+			get { return _fault.GetFaultInfo(); }
+		}
+
+		/// <summary>
+		///     Gets the <see cref="OccurrencePattern" /> instance the metadata is provided for.
+		/// </summary>
+		public OccurrencePattern OccurrencePattern { get; private set; }
 	}
 }

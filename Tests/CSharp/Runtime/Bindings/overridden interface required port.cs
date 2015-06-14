@@ -20,34 +20,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Bindings
 {
 	using System;
-	using Modeling;
+	using System.Linq;
+	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="OccurrencePattern" /> instance.
-	/// </summary>
-	public sealed partial class OccurrenceInfo
+	internal interface I4 : IComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="occurrencePattern"></param>
-		/// <param name="fault"></param>
-		public OccurrenceInfo(OccurrencePattern occurrencePattern, Fault fault)
+		[Required]
+		void M();
+	}
+
+	internal class X49 : Component, I4
+	{
+		public virtual extern void M();
+	}
+
+	internal class X50 : X49, I4
+	{
+		public override extern void M();
+	}
+
+	internal class X51 : TestComponent
+	{
+		private readonly I4 _i = new X50();
+
+		public X51()
 		{
-			throw new NotImplementedException();
+			Bind(_i.RequiredPorts.M = ProvidedPorts.N);
 		}
 
-		/// <summary>
-		///     Gets the fault that is affected by the occurrence pattern.
-		/// </summary>
-		public Fault Fault { get; private set; }
+		public void N()
+		{
+		}
 
-		/// <summary>
-		///     Gets the <see cref="OccurrencePattern" /> instance the metadata is provided for.
-		/// </summary>
-		public OccurrencePattern OccurrencePattern { get; private set; }
+		protected override void Check()
+		{
+			Metadata.Bindings.Count().ShouldBe(1);
+
+			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(_i.GetComponentInfo().RequiredPorts[1]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
+		}
 	}
 }

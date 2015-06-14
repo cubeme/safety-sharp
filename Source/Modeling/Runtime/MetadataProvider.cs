@@ -58,7 +58,7 @@ namespace SafetySharp.Runtime
 		{
 			{ typeof(Component), component => new ComponentInfo.Builder((Component)component) },
 			{ typeof(Fault), fault => new FaultInfo.Builder((Fault)fault) },
-			{ typeof(OccurrencePattern), occurrencePattern => new OccurrenceInfo.Builder((OccurrencePattern)occurrencePattern) }
+			{ typeof(OccurrencePattern), occurrencePattern => new OccurrencePatternInfo.Builder((OccurrencePattern)occurrencePattern) }
 		};
 
 		/// <summary>
@@ -82,6 +82,22 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
+		///     Tries to get the builder instance for <paramref name="obj" />.
+		/// </summary>
+		/// <param name="obj">The object instance the builder should be returned for.</param>
+		/// <param name="builder">Returns the builder if it exists.</param>
+		internal static bool TryGetBuilder(object obj, out object builder)
+		{
+			Requires.NotNull(obj, () => obj);
+
+			lock (_syncObj)
+			{
+				Requires.That(!_metadata.ContainsKey(obj), () => obj, "The object's metadata has already been created.");
+				return _builders.TryGetValue(obj, out builder);
+			}
+		}
+
+		/// <summary>
 		///     Gets the builder instance for <paramref name="obj" />.
 		/// </summary>
 		/// <param name="obj">The object instance the builder should be returned for.</param>
@@ -89,15 +105,10 @@ namespace SafetySharp.Runtime
 		{
 			Requires.NotNull(obj, () => obj);
 
-			lock (_syncObj)
-			{
-				Requires.That(!_metadata.ContainsKey(obj), () => obj, "The object's metadata has already been created.");
+			object builder;
+			Requires.That(TryGetBuilder(obj, out builder), () => obj, "The object's metadata builder has not yet been created.");
 
-				object info;
-				Requires.That(_builders.TryGetValue(obj, out info), () => obj, "The object's metadata builder has not yet been created.");
-
-				return info;
-			}
+			return builder;
 		}
 
 		/// <summary>

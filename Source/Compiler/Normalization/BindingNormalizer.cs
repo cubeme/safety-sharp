@@ -160,12 +160,17 @@ namespace SafetySharp.Compiler.Normalization
 		{
 			// TODO: property ports
 
+			// Delegate.CreateDelegate(...)
+			var delegateClass = Syntax.TypeExpression(Compilation.GetTypeSymbol<Delegate>());
+			var createDelegateMethod = Syntax.MemberAccessExpression(delegateClass, "CreateDelegate");
+
+			// Arguments (typeof(delegateType), targetObject, reflectedMethod)
+			var typeofDelegate = SyntaxFactory.TypeOfExpression(SyntaxFactory.ParseTypeName(delegateType));
+			var reflectedMethod = port.Symbol.GetRuntimeMethodExpression(Syntax);
 			var nestedMemberAccess = portExpression.Expression.RemoveParentheses() as MemberAccessExpressionSyntax;
-			var castTarget = nestedMemberAccess != null
-				? Syntax.MemberAccessExpression(nestedMemberAccess.Expression, portExpression.Name)
-				: portExpression.Name;
-			var type = SyntaxFactory.ParseTypeName(delegateType);
-			return (ExpressionSyntax)Syntax.CastExpression(type, castTarget).NormalizeWhitespace();
+			var targetObject = nestedMemberAccess != null ? nestedMemberAccess.Expression : Syntax.ThisExpression();
+
+			return (ExpressionSyntax)Syntax.InvocationExpression(createDelegateMethod, typeofDelegate, targetObject, reflectedMethod);
 		}
 	}
 }

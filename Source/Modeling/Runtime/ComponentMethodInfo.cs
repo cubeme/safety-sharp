@@ -25,6 +25,7 @@ namespace SafetySharp.Runtime
 	using System;
 	using System.Reflection;
 	using CompilerServices;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -34,17 +35,23 @@ namespace SafetySharp.Runtime
 	public abstract class ComponentMethodInfo
 	{
 		/// <summary>
+		///     The component the method belongs to.
+		/// </summary>
+		private readonly Component _component;
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="component">The component the method belongs to.</param>
 		/// <param name="method">The method that represents the component method.</param>
 		/// <param name="baseMethod">The overridden base method, if any.</param>
-		internal ComponentMethodInfo(ComponentInfo component, MethodInfo method, MethodInfo baseMethod = null)
+		internal ComponentMethodInfo(Component component, MethodInfo method, MethodInfo baseMethod = null)
 		{
 			Requires.NotNull(component, () => component);
 			Requires.NotNull(method, () => method);
+			Requires.That(method != baseMethod, "A method cannot override itself.");
 
-			Component = component;
+			_component = component;
 			Method = method;
 			BaseMethod = baseMethod;
 
@@ -62,7 +69,7 @@ namespace SafetySharp.Runtime
 		public FieldInfo BackingField { get; private set; }
 
 		/// <summary>
-		///     Gets the underlying method.
+		///     Gets the underlying .NET method.
 		/// </summary>
 		public MethodInfo Method { get; private set; }
 
@@ -88,8 +95,19 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets the component the field belongs to.
+		///     Gets the metadata of the component the method belongs to.
 		/// </summary>
-		public ComponentInfo Component { get; private set; }
+		public ComponentInfo Component
+		{
+			get { return _component.GetComponentInfo(); }
+		}
+
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
+		{
+			return String.Format("{0} declared by {1}", Method, Method.DeclaringType);
+		}
 	}
 }

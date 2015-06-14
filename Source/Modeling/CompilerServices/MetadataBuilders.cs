@@ -54,14 +54,14 @@ namespace SafetySharp.CompilerServices
 		}
 
 		/// <summary>
-		///     Gets the <see cref="OccurrenceInfo.Builder" /> instance for <paramref name="occurrencePattern" />. Throws a
+		///     Gets the <see cref="OccurrencePatternInfo.Builder" /> instance for <paramref name="occurrencePattern" />. Throws a
 		///     <see cref="InvalidOperationException" /> when <paramref name="occurrencePattern" />'s metadata has already
 		///     been fully initialized.
 		/// </summary>
 		/// <param name="occurrencePattern">The occurrence pattern instance the builder should be returned for.</param>
-		public static OccurrenceInfo.Builder GetBuilder(OccurrencePattern occurrencePattern)
+		public static OccurrencePatternInfo.Builder GetBuilder(OccurrencePattern occurrencePattern)
 		{
-			return (OccurrenceInfo.Builder)MetadataProvider.GetBuilder(occurrencePattern);
+			return (OccurrencePatternInfo.Builder)MetadataProvider.GetBuilder(occurrencePattern);
 		}
 	}
 }

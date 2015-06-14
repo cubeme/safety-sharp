@@ -20,34 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.Behaviors
+namespace Tests.Runtime.Bindings
 {
 	using System;
 	using System.Linq;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 	using Shouldly;
 
-	internal class X2 : TestComponent
+	internal class X21 : Component
 	{
-		public override void Update()
+		public extern void M();
+	}
+
+	internal class X22 : TestComponent
+	{
+		private X21 _y = new X21();
+
+		public X22()
+		{
+			Bind(((((_y).RequiredPorts).M) = (ProvidedPorts.M)));
+		}
+
+		private void M()
 		{
 		}
 
 		protected override void Check()
 		{
-			Metadata.Behaviors.Count().ShouldBe(2);
+			Metadata.Bindings.Count().ShouldBe(1);
 
-			Metadata.Behaviors[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
-			Metadata.Behaviors[0].Component.Component.ShouldBe(this);
-			Metadata.Behaviors[0].BaseMethod.ShouldBe(null);
-			Metadata.Behaviors[0].IsOverride.ShouldBe(false);
-			Metadata.Behaviors[0].Name.ShouldBe("Update");
-
-			Metadata.Behaviors[1].Method.ShouldBe(typeof(X2).GetMethod("Update"));
-			Metadata.Behaviors[1].Component.Component.ShouldBe(this);
-			Metadata.Behaviors[1].BaseMethod.ShouldBe(ComponentUpdatedMethod);
-			Metadata.Behaviors[1].IsOverride.ShouldBe(true);
-			Metadata.Behaviors[1].Name.ShouldBe("Update");
+			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(_y.GetComponentInfo().RequiredPorts[0]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
 		}
 	}
 }

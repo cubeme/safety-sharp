@@ -34,7 +34,7 @@ namespace SafetySharp.Runtime
 		///     Gets the <see cref="ComponentInfo" /> instance for the <paramref name="component" /> instance.
 		/// </summary>
 		/// <param name="component">The component the <see cref="ComponentInfo" /> instance should be retrieved for.</param>
-		public static ComponentInfo GetComponentInfo(this Component component)
+		public static ComponentInfo GetComponentInfo(this IComponent component)
 		{
 			return (ComponentInfo)MetadataProvider.GetMetadata(component);
 		}
@@ -49,12 +49,12 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets the <see cref="OccurrenceInfo" /> instance for the <paramref name="occurrencePattern" /> instance.
+		///     Gets the <see cref="OccurrencePatternInfo" /> instance for the <paramref name="occurrencePattern" /> instance.
 		/// </summary>
-		/// <param name="occurrencePattern">The occurrence pattern the <see cref="OccurrenceInfo" /> instance should be retrieved for.</param>
-		public static OccurrenceInfo GetOccurrenceInfo(this OccurrencePattern occurrencePattern)
+		/// <param name="occurrencePattern">The occurrence pattern the <see cref="OccurrencePatternInfo" /> instance should be retrieved for.</param>
+		public static OccurrencePatternInfo GetOccurrenceInfo(this OccurrencePattern occurrencePattern)
 		{
-			return (OccurrenceInfo)MetadataProvider.GetMetadata(occurrencePattern);
+			return (OccurrencePatternInfo)MetadataProvider.GetMetadata(occurrencePattern);
 		}
 	}
 }

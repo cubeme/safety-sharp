@@ -28,10 +28,10 @@ namespace SafetySharp.Runtime
 	using Modeling;
 	using Utilities;
 
-	partial class OccurrenceInfo
+	partial class OccurrencePatternInfo
 	{
 		/// <summary>
-		///     Represents a mutable builder for <see cref="OccurrenceInfo" /> instances.
+		///     Represents a mutable builder for <see cref="OccurrencePatternInfo" /> instances.
 		/// </summary>
 		public class Builder
 		{
@@ -51,15 +51,15 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Creates an immutable <see cref="OccurrenceInfo" /> instance from the current state of the builder and makes it available
+			///     Creates an immutable <see cref="OccurrencePatternInfo" /> instance from the current state of the builder and makes it available
 			///     to S#'s <see cref="MetadataProvider" />.
 			/// </summary>
 			/// <param name="fault">The fault that is affected by the occurrence pattern.</param>
-			internal OccurrenceInfo RegisterMetadata(Fault fault)
+			internal OccurrencePatternInfo RegisterMetadata(Fault fault)
 			{
 				Requires.NotNull(fault, () => fault);
 
-				var info = new OccurrenceInfo(_occurrencePattern, fault);
+				var info = new OccurrencePatternInfo(_occurrencePattern, fault);
 				MetadataProvider.FinalizeMetadata(_occurrencePattern, info);
 
 				return info;

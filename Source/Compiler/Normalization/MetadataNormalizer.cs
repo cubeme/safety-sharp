@@ -27,7 +27,6 @@ namespace SafetySharp.Compiler.Normalization
 	using System.Linq;
 	using CompilerServices;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Roslyn;
 	using Roslyn.Symbols;
@@ -68,6 +67,7 @@ namespace SafetySharp.Compiler.Normalization
 				.Union(GetRequiredPortMetadata(type))
 				.Union(GetProvidedPortMetadata(type))
 				.Union(GetUpdateMethodMetadata(type))
+				.Union(GetSubcomponentMetadata(type))
 				.Union(GetFaultMetadata(type));
 
 			GenerateMetadataMethod(type, members);
@@ -123,10 +123,40 @@ namespace SafetySharp.Compiler.Normalization
 
 			foreach (var field in fields)
 			{
-				var fieldInfo = field.GetRuntimeFieldExpression(Compilation, Syntax);
+				var fieldInfo = field.GetRuntimeFieldExpression(Syntax);
 				var methodName = field.Type.TypeKind == TypeKind.TypeParameter ? "WithGenericField" : "WithField";
 				var withFieldMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), methodName);
 				var invocation = Syntax.InvocationExpression(withFieldMethod, fieldInfo);
+				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
+			}
+		}
+
+		/// <summary>
+		///     Generates the metadata initialization code for all subcomponent fields of the <paramref name="type" />.
+		/// </summary>
+		/// <param name="type">The type that declares the fields the metadata initialization code should be generated for.</param>
+		private IEnumerable<StatementSyntax> GetSubcomponentMetadata(INamedTypeSymbol type)
+		{
+			var fields = type
+				.GetMembers()
+				.OfType<IFieldSymbol>()
+				.Where(field =>
+				{
+					if (field.IsConst)
+						return false;
+
+					if (field.Type.TypeKind == TypeKind.TypeParameter)
+						return true;
+
+					return field.Type.ImplementsIComponent(Compilation);
+				});
+
+			foreach (var field in fields)
+			{
+				var fieldInfo = field.GetRuntimeFieldExpression(Syntax);
+				var methodName = field.Type.TypeKind == TypeKind.TypeParameter ? "WithGenericSubcomponent" : "WithSubcomponent";
+				var withSubcomponentMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), methodName);
+				var invocation = Syntax.InvocationExpression(withSubcomponentMethod, fieldInfo);
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}
@@ -145,7 +175,7 @@ namespace SafetySharp.Compiler.Normalization
 			foreach (var method in methods)
 			{
 				var withRequiredPortMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithRequiredPort");
-				var invocation = Syntax.InvocationExpression(withRequiredPortMethod, GetMethodInfo(method));
+				var invocation = Syntax.InvocationExpression(withRequiredPortMethod, method.GetRuntimeMethodExpression(Syntax));
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}
@@ -164,11 +194,11 @@ namespace SafetySharp.Compiler.Normalization
 			foreach (var method in methods)
 			{
 				var withProvidedPort = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithProvidedPort");
-				var port = GetMethodInfo(method);
+				var port = method.GetRuntimeMethodExpression(Syntax);
 
 				var invocation = method.OverriddenMethod == null || method.OverriddenMethod.IsAbstract
 					? Syntax.InvocationExpression(withProvidedPort, port)
-					: Syntax.InvocationExpression(withProvidedPort, port, GetMethodInfo(method.OverriddenMethod));
+					: Syntax.InvocationExpression(withProvidedPort, port, method.OverriddenMethod.GetRuntimeMethodExpression(Syntax));
 
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
@@ -188,12 +218,14 @@ namespace SafetySharp.Compiler.Normalization
 			foreach (var method in methods)
 			{
 				var withStepMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithStepMethod");
-				var overridingMethod = GetMethodInfo(method);
-				var overriddenMethod = GetMethodInfo(method.OverriddenMethod);
+				var overridingMethod = method.GetRuntimeMethodExpression(Syntax);
+				var overriddenMethod = method.OverriddenMethod.GetRuntimeMethodExpression(Syntax);
 				var invocation = Syntax.InvocationExpression(withStepMethod, overridingMethod, overriddenMethod);
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}
+
+		
 
 		/// <summary>
 		///     Generates the metadata initialization code for faults affecting the <paramref name="type" />.
@@ -213,44 +245,6 @@ namespace SafetySharp.Compiler.Normalization
 				var invocation = Syntax.InvocationExpression(withFault, faultCreationExpression);
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
-		}
-
-		/// <summary>
-		///     Gets the <see cref="ReflectionHelpers.GetMethod" /> invocation that gets the <paramref name="method" /> using
-		///     reflection.
-		/// </summary>
-		/// <param name="method">The method the code should be created for.</param>
-		private ExpressionSyntax GetMethodInfo(IMethodSymbol method)
-		{
-			var declaringTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(method.ContainingType));
-			var parameters = GetParameterTypeArray(method);
-			var returnType = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(method.ReturnType));
-			var nameArg = Syntax.LiteralExpression(method.Name);
-			var reflectionHelpersType = Syntax.TypeExpression(Compilation.GetTypeSymbol(typeof(ReflectionHelpers)));
-			var getMethodMethod = Syntax.MemberAccessExpression(reflectionHelpersType, "GetMethod");
-			return (ExpressionSyntax)Syntax.InvocationExpression(getMethodMethod, declaringTypeArg, nameArg, parameters, returnType);
-		}
-
-		/// <summary>
-		///     Gets the parameter type array that can be used to retrieve the <paramref name="method" /> via reflection.
-		/// </summary>
-		/// <param name="method">The method the parameter type array should be returned for.</param>
-		private ExpressionSyntax GetParameterTypeArray(IMethodSymbol method)
-		{
-			var typeExpressions = method.Parameters.Select(p =>
-			{
-				var typeofExpression = SyntaxFactory.TypeOfExpression((TypeSyntax)Syntax.TypeExpression(p.Type));
-				if (p.RefKind == RefKind.None)
-					return typeofExpression;
-
-				var makeRefType = Syntax.MemberAccessExpression(typeofExpression, "MakeByRefType");
-				return (ExpressionSyntax)Syntax.InvocationExpression(makeRefType);
-			});
-
-			var arguments = SyntaxFactory.SeparatedList(typeExpressions);
-			var initialize = SyntaxFactory.InitializerExpression(SyntaxKind.ArrayInitializerExpression, arguments);
-			var arrayType = Syntax.ArrayTypeExpression(Syntax.TypeExpression(Compilation.GetTypeSymbol<Type>()));
-			return SyntaxFactory.ArrayCreationExpression((ArrayTypeSyntax)arrayType, initialize);
 		}
 	}
 }

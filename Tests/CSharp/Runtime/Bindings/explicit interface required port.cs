@@ -20,47 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.Behaviors
+namespace Tests.Runtime.Bindings
 {
 	using System;
 	using System.Linq;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 	using Shouldly;
 
-	internal abstract class X5 : TestComponent
+	internal interface I6 : IComponent
 	{
-		public override void Update()
-		{
-		}
+		[Required]
+		void M();
 	}
 
-	internal class X6 : X5
+	internal class X54 : Component, I6
 	{
-		public override void Update()
+		extern void I6.M();
+	}
+
+	internal class X55 : TestComponent
+	{
+		private readonly I6 _i = new X54();
+
+		public X55()
+		{
+			Bind(_i.RequiredPorts.M = ProvidedPorts.N);
+		}
+
+		public void N()
 		{
 		}
 
 		protected override void Check()
 		{
-			Metadata.Behaviors.Count().ShouldBe(3);
+			Metadata.Bindings.Count().ShouldBe(1);
 
-			Metadata.Behaviors[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
-			Metadata.Behaviors[0].Component.Component.ShouldBe(this);
-			Metadata.Behaviors[0].BaseMethod.ShouldBe(null);
-			Metadata.Behaviors[0].IsOverride.ShouldBe(false);
-			Metadata.Behaviors[0].Name.ShouldBe("Update");
-
-			Metadata.Behaviors[1].Method.ShouldBe(typeof(X5).GetMethod("Update"));
-			Metadata.Behaviors[1].Component.Component.ShouldBe(this);
-			Metadata.Behaviors[1].BaseMethod.ShouldBe(ComponentUpdatedMethod);
-			Metadata.Behaviors[1].IsOverride.ShouldBe(true);
-			Metadata.Behaviors[1].Name.ShouldBe("Update");
-
-			Metadata.Behaviors[2].Method.ShouldBe(typeof(X6).GetMethod("Update"));
-			Metadata.Behaviors[2].Component.Component.ShouldBe(this);
-			Metadata.Behaviors[2].BaseMethod.ShouldBe(typeof(X5).GetMethod("Update"));
-			Metadata.Behaviors[2].IsOverride.ShouldBe(true);
-			Metadata.Behaviors[2].Name.ShouldBe("Update");
+			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(_i.GetComponentInfo().RequiredPorts[0]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
 		}
 	}
 }

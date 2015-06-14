@@ -41,8 +41,14 @@ namespace Tests.Runtime
 			Check(code);
 		}
 
-		[Theory, MemberData("DiscoverTests", "Behaviors")]
-		public void Behaviors(string test, SyntaxTree code)
+		[Theory, MemberData("DiscoverTests", "Bindings")]
+		public void Bindings(string test, SyntaxTree code)
+		{
+			Check(code);
+		}
+
+		[Theory, MemberData("DiscoverTests", "Steps")]
+		public void Steps(string test, SyntaxTree code)
 		{
 			Check(code);
 		}

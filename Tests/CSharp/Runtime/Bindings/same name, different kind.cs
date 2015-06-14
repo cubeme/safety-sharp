@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,26 +20,67 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Bindings
 {
 	using System;
-	using System.Reflection;
-	using Modeling;
+	using System.Linq;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the the immutable metadata of a step method of a S# <see cref="Component" />.
-	/// </summary>
-	public sealed class StepMethodInfo : BehaviorInfo
+	internal class X23 : TestComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component the method belongs to.</param>
-		/// <param name="stepMethod">The method that represents the component's step method.</param>
-		/// <param name="baseStepMethod">The overridden base step method, if any.</param>
-		public StepMethodInfo(Component component, MethodInfo stepMethod, MethodInfo baseStepMethod = null)
-			: base(component, stepMethod, baseStepMethod)
+		public X23()
 		{
+			Bind(RequiredPorts.M = ProvidedPorts.N);
+		}
+
+		private void M()
+		{
+		}
+
+		private extern void N();
+
+		private void N(int i)
+		{
+		}
+
+		private extern void M(int i);
+
+		protected override void Check()
+		{
+			Metadata.Bindings.Count().ShouldBe(1);
+
+			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
+		}
+	}
+
+	internal class X24 : TestComponent
+	{
+		public X24()
+		{
+			Bind(RequiredPorts.N = ProvidedPorts.M);
+		}
+
+		private void M()
+		{
+		}
+
+		private extern void N();
+
+		private void N(int i)
+		{
+		}
+
+		private extern void M(int i);
+
+		protected override void Check()
+		{
+			Metadata.Bindings.Count().ShouldBe(1);
+
+			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
 		}
 	}
 }

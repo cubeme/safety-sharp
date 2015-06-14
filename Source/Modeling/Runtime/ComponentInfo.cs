@@ -23,7 +23,6 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections.Generic;
 	using Modeling;
 
 	/// <summary>
@@ -34,22 +33,33 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the faults affecting the component.
 		/// </summary>
-		public IEnumerable<FaultInfo> Faults { get; private set; }
+		public ComponentMemberCollection<FaultInfo> Faults { get; private set; }
 
 		/// <summary>
 		///     Gets the fields declared by the component.
 		/// </summary>
-		public IEnumerable<ComponentFieldInfo> Fields { get; private set; }
+		public ComponentMemberCollection<ComponentFieldInfo> Fields { get; private set; }
 
 		/// <summary>
 		///     Gets the port bindings declared by the component.
 		/// </summary>
-		public IEnumerable<BindingInfo> Bindings { get; private set; }
+		public ComponentMemberCollection<BindingInfo> Bindings { get; private set; }
+
+		/// <summary>
+		///     Gets the subcomponents contained within the component.
+		/// </summary>
+		public ComponentMemberCollection<ComponentInfo> Subcomponents { get; private set; }
 
 		/// <summary>
 		///     Gets the <see cref="Component" /> instance the metadata is provided for.
 		/// </summary>
 		public Component Component { get; private set; }
+
+		/// <summary>
+		///     Gets the parent <see cref="Component" /> instance within the component hierarchy. Returns <c>null</c> for the
+		///     root component.
+		/// </summary>
+		public ComponentInfo ParentComponent { get; private set; }
 
 		/// <summary>
 		///     Gets the behaviors declared by the component.

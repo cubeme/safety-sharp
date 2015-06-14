@@ -23,8 +23,8 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Linq.Expressions;
 	using System.Reflection;
+	using CompilerServices;
 	using Modeling;
 	using Utilities;
 
@@ -35,7 +35,8 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public class Builder
 		{
-			private OccurrenceInfo _occurrencePattern;
+			private readonly Fault _fault;
+			private OccurrencePatternInfo _occurrencePattern;
 
 			/// <summary>
 			///     Initializes a new instance.
@@ -44,22 +45,15 @@ namespace SafetySharp.Runtime
 			internal Builder(Fault fault)
 			{
 				Requires.NotNull(fault, () => fault);
-				Fault = fault;
+				_fault = fault;
 			}
 
 			/// <summary>
-			///     Gets the fault the metadata is built for.
-			/// </summary>
-			public Fault Fault { get; private set; }
-
-			/// <summary>
-			///     Adds the <paramref name="faultEffect" /> to the fault's metadata. The <paramref name="createBody" /> must not be
-			///     <c>null</c> if the component is intended to be used with S# analysis techniques.
+			///     Adds the <paramref name="faultEffect" /> to the fault's metadata.
 			/// </summary>
 			/// <param name="faultEffect">The fault effect that should be added.</param>
 			/// <param name="affectedMethod">The affected method of the affected component.</param>
-			/// <param name="createBody">The callback that should be used to retrieve the body of the fault effect.</param>
-			public void WithEffect(MethodInfo faultEffect, MethodInfo affectedMethod, Func<Expression> createBody = null)
+			public void WithEffect(MethodInfo faultEffect, MethodInfo affectedMethod)
 			{
 				Requires.NotNull(faultEffect, () => faultEffect);
 				Requires.NotNull(affectedMethod, () => affectedMethod);
@@ -69,12 +63,10 @@ namespace SafetySharp.Runtime
 			///     Sets the <paramref name="occurrencePattern" /> that affects the fault.
 			/// </summary>
 			/// <param name="occurrencePattern">The occurrence pattern that should be set.</param>
-			public void WithOccurrencePattern(OccurrenceInfo occurrencePattern)
+			public void WithOccurrencePattern(OccurrencePattern occurrencePattern)
 			{
 				Requires.NotNull(occurrencePattern, () => occurrencePattern);
-				Requires.That(occurrencePattern.Fault == Fault, () => occurrencePattern, "The occurrence pattern affects another fault.");
-
-				_occurrencePattern = occurrencePattern;
+				_occurrencePattern = MetadataBuilders.GetBuilder(occurrencePattern).RegisterMetadata(_fault);
 			}
 
 			/// <summary>
@@ -82,12 +74,12 @@ namespace SafetySharp.Runtime
 			///     to S#'s <see cref="MetadataProvider" />.
 			/// </summary>
 			/// <param name="component">The component that is affected by the fault.</param>
-			internal FaultInfo FinalizeMetadata(ComponentInfo component)
+			internal FaultInfo RegisterMetadata(Component component)
 			{
 				Requires.NotNull(component, () => component);
 
-				var info = new FaultInfo(component, Fault);
-				MetadataProvider.FinalizeMetadata(Fault, info);
+				var info = new FaultInfo(component, _fault);
+				MetadataProvider.FinalizeMetadata(_fault, info);
 
 				return info;
 			}

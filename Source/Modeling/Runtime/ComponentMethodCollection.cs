@@ -23,71 +23,24 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
-	using Utilities;
+	using Modeling;
 
 	/// <summary>
 	///     Represents a collection of <see cref="ComponentMethodInfo" /> instances.
 	/// </summary>
 	/// <typeparam name="T">The actual type of the <see cref="ComponentMethodInfo" /> instances.</typeparam>
-	public sealed class ComponentMethodCollection<T> : IEnumerable<T>
+	public sealed class ComponentMethodCollection<T> : ComponentMemberCollection<T>
 		where T : ComponentMethodInfo
 	{
-		private ImmutableArray<T> _methods;
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
+		/// <param name="component">The component the method collection belongs to.</param>
 		/// <param name="methods">The methods that should be contained in the collection.</param>
-		internal ComponentMethodCollection(IEnumerable<T> methods)
+		internal ComponentMethodCollection(Component component, IEnumerable<T> methods)
+			: base(component, methods)
 		{
-			Requires.NotNull(methods, () => methods);
-			_methods = methods.ToImmutableArray();
-		}
-
-		/// <summary>
-		///     Gets the method at the zero-based <paramref name="index" /> within the collection.
-		/// </summary>
-		/// <param name="index">The index of the method that should be returned.</param>
-		public T this[int index]
-		{
-			get { return _methods[index]; }
-		}
-
-		/// <summary>
-		///     Gets the number of methods in the collection.
-		/// </summary>
-		public int Length
-		{
-			get { return _methods.Length; }
-		}
-
-		/// <summary>
-		///     Returns an enumerator that iterates through the collection.
-		/// </summary>
-		IEnumerator<T> IEnumerable<T>.GetEnumerator()
-		{
-			foreach (var method in _methods)
-				yield return method;
-		}
-
-		/// <summary>
-		///     Returns an enumerator that iterates through the collection.
-		/// </summary>
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			foreach (var method in _methods)
-				yield return method;
-		}
-
-		/// <summary>
-		///     Returns an enumerator that iterates through the collection.
-		/// </summary>
-		public ImmutableArray<T>.Enumerator GetEnumerator()
-		{
-			return _methods.GetEnumerator();
 		}
 	}
 }

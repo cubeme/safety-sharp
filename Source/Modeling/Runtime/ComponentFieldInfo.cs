@@ -25,6 +25,7 @@ namespace SafetySharp.Runtime
 	using System;
 	using System.Collections.Immutable;
 	using System.Reflection;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -32,7 +33,10 @@ namespace SafetySharp.Runtime
 	/// </summary>
 	public sealed class ComponentFieldInfo
 	{
-		private readonly FieldInfo _field;
+		/// <summary>
+		///     The component the field belongs to.
+		/// </summary>
+		private readonly Component _component;
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -42,38 +46,44 @@ namespace SafetySharp.Runtime
 		/// <param name="initialValues">
 		///     The set of initial values. <c>null</c> indicates that the current field value should be used instead.
 		/// </param>
-		internal ComponentFieldInfo(ComponentInfo component, FieldInfo field, object[] initialValues)
+		internal ComponentFieldInfo(Component component, FieldInfo field, object[] initialValues)
 		{
 			Requires.NotNull(component, () => component);
 			Requires.NotNull(field, () => field);
 
-			_field = field;
+			_component = component;
 
-			Component = component;
-			InitialValues = initialValues == null
-				? ImmutableArray.Create(field.GetValue(component.Component))
-				: initialValues.ToImmutableArray();
+			Field = field;
+			InitialValues = initialValues == null ? ImmutableArray.Create(field.GetValue(component)) : initialValues.ToImmutableArray();
 		}
+
+		/// <summary>
+		///     Gets the underlying .NET field.
+		/// </summary>
+		public FieldInfo Field { get; private set; }
 
 		/// <summary>
 		///     Gets the name of the field.
 		/// </summary>
 		public string Name
 		{
-			get { return _field.Name; }
+			get { return Field.Name; }
 		}
 
 		/// <summary>
-		///     Gets the component the field belongs to.
+		///     Gets the metadata of the component the field belongs to.
 		/// </summary>
-		public ComponentInfo Component { get; private set; }
+		public ComponentInfo Component
+		{
+			get { return _component.GetComponentInfo(); }
+		}
 
 		/// <summary>
 		///     Gets the type of the field.
 		/// </summary>
 		public Type Type
 		{
-			get { return _field.FieldType; }
+			get { return Field.FieldType; }
 		}
 
 		/// <summary>

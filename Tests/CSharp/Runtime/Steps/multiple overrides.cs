@@ -20,55 +20,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Steps
 {
 	using System;
-	using Modeling;
-	using Utilities;
+	using System.Linq;
+	using SafetySharp.Modeling;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
-	/// </summary>
-	public sealed partial class FaultInfo
+	internal abstract class X5 : TestComponent
 	{
-		/// <summary>
-		///     The component affected by the fault.
-		/// </summary>
-		private readonly Component _component;
-
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(Component component, Fault fault)
+		public override void Update()
 		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
+		}
+	}
 
-			_component = component;
-			Fault = fault;
+	internal class X6 : X5
+	{
+		public override void Update()
+		{
 		}
 
-		/// <summary>
-		///     Gets the metadata of the component affected by the fault.
-		/// </summary>
-		public ComponentInfo Component
+		protected override void Check()
 		{
-			get { return _component.GetComponentInfo(); }
-		}
+			Metadata.Behaviors.Count().ShouldBe(3);
 
-		/// <summary>
-		///     Gets the fault the metadata is provided for.
-		/// </summary>
-		public Fault Fault { get; set; }
+			Metadata.Behaviors[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
+			Metadata.Behaviors[0].Component.Component.ShouldBe(this);
+			Metadata.Behaviors[0].BaseMethod.ShouldBe(null);
+			Metadata.Behaviors[0].IsOverride.ShouldBe(false);
+			Metadata.Behaviors[0].Name.ShouldBe("Update");
 
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
-		{
-			get { return Fault.GetType().Name; }
+			Metadata.Behaviors[1].Method.ShouldBe(typeof(X5).GetMethod("Update"));
+			Metadata.Behaviors[1].Component.Component.ShouldBe(this);
+			Metadata.Behaviors[1].BaseMethod.ShouldBe(ComponentUpdatedMethod);
+			Metadata.Behaviors[1].IsOverride.ShouldBe(true);
+			Metadata.Behaviors[1].Name.ShouldBe("Update");
+
+			Metadata.Behaviors[2].Method.ShouldBe(typeof(X6).GetMethod("Update"));
+			Metadata.Behaviors[2].Component.Component.ShouldBe(this);
+			Metadata.Behaviors[2].BaseMethod.ShouldBe(typeof(X5).GetMethod("Update"));
+			Metadata.Behaviors[2].IsOverride.ShouldBe(true);
+			Metadata.Behaviors[2].Name.ShouldBe("Update");
 		}
 	}
 }

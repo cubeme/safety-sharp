@@ -25,6 +25,10 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 	using System;
 	using SafetySharp.Modeling;
 
+	/* ============================================================================= */
+	/* This is valid only because non-existing ports are handled by another analyzer */
+	/* ============================================================================= */
+
 	internal class X10 : Component
 	{
 		private X10()

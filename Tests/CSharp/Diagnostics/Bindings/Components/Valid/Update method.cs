@@ -25,6 +25,10 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 	using System;
 	using SafetySharp.Modeling;
 
+	/* ============================================================================= */
+	/* This is valid only because non-existing ports are handled by another analyzer */
+	/* ============================================================================= */
+
 	internal class X25 : Component
 	{
 		private X25()
@@ -36,6 +40,7 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 		{
 		}
 
+		
 		public override void Update()
 		{
 		}

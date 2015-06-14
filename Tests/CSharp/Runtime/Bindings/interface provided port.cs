@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,26 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Bindings
 {
 	using System;
-	using System.Reflection;
-	using Modeling;
+	using System.Linq;
+	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the the immutable metadata of a step method of a S# <see cref="Component" />.
-	/// </summary>
-	public sealed class StepMethodInfo : BehaviorInfo
+	internal interface I1 : IComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component the method belongs to.</param>
-		/// <param name="stepMethod">The method that represents the component's step method.</param>
-		/// <param name="baseStepMethod">The overridden base step method, if any.</param>
-		public StepMethodInfo(Component component, MethodInfo stepMethod, MethodInfo baseStepMethod = null)
-			: base(component, stepMethod, baseStepMethod)
+		[Provided]
+		void M();
+	}
+
+	internal class X41 : Component, I1
+	{
+		public void M()
 		{
+		}
+	}
+
+	internal class X42 : TestComponent
+	{
+		private readonly I1 _i = new X41();
+
+		public X42()
+		{
+			Bind(RequiredPorts.N = _i.ProvidedPorts.M);
+		}
+
+		public extern void N();
+
+		protected override void Check()
+		{
+			Metadata.Bindings.Count().ShouldBe(1);
+
+			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(_i.GetComponentInfo().ProvidedPorts[0]);
 		}
 	}
 }

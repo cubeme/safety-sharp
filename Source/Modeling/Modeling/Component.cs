@@ -44,9 +44,14 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		protected Component()
+		/// <param name="name">The (optional) name of the component.</param>
+		protected Component(string name = null)
 		{
 			MetadataProvider.CreateBuilder(this);
+
+			if (!String.IsNullOrWhiteSpace(name))
+				MetadataBuilders.GetBuilder(this).WithName(name);
+
 			MetadataProvider.InitializeMetadata(this);
 		}
 

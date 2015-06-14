@@ -36,9 +36,20 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		/// <param name="component">The component the method belongs to.</param>
 		/// <param name="port">The method representing the component's port.</param>
-		internal RequiredPortInfo(ComponentInfo component, MethodInfo port)
+		internal RequiredPortInfo(Component component, MethodInfo port)
 			: base(component, port)
 		{
+		}
+
+		/// <summary>
+		///     Gets the metadata of the provided port that has been bound to the required port.
+		/// </summary>
+		public ProvidedPortInfo BoundProvidedPort
+		{
+			get
+			{
+				throw new NotImplementedException();
+			}
 		}
 	}
 }

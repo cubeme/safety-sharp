@@ -39,7 +39,7 @@ namespace SafetySharp.Runtime
 		/// <param name="component">The component the method belongs to.</param>
 		/// <param name="behavior">The method representing the component's behavior.</param>
 		/// <param name="baseBehavior">The overridden behavior of the base type, if any.</param>
-		internal BehaviorInfo(ComponentInfo component, MethodInfo behavior, MethodInfo baseBehavior = null)
+		internal BehaviorInfo(Component component, MethodInfo behavior, MethodInfo baseBehavior = null)
 			: base(component, behavior, baseBehavior)
 		{
 			var behaviorAttribute = behavior.GetCustomAttribute<MethodBehaviorAttribute>();
@@ -48,8 +48,8 @@ namespace SafetySharp.Runtime
 
 			ImplementationMethod = behaviorAttribute.GetMethodInfo(behavior.DeclaringType);
 
-			var implementationDelegate = Delegate.CreateDelegate(BackingField.FieldType, component.Component, ImplementationMethod);
-			BackingField.SetValue(component.Component, implementationDelegate);
+			var implementationDelegate = Delegate.CreateDelegate(BackingField.FieldType, component, ImplementationMethod);
+			BackingField.SetValue(component, implementationDelegate);
 		}
 
 		/// <summary>

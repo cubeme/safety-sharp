@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,26 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Runtime.Steps
 {
 	using System;
-	using System.Reflection;
-	using Modeling;
+	using System.Linq;
+	using SafetySharp.Modeling;
+	using Shouldly;
 
-	/// <summary>
-	///     Represents the the immutable metadata of a step method of a S# <see cref="Component" />.
-	/// </summary>
-	public sealed class StepMethodInfo : BehaviorInfo
+	internal class X1 : TestComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component the method belongs to.</param>
-		/// <param name="stepMethod">The method that represents the component's step method.</param>
-		/// <param name="baseStepMethod">The overridden base step method, if any.</param>
-		public StepMethodInfo(Component component, MethodInfo stepMethod, MethodInfo baseStepMethod = null)
-			: base(component, stepMethod, baseStepMethod)
+		protected override void Check()
 		{
+			Metadata.Behaviors.Count().ShouldBe(1);
+			Metadata.Behaviors[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
+			Metadata.Behaviors[0].Component.Component.ShouldBe(this);
+			Metadata.Behaviors[0].BaseMethod.ShouldBe(null);
+			Metadata.Behaviors[0].IsOverride.ShouldBe(false);
+			Metadata.Behaviors[0].Name.ShouldBe("Update");
 		}
 	}
 }
