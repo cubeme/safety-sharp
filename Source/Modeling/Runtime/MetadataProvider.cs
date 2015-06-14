@@ -34,6 +34,9 @@ namespace SafetySharp.Runtime
 	/// </summary>
 	internal static class MetadataProvider
 	{
+		/// <summary>
+		///     The object used for thread sychronization.
+		/// </summary>
 		private static readonly object _syncObj = new object();
 
 		/// <summary>
@@ -82,8 +85,7 @@ namespace SafetySharp.Runtime
 		///     Gets the builder instance for <paramref name="obj" />.
 		/// </summary>
 		/// <param name="obj">The object instance the builder should be returned for.</param>
-		internal static object GetBuilder<T>(T obj)
-			where T : class
+		internal static object GetBuilder(object obj)
 		{
 			Requires.NotNull(obj, () => obj);
 
