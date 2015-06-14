@@ -34,9 +34,14 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 
 	internal class X32 : X31
 	{
+		private X32 _x;
+
 		private X32()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
+			Bind(RequiredPorts.N = ((X31)this).ProvidedPorts.M);
+			Bind(RequiredPorts.N = ((X31)_x).ProvidedPorts.M);
+			Bind(RequiredPorts.N = ((X31)_x._x._x).ProvidedPorts.M);
 		}
 
 		private extern void N();

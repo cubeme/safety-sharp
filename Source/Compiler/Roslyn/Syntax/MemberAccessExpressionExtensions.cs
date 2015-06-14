@@ -28,9 +28,9 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using SafetySharp.Modeling;
-	using SafetySharp.Utilities;
+	using Modeling;
 	using Symbols;
+	using Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="MemberAccessExpressionSyntax" /> instances.
@@ -77,28 +77,34 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 				targetSymbol = semanticModel.GetEnclosingSymbol(node.SpanStart).ContainingType;
 			else
 			{
-				var untypedTargetSymbol = nestedMemberAccess.Expression.GetReferencedSymbol(semanticModel);
+				var castExpression = nestedMemberAccess.Expression.RemoveParentheses() as CastExpressionSyntax;
+				if (castExpression != null)
+					targetSymbol = castExpression.Type.GetReferencedSymbol<ITypeSymbol>(semanticModel);
+				else
+				{
+					var untypedTargetSymbol = nestedMemberAccess.Expression.GetReferencedSymbol(semanticModel);
 
-				var parameterSymbol = untypedTargetSymbol as IParameterSymbol;
-				var localSymbol = untypedTargetSymbol as ILocalSymbol;
-				var fieldSymbol = untypedTargetSymbol as IFieldSymbol;
-				var propertySymbol = untypedTargetSymbol as IPropertySymbol;
-				var methodSymbol = untypedTargetSymbol as IMethodSymbol;
+					var parameterSymbol = untypedTargetSymbol as IParameterSymbol;
+					var localSymbol = untypedTargetSymbol as ILocalSymbol;
+					var fieldSymbol = untypedTargetSymbol as IFieldSymbol;
+					var propertySymbol = untypedTargetSymbol as IPropertySymbol;
+					var methodSymbol = untypedTargetSymbol as IMethodSymbol;
 
-				if (parameterSymbol != null)
-					targetSymbol = parameterSymbol.Type;
+					if (parameterSymbol != null)
+						targetSymbol = parameterSymbol.Type;
 
-				if (localSymbol != null)
-					targetSymbol = localSymbol.Type;
+					if (localSymbol != null)
+						targetSymbol = localSymbol.Type;
 
-				if (fieldSymbol != null)
-					targetSymbol = fieldSymbol.Type;
+					if (fieldSymbol != null)
+						targetSymbol = fieldSymbol.Type;
 
-				if (propertySymbol != null)
-					targetSymbol = propertySymbol.Type;
+					if (propertySymbol != null)
+						targetSymbol = propertySymbol.Type;
 
-				if (methodSymbol != null)
-					targetSymbol = methodSymbol.ReturnType;
+					if (methodSymbol != null)
+						targetSymbol = methodSymbol.ReturnType;
+				}
 			}
 
 			Assert.NotNull(targetSymbol, "Failed to determine the target symbol.");

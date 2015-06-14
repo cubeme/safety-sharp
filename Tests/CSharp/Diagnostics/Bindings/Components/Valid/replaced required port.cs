@@ -35,6 +35,7 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 		private X34()
 		{
 			Bind(RequiredPorts.M = ProvidedPorts.N);
+			Bind(((X33)this).RequiredPorts.M = ProvidedPorts.N);
 		}
 
 		private void N()

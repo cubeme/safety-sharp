@@ -36,7 +36,7 @@ namespace Tests.Runtime.Bindings
 		public X34()
 		{
 			Bind(RequiredPorts.M = ProvidedPorts.N);
-			Bind(RequiredPorts.M = ((X33)this).ProvidedPorts.N);
+			Bind(((X33)this).RequiredPorts.M = ProvidedPorts.N);
 		}
 
 		private void N()
