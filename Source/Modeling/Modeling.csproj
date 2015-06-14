@@ -61,6 +61,7 @@
     </Compile>
     <Compile Include="CompilerServices\LiftExpressionAttribute.cs" />
     <Compile Include="CompilerServices\MetadataBuilders.cs" />
+    <Compile Include="Runtime\MetadataExtensions.cs" />
     <Compile Include="Runtime\OccurrenceInfo.Builder.cs">
       <DependentUpon>OccurrenceInfo.cs</DependentUpon>
     </Compile>

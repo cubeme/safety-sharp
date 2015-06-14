@@ -35,7 +35,7 @@ namespace SafetySharp.Runtime
 	internal static class MetadataProvider
 	{
 		/// <summary>
-		///     The object used for thread sychronization.
+		///     The object used for thread synchronization.
 		/// </summary>
 		private static readonly object _syncObj = new object();
 
@@ -101,54 +101,19 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets the <see cref="ComponentInfo" /> instance for the <paramref name="component" /> instance.
+		///     Gets the metadata for the <paramref name="obj" />.
 		/// </summary>
-		/// <param name="component">The component the <see cref="ComponentInfo" /> instance should be retrieved for.</param>
-		public static ComponentInfo GetComponentInfo(this Component component)
+		/// <param name="obj">The object the metadata should be returned for.</param>
+		internal static object GetMetadata(object obj)
 		{
-			Requires.NotNull(component, () => component);
+			Requires.NotNull(obj, () => obj);
 
 			lock (_syncObj)
 			{
 				object info;
-				Requires.That(_metadata.TryGetValue(component, out info), () => component, "The metadata for the component is not yet available.");
+				Requires.That(_metadata.TryGetValue(obj, out info), () => obj, "The object's metadata has not yet been created.");
 
-				return (ComponentInfo)info;
-			}
-		}
-
-		/// <summary>
-		///     Gets the <see cref="FaultInfo" /> instance for the <paramref name="fault" /> instance.
-		/// </summary>
-		/// <param name="fault">The fault the <see cref="FaultInfo" /> instance should be retrieved for.</param>
-		public static FaultInfo GetFaultInfo(this Fault fault)
-		{
-			Requires.NotNull(fault, () => fault);
-
-			lock (_syncObj)
-			{
-				object info;
-				Requires.That(_metadata.TryGetValue(fault, out info), () => fault, "The metadata for the fault is not yet available.");
-
-				return (FaultInfo)info;
-			}
-		}
-
-		/// <summary>
-		///     Gets the <see cref="OccurrenceInfo" /> instance for the <paramref name="occurrencePattern" /> instance.
-		/// </summary>
-		/// <param name="occurrencePattern">The occurrence pattern the <see cref="OccurrenceInfo" /> instance should be retrieved for.</param>
-		public static OccurrenceInfo GetOccurrenceInfo(this OccurrencePattern occurrencePattern)
-		{
-			Requires.NotNull(occurrencePattern, () => occurrencePattern);
-
-			lock (_syncObj)
-			{
-				object info;
-				Requires.That(_metadata.TryGetValue(occurrencePattern, out info), () => occurrencePattern,
-					"The metadata for the occurrence pattern is not yet available.");
-
-				return (OccurrenceInfo)info;
+				return info;
 			}
 		}
 
