@@ -31,7 +31,7 @@ namespace Tests.Normalization.Bindings.Components
 
 		private In1()
 		{
-			Bind(x.RequiredPorts.N = x.ProvidedPorts.M).Delayed();
+			Bind(x.RequiredPorts.N = x.ProvidedPorts.M);
 		}
 
 		private void M()
@@ -47,10 +47,7 @@ namespace Tests.Normalization.Bindings.Components
 
 		private Out1()
 		{
-			Bind(new SafetySharp.Modeling.PortBinding(
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x.N)),
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x.M))))
-				.Delayed();
+			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding((__BindingDelegate0__)(x.N), (__BindingDelegate0__)(x.M));
 		}
 
 		private void M()

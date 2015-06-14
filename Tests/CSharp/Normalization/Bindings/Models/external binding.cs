@@ -38,7 +38,7 @@ namespace Tests.Normalization.Bindings.Models
 	{
 		private void Q(X2 x1, X2 x2, Model m)
 		{
-			m.Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M).Delayed();
+			m.Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
 		}
 	}
 
@@ -46,10 +46,7 @@ namespace Tests.Normalization.Bindings.Models
 	{
 		private void Q(X2 x1, X2 x2, Model m)
 		{
-			m.Bind(new SafetySharp.Modeling.PortBinding(
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x1.N)),
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x2.M))))
-			 .Delayed();
+			//global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(m).WithBinding((__BindingDelegate0__)(x1.N), (__BindingDelegate0__)(x2.M));
 		}
 	}
 

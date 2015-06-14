@@ -53,21 +53,18 @@ namespace Tests.Runtime.ProvidedPorts
 			Metadata.ProvidedPorts[0].Method.ReturnType.ShouldBe(typeof(void));
 			Metadata.ProvidedPorts[0].Component.Component.ShouldBe(this);
 			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[0].CreateBody.ShouldBe(null);
 			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
 			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
 
 			Metadata.ProvidedPorts[1].Method.ReturnType.ShouldBe(typeof(int));
 			Metadata.ProvidedPorts[1].Component.Component.ShouldBe(this);
 			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[1].CreateBody.ShouldBe(null);
 			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
 			Metadata.ProvidedPorts[1].Name.ShouldBe("M");
 
 			Metadata.ProvidedPorts[2].Method.ReturnType.ShouldBe(typeof(bool));
 			Metadata.ProvidedPorts[2].Component.Component.ShouldBe(this);
 			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[2].CreateBody.ShouldBe(null);
 			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
 			Metadata.ProvidedPorts[2].Name.ShouldBe("M");
 		}

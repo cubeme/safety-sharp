@@ -39,9 +39,7 @@ namespace SafetySharp.Runtime
 		/// <param name="component">The component the method belongs to.</param>
 		/// <param name="method">The method that represents the component method.</param>
 		/// <param name="baseMethod">The overridden base method, if any.</param>
-		/// <param name="createBody">The callback that should be used to retrieve the body of the method.</param>
-		internal ComponentMethodInfo(ComponentInfo component, MethodInfo method, MethodInfo baseMethod = null,
-									 CreateBodyCallback createBody = null)
+		internal ComponentMethodInfo(ComponentInfo component, MethodInfo method, MethodInfo baseMethod = null)
 		{
 			Requires.NotNull(component, () => component);
 			Requires.NotNull(method, () => method);
@@ -49,7 +47,6 @@ namespace SafetySharp.Runtime
 			Component = component;
 			Method = method;
 			BaseMethod = baseMethod;
-			CreateBody = createBody;
 
 			var backingFieldAttribute = method.GetCustomAttribute<BackingFieldAttribute>();
 			Requires.That(backingFieldAttribute != null, "Expected to find an instance of '{0}' on component member '{1}'.",
@@ -65,18 +62,12 @@ namespace SafetySharp.Runtime
 		public FieldInfo BackingField { get; private set; }
 
 		/// <summary>
-		///     Gets the callback that retrieves the body of the method. Is <c>null</c> when the method has no body or no body could be
-		///     found in the S# assembly's metadata.
-		/// </summary>
-		public CreateBodyCallback CreateBody { get; private set; }
-
-		/// <summary>
 		///     Gets the underlying method.
 		/// </summary>
 		public MethodInfo Method { get; private set; }
 
 		/// <summary>
-		///     Gets the overriden base method, if any.
+		///     Gets the overridden base method, if any.
 		/// </summary>
 		public MethodInfo BaseMethod { get; private set; }
 

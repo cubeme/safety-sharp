@@ -38,7 +38,6 @@ namespace Tests.Runtime.RequiredPorts
 			Metadata.RequiredPorts[0].Method.ShouldBe(typeof(X2).GetMethod("M", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.RequiredPorts[0].Component.Component.ShouldBe(this);
 			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[0].CreateBody.ShouldBe(null);
 			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
 			Metadata.RequiredPorts[0].Name.ShouldBe("M");
 		}

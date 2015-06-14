@@ -47,6 +47,8 @@
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
     <Compile Include="CompilerServices\MetadataAttribute.cs" />
     <Compile Include="CompilerServices\IgnoreAttribute.cs" />
+    <Compile Include="Modeling\PortBinding.cs" />
+    <Compile Include="Modeling\PortInfo.cs" />
     <Compile Include="Runtime\BehaviorInfo.cs" />
     <Compile Include="Runtime\ComponentFieldInfo.cs" />
     <Compile Include="Runtime\ComponentInfo.Builder.cs">
@@ -54,7 +56,6 @@
     </Compile>
     <Compile Include="Runtime\ComponentMethodCollection.cs" />
     <Compile Include="Runtime\ComponentMethodInfo.cs" />
-    <Compile Include="Runtime\CreateBodyCallback.cs" />
     <Compile Include="Runtime\FaultInfo.Builder.cs">
       <DependentUpon>FaultInfo.cs</DependentUpon>
     </Compile>
@@ -99,8 +100,6 @@
     <Compile Include="Modeling\OccurrencePatternAttribute.cs" />
     <Compile Include="Modeling\OverflowBehavior.cs" />
     <Compile Include="Modeling\PersistentAttribute.cs" />
-    <Compile Include="Modeling\PortBinding.cs" />
-    <Compile Include="Modeling\PortInfo.cs" />
     <Compile Include="Modeling\ProvidedAttribute.cs" />
     <Compile Include="Modeling\RequiredAttribute.cs" />
     <Compile Include="Runtime\ProvidedPortInfo.cs" />
@@ -112,6 +111,7 @@
     <Compile Include="Runtime\OccurrenceInfo.cs" />
     <Compile Include="CompilerServices\ReflectionHelpers.cs" />
     <Compile Include="Runtime\MetadataProvider.cs" />
+    <Compile Include="Runtime\StepMethodInfo.cs" />
     <Compile Include="Utilities\Assert.cs" />
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />
     <Compile Include="Utilities\ReflectionExtensions.cs" />

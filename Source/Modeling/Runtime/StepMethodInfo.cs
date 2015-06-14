@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,11 +23,23 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Linq.Expressions;
+	using System.Reflection;
 	using Modeling;
 
 	/// <summary>
-	///     Represents a callback function that can be used to retrieve the body of a S# <see cref="Component" /> method.
+	///     Represents the the immutable metadata of a step method of a S# <see cref="Component" />.
 	/// </summary>
-	public delegate Expression CreateBodyCallback();
+	public sealed class StepMethodInfo : BehaviorInfo
+	{
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="component">The component the method belongs to.</param>
+		/// <param name="stepMethod">The method that represents the component's step method.</param>
+		/// <param name="baseStepMethod">The overridden base step method, if any.</param>
+		public StepMethodInfo(ComponentInfo component, MethodInfo stepMethod, MethodInfo baseStepMethod = null)
+			: base(component, stepMethod, baseStepMethod)
+		{
+		}
+	}
 }

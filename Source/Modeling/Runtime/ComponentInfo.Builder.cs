@@ -38,13 +38,14 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public class Builder
 		{
-			private readonly List<BehaviorInfo> _behaviors = new List<BehaviorInfo>();
+			private readonly List<Tuple<Delegate, Delegate>> _bindings = new List<Tuple<Delegate, Delegate>>();
 			private readonly Component _component;
 			private readonly List<FaultInfo> _faults = new List<FaultInfo>();
 			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
 			private readonly ComponentInfo _info;
 			private readonly List<ProvidedPortInfo> _providedPorts = new List<ProvidedPortInfo>();
 			private readonly List<RequiredPortInfo> _requiredPorts = new List<RequiredPortInfo>();
+			private readonly List<StepMethodInfo> _stepMethods = new List<StepMethodInfo>();
 			private readonly List<FieldInfo> _subcomponents = new List<FieldInfo>();
 			private string _name;
 
@@ -136,13 +137,11 @@ namespace SafetySharp.Runtime
 
 			/// <summary>
 			///     Adds the <paramref name="providedPort" /> to the component's metadata. If the port overrides a virtual port declared by
-			///     a base type, the <paramref name="basePort" /> must not be <c>null</c>. The <paramref name="createBody" /> must not be
-			///     <c>null</c> if the component is intended to be used with S# analysis techniques.
+			///     a base type, the <paramref name="basePort" /> must not be <c>null</c>.
 			/// </summary>
 			/// <param name="providedPort">The provided port that should be added to the component's metadata.</param>
 			/// <param name="basePort">The overridden method of the base type, if any.</param>
-			/// <param name="createBody">The callback that should be used to retrieve the body of the port.</param>
-			public void WithProvidedPort(MethodInfo providedPort, MethodInfo basePort = null, CreateBodyCallback createBody = null)
+			public void WithProvidedPort(MethodInfo providedPort, MethodInfo basePort = null)
 			{
 				Requires.NotNull(providedPort, () => providedPort);
 				Requires.That(_providedPorts.All(p => p.Method != providedPort), () => providedPort, "The port has already been added.");
@@ -151,7 +150,7 @@ namespace SafetySharp.Runtime
 				Requires.That(basePort == null || _providedPorts.Any(p => p.Method == basePort), () => _providedPorts,
 					"The base port is unknown.");
 
-				_providedPorts.Add(new ProvidedPortInfo(_info, providedPort, basePort, createBody));
+				_providedPorts.Add(new ProvidedPortInfo(_info, providedPort, basePort));
 			}
 
 			/// <summary>
@@ -168,20 +167,18 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="behavior" /> to the component's metadata. If the behavior overrides a behavior declared by
-			///     a base type, the <paramref name="baseBehavior" /> must not be <c>null</c>. The <paramref name="createBody" /> must not
-			///     be <c>null</c> if the component is intended to be used with S# analysis techniques.
+			///     Adds the <paramref name="stepMethod" /> to the component's metadata. If <paramref name="stepMethod" /> overrides a step
+			///     method declared by a base type, the <paramref name="baseStepMethod" /> must not be <c>null</c>.
 			/// </summary>
-			/// <param name="behavior">The method representing the component's behavior that should be added to the component's metadata.</param>
-			/// <param name="baseBehavior">The overridden behavior of the base type, if any.</param>
-			/// <param name="createBody">The callback that should be used to retrieve the body of the method.</param>
-			public void WithBehavior(MethodInfo behavior, MethodInfo baseBehavior = null, CreateBodyCallback createBody = null)
+			/// <param name="stepMethod">The method representing the component's behavior that should be added to the component's metadata.</param>
+			/// <param name="baseStepMethod">The overridden behavior of the base type, if any.</param>
+			public void WithStepMethod(MethodInfo stepMethod, MethodInfo baseStepMethod = null)
 			{
-				Requires.NotNull(behavior, () => behavior);
-				Requires.That(baseBehavior == null || _behaviors.Any(b => b.Method == baseBehavior), () => baseBehavior,
+				Requires.NotNull(stepMethod, () => stepMethod);
+				Requires.That(baseStepMethod == null || _stepMethods.Any(b => b.Method == baseStepMethod), () => baseStepMethod,
 					"The base behavior is unknown.");
 
-				_behaviors.Add(new BehaviorInfo(_info, behavior, baseBehavior, createBody));
+				_stepMethods.Add(new StepMethodInfo(_info, stepMethod, baseStepMethod));
 			}
 
 			/// <summary>
@@ -197,6 +194,12 @@ namespace SafetySharp.Runtime
 					"Expected a port declared by a type implementing '{0}'.", typeof(IComponent).FullName);
 				Requires.OfType<IComponent>(targetPort.Target, () => sourcePort,
 					"Expected a port declared by a type implementing '{0}'.", typeof(IComponent).FullName);
+				Requires.That(targetPort.Method.HasAttribute<RequiredAttribute>(), () => targetPort,
+					"Expected a required port declared by a type implementing '{0}'.", typeof(IComponent).FullName);
+				Requires.That(sourcePort.Method.HasAttribute<ProvidedAttribute>(), () => sourcePort,
+					"Expected a provided port declared by a type implementing '{0}'.", typeof(IComponent).FullName);
+
+				_bindings.Add(Tuple.Create(targetPort, sourcePort));
 			}
 
 			/// <summary>
@@ -218,7 +221,7 @@ namespace SafetySharp.Runtime
 				_info.Name = _name;
 				_info.Fields = _fields.Select(field => new ComponentFieldInfo(_info, field.Key, field.Value)).ToImmutableArray();
 				_info.Faults = _faults.ToImmutableArray();
-				_info.Behaviors = new ComponentMethodCollection<BehaviorInfo>(_behaviors);
+				_info.Behaviors = new ComponentMethodCollection<BehaviorInfo>(_stepMethods);
 				_info.RequiredPorts = new ComponentMethodCollection<RequiredPortInfo>(_requiredPorts);
 				_info.ProvidedPorts = new ComponentMethodCollection<ProvidedPortInfo>(_providedPorts);
 

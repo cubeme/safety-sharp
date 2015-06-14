@@ -41,16 +41,18 @@ namespace SafetySharp.Compiler.Normalization
 	public sealed class InitialValuesNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
-		///     Replaces the <paramref name="invocation" />, if necessary.
+		///     Normalizes the <paramref name="statement" /> if it is an invocation of
+		///     <see cref="Component.SetInitialValues{T}(T,T[])" />.
 		/// </summary>
-		public override SyntaxNode VisitInvocationExpression(InvocationExpressionSyntax invocation)
+		public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax statement)
 		{
-			var methodSymbol = SemanticModel.GetSymbolInfo(invocation).Symbol;
-			if (methodSymbol == null)
-				return invocation;
+			var invocationExpression = statement.Expression as InvocationExpressionSyntax;
+			if (invocationExpression == null)
+				return base.VisitExpressionStatement(statement);
 
+			var methodSymbol = invocationExpression.GetReferencedSymbol(SemanticModel);
 			if (!methodSymbol.ContainingType.Equals(Compilation.GetComponentClassSymbol()) || methodSymbol.Name != "SetInitialValues")
-				return invocation;
+				return statement;
 
 			// MetadataBuilders.GetBuilder(this)
 			var metadataBuilderSymbol = Syntax.TypeExpression(Compilation.GetTypeSymbol(typeof(MetadataBuilders)));
@@ -58,18 +60,18 @@ namespace SafetySharp.Compiler.Normalization
 			var builder = Syntax.InvocationExpression(getBuilderMethod, Syntax.ThisExpression());
 
 			// ReflectionHelpers.GetField(typeof(...), typeof(...), "...")
-			var symbol = invocation.ArgumentList.Arguments[0].Expression.GetReferencedSymbol(SemanticModel);
+			var symbol = invocationExpression.ArgumentList.Arguments[0].Expression.GetReferencedSymbol(SemanticModel);
 			var fieldSymbol = symbol as IFieldSymbol;
 			if (fieldSymbol == null)
-				return invocation; // TODO: Remove once the expression overload of SetInitialValues is removed
+				return statement; // TODO: Remove once the expression overload of SetInitialValues is removed
 
 			var fieldInfo = fieldSymbol.GetRuntimeFieldExpression(Compilation, Syntax);
 
 			// .WithInitialValues()
 			var withInitialValues = Syntax.MemberAccessExpression(builder, "WithInitialValues");
-			var arguments = new List<ArgumentSyntax>(invocation.ArgumentList.Arguments.Skip(1));
+			var arguments = new List<ArgumentSyntax>(invocationExpression.ArgumentList.Arguments.Skip(1));
 			arguments.Insert(0, (ArgumentSyntax)Syntax.Argument(fieldInfo));
-			return Syntax.InvocationExpression(withInitialValues, arguments);
+			return Syntax.ExpressionStatement(Syntax.InvocationExpression(withInitialValues, arguments)).EnsureLineCount(statement);
 		}
 	}
 }

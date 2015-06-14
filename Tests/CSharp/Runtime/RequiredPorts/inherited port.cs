@@ -42,14 +42,12 @@ namespace Tests.Runtime.RequiredPorts
 			Metadata.RequiredPorts[0].Method.ShouldBe(typeof(X4).GetMethod("M"));
 			Metadata.RequiredPorts[0].Component.Component.ShouldBe(this);
 			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[0].CreateBody.ShouldBe(null);
 			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
 			Metadata.RequiredPorts[0].Name.ShouldBe("M");
 
 			Metadata.RequiredPorts[1].Method.ShouldBe(typeof(X5).GetMethod("Q"));
 			Metadata.RequiredPorts[1].Component.Component.ShouldBe(this);
 			Metadata.RequiredPorts[1].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[1].CreateBody.ShouldBe(null);
 			Metadata.RequiredPorts[1].IsOverride.ShouldBe(false);
 			Metadata.RequiredPorts[1].Name.ShouldBe("Q");
 		}

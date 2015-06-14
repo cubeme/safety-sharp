@@ -96,39 +96,3 @@ module ``AsSingleLine method`` =
     let ``modifies multi-line statements`` () =
         asSingleLine "var\nx =\n1;" =? "var x = 1;"
         asSingleLine "if\n(true)\n; else\nreturn;" =? "if (true) ; else return;"
-
-[<TestFixture>]
-module ``EnsureSameLineCount method`` =
-
-    let ensureSameLineCount csharpCode templateCSharpCode =
-        let templateNode = SyntaxFactory.ParseStatement templateCSharpCode
-        SyntaxFactory.ParseStatement(csharpCode).EnsureSameLineCount(templateNode) |> toString
-
-    [<Test>]
-    let ``throws when syntax node is null`` () =
-        raisesArgumentNullException "syntaxNode" (fun () -> (null : SyntaxNode).EnsureSameLineCount (SyntaxFactory.ParseExpression "1") |> ignore)
-
-    [<Test>]
-    let ``throws when template node is null`` () =
-        raisesArgumentNullException "templateNode" (fun () -> (SyntaxFactory.ParseExpression "1").EnsureSameLineCount null |> ignore)
-
-    [<Test>]
-    let ``throws when syntax node has more lines than template node`` () =
-        let syntaxNode = SyntaxFactory.ParseExpression "1 +\n 1"
-        let templateNode = SyntaxFactory.ParseExpression "1 + 1"
-        raises<InvalidOperationException> (fun () -> syntaxNode.EnsureSameLineCount templateNode |> ignore)
-
-    [<Test>]
-    let ``does not modify syntax node when line counts match`` () =
-        ensureSameLineCount "var x = 1;" "    var x =   1;" =? "var x = 1;"
-        ensureSameLineCount "if (true) ; else return;" "var y = 1 + 1" =? "if (true) ; else return;"
-
-    [<Test>]
-    let ``adds trailing new lines when syntax node has less lines than template node`` () =
-        ensureSameLineCount "var x = 1;" " var x \n=   1;" =? "var x = 1;\n"
-        ensureSameLineCount "var x = 1;" " var x =   1;\n" =? "var x = 1;\n"
-
-        let actual = ensureSameLineCount "if (true) ; else return;" "if \n(true) \n;\n else\n return;\n"
-        let expected = "if (true) ; else return;\n\n\n\n\n"
-
-        actual =? expected

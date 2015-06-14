@@ -187,10 +187,10 @@ namespace SafetySharp.Compiler.Normalization
 
 			foreach (var method in methods)
 			{
-				var withBehavior = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithBehavior");
+				var withStepMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithStepMethod");
 				var overridingMethod = GetMethodInfo(method);
 				var overriddenMethod = GetMethodInfo(method.OverriddenMethod);
-				var invocation = Syntax.InvocationExpression(withBehavior, overridingMethod, overriddenMethod);
+				var invocation = Syntax.InvocationExpression(withStepMethod, overridingMethod, overriddenMethod);
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}

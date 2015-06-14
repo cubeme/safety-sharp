@@ -240,40 +240,6 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 		}
 
 		/// <summary>
-		///     Returns a copy of <paramref name="syntaxNode" /> that has the same line count as <paramref name="templateNode" />. If
-		///     <paramref name="syntaxNode" /> has fewer lines, the appropriate number of empty lines are added. If it has more lines,
-		///     an exception is thrown.
-		/// </summary>
-		/// <typeparam name="T">The type of the syntax node that should match the line count of <paramref name="templateNode" />.</typeparam>
-		/// <param name="syntaxNode">The syntax node that should match the line count of <paramref name="templateNode" />.</param>
-		/// <param name="templateNode">
-		///     The syntax node that is used to determine the desired line count of <paramref name="syntaxNode" />.
-		/// </param>
-		[Pure, NotNull]
-		public static T EnsureSameLineCount<T>([NotNull] this T syntaxNode, [NotNull] SyntaxNode templateNode)
-			where T : SyntaxNode
-		{
-			Requires.NotNull(syntaxNode, () => syntaxNode);
-			Requires.NotNull(templateNode, () => templateNode);
-
-			Func<SyntaxNode, int> countLines =
-				node => { return node.ToFullString().Replace("\r\n", "\n").Replace("\r", "\n").Count(c => c == '\n'); };
-
-			var actualLineCount = countLines(syntaxNode);
-			var desiredLineCount = countLines(templateNode);
-
-			if (actualLineCount == desiredLineCount)
-				return syntaxNode;
-
-			if (actualLineCount < desiredLineCount)
-				return syntaxNode.WithTrailingNewLines(desiredLineCount - actualLineCount);
-
-			Assert.NotReached("The given syntax node occupies {0} lines, whereas it is only allowed to occupy {1} lines.",
-				actualLineCount, desiredLineCount);
-			return syntaxNode;
-		}
-
-		/// <summary>
 		///     Returns a copy of <paramref name="syntaxNode" /> with all leading and trailing trivia removed.
 		/// </summary>
 		/// <typeparam name="T">The type of the syntax node.</typeparam>

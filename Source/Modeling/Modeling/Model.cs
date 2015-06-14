@@ -32,7 +32,7 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	///     Represents a model of a safety-critical system.
 	/// </summary>
-	public partial class Model
+	public partial class Model : IDisposable
 	{
 		/// <summary>
 		///     The list of port bindings established by the model.
@@ -98,6 +98,32 @@ namespace SafetySharp.Modeling
 				RequiresIsSealed();
 				return _components;
 			}
+		}
+
+		/// <summary>
+		///     Cleans up all allocated metadata information of the model and its components.
+		/// </summary>
+		public void Dispose()
+		{
+			OnDisposing(true);
+		}
+
+		/// <summary>
+		///     Cleans up all allocated metadata information of the model and its components.
+		/// </summary>
+		protected virtual void OnDisposing(bool disposing)
+		{
+			// TODO:
+			// - Cleanup ComponentInfos
+			// - Cleanup BindingTable
+		}
+
+		/// <summary>
+		///     Cleans up all allocated metadata information of the model and its components.
+		/// </summary>
+		~Model()
+		{
+			OnDisposing(false);
 		}
 
 		/// <summary>

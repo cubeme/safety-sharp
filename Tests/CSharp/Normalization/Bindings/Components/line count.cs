@@ -20,46 +20,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Normalization.Bindings.Components
 {
 	using System;
-	using Utilities;
+	using SafetySharp.Modeling;
 
-	/// <summary>
-	///     Represents a binding between two ports.
-	/// </summary>
-	public class BindingInfo
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
+	partial class In13 : Component
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component that declares the binding.</param>
-		/// <param name="targetPort">The target port of the port binding.</param>
-		/// <param name="sourcePort">The source port of the port binding.</param>
-		internal BindingInfo(ComponentInfo component, Delegate targetPort, Delegate sourcePort)
-		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(targetPort, () => targetPort);
-			Requires.NotNull(sourcePort, () => sourcePort);
+		private In13 i;
 
-			Component = component;
-			TargetPort = targetPort;
-			SourcePort = sourcePort;
+		private In13()
+		{
+			Bind(i
+			.
+			RequiredPorts
+				.
+				N =
+				
+				ProvidedPorts
+				.M
+				);
 		}
 
-		/// <summary>
-		///     Gets the component the binding belongs to.
-		/// </summary>
-		public ComponentInfo Component { get; private set; }
+		private void M()
+		{
+		}
 
-		/// <summary>
-		///     Gets the target port of the binding.
-		/// </summary>
-		public Delegate TargetPort { get; private set; }
+		private extern void N();
+	}
 
-		/// <summary>
-		///     Gets the source port of the binding.
-		/// </summary>
-		public Delegate SourcePort { get; private set; }
+	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
+	partial class Out13 : Component
+	{
+		private Out13 i;
+
+		private Out13()
+		{
+			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding((__BindingDelegate0__)(i.N), (__BindingDelegate0__)(M));
+#line 44
+		}
+
+		private void M()
+		{
+		}
+
+		private extern void N();
+	}
+
+	partial class Out13
+	{
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate void __BindingDelegate0__();
 	}
 }

@@ -37,9 +37,8 @@ namespace SafetySharp.Runtime
 		/// <param name="component">The component the method belongs to.</param>
 		/// <param name="port">The method that represents the component's port.</param>
 		/// <param name="basePort">The overridden base port, if any.</param>
-		/// <param name="createBody">The callback that should be used to retrieve the body of the port.</param>
-		public ProvidedPortInfo(ComponentInfo component, MethodInfo port, MethodInfo basePort = null, CreateBodyCallback createBody = null)
-			: base(component, port, basePort, createBody)
+		public ProvidedPortInfo(ComponentInfo component, MethodInfo port, MethodInfo basePort = null)
+			: base(component, port, basePort)
 		{
 		}
 	}

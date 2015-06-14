@@ -26,6 +26,7 @@ namespace SafetySharp.Compiler.Normalization
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
+	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -41,7 +42,7 @@ namespace SafetySharp.Compiler.Normalization
 	///     <code>
 	///    		Bind(c.RequiredPorts.X, ProvidedPorts.Y);
 	///    		// becomes (for some matching delegate type D):
-	///  		Bind(new PortBinding(PortInfo.RequiredPort((D)c.X, "..."), PortInfo.ProvidedPort((D)Y)));
+	///  		MetadataBuilders.GetBuilder(this).Bind(new PortBinding(PortInfo.RequiredPort((D)c.X, "..."), PortInfo.ProvidedPort((D)Y)));
 	///   	</code>
 	/// </summary>
 	public sealed class BindingNormalizer : SyntaxNormalizer
@@ -87,30 +88,27 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes <paramref name="expression" /> if it is an invocation of <see cref="Component.Bind" /> or
+		///     Normalizes the <paramref name="statement" /> if it is an invocation of <see cref="Component.Bind" /> or
 		///     <see cref="Model.Bind" />.
 		/// </summary>
-		public override SyntaxNode VisitInvocationExpression(InvocationExpressionSyntax expression)
+		public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax statement)
 		{
-			var newExpression = (InvocationExpressionSyntax)base.VisitInvocationExpression(expression);
+			var invocationExpression = statement.Expression as InvocationExpressionSyntax;
+			if (invocationExpression == null)
+				return base.VisitExpressionStatement(statement);
 
-			// If the expression has changed, that means we're looking at an invocation of the Delayed() function;
-			// there's no need to rewrite it.
-			if (newExpression != expression)
-				return newExpression;
-
-			var methodSymbol = SemanticModel.GetSymbolInfo(expression.Expression).Symbol as IMethodSymbol;
+			var methodSymbol = SemanticModel.GetSymbolInfo(invocationExpression.Expression).Symbol as IMethodSymbol;
 			if (methodSymbol == null)
-				return expression;
+				return statement;
 
 			var componentBindSymbol = SemanticModel.GetComponentBindMethodSymbol();
 			var modelBindSymbol = SemanticModel.GetModelBindMethodSymbol();
 
 			if (!methodSymbol.Equals(componentBindSymbol) && !methodSymbol.Equals(modelBindSymbol))
-				return expression;
+				return statement;
 
 			// We now know that the argument of the invocation is a port binding in the form of an assignment
-			var assignment = (AssignmentExpressionSyntax)expression.ArgumentList.Arguments[0].Expression.RemoveParentheses();
+			var assignment = (AssignmentExpressionSyntax)invocationExpression.ArgumentList.Arguments[0].Expression.RemoveParentheses();
 			var leftExpression = (MemberAccessExpressionSyntax)assignment.Left.RemoveParentheses();
 			var rightExpression = assignment.Right.RemoveParentheses() as MemberAccessExpressionSyntax;
 
@@ -125,8 +123,8 @@ namespace SafetySharp.Compiler.Normalization
 			var leftPorts = leftExpression.GetReferencedPorts(SemanticModel);
 			var rightPorts = rightExpression.GetReferencedPorts(SemanticModel);
 
-			leftPorts.RemoveInaccessiblePorts(SemanticModel, expression.SpanStart);
-			rightPorts.RemoveInaccessiblePorts(SemanticModel, expression.SpanStart);
+			leftPorts.RemoveInaccessiblePorts(SemanticModel, invocationExpression.SpanStart);
+			rightPorts.RemoveInaccessiblePorts(SemanticModel, invocationExpression.SpanStart);
 
 			// If there is a cast, filter the right-hand port list
 			if (castExpression != null)
@@ -140,40 +138,34 @@ namespace SafetySharp.Compiler.Normalization
 			var leftPort = CreatePortInfoExpression(boundPorts.Left, leftExpression, delegateType.Identifier.ValueText);
 			var rightPort = CreatePortInfoExpression(boundPorts.Right, rightExpression, delegateType.Identifier.ValueText);
 
-			var leftArgument = SyntaxFactory.Argument(leftPort);
-			var rightArgument = SyntaxFactory.Argument(rightPort);
-			var constructorArgumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { leftArgument, rightArgument }));
-			var portBindingType = SyntaxFactory.ParseTypeName(typeof(PortBinding).FullName);
-			var instantiation = SyntaxFactory.ObjectCreationExpression(portBindingType, constructorArgumentList, null);
-			var instantiationArgument = SyntaxFactory.Argument(instantiation);
+			// MetadataBuilders.GetBuilder(this)
+			var metadataBuilderType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(MetadataBuilders)));
+			var getBuilderMethod = Syntax.MemberAccessExpression(metadataBuilderType, "GetBuilder");
+			var getBuilder = Syntax.InvocationExpression(getBuilderMethod, Syntax.ThisExpression());
 
-			var argumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(instantiationArgument));
-			return expression.WithArgumentList(argumentList).NormalizeWhitespace().WithTrivia(expression).EnsureSameLineCount(expression);
+			// .WithBinding(leftPort, rightPort)
+			var withBindingMethod = Syntax.MemberAccessExpression(getBuilder, "WithBinding");
+			var withBinding = Syntax.InvocationExpression(withBindingMethod, leftPort, rightPort);
+
+			return Syntax.ExpressionStatement(withBinding.NormalizeWhitespace()).EnsureLineCount(statement);
 		}
 
 		/// <summary>
-		///     Creates an expression that instantiates a <see cref="PortInfo" /> instance for the given port.
+		///     Creates an expression that instantiates a delegate for the given port.
 		/// </summary>
 		/// <param name="port">The port the expression should be created for.</param>
 		/// <param name="portExpression">The port expression that was used to reference the port.</param>
 		/// <param name="delegateType">The type of the delegate the port should be cast to.</param>
-		private static ExpressionSyntax CreatePortInfoExpression(Port port, MemberAccessExpressionSyntax portExpression, string delegateType)
+		private ExpressionSyntax CreatePortInfoExpression(Port port, MemberAccessExpressionSyntax portExpression, string delegateType)
 		{
 			// TODO: property ports
 
 			var nestedMemberAccess = portExpression.Expression.RemoveParentheses() as MemberAccessExpressionSyntax;
-			var castTarget =
-				nestedMemberAccess != null
-					? SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, nestedMemberAccess.Expression, portExpression.Name)
-					: (ExpressionSyntax)portExpression.Name;
+			var castTarget = nestedMemberAccess != null
+				? Syntax.MemberAccessExpression(nestedMemberAccess.Expression, portExpression.Name)
+				: portExpression.Name;
 			var type = SyntaxFactory.ParseTypeName(delegateType);
-			var castExpression = SyntaxFactory.CastExpression(type, SyntaxFactory.ParenthesizedExpression(castTarget)).NormalizeWhitespace();
-			var castArgument = SyntaxFactory.Argument(castExpression);
-			var arguments = SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(castArgument));
-			var portInfoType = SyntaxFactory.ParseTypeName(typeof(PortInfo).FullName);
-			var methodName = SyntaxFactory.IdentifierName("MethodPort");
-			var memberAccess = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, portInfoType, methodName);
-			return SyntaxFactory.InvocationExpression(memberAccess, arguments);
+			return (ExpressionSyntax)Syntax.CastExpression(type, castTarget).NormalizeWhitespace();
 		}
 	}
 }

@@ -42,6 +42,11 @@ namespace SafetySharp.Runtime
 		public IEnumerable<ComponentFieldInfo> Fields { get; private set; }
 
 		/// <summary>
+		///     Gets the port bindings declared by the component.
+		/// </summary>
+		public IEnumerable<BindingInfo> Bindings { get; private set; }
+
+		/// <summary>
 		///     Gets the <see cref="Component" /> instance the metadata is provided for.
 		/// </summary>
 		public Component Component { get; private set; }

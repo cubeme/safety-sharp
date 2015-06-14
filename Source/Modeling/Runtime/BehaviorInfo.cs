@@ -31,7 +31,7 @@ namespace SafetySharp.Runtime
 	/// <summary>
 	///     Represents the the immutable metadata of a behavior of a S# <see cref="Component" />.
 	/// </summary>
-	public class BehaviorInfo : ComponentMethodInfo
+	public abstract class BehaviorInfo : ComponentMethodInfo
 	{
 		/// <summary>
 		///     Initializes a new instance.
@@ -39,9 +39,8 @@ namespace SafetySharp.Runtime
 		/// <param name="component">The component the method belongs to.</param>
 		/// <param name="behavior">The method representing the component's behavior.</param>
 		/// <param name="baseBehavior">The overridden behavior of the base type, if any.</param>
-		/// <param name="createBody">The callback that should be used to retrieve the body of the method.</param>
-		internal BehaviorInfo(ComponentInfo component, MethodInfo behavior, MethodInfo baseBehavior = null, CreateBodyCallback createBody = null)
-			: base(component, behavior, baseBehavior, createBody)
+		internal BehaviorInfo(ComponentInfo component, MethodInfo behavior, MethodInfo baseBehavior = null)
+			: base(component, behavior, baseBehavior)
 		{
 			var behaviorAttribute = behavior.GetCustomAttribute<MethodBehaviorAttribute>();
 			Requires.That(behaviorAttribute != null, "Expected to find an instance of '{0}' on component member '{1}'.",

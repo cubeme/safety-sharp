@@ -81,7 +81,7 @@ namespace SafetySharp.Modeling
 		[UsedImplicitly]
 		private void InitializeMetadata()
 		{
-			MetadataBuilders.GetBuilder(this).WithBehavior(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
+			MetadataBuilders.GetBuilder(this).WithStepMethod(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
 		}
 
 		/// <summary>

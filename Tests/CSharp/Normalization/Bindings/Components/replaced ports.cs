@@ -39,7 +39,7 @@ namespace Tests.Normalization.Bindings.Components
 		private In12()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
-			//Bind(((X12)this).RequiredPorts.N = ProvidedPorts.M);
+			//Bind(((X12)this).RequiredPorts.N = ProvidedPorts.M); // TODO
 		}
 
 		public new extern void N();
@@ -53,9 +53,7 @@ namespace Tests.Normalization.Bindings.Components
 	{
 		private Out12()
 		{
-			Bind(new SafetySharp.Modeling.PortBinding(
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(N)),
-				SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M))));
+			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding((__BindingDelegate0__)(N), (__BindingDelegate0__)(M));
 			//Bind(new SafetySharp.Modeling.PortBinding(
 			//	SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(((X12)this).N)),
 			//	SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M))));

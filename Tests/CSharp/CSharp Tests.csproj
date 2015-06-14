@@ -214,6 +214,7 @@
     <Compile Include="Normalization\Bindings\Components\replaced ports.cs" />
     <Compile Include="Normalization\Bindings\Components\overridden ports.cs" />
     <Compile Include="Normalization\Bindings\Components\multiple bindings.cs" />
+    <Compile Include="Normalization\Bindings\Components\line count.cs" />
     <Compile Include="Normalization\Bindings\Components\self-declared ports.cs" />
     <Compile Include="Normalization\Bindings\Components\nested subcomponents.cs" />
     <Compile Include="Normalization\Bindings\Components\method-returned subcomponents.cs" />
