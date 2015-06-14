@@ -53,8 +53,12 @@ namespace Tests.Normalization.Bindings.Components
 	{
 		private Out12()
 		{
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding((__BindingDelegate0__)(N), (__BindingDelegate0__)(M));
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding((__BindingDelegate0__)(((X12)this).N), (__BindingDelegate0__)(M));
+			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In12), "N", new System.Type[] { }, typeof(void))),
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In12), "M", new System.Type[] { }, typeof(void))));
+			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), ((X12)this), SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In12), "N", new System.Type[] { }, typeof(void))),
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In12), "M", new System.Type[] { }, typeof(void))));
 		}
 
 		public new extern void N();

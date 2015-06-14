@@ -43,7 +43,9 @@ namespace Tests.Normalization.Bindings.Components
 	{
 		private Out7()
 		{
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding((__BindingDelegate0__)(N), (__BindingDelegate0__)(M));
+			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In7), "N", new System.Type[] { }, typeof(void))),
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In7), "M", new System.Type[] { }, typeof(void))));
 		}
 
 		private void M()
