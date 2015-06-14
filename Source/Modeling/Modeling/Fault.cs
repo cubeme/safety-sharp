@@ -40,7 +40,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		protected Fault()
 		{
-			MetadataProvider.FaultBuilders.Add(this, new FaultInfo.Builder(this));
+			MetadataProvider.CreateBuilder(this);
 
 			OccurrencePattern = GetType().GetCustomAttribute<OccurrencePatternAttribute>();
 			Requires.That(OccurrencePattern != null, "Expected fault to be marked with an instance of '{0}'.",

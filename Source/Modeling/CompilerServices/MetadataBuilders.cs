@@ -25,7 +25,6 @@ namespace SafetySharp.CompilerServices
 	using System;
 	using Modeling;
 	using Runtime;
-	using Utilities;
 
 	/// <summary>
 	///     Provides access to and manages the lifetime of the various metadata builder kinds.
@@ -40,13 +39,7 @@ namespace SafetySharp.CompilerServices
 		/// <param name="component">The component instance the builder should be returned for.</param>
 		public static ComponentInfo.Builder GetBuilder(Component component)
 		{
-			Requires.NotNull(component, () => component);
-
-			ComponentInfo.Builder info;
-			Requires.That(MetadataProvider.ComponentBuilders.TryGetValue(component, out info), () => component,
-				"The component's metadata cannot be changed.");
-
-			return info;
+			return (ComponentInfo.Builder)MetadataProvider.GetBuilder(component);
 		}
 
 		/// <summary>
@@ -57,13 +50,7 @@ namespace SafetySharp.CompilerServices
 		/// <param name="fault">The fault instance the builder should be returned for.</param>
 		public static FaultInfo.Builder GetBuilder(Fault fault)
 		{
-			Requires.NotNull(fault, () => fault);
-
-			FaultInfo.Builder info;
-			Requires.That(MetadataProvider.FaultBuilders.TryGetValue(fault, out info), () => fault,
-				"The fault's metadata cannot be changed.");
-
-			return info;
+			return (FaultInfo.Builder)MetadataProvider.GetBuilder(fault);
 		}
 
 		/// <summary>
@@ -74,13 +61,7 @@ namespace SafetySharp.CompilerServices
 		/// <param name="occurrencePattern">The occurrence pattern instance the builder should be returned for.</param>
 		public static OccurrenceInfo.Builder GetBuilder(OccurrencePattern occurrencePattern)
 		{
-			Requires.NotNull(occurrencePattern, () => occurrencePattern);
-
-			OccurrenceInfo.Builder info;
-			Requires.That(MetadataProvider.OccurrencePatternBuilders.TryGetValue(occurrencePattern, out info), () => occurrencePattern,
-				"The occurrence pattern's metadata cannot be changed.");
-
-			return info;
+			return (OccurrenceInfo.Builder)MetadataProvider.GetBuilder(occurrencePattern);
 		}
 	}
 }

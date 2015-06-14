@@ -31,10 +31,11 @@ namespace SafetySharp.Runtime
 	public sealed partial class OccurrenceInfo
 	{
 		/// <summary>
-		/// Initializes a new instance.
+		///     Initializes a new instance.
 		/// </summary>
+		/// <param name="occurrencePattern"></param>
 		/// <param name="fault"></param>
-		public OccurrenceInfo(Fault fault)
+		public OccurrenceInfo(OccurrencePattern occurrencePattern, Fault fault)
 		{
 			throw new NotImplementedException();
 		}
@@ -43,5 +44,10 @@ namespace SafetySharp.Runtime
 		///     Gets the fault that is affected by the occurrence pattern.
 		/// </summary>
 		public Fault Fault { get; private set; }
+
+		/// <summary>
+		///     Gets the <see cref="OccurrencePattern" /> instance the metadata is provided for.
+		/// </summary>
+		public OccurrencePattern OccurrencePattern { get; private set; }
 	}
 }

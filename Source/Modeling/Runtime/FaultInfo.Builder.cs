@@ -87,8 +87,7 @@ namespace SafetySharp.Runtime
 				Requires.NotNull(component, () => component);
 
 				var info = new FaultInfo(component, Fault);
-				MetadataProvider.Faults.Add(Fault, info);
-				MetadataProvider.FaultBuilders.Remove(Fault);
+				MetadataProvider.FinalizeMetadata(Fault, info);
 
 				return info;
 			}

@@ -23,7 +23,6 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using CompilerServices;
 	using Runtime;
 
 	/// <summary>
@@ -36,7 +35,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		protected OccurrencePattern()
 		{
-			MetadataProvider.OccurrencePatternBuilders.Add(this, new OccurrenceInfo.Builder(this));
+			MetadataProvider.CreateBuilder(this);
 		}
 
 		/// <summary>

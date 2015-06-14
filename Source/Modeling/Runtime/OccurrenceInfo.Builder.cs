@@ -35,10 +35,11 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public class Builder
 		{
-			private readonly OccurrencePattern _occurrencePattern = null;
+			private readonly OccurrencePattern _occurrencePattern;
 
 			internal Builder(OccurrencePattern c)
 			{
+				_occurrencePattern = c;
 			}
 
 			public void WithUpdateMethod(MethodInfo method, Func<Expression> createBody = null)
@@ -58,9 +59,8 @@ namespace SafetySharp.Runtime
 			{
 				Requires.NotNull(fault, () => fault);
 
-				var info = new OccurrenceInfo(fault);
-				MetadataProvider.OccurrencePatterns.Add(_occurrencePattern, info);
-				MetadataProvider.OccurrencePatternBuilders.Remove(_occurrencePattern);
+				var info = new OccurrenceInfo(_occurrencePattern, fault);
+				MetadataProvider.FinalizeMetadata(_occurrencePattern, info);
 
 				return info;
 			}

@@ -46,7 +46,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		protected Component()
 		{
-			MetadataProvider.ComponentBuilders.Add(this, new ComponentInfo.Builder(this));
+			MetadataProvider.CreateBuilder(this);
 			MetadataProvider.InitializeMetadata(this);
 		}
 

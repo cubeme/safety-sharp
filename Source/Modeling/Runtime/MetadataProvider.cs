@@ -34,41 +34,69 @@ namespace SafetySharp.Runtime
 	/// </summary>
 	internal static class MetadataProvider
 	{
-		/// <summary>
-		///     The currently available <see cref="ComponentInfo.Builder" /> instances.
-		/// </summary>
-		internal static readonly Dictionary<Component, ComponentInfo.Builder> ComponentBuilders =
-			new Dictionary<Component, ComponentInfo.Builder>(ReferenceEqualityComparer<Component>.Instance);
+		private static readonly object _syncObj = new object();
 
 		/// <summary>
-		///     The currently available <see cref="FaultInfo.Builder" /> instances.
+		///     The currently available metadata builders.
 		/// </summary>
-		internal static readonly Dictionary<Fault, FaultInfo.Builder> FaultBuilders =
-			new Dictionary<Fault, FaultInfo.Builder>(ReferenceEqualityComparer<Fault>.Instance);
+		private static readonly Dictionary<object, object> _builders =
+			new Dictionary<object, object>(ReferenceEqualityComparer<object>.Instance);
 
 		/// <summary>
-		///     The currently available <see cref="OccurrenceInfo.Builder" /> instances.
+		///     The currently available metadata instances.
 		/// </summary>
-		internal static readonly Dictionary<OccurrencePattern, OccurrenceInfo.Builder> OccurrencePatternBuilders =
-			new Dictionary<OccurrencePattern, OccurrenceInfo.Builder>(ReferenceEqualityComparer<OccurrencePattern>.Instance);
+		private static readonly Dictionary<object, object> _metadata =
+			new Dictionary<object, object>(ReferenceEqualityComparer<object>.Instance);
 
 		/// <summary>
-		///     Gets the currently available <see cref="ComponentInfo" /> instances.
+		///     Maps each supported type with S# metadata to a factory function for its metadata builder.
 		/// </summary>
-		internal static readonly Dictionary<Component, ComponentInfo> Components =
-			new Dictionary<Component, ComponentInfo>(ReferenceEqualityComparer<Component>.Instance);
+		private static readonly Dictionary<Type, Func<object, object>> _builderCreators = new Dictionary<Type, Func<object, object>>
+		{
+			{ typeof(Component), component => new ComponentInfo.Builder((Component)component) },
+			{ typeof(Fault), fault => new FaultInfo.Builder((Fault)fault) },
+			{ typeof(OccurrencePattern), occurrencePattern => new OccurrenceInfo.Builder((OccurrencePattern)occurrencePattern) }
+		};
 
 		/// <summary>
-		///     Gets the currently available <see cref="FaultInfo" /> instances.
+		///     Creates the metadata builder for <paramref name="obj" />.
 		/// </summary>
-		internal static readonly Dictionary<Fault, FaultInfo> Faults =
-			new Dictionary<Fault, FaultInfo>(ReferenceEqualityComparer<Fault>.Instance);
+		/// <param name="obj">The object the metadata builder should be created for.</param>
+		internal static void CreateBuilder<T>(T obj)
+			where T : class
+		{
+			Requires.NotNull(obj, () => obj);
+			Requires.That(_builderCreators.ContainsKey(typeof(T)), () => obj,
+				"Type '{0}' does not expose any S#-specific metadata.", typeof(T).FullName);
+
+			lock (_syncObj)
+			{
+				Requires.That(!_builders.ContainsKey(obj), () => obj, "A builder has already been created.");
+				Requires.That(!_metadata.ContainsKey(obj), () => obj, "The object's metadata has already been created.");
+
+				_builders.Add(obj, _builderCreators[typeof(T)](obj));
+			}
+		}
 
 		/// <summary>
-		///     Gets the currently available <see cref="OccurrenceInfo" /> instances.
+		///     Gets the builder instance for <paramref name="obj" />.
 		/// </summary>
-		internal static readonly Dictionary<OccurrencePattern, OccurrenceInfo> OccurrencePatterns =
-			new Dictionary<OccurrencePattern, OccurrenceInfo>(ReferenceEqualityComparer<OccurrencePattern>.Instance);
+		/// <param name="obj">The object instance the builder should be returned for.</param>
+		internal static object GetBuilder<T>(T obj)
+			where T : class
+		{
+			Requires.NotNull(obj, () => obj);
+
+			lock (_syncObj)
+			{
+				Requires.That(!_metadata.ContainsKey(obj), () => obj, "The object's metadata has already been created.");
+
+				object info;
+				Requires.That(_builders.TryGetValue(obj, out info), () => obj, "The object's metadata builder has not yet been created.");
+
+				return info;
+			}
+		}
 
 		/// <summary>
 		///     Gets the <see cref="ComponentInfo" /> instance for the <paramref name="component" /> instance.
@@ -78,10 +106,13 @@ namespace SafetySharp.Runtime
 		{
 			Requires.NotNull(component, () => component);
 
-			ComponentInfo info;
-			Requires.That(Components.TryGetValue(component, out info), () => component, "The metadata for the component is not yet available.");
+			lock (_syncObj)
+			{
+				object info;
+				Requires.That(_metadata.TryGetValue(component, out info), () => component, "The metadata for the component is not yet available.");
 
-			return info;
+				return (ComponentInfo)info;
+			}
 		}
 
 		/// <summary>
@@ -92,10 +123,13 @@ namespace SafetySharp.Runtime
 		{
 			Requires.NotNull(fault, () => fault);
 
-			FaultInfo info;
-			Requires.That(Faults.TryGetValue(fault, out info), () => fault, "The metadata for the fault is not yet available.");
+			lock (_syncObj)
+			{
+				object info;
+				Requires.That(_metadata.TryGetValue(fault, out info), () => fault, "The metadata for the fault is not yet available.");
 
-			return info;
+				return (FaultInfo)info;
+			}
 		}
 
 		/// <summary>
@@ -106,11 +140,31 @@ namespace SafetySharp.Runtime
 		{
 			Requires.NotNull(occurrencePattern, () => occurrencePattern);
 
-			OccurrenceInfo info;
-			Requires.That(OccurrencePatterns.TryGetValue(occurrencePattern, out info), () => occurrencePattern,
-				"The metadata for the occurrence pattern is not yet available.");
+			lock (_syncObj)
+			{
+				object info;
+				Requires.That(_metadata.TryGetValue(occurrencePattern, out info), () => occurrencePattern,
+					"The metadata for the occurrence pattern is not yet available.");
 
-			return info;
+				return (OccurrenceInfo)info;
+			}
+		}
+
+		/// <summary>
+		///     Adds the finalized <paramref name="metadata" /> for the <paramref name="obj" />.
+		/// </summary>
+		/// <param name="obj">The object the finalized metadata is added for.</param>
+		/// <param name="metadata">The finalized metadata that should be added.</param>
+		internal static void FinalizeMetadata(object obj, object metadata)
+		{
+			Requires.NotNull(obj, () => obj);
+			Requires.NotNull(metadata, () => metadata);
+
+			lock (_syncObj)
+			{
+				_metadata.Add(obj, metadata);
+				_builders.Remove(obj);
+			}
 		}
 
 		/// <summary>
@@ -121,21 +175,24 @@ namespace SafetySharp.Runtime
 		{
 			Requires.NotNull(obj, () => obj);
 
-			// The metadata of base types must be initialized first
-			Action<Type> initialize = null;
-			initialize = type =>
+			lock (_syncObj)
 			{
-				if (type == typeof(object))
-					return;
+				// The metadata of base types must be initialized first
+				Action<Type> initialize = null;
+				initialize = type =>
+				{
+					if (type == typeof(object))
+						return;
 
-				initialize(type.BaseType);
+					initialize(type.BaseType);
 
-				var metadataInitialization = type.GetCustomAttribute<MetadataAttribute>();
-				if (metadataInitialization != null)
-					metadataInitialization.InitializeMetadata(type, obj);
-			};
+					var metadataInitialization = type.GetCustomAttribute<MetadataAttribute>();
+					if (metadataInitialization != null)
+						metadataInitialization.InitializeMetadata(type, obj);
+				};
 
-			initialize(obj.GetType());
+				initialize(obj.GetType());
+			}
 		}
 	}
 }

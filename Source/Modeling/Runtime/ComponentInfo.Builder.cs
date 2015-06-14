@@ -225,8 +225,7 @@ namespace SafetySharp.Runtime
 				_info.RequiredPorts = new ComponentMethodCollection<RequiredPortInfo>(_requiredPorts);
 				_info.ProvidedPorts = new ComponentMethodCollection<ProvidedPortInfo>(_providedPorts);
 
-				MetadataProvider.Components.Add(_component, _info);
-				MetadataProvider.ComponentBuilders.Remove(_component);
+				MetadataProvider.FinalizeMetadata(_component, _info);
 
 				return _info;
 			}

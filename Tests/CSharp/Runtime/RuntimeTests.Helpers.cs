@@ -33,6 +33,7 @@ namespace Tests.Runtime
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using SafetySharp.Compiler.Roslyn.Symbols;
 	using SafetySharp.Compiler.Roslyn.Syntax;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -138,7 +139,7 @@ namespace Tests.Runtime
 			{
 				var type = assembly.GetType(componentType);
 				var component = (TestComponent)Activator.CreateInstance(type);
-				var info = MetadataProvider.ComponentBuilders[component].RegisterMetadata();
+				var info = MetadataBuilders.GetBuilder(component).RegisterMetadata();
 				component.Check(info);
 			}
 		}
