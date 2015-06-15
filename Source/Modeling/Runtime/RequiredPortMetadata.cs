@@ -24,23 +24,39 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Reflection;
+	using MetadataAnalysis;
 	using Modeling;
+	using Utilities;
 
 	/// <summary>
-	///     Represents a collection of <see cref="ComponentMethodInfo" /> instances.
+	///     Represents the the immutable metadata of a required port of a S# <see cref="Component" />.
 	/// </summary>
-	/// <typeparam name="T">The actual type of the <see cref="ComponentMethodInfo" /> instances.</typeparam>
-	public sealed class ComponentMethodCollection<T> : ComponentMemberCollection<T>
-		where T : ComponentMethodInfo
+	public sealed class RequiredPortMetadata : MethodMetadata
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="component">The component the method collection belongs to.</param>
-		/// <param name="methods">The methods that should be contained in the collection.</param>
-		internal ComponentMethodCollection(Component component, IEnumerable<T> methods)
-			: base(component, methods)
+		/// <param name="component">The component the method belongs to.</param>
+		/// <param name="port">The CLR method representing the component's port.</param>
+		internal RequiredPortMetadata(Component component, MethodInfo port)
+			: base(component, port)
 		{
+			Requires.That(!HasImplementation, () => port, "Requires ports must not have an implementation.");
+			Requires.That(CanBeAffectedByFaultEffects, () => port, "Required ports must be sensitive to fault effects.");
+		}
+
+		/// <summary>
+		///     Gets the metadata of the provided ports that have been bound to the required port.
+		/// </summary>
+		public IEnumerable<ProvidedPortMetadata> BoundProvidedPorts
+		{
+			get
+			{
+				var finder = new BoundProvidedPortsFinder(((ComponentMetadata)DeclaringObject).RootComponent, this);
+				finder.WalkPreOrder();
+				return finder.ProvidedPorts;
+			}
 		}
 	}
 }

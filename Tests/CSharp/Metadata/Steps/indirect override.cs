@@ -24,6 +24,7 @@ namespace Tests.Metadata.Steps
 {
 	using System;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
@@ -39,19 +40,19 @@ namespace Tests.Metadata.Steps
 
 		protected override void Check()
 		{
-			Metadata.Behaviors.Length.ShouldBe(2);
+			Metadata.StepMethods.Length.ShouldBe(2);
 
-			Metadata.Behaviors[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
-			Metadata.Behaviors[0].Component.Component.ShouldBe(this);
-			Metadata.Behaviors[0].BaseMethod.ShouldBe(null);
-			Metadata.Behaviors[0].IsOverride.ShouldBe(false);
-			Metadata.Behaviors[0].Name.ShouldBe("Update");
+			Metadata.StepMethods[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
+			Metadata.StepMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.StepMethods[0].BaseMethod.ShouldBe(null);
+			Metadata.StepMethods[0].IsOverride.ShouldBe(false);
+			Metadata.StepMethods[0].Name.ShouldBe("Update");
 
-			Metadata.Behaviors[1].Method.ShouldBe(typeof(X4).GetMethod("Update"));
-			Metadata.Behaviors[1].Component.Component.ShouldBe(this);
-			Metadata.Behaviors[1].BaseMethod.ShouldBe(ComponentUpdatedMethod);
-			Metadata.Behaviors[1].IsOverride.ShouldBe(true);
-			Metadata.Behaviors[1].Name.ShouldBe("Update");
+			Metadata.StepMethods[1].Method.ShouldBe(typeof(X4).GetMethod("Update"));
+			Metadata.StepMethods[1].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.StepMethods[1].BaseMethod.ShouldBe(ComponentUpdatedMethod);
+			Metadata.StepMethods[1].IsOverride.ShouldBe(true);
+			Metadata.StepMethods[1].Name.ShouldBe("Update");
 		}
 	}
 }

@@ -30,7 +30,7 @@ namespace Tests.Utilities
 
 	public abstract class TestComponent : Component
 	{
-		protected ComponentInfo Metadata { get; private set; }
+		protected ComponentMetadata Metadata { get; private set; }
 
 		protected MethodInfo ComponentUpdatedMethod
 		{
@@ -39,7 +39,7 @@ namespace Tests.Utilities
 
 		public void RunTests()
 		{
-			Metadata = this.GetComponentInfo();
+			Metadata = this.GetMetadata();
 			Metadata.Component.ShouldBe(this);
 
 			Check();

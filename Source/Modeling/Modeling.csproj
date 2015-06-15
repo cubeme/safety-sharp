@@ -49,32 +49,23 @@
     <Compile Include="CompilerServices\IgnoreAttribute.cs" />
     <Compile Include="Modeling\PortBinding.cs" />
     <Compile Include="Modeling\PortInfo.cs" />
-    <Compile Include="Runtime\ComponentInfo.Builder.cs">
-      <DependentUpon>ComponentInfo.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Runtime\ComponentMetadata.Builder.cs" />
+    <Compile Include="Runtime\FaultMetadata.Builder.cs" />
+    <Compile Include="Runtime\MemberCollection.cs" />
     <Compile Include="Runtime\MetadataAnalysis\BoundRequiredPortsFinder.cs" />
     <Compile Include="Runtime\MetadataAnalysis\BoundProvidedPortsFinder.cs" />
     <Compile Include="Runtime\MetadataAnalysis\ComponentHierarchyWalker.cs" />
-    <Compile Include="Runtime\BehaviorInfo.cs" />
-    <Compile Include="Runtime\ComponentFieldInfo.cs" />
-    <Compile Include="Runtime\ComponentMemberCollection.cs" />
-    <Compile Include="Runtime\ComponentMethodCollection.cs" />
-    <Compile Include="Runtime\ComponentMethodInfo.cs" />
-    <Compile Include="Runtime\FaultInfo.Builder.cs">
-      <DependentUpon>FaultInfo.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Runtime\FieldMetadata.cs" />
+    <Compile Include="Runtime\MethodMetadata.cs" />
     <Compile Include="CompilerServices\LiftExpressionAttribute.cs" />
     <Compile Include="CompilerServices\MetadataBuilders.cs" />
     <Compile Include="Runtime\MetadataExtensions.cs" />
-    <Compile Include="Runtime\OccurrenceInfo.Builder.cs">
-      <DependentUpon>OccurrencePatternInfo.cs</DependentUpon>
-    </Compile>
     <Compile Include="CompilerServices\MethodBehaviorAttribute.cs" />
     <Compile Include="CompilerServices\SafetySharpAttribute.cs" />
     <Compile Include="Modeling\OccurrencePattern.cs" />
-    <Compile Include="Runtime\BindingInfo.cs" />
-    <Compile Include="Runtime\ComponentInfo.cs" />
-    <Compile Include="Runtime\FaultInfo.cs" />
+    <Compile Include="Runtime\BindingMetadata.cs" />
+    <Compile Include="Runtime\ComponentMetadata.cs" />
+    <Compile Include="Runtime\FaultMetadata.cs" />
     <Compile Include="Modeling\BindingKind.cs" />
     <Compile Include="Modeling\Model.Immutability.cs">
       <DependentUpon>Model.cs</DependentUpon>
@@ -107,16 +98,18 @@
     <Compile Include="Modeling\PersistentAttribute.cs" />
     <Compile Include="Modeling\ProvidedAttribute.cs" />
     <Compile Include="Modeling\RequiredAttribute.cs" />
-    <Compile Include="Runtime\ProvidedPortInfo.cs" />
-    <Compile Include="Runtime\RequiredPortInfo.cs" />
+    <Compile Include="Runtime\ObjectMetadata.cs" />
+    <Compile Include="Runtime\OccurrencePattern.Builder.cs" />
+    <Compile Include="Runtime\ProvidedPortMetadata.cs" />
+    <Compile Include="Runtime\RequiredPortMetadata.cs" />
     <Compile Include="Runtime\RootComponent.cs" />
     <Compile Include="Modeling\SharedComponentsException.cs" />
     <Compile Include="Modeling\TransientAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Runtime\OccurrencePatternInfo.cs" />
+    <Compile Include="Runtime\OccurrencePatternMetadata.cs" />
     <Compile Include="CompilerServices\ReflectionHelpers.cs" />
     <Compile Include="Runtime\MetadataProvider.cs" />
-    <Compile Include="Runtime\StepMethodInfo.cs" />
+    <Compile Include="Runtime\StepMethodMetadata.cs" />
     <Compile Include="Utilities\Assert.cs" />
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />
     <Compile Include="Utilities\ReflectionExtensions.cs" />

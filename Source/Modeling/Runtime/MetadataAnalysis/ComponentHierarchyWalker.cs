@@ -33,13 +33,13 @@ namespace SafetySharp.Runtime.MetadataAnalysis
 		/// <summary>
 		///     The root of the component hierarchy.
 		/// </summary>
-		private readonly ComponentInfo _root;
+		private readonly ComponentMetadata _root;
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="root">The root of the component hierarchy.</param>
-		protected ComponentHierarchyWalker(ComponentInfo root)
+		protected ComponentHierarchyWalker(ComponentMetadata root)
 		{
 			Requires.NotNull(root, () => root);
 			_root = root;
@@ -50,7 +50,7 @@ namespace SafetySharp.Runtime.MetadataAnalysis
 		/// </summary>
 		internal void WalkPreOrder()
 		{
-			Action<ComponentInfo> preOrder = null;
+			Action<ComponentMetadata> preOrder = null;
 			preOrder = component =>
 			{
 				Visit(component);
@@ -63,9 +63,9 @@ namespace SafetySharp.Runtime.MetadataAnalysis
 		}
 
 		/// <summary>
-		///     Visits the <paramref name="componentInfo" />.
+		///     Visits the <paramref name="metadata" />.
 		/// </summary>
-		/// <param name="componentInfo">The component metadata that should be visited.</param>
-		protected abstract void Visit(ComponentInfo componentInfo);
+		/// <param name="metadata">The component metadata that should be visited.</param>
+		protected abstract void Visit(ComponentMetadata metadata);
 	}
 }

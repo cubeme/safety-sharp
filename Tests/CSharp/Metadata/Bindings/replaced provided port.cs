@@ -24,6 +24,7 @@ namespace Tests.Metadata.Bindings
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
@@ -55,16 +56,16 @@ namespace Tests.Metadata.Bindings
 		{
 			Metadata.Bindings.Length.ShouldBe(3);
 
-			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
 			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
 
-			Metadata.Bindings[1].Component.Component.ShouldBe(this);
+			Metadata.Bindings[1].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Bindings[1].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
 			Metadata.Bindings[1].ProvidedPort.Method.ShouldBe(typeof(X32).GetMethod("__SynthesizedPort0__",
 				BindingFlags.Instance | BindingFlags.NonPublic));
 
-			Metadata.Bindings[2].Component.Component.ShouldBe(this);
+			Metadata.Bindings[2].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Bindings[2].RequiredPort.ShouldBe(Metadata.RequiredPorts[2]);
 			Metadata.Bindings[2].ProvidedPort.Method.ShouldBe(typeof(X32).GetMethod("__SynthesizedPort1__",
 				BindingFlags.Instance | BindingFlags.NonPublic));

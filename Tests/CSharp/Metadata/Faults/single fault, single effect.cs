@@ -34,7 +34,7 @@ namespace Tests.Metadata.Faults
 		{
 			Metadata.Faults.Length.ShouldBe(1);
 
-			Metadata.Faults[0].Component.ShouldBe(this.GetComponentInfo());
+			Metadata.Faults[0].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Faults[0].Fault.GetType().ShouldBe(typeof(F));
 			Metadata.Faults[0].Name.ShouldBe("F");
 		}

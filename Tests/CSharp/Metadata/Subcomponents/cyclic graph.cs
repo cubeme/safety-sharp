@@ -57,9 +57,9 @@ namespace Tests.Metadata.Subcomponents
 			Metadata.Subcomponents.Length.ShouldBe(1);
 
 			Metadata.Subcomponents[0].Component.ShouldBe(_a);
-			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetComponentInfo());
+			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
 
-			_a.GetComponentInfo().Subcomponents[0].Component.ShouldBe(this);
+			_a.GetMetadata().Subcomponents[0].Component.ShouldBe(this);
 		}
 	}
 }

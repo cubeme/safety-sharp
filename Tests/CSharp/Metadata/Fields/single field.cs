@@ -26,6 +26,7 @@ namespace Tests.Metadata.Fields
 	using System.Reflection;
 	using Shouldly;
 	using Utilities;
+	using SafetySharp.Runtime;
 
 	internal class X2 : TestComponent
 	{
@@ -35,7 +36,7 @@ namespace Tests.Metadata.Fields
 		{
 			Metadata.Fields.Length.ShouldBe(1);
 
-			Metadata.Fields[0].Component.Component.ShouldBe(this);
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[0].Field.ShouldBe(typeof(X2).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _x });
 		}
@@ -49,7 +50,7 @@ namespace Tests.Metadata.Fields
 		{
 			Metadata.Fields.Length.ShouldBe(1);
 
-			Metadata.Fields[0].Component.Component.ShouldBe(this);
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[0].Field.ShouldBe(typeof(X3).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _x });
 		}
@@ -63,7 +64,7 @@ namespace Tests.Metadata.Fields
 		{
 			Metadata.Fields.Length.ShouldBe(1);
 
-			Metadata.Fields[0].Component.Component.ShouldBe(this);
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[0].Field.ShouldBe(typeof(X4).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _x });
 		}
@@ -77,7 +78,7 @@ namespace Tests.Metadata.Fields
 		{
 			Metadata.Fields.Length.ShouldBe(1);
 
-			Metadata.Fields[0].Component.Component.ShouldBe(this);
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[0].Field.ShouldBe(typeof(X5).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _x });
 		}

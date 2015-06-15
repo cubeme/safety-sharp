@@ -32,36 +32,36 @@ namespace SafetySharp.CompilerServices
 	public static class MetadataBuilders
 	{
 		/// <summary>
-		///     Gets the <see cref="ComponentInfo.Builder" /> instance for <paramref name="component" />. Throws a
+		///     Gets the <see cref="ComponentMetadata.Builder" /> instance for <paramref name="component" />. Throws a
 		///     <see cref="InvalidOperationException" /> when <paramref name="component" />'s metadata has already
 		///     been fully initialized.
 		/// </summary>
 		/// <param name="component">The component instance the builder should be returned for.</param>
-		public static ComponentInfo.Builder GetBuilder(Component component)
+		public static ComponentMetadata.Builder GetBuilder(Component component)
 		{
-			return (ComponentInfo.Builder)MetadataProvider.GetBuilder(component);
+			return (ComponentMetadata.Builder)MetadataProvider.GetBuilder(component);
 		}
 
 		/// <summary>
-		///     Gets the <see cref="FaultInfo.Builder" /> instance for <paramref name="fault" />. Throws a
+		///     Gets the <see cref="FaultMetadata.Builder" /> instance for <paramref name="fault" />. Throws a
 		///     <see cref="InvalidOperationException" /> when <paramref name="fault" />'s metadata has already
 		///     been fully initialized.
 		/// </summary>
 		/// <param name="fault">The fault instance the builder should be returned for.</param>
-		public static FaultInfo.Builder GetBuilder(Fault fault)
+		public static FaultMetadata.Builder GetBuilder(Fault fault)
 		{
-			return (FaultInfo.Builder)MetadataProvider.GetBuilder(fault);
+			return (FaultMetadata.Builder)MetadataProvider.GetBuilder(fault);
 		}
 
 		/// <summary>
-		///     Gets the <see cref="OccurrencePatternInfo.Builder" /> instance for <paramref name="occurrencePattern" />. Throws a
+		///     Gets the <see cref="OccurrencePatternMetadata.Builder" /> instance for <paramref name="occurrencePattern" />. Throws a
 		///     <see cref="InvalidOperationException" /> when <paramref name="occurrencePattern" />'s metadata has already
 		///     been fully initialized.
 		/// </summary>
 		/// <param name="occurrencePattern">The occurrence pattern instance the builder should be returned for.</param>
-		public static OccurrencePatternInfo.Builder GetBuilder(OccurrencePattern occurrencePattern)
+		public static OccurrencePatternMetadata.Builder GetBuilder(OccurrencePattern occurrencePattern)
 		{
-			return (OccurrencePatternInfo.Builder)MetadataProvider.GetBuilder(occurrencePattern);
+			return (OccurrencePatternMetadata.Builder)MetadataProvider.GetBuilder(occurrencePattern);
 		}
 	}
 }

@@ -31,30 +31,42 @@ namespace SafetySharp.Runtime
 	public static class MetadataExtensions
 	{
 		/// <summary>
-		///     Gets the <see cref="ComponentInfo" /> instance for the <paramref name="component" /> instance.
+		///     Gets the <see cref="ObjectMetadata" /> instance for the <paramref name="obj" />.
 		/// </summary>
-		/// <param name="component">The component the <see cref="ComponentInfo" /> instance should be retrieved for.</param>
-		public static ComponentInfo GetComponentInfo(this IComponent component)
+		/// <param name="obj">The component the <see cref="ObjectMetadata" /> instance should be retrieved for.</param>
+		public static ObjectMetadata GetMetadata(this object obj)
 		{
-			return (ComponentInfo)MetadataProvider.GetMetadata(component);
+			return MetadataProvider.GetMetadata(obj);
 		}
 
 		/// <summary>
-		///     Gets the <see cref="FaultInfo" /> instance for the <paramref name="fault" /> instance.
+		///     Gets the <see cref="ComponentMetadata" /> instance for the <paramref name="component" /> instance.
 		/// </summary>
-		/// <param name="fault">The fault the <see cref="FaultInfo" /> instance should be retrieved for.</param>
-		public static FaultInfo GetFaultInfo(this Fault fault)
+		/// <param name="component">The component the <see cref="ComponentMetadata" /> instance should be retrieved for.</param>
+		public static ComponentMetadata GetMetadata(this IComponent component)
 		{
-			return (FaultInfo)MetadataProvider.GetMetadata(fault);
+			return (ComponentMetadata)MetadataProvider.GetMetadata(component);
 		}
 
 		/// <summary>
-		///     Gets the <see cref="OccurrencePatternInfo" /> instance for the <paramref name="occurrencePattern" /> instance.
+		///     Gets the <see cref="FaultMetadata" /> instance for the <paramref name="fault" /> instance.
 		/// </summary>
-		/// <param name="occurrencePattern">The occurrence pattern the <see cref="OccurrencePatternInfo" /> instance should be retrieved for.</param>
-		public static OccurrencePatternInfo GetOccurrenceInfo(this OccurrencePattern occurrencePattern)
+		/// <param name="fault">The fault the <see cref="FaultMetadata" /> instance should be retrieved for.</param>
+		public static FaultMetadata GetMetadata(this Fault fault)
 		{
-			return (OccurrencePatternInfo)MetadataProvider.GetMetadata(occurrencePattern);
+			return (FaultMetadata)MetadataProvider.GetMetadata(fault);
+		}
+
+		/// <summary>
+		///     Gets the <see cref="OccurrencePatternMetadata" /> instance for the <paramref name="occurrencePattern" /> instance.
+		/// </summary>
+		/// <param name="occurrencePattern">
+		///     The occurrence pattern the <see cref="OccurrencePatternMetadata" /> instance should be retrieved
+		///     for.
+		/// </param>
+		public static OccurrencePatternMetadata GetMetadata(this OccurrencePattern occurrencePattern)
+		{
+			return (OccurrencePatternMetadata)MetadataProvider.GetMetadata(occurrencePattern);
 		}
 	}
 }

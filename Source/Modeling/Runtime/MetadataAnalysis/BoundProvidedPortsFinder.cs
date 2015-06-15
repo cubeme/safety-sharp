@@ -35,34 +35,34 @@ namespace SafetySharp.Runtime.MetadataAnalysis
 		/// <summary>
 		///     The required port the provided ports are retrieved for.
 		/// </summary>
-		private readonly RequiredPortInfo _requiredPort;
+		private readonly RequiredPortMetadata _requiredPort;
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="root">The root of the component hierarchy.</param>
 		/// <param name="requiredPort">The required port the provided ports should be retrieved for.</param>
-		public BoundProvidedPortsFinder(ComponentInfo root, RequiredPortInfo requiredPort)
+		public BoundProvidedPortsFinder(ComponentMetadata root, RequiredPortMetadata requiredPort)
 			: base(root)
 		{
 			Requires.NotNull(requiredPort, () => requiredPort);
 
-			ProvidedPorts = new List<ProvidedPortInfo>();
+			ProvidedPorts = new List<ProvidedPortMetadata>();
 			_requiredPort = requiredPort;
 		}
 
 		/// <summary>
 		///     Gets the provided ports that are bound to the required port.
 		/// </summary>
-		public List<ProvidedPortInfo> ProvidedPorts { get; private set; }
+		public List<ProvidedPortMetadata> ProvidedPorts { get; private set; }
 
 		/// <summary>
-		///     Visits the <paramref name="componentInfo" />.
+		///     Visits the <paramref name="metadata" />.
 		/// </summary>
-		/// <param name="componentInfo">The component metadata that should be visited.</param>
-		protected override void Visit(ComponentInfo componentInfo)
+		/// <param name="metadata">The component metadata that should be visited.</param>
+		protected override void Visit(ComponentMetadata metadata)
 		{
-			ProvidedPorts.AddRange(from binding in componentInfo.Bindings
+			ProvidedPorts.AddRange(from binding in metadata.Bindings
 								   where binding.RequiredPort == _requiredPort
 								   select binding.ProvidedPort);
 		}

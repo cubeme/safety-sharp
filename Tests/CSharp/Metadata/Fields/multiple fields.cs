@@ -24,6 +24,7 @@ namespace Tests.Metadata.Fields
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
@@ -38,19 +39,19 @@ namespace Tests.Metadata.Fields
 		{
 			Metadata.Fields.Length.ShouldBe(4);
 
-			Metadata.Fields[0].Component.Component.ShouldBe(this);
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[0].Field.ShouldBe(typeof(X9).GetField("_w", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _w });
 
-			Metadata.Fields[1].Component.Component.ShouldBe(this);
+			Metadata.Fields[1].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[1].Field.ShouldBe(typeof(X9).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[1].InitialValues.ShouldBe(new object[] { _x });
 
-			Metadata.Fields[2].Component.Component.ShouldBe(this);
+			Metadata.Fields[2].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[2].Field.ShouldBe(typeof(X9).GetField("_y", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[2].InitialValues.ShouldBe(new object[] { _y });
 
-			Metadata.Fields[3].Component.Component.ShouldBe(this);
+			Metadata.Fields[3].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[3].Field.ShouldBe(typeof(X9).GetField("_z", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[3].InitialValues.ShouldBe(new object[] { _z });
 		}

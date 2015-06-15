@@ -26,40 +26,39 @@ namespace SafetySharp.Runtime
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
 	using System.Reflection;
-	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Component" /> instance field.
+	///     Represents the immutable metadata of a S# field.
 	/// </summary>
-	public sealed class ComponentFieldInfo
+	public sealed class FieldMetadata
 	{
 		/// <summary>
-		///     The component the field belongs to.
+		///     The S# object the field belongs to.
 		/// </summary>
-		private readonly Component _component;
+		private readonly object _object;
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="component">The component the field belongs to.</param>
-		/// <param name="field">The field that represents the component field.</param>
+		/// <param name="obj">The object the field belongs to.</param>
+		/// <param name="field">The CLR field the metadata should be provided for.</param>
 		/// <param name="initialValues">
-		///     The set of initial values. <c>null</c> indicates that the current field value should be used instead.
+		///     The set of initial values. A value of <c>null</c> indicates that the current field value should be used.
 		/// </param>
-		internal ComponentFieldInfo(Component component, FieldInfo field, object[] initialValues)
+		internal FieldMetadata(object obj, FieldInfo field, object[] initialValues)
 		{
-			Requires.NotNull(component, () => component);
+			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(field, () => field);
 
-			_component = component;
+			_object = obj;
 
 			Field = field;
-			InitialValues = initialValues == null ? ImmutableArray.Create(field.GetValue(component)) : initialValues.ToImmutableArray();
+			InitialValues = initialValues == null ? ImmutableArray.Create(field.GetValue(obj)) : initialValues.ToImmutableArray();
 		}
 
 		/// <summary>
-		///     Gets the underlying .NET field.
+		///     Gets the underlying CLR field.
 		/// </summary>
 		public FieldInfo Field { get; private set; }
 
@@ -72,11 +71,11 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets the metadata of the component the field belongs to.
+		///     Gets the metadata of the declaring object.
 		/// </summary>
-		public ComponentInfo Component
+		public ObjectMetadata DeclaringObject
 		{
-			get { return _component.GetComponentInfo(); }
+			get { return _object.GetMetadata(); }
 		}
 
 		/// <summary>

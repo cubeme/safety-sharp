@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Bindings
 {
 	using System;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
@@ -51,7 +52,7 @@ namespace Tests.Metadata.Bindings
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
 
-			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
 			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
 
@@ -85,7 +86,7 @@ namespace Tests.Metadata.Bindings
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
 
-			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
 			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
 
@@ -121,7 +122,7 @@ namespace Tests.Metadata.Bindings
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
 
-			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
 			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
 

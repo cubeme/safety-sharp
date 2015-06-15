@@ -63,12 +63,12 @@ namespace Tests.Metadata.Bindings
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
 
-			Metadata.Bindings[0].Component.Component.ShouldBe(this);
+			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
-			Metadata.Bindings[0].ProvidedPort.ShouldBe(_i.GetComponentInfo().ProvidedPorts[1]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(_i.GetMetadata().ProvidedPorts[1]);
 
-			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { _i.GetComponentInfo().ProvidedPorts[1] });
-			_i.GetComponentInfo().ProvidedPorts[1].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[0] });
+			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { _i.GetMetadata().ProvidedPorts[1] });
+			_i.GetMetadata().ProvidedPorts[1].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[0] });
 		}
 	}
 }

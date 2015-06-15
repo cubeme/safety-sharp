@@ -23,23 +23,11 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Reflection;
-	using Modeling;
 
 	/// <summary>
-	///     Represents the the immutable metadata of a step method of a S# <see cref="Component" />.
+	///     Represents the immutable metadata of a S# <see cref="Object" /> instance.
 	/// </summary>
-	public sealed class StepMethodInfo : BehaviorInfo
+	public class ObjectMetadata
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component the method belongs to.</param>
-		/// <param name="stepMethod">The method that represents the component's step method.</param>
-		/// <param name="baseStepMethod">The overridden base step method, if any.</param>
-		public StepMethodInfo(Component component, MethodInfo stepMethod, MethodInfo baseStepMethod = null)
-			: base(component, stepMethod, baseStepMethod)
-		{
-		}
 	}
 }

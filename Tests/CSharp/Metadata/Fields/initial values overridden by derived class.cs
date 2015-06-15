@@ -24,6 +24,7 @@ namespace Tests.Metadata.Fields
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
@@ -48,7 +49,7 @@ namespace Tests.Metadata.Fields
 		{
 			Metadata.Fields.Length.ShouldBe(1);
 
-			Metadata.Fields[0].Component.Component.ShouldBe(this);
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[0].Field.ShouldBe(typeof(X12).GetField("_x", BindingFlags.Instance| BindingFlags.NonPublic));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { 88, 22 });
 		}

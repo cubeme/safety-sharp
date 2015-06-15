@@ -30,16 +30,16 @@ namespace SafetySharp.Runtime
 	using Modeling;
 	using Utilities;
 
-	partial class FaultInfo
+	partial class FaultMetadata
 	{
 		/// <summary>
-		///     Represents a mutable builder for <see cref="FaultInfo" /> instances.
+		///     Represents a mutable builder for <see cref="FaultMetadata" /> instances.
 		/// </summary>
 		public class Builder
 		{
 			private readonly Fault _fault;
 			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
-			private OccurrencePatternInfo _occurrencePattern;
+			private OccurrencePatternMetadata _occurrencePattern;
 
 			/// <summary>
 			///     Initializes a new instance.
@@ -49,6 +49,21 @@ namespace SafetySharp.Runtime
 			{
 				Requires.NotNull(fault, () => fault);
 				_fault = fault;
+			}
+
+			/// <summary>
+			///     Adds the <paramref name="field" /> to the component's metadata.
+			/// </summary>
+			/// <param name="field">The field that should be added to the metadata.</param>
+			public void WithField(FieldInfo field)
+			{
+				Requires.NotNull(field, () => field);
+				Requires.That(!_fields.ContainsKey(field), () => field, "The field has already been added.");
+				Requires.That(field.FieldType == typeof(int) || field.FieldType == typeof(bool) ||
+							  field.FieldType == typeof(double) || field.FieldType.IsEnum, () => field,
+					"Invalid field type: Only 'bool', 'int', 'double', and enumeration types are supported.");
+
+				_fields.Add(field, null);
 			}
 
 			/// <summary>
@@ -91,15 +106,15 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Creates an immutable <see cref="FaultInfo" /> instance from the current state of the builder and makes it available
+			///     Creates an immutable <see cref="FaultMetadata" /> instance from the current state of the builder and makes it available
 			///     to S#'s <see cref="MetadataProvider" />.
 			/// </summary>
 			/// <param name="component">The component that is affected by the fault.</param>
-			internal FaultInfo RegisterMetadata(Component component)
+			internal FaultMetadata RegisterMetadata(Component component)
 			{
 				Requires.NotNull(component, () => component);
 
-				var info = new FaultInfo(component, _fault);
+				var info = new FaultMetadata(component, _fault);
 				MetadataProvider.FinalizeMetadata(_fault, info);
 
 				return info;

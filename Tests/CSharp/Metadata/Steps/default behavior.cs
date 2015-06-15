@@ -24,6 +24,7 @@ namespace Tests.Metadata.Steps
 {
 	using System;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
@@ -31,12 +32,12 @@ namespace Tests.Metadata.Steps
 	{
 		protected override void Check()
 		{
-			Metadata.Behaviors.Length.ShouldBe(1);
-			Metadata.Behaviors[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
-			Metadata.Behaviors[0].Component.Component.ShouldBe(this);
-			Metadata.Behaviors[0].BaseMethod.ShouldBe(null);
-			Metadata.Behaviors[0].IsOverride.ShouldBe(false);
-			Metadata.Behaviors[0].Name.ShouldBe("Update");
+			Metadata.StepMethods.Length.ShouldBe(1);
+			Metadata.StepMethods[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
+			Metadata.StepMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.StepMethods[0].BaseMethod.ShouldBe(null);
+			Metadata.StepMethods[0].IsOverride.ShouldBe(false);
+			Metadata.StepMethods[0].Name.ShouldBe("Update");
 		}
 	}
 }

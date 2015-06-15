@@ -57,7 +57,7 @@ namespace SafetySharp.CompilerServices
 			Requires.NotNull(type, () => type);
 
 			var method = type.GetMethod(MethodName, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic);
-			Requires.That(method != null, "Unable to find behavior method '{0}.{1}'.", type.FullName, MethodName);
+			Requires.That(method != null, "Unable to find method '{0}.{1}'.", type.FullName, MethodName);
 
 			return method;
 		}

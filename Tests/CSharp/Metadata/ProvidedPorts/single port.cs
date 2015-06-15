@@ -24,6 +24,7 @@ namespace Tests.Metadata.ProvidedPorts
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
@@ -34,9 +35,13 @@ namespace Tests.Metadata.ProvidedPorts
 			Metadata.ProvidedPorts.Length.ShouldBe(1);
 
 			Metadata.ProvidedPorts[0].Method.ShouldBe(typeof(X2).GetMethod("Check", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.ProvidedPorts[0].Component.Component.ShouldBe(this);
+			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
+			Metadata.ProvidedPorts[0].HasImplementation.ShouldBe(true);
+			Metadata.ProvidedPorts[0].Implementation.ShouldBe(typeof(X2).GetMethod("__Behavior0__",
+				BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.ProvidedPorts[0].Name.ShouldBe("Check");
 		}
 	}

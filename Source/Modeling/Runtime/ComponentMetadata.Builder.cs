@@ -30,20 +30,20 @@ namespace SafetySharp.Runtime
 	using Modeling;
 	using Utilities;
 
-	partial class ComponentInfo
+	partial class ComponentMetadata
 	{
 		/// <summary>
-		///     Represents a mutable builder for <see cref="ComponentInfo" /> instances.
+		///     Represents a mutable builder for <see cref="ComponentMetadata" /> instances.
 		/// </summary>
 		public class Builder
 		{
-			private readonly List<BindingInfo> _bindings = new List<BindingInfo>();
+			private readonly List<BindingMetadata> _bindings = new List<BindingMetadata>();
 			private readonly Component _component;
-			private readonly List<FaultInfo> _faults = new List<FaultInfo>();
+			private readonly List<FaultMetadata> _faults = new List<FaultMetadata>();
 			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
-			private readonly List<ProvidedPortInfo> _providedPorts = new List<ProvidedPortInfo>();
-			private readonly List<RequiredPortInfo> _requiredPorts = new List<RequiredPortInfo>();
-			private readonly List<StepMethodInfo> _stepMethods = new List<StepMethodInfo>();
+			private readonly List<ProvidedPortMetadata> _providedPorts = new List<ProvidedPortMetadata>();
+			private readonly List<RequiredPortMetadata> _requiredPorts = new List<RequiredPortMetadata>();
+			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
 			private readonly List<FieldInfo> _subcomponents = new List<FieldInfo>();
 			private string _name;
 
@@ -160,7 +160,7 @@ namespace SafetySharp.Runtime
 				Requires.That(basePort == null || _providedPorts.Any(p => p.Method == basePort), () => _providedPorts,
 					"The base port is unknown.");
 
-				_providedPorts.Add(new ProvidedPortInfo(_component, providedPort, basePort));
+				_providedPorts.Add(new ProvidedPortMetadata(_component, providedPort, basePort));
 			}
 
 			/// <summary>
@@ -173,7 +173,7 @@ namespace SafetySharp.Runtime
 				Requires.That(requiredPort.HasAttribute<RequiredAttribute>(), () => requiredPort,
 					"The method must be marked with'{0}'.", typeof(RequiredAttribute).FullName);
 
-				_requiredPorts.Add(new RequiredPortInfo(_component, requiredPort));
+				_requiredPorts.Add(new RequiredPortMetadata(_component, requiredPort));
 			}
 
 			/// <summary>
@@ -188,7 +188,10 @@ namespace SafetySharp.Runtime
 				Requires.That(baseStepMethod == null || _stepMethods.Any(b => b.Method == baseStepMethod), () => baseStepMethod,
 					"The base behavior is unknown.");
 
-				_stepMethods.Add(new StepMethodInfo(_component, stepMethod, baseStepMethod));
+				var metadata = new StepMethodMetadata(_component, stepMethod, baseStepMethod);
+				Requires.That(metadata.CanBeAffectedByFaultEffects, () => stepMethod, "Component step methods must be sensitive to fault effects.");
+
+				_stepMethods.Add(metadata);
 			}
 
 			/// <summary>
@@ -210,7 +213,7 @@ namespace SafetySharp.Runtime
 				Requires.That(providedPort.Method.HasAttribute<ProvidedAttribute>(), () => providedPort,
 					"Expected a provided port declared by a type implementing '{0}'.", typeof(IComponent).FullName);
 
-				_bindings.Add(new BindingInfo(_component, requiredPort, providedPort));
+				_bindings.Add(new BindingMetadata(_component, requiredPort, providedPort));
 			}
 
 			/// <summary>
@@ -224,24 +227,25 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Creates an immutable <see cref="ComponentInfo" /> instance from the current state of the builder and makes it available
+			///     Creates an immutable <see cref="ComponentMetadata" /> instance from the current state of the builder and makes it
+			///     available
 			///     to S#'s <see cref="MetadataProvider" />.
 			/// </summary>
 			/// <param name="parent">The metadata of the parent component. Can be <c>null</c> for the root of the component hierarchy.</param>
-			internal void RegisterMetadata(ComponentInfo parent = null)
+			internal void RegisterMetadata(ComponentMetadata parent = null)
 			{
-				var fields = _fields.Select(field => new ComponentFieldInfo(_component, field.Key, field.Value));
-				var info = new ComponentInfo
+				var fields = _fields.Select(field => new FieldMetadata(_component, field.Key, field.Value));
+				var info = new ComponentMetadata
 				{
 					Component = _component,
 					Name = _name,
 					ParentComponent = parent,
-					Fields = new ComponentMemberCollection<ComponentFieldInfo>(_component, fields),
-					Faults = new ComponentMemberCollection<FaultInfo>(_component, _faults),
-					Behaviors = new ComponentMethodCollection<BehaviorInfo>(_component, _stepMethods),
-					RequiredPorts = new ComponentMethodCollection<RequiredPortInfo>(_component, _requiredPorts),
-					ProvidedPorts = new ComponentMethodCollection<ProvidedPortInfo>(_component, _providedPorts),
-					Bindings = new ComponentMemberCollection<BindingInfo>(_component, _bindings)
+					Fields = new MemberCollection<FieldMetadata>(_component, fields),
+					Faults = new MemberCollection<FaultMetadata>(_component, _faults),
+					StepMethods = new MemberCollection<StepMethodMetadata>(_component, _stepMethods),
+					RequiredPorts = new MemberCollection<RequiredPortMetadata>(_component, _requiredPorts),
+					ProvidedPorts = new MemberCollection<ProvidedPortMetadata>(_component, _providedPorts),
+					Bindings = new MemberCollection<BindingMetadata>(_component, _bindings)
 				};
 
 				// We have to register the metadata now, even though we'll still have to change it later on; this way,
@@ -267,8 +271,8 @@ namespace SafetySharp.Runtime
 				}
 
 				// Add the subcomponents to the metadata
-				var subcomponentMetadata = subcomponents.Select(subcomponent => subcomponent.GetComponentInfo());
-				info.Subcomponents = new ComponentMemberCollection<ComponentInfo>(_component, subcomponentMetadata);
+				var subcomponentMetadata = subcomponents.Select(subcomponent => subcomponent.GetMetadata());
+				info.Subcomponents = new MemberCollection<ComponentMetadata>(_component, subcomponentMetadata);
 			}
 		}
 	}

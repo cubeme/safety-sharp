@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,52 +23,41 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Reflection;
+	using MetadataAnalysis;
 	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
+	///     Represents the the immutable metadata of a provided port of a S# <see cref="Component" />.
 	/// </summary>
-	public sealed partial class FaultInfo
+	public sealed class ProvidedPortMetadata : MethodMetadata
 	{
-		/// <summary>
-		///     The component affected by the fault.
-		/// </summary>
-		private readonly Component _component;
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		public FaultInfo(Component component, Fault fault)
+		/// <param name="component">The component the method belongs to.</param>
+		/// <param name="port">The CLR method representing the component's port.</param>
+		/// <param name="basePort">The overridden base port, if any.</param>
+		public ProvidedPortMetadata(Component component, MethodInfo port, MethodInfo basePort = null)
+			: base(component, port, basePort)
 		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
-
-			_component = component;
-			Fault = fault;
+			Requires.That(HasImplementation, () => port, "Provided ports must have an implementation.");
+			Requires.That(CanBeAffectedByFaultEffects, () => port, "Provided ports must be sensitive to fault effects.");
 		}
 
 		/// <summary>
-		///     Gets the metadata of the component affected by the fault.
+		///     Gets the metadata of the required ports that have been bound to the provided port.
 		/// </summary>
-		public ComponentInfo Component
+		public IEnumerable<RequiredPortMetadata> BoundRequiredPorts
 		{
-			get { return _component.GetComponentInfo(); }
-		}
-
-		/// <summary>
-		///     Gets the fault the metadata is provided for.
-		/// </summary>
-		public Fault Fault { get; set; }
-
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
-		{
-			get { return Fault.GetType().Name; }
+			get
+			{
+				var finder = new BoundRequiredPortsFinder(((ComponentMetadata)DeclaringObject).RootComponent, this);
+				finder.WalkPreOrder();
+				return finder.RequiredPorts;
+			}
 		}
 	}
 }

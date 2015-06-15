@@ -30,9 +30,9 @@ namespace SafetySharp.Runtime
 	using Utilities;
 
 	/// <summary>
-	///     Represents a binding between two ports.
+	///     Represents the immutable metadata of a S# port binding.
 	/// </summary>
-	public class BindingInfo
+	public class BindingMetadata
 	{
 		/// <summary>
 		///     The component the binding belongs to.
@@ -55,7 +55,7 @@ namespace SafetySharp.Runtime
 		/// <param name="component">The component that declares the binding.</param>
 		/// <param name="requiredPort">The target port of the port binding.</param>
 		/// <param name="providedPort">The source port of the port binding.</param>
-		internal BindingInfo(Component component, Delegate requiredPort, Delegate providedPort)
+		internal BindingMetadata(Component component, Delegate requiredPort, Delegate providedPort)
 		{
 			Requires.NotNull(component, () => component);
 			Requires.NotNull(requiredPort, () => requiredPort);
@@ -80,27 +80,27 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets the metadata of the component the binding belongs to.
+		///     Gets the metadata of the declaring component.
 		/// </summary>
-		public ComponentInfo Component
+		public ComponentMetadata DeclaringComponent
 		{
-			get { return _component.GetComponentInfo(); }
+			get { return (ComponentMetadata)MetadataExtensions.GetMetadata((object)_component); }
 		}
 
 		/// <summary>
 		///     Gets the metadata of the bound provided port.
 		/// </summary>
-		public ProvidedPortInfo ProvidedPort
+		public ProvidedPortMetadata ProvidedPort
 		{
-			get { return ((Component)_providedPort.Target).GetComponentInfo().ProvidedPorts.Single(port => port.Method == _providedPort.Method); }
+			get { return ((Component)_providedPort.Target).GetMetadata().ProvidedPorts.Single(port => port.Method == _providedPort.Method); }
 		}
 
 		/// <summary>
 		///     Gets the metadata of the bound required port.
 		/// </summary>
-		public RequiredPortInfo RequiredPort
+		public RequiredPortMetadata RequiredPort
 		{
-			get { return ((Component)_requiredPort.Target).GetComponentInfo().RequiredPorts.Single(port => port.Method == _requiredPort.Method); }
+			get { return ((Component)_requiredPort.Target).GetMetadata().RequiredPorts.Single(port => port.Method == _requiredPort.Method); }
 		}
 	}
 }

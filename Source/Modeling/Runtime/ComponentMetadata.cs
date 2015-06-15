@@ -28,27 +28,27 @@ namespace SafetySharp.Runtime
 	/// <summary>
 	///     Represents the immutable metadata of a S# <see cref="Component" /> instance.
 	/// </summary>
-	public sealed partial class ComponentInfo
+	public sealed partial class ComponentMetadata : ObjectMetadata
 	{
 		/// <summary>
 		///     Gets the faults affecting the component.
 		/// </summary>
-		public ComponentMemberCollection<FaultInfo> Faults { get; private set; }
+		public MemberCollection<FaultMetadata> Faults { get; private set; }
 
 		/// <summary>
 		///     Gets the fields declared by the component.
 		/// </summary>
-		public ComponentMemberCollection<ComponentFieldInfo> Fields { get; private set; }
+		public MemberCollection<FieldMetadata> Fields { get; private set; }
 
 		/// <summary>
 		///     Gets the port bindings declared by the component.
 		/// </summary>
-		public ComponentMemberCollection<BindingInfo> Bindings { get; private set; }
+		public MemberCollection<BindingMetadata> Bindings { get; private set; }
 
 		/// <summary>
 		///     Gets the subcomponents contained within the component.
 		/// </summary>
-		public ComponentMemberCollection<ComponentInfo> Subcomponents { get; private set; }
+		public MemberCollection<ComponentMetadata> Subcomponents { get; private set; }
 
 		/// <summary>
 		///     Gets the <see cref="Component" /> instance the metadata is provided for.
@@ -59,27 +59,27 @@ namespace SafetySharp.Runtime
 		///     Gets the parent <see cref="Component" /> instance within the component hierarchy. Returns <c>null</c> for the
 		///     root component.
 		/// </summary>
-		public ComponentInfo ParentComponent { get; private set; }
+		public ComponentMetadata ParentComponent { get; private set; }
 
 		/// <summary>
-		///     Gets the behaviors declared by the component.
+		///     Gets the step methods declared by the component.
 		/// </summary>
-		public ComponentMethodCollection<BehaviorInfo> Behaviors { get; private set; }
+		public MemberCollection<StepMethodMetadata> StepMethods { get; private set; }
 
 		/// <summary>
 		///     Gets the required ports declared by the component.
 		/// </summary>
-		public ComponentMethodCollection<RequiredPortInfo> RequiredPorts { get; private set; }
+		public MemberCollection<RequiredPortMetadata> RequiredPorts { get; private set; }
 
 		/// <summary>
 		///     Gets the provided ports declared by the component.
 		/// </summary>
-		public ComponentMethodCollection<ProvidedPortInfo> ProvidedPorts { get; private set; }
+		public MemberCollection<ProvidedPortMetadata> ProvidedPorts { get; private set; }
 
 		/// <summary>
 		///     Gets the root of the component hierarchy.
 		/// </summary>
-		public ComponentInfo RootComponent
+		public ComponentMetadata RootComponent
 		{
 			get
 			{

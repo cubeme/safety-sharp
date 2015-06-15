@@ -29,7 +29,7 @@ namespace SafetySharp.Runtime
 	/// <summary>
 	///     Represents the immutable metadata of a S# <see cref="OccurrencePattern" /> instance.
 	/// </summary>
-	public sealed partial class OccurrencePatternInfo
+	public sealed partial class OccurrencePatternMetadata : ObjectMetadata
 	{
 		/// <summary>
 		///     The fault that is affected by the occurrence pattern.
@@ -39,9 +39,9 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="occurrencePattern"></param>
-		/// <param name="fault"></param>
-		internal OccurrencePatternInfo(OccurrencePattern occurrencePattern, Fault fault)
+		/// <param name="occurrencePattern">The occurrence pattern the metadata is provided for.</param>
+		/// <param name="fault">The fault affected by the occurrence pattern.</param>
+		internal OccurrencePatternMetadata(OccurrencePattern occurrencePattern, Fault fault)
 		{
 			Requires.NotNull(occurrencePattern, () => occurrencePattern);
 			Requires.NotNull(fault, () => fault);
@@ -53,9 +53,9 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the metadata of the fault that is affected by the occurrence pattern.
 		/// </summary>
-		public FaultInfo Fault
+		public FaultMetadata AffectedFault
 		{
-			get { return _fault.GetFaultInfo(); }
+			get { return _fault.GetMetadata(); }
 		}
 
 		/// <summary>

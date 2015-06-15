@@ -25,6 +25,7 @@ namespace Tests.Metadata.ProvidedPorts
 	using System;
 	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
@@ -51,19 +52,19 @@ namespace Tests.Metadata.ProvidedPorts
 			Metadata.ProvidedPorts.Length.ShouldBe(3);
 
 			Metadata.ProvidedPorts[0].Method.ReturnType.ShouldBe(typeof(void));
-			Metadata.ProvidedPorts[0].Component.Component.ShouldBe(this);
+			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
 			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
 
 			Metadata.ProvidedPorts[1].Method.ReturnType.ShouldBe(typeof(int));
-			Metadata.ProvidedPorts[1].Component.Component.ShouldBe(this);
+			Metadata.ProvidedPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
 			Metadata.ProvidedPorts[1].Name.ShouldBe("M");
 
 			Metadata.ProvidedPorts[2].Method.ReturnType.ShouldBe(typeof(bool));
-			Metadata.ProvidedPorts[2].Component.Component.ShouldBe(this);
+			Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
 			Metadata.ProvidedPorts[2].Name.ShouldBe("M");

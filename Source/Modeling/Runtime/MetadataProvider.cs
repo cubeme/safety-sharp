@@ -48,17 +48,17 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     The currently available metadata instances.
 		/// </summary>
-		private static readonly Dictionary<object, object> _metadata =
-			new Dictionary<object, object>(ReferenceEqualityComparer<object>.Instance);
+		private static readonly Dictionary<object, ObjectMetadata> _metadata =
+			new Dictionary<object, ObjectMetadata>(ReferenceEqualityComparer<object>.Instance);
 
 		/// <summary>
 		///     Maps each supported type with S# metadata to a factory function for its metadata builder.
 		/// </summary>
 		private static readonly Dictionary<Type, Func<object, object>> _builderCreators = new Dictionary<Type, Func<object, object>>
 		{
-			{ typeof(Component), component => new ComponentInfo.Builder((Component)component) },
-			{ typeof(Fault), fault => new FaultInfo.Builder((Fault)fault) },
-			{ typeof(OccurrencePattern), occurrencePattern => new OccurrencePatternInfo.Builder((OccurrencePattern)occurrencePattern) }
+			{ typeof(Component), component => new ComponentMetadata.Builder((Component)component) },
+			{ typeof(Fault), fault => new FaultMetadata.Builder((Fault)fault) },
+			{ typeof(OccurrencePattern), occurrencePattern => new OccurrencePatternMetadata.Builder((OccurrencePattern)occurrencePattern) }
 		};
 
 		/// <summary>
@@ -114,13 +114,13 @@ namespace SafetySharp.Runtime
 		///     Gets the metadata for the <paramref name="obj" />.
 		/// </summary>
 		/// <param name="obj">The object the metadata should be returned for.</param>
-		internal static object GetMetadata(object obj)
+		internal static ObjectMetadata GetMetadata(object obj)
 		{
 			Requires.NotNull(obj, () => obj);
 
 			lock (_syncObj)
 			{
-				object info;
+				ObjectMetadata info;
 				Requires.That(_metadata.TryGetValue(obj, out info), () => obj, "The object's metadata has not yet been created.");
 
 				return info;
@@ -132,7 +132,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		/// <param name="obj">The object the finalized metadata is added for.</param>
 		/// <param name="metadata">The finalized metadata that should be added.</param>
-		internal static void FinalizeMetadata(object obj, object metadata)
+		internal static void FinalizeMetadata(object obj, ObjectMetadata metadata)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(metadata, () => metadata);

@@ -24,37 +24,23 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Reflection;
-	using CompilerServices;
-	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Represents the the immutable metadata of a behavior of a S# <see cref="Component" />.
+	///     Represents the the immutable metadata of a S# step method.
 	/// </summary>
-	public abstract class BehaviorInfo : ComponentMethodInfo
+	public sealed class StepMethodMetadata : MethodMetadata
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="component">The component the method belongs to.</param>
-		/// <param name="behavior">The method representing the component's behavior.</param>
-		/// <param name="baseBehavior">The overridden behavior of the base type, if any.</param>
-		internal BehaviorInfo(Component component, MethodInfo behavior, MethodInfo baseBehavior = null)
-			: base(component, behavior, baseBehavior)
+		/// <param name="obj">The S# object the method belongs to.</param>
+		/// <param name="stepMethod">The CLR method the metadata should be provided for.</param>
+		/// <param name="baseStepMethod">The overridden base step method, if any.</param>
+		public StepMethodMetadata(object obj, MethodInfo stepMethod, MethodInfo baseStepMethod = null)
+			: base(obj, stepMethod, baseStepMethod)
 		{
-			var behaviorAttribute = behavior.GetCustomAttribute<MethodBehaviorAttribute>();
-			Requires.That(behaviorAttribute != null, "Expected to find an instance of '{0}' on component member '{1}'.",
-				typeof(MethodBehaviorAttribute).FullName, behavior);
-
-			ImplementationMethod = behaviorAttribute.GetMethodInfo(behavior.DeclaringType);
-
-			var implementationDelegate = Delegate.CreateDelegate(BackingField.FieldType, component, ImplementationMethod);
-			BackingField.SetValue(component, implementationDelegate);
+			Requires.That(HasImplementation, () => stepMethod, "Step methods must have an implementation.");
 		}
-
-		/// <summary>
-		///     Gets the method that represents the behavior's default implementation in the absence of any component faults.
-		/// </summary>
-		public MethodInfo ImplementationMethod { get; private set; }
 	}
 }

@@ -26,20 +26,19 @@ namespace SafetySharp.Runtime
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
-	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Represents a collection of component members.
+	///     Represents a collection of S# object members.
 	/// </summary>
-	/// <typeparam name="T">The actual type of the component members.</typeparam>
-	public class ComponentMemberCollection<T> : IEnumerable<T>
+	/// <typeparam name="T">The actual type of the object members.</typeparam>
+	public sealed class MemberCollection<T> : IEnumerable<T>
 		where T : class
 	{
 		/// <summary>
-		///     The component the method collection belongs to.
+		///     The S# object the method collection belongs to.
 		/// </summary>
-		private readonly Component _component;
+		private readonly object _object;
 
 		/// <summary>
 		///     The members contained in the collection.
@@ -49,22 +48,22 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="component">The component the method collection belongs to.</param>
+		/// <param name="obj">The object the method collection belongs to.</param>
 		/// <param name="members">The members that should be contained in the collection.</param>
-		internal ComponentMemberCollection(Component component, IEnumerable<T> members)
+		internal MemberCollection(object obj, IEnumerable<T> members)
 		{
 			Requires.NotNull(members, () => members);
 
-			_component = component;
+			_object = obj;
 			_members = members.ToImmutableArray();
 		}
 
 		/// <summary>
-		///     Gets the metadata of the component the method collection belongs to.
+		///     Gets the metadata of the declaring object.
 		/// </summary>
-		public ComponentInfo Component
+		public ObjectMetadata DeclaringObject
 		{
-			get { return _component.GetComponentInfo(); }
+			get { return _object.GetMetadata(); }
 		}
 
 		/// <summary>

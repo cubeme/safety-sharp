@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Nested
 {
 	using System;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
@@ -45,7 +46,7 @@ namespace Tests.Metadata.Nested
 		{
 			Metadata.Fields.Length.ShouldBe(1);
 			
-			Metadata.Fields[0].Component.Component.ShouldBe(this);
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[0].Field.ShouldBe(typeof(X1.Y1).GetField("_x"));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _x });
 		}
@@ -57,7 +58,7 @@ namespace Tests.Metadata.Nested
 		{
 			Metadata.Fields.Length.ShouldBe(1);
 			
-			Metadata.Fields[0].Component.Component.ShouldBe(this);
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[0].Field.ShouldBe(typeof(X1.Y2<bool>).GetField("_x"));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _x });
 		}
