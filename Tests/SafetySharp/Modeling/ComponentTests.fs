@@ -301,7 +301,7 @@ module ``Bindings property`` =
 
     [<Test>]
     let ``returns delayed port binding of a component`` () =
-        bindings "class X : Component { void M() {} extern void N(); public X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }"
+        bindings "class X : Component { void M() {} extern void N(); public X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }"
         component'.Bindings.Length =? 1
         component'.Bindings.[0].Kind =? BindingKind.Delayed
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
@@ -325,7 +325,7 @@ module ``Bindings property`` =
 
     [<Test>]
     let ``returns multiple port binding between subcomponents`` () =
-        bindings "class Y : Component { public void M() {} public extern void N(); } class X : Component { Y y1 = new Y(); Y y2 = new Y(); public X() { Bind(y1.RequiredPorts.N = y2.ProvidedPorts.M); Bind(y2.RequiredPorts.N = y1.ProvidedPorts.M).Delayed(); } }"
+        bindings "class Y : Component { public void M() {} public extern void N(); } class X : Component { Y y1 = new Y(); Y y2 = new Y(); public X() { Bind(y1.RequiredPorts.N = y2.ProvidedPorts.M); Bind(y2.RequiredPorts.N = y1.ProvidedPorts.M); } }"
         component'.Bindings.Length =? 2
         component'.Bindings.[0].Kind =? BindingKind.Instantaneous
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
@@ -344,7 +344,7 @@ module ``Bindings property`` =
 
     [<Test>]
     let ``returns inherited port binding between subcomponents`` () =
-        bindings "class Y : Component { public void M() {} public extern void N(); } class Z : Component { public Y y = new Y(); public Z() { Bind(y.RequiredPorts.N = y.ProvidedPorts.M).Delayed(); } } class X : Z { public Y y2 = new Y(); public X() { Bind(y.RequiredPorts.N = y2.ProvidedPorts.M).Delayed(); } }"
+        bindings "class Y : Component { public void M() {} public extern void N(); } class Z : Component { public Y y = new Y(); public Z() { Bind(y.RequiredPorts.N = y.ProvidedPorts.M); } } class X : Z { public Y y2 = new Y(); public X() { Bind(y.RequiredPorts.N = y2.ProvidedPorts.M); } }"
         component'.Bindings.Length =? 2
         component'.Bindings.[0].Kind =? BindingKind.Delayed
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true

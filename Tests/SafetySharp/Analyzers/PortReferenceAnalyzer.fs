@@ -54,7 +54,6 @@ module ``Port references`` =
     [<Test>]
     let ``non-existent required port is invalid`` () =
         getDiagnostic "namespace Y { class X : Component { X() { var x = RequiredPorts.Xyz; } } }" =? reqUnknown 64 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X() { var x = base.RequiredPorts.Xyz; } } }" =? reqUnknown 69 "Y.X" "Xyz"
         getDiagnostic "namespace Y { class X : Component { X() { var x = this.RequiredPorts.Xyz; } } }" =? reqUnknown 69 "Y.X" "Xyz"
         getDiagnostic "namespace Y { class X : Component { X(X x) { var y = x.RequiredPorts.Xyz; } } }" =? reqUnknown 69 "Y.X" "Xyz"
         getDiagnostic "namespace Y { class X : Component { X() { X x = null; var y = x.RequiredPorts.Xyz; } } }" =? reqUnknown 78 "Y.X" "Xyz"
@@ -83,7 +82,6 @@ module ``Port references`` =
     let ``non-existent provided port is invalid`` () =
         getDiagnostic "namespace Y { class X : Component { X() { var x = ProvidedPorts.Xyz; } } }" =? provUnknown 64 "Y.X" "Xyz"
         getDiagnostic "namespace Y { class X : Component { X() { var x = this.ProvidedPorts.Xyz; } } }" =? provUnknown 69 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X() { var x = base.ProvidedPorts.Xyz; } } }" =? provUnknown 69 "Y.X" "Xyz"
         getDiagnostic "namespace Y { class X : Component { X(X x) { var y = x.ProvidedPorts.Xyz; } } }" =? provUnknown 69 "Y.X" "Xyz"
         getDiagnostic "namespace Y { class X : Component { X() { X x = null; var y = x.ProvidedPorts.Xyz; } } }" =? provUnknown 78 "Y.X" "Xyz"
         getDiagnostic "namespace Y { class X : Component { X x; X() { var y = x.ProvidedPorts.Xyz; } } }" =? provUnknown 71 "Y.X" "Xyz"
@@ -110,7 +108,6 @@ module ``Port references`` =
     [<Test>]
     let ``existing required port is valid`` () =
         getDiagnostic "namespace Y { class X : Component { extern void Xyz(); X() { var x = RequiredPorts.Xyz; } } }" =? None
-        getDiagnostic "namespace Y { class X : Component { extern void Xyz(); X() { var x = base.RequiredPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { extern void Xyz(); X() { var x = this.RequiredPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { extern void Xyz(); X(X x) { var y = x.RequiredPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { extern void Xyz(); X() { X x = null; var y = x.RequiredPorts.Xyz; } } }" =? None
@@ -124,7 +121,6 @@ module ``Port references`` =
     let ``existing provided port is valid`` () =
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X() { var x = ProvidedPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X() { var x = (this).ProvidedPorts.Xyz; } } }" =? None
-        getDiagnostic "namespace Y { class X : Component { void Xyz() {} X() { var x = base.ProvidedPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X(X x) { var y = x.ProvidedPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X() { X x = null; var y = x.ProvidedPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X x; X() { var y = x.ProvidedPorts.Xyz; } } }" =? None

@@ -24,6 +24,7 @@ namespace SafetySharp.Modeling
 {
 	using System;
 	using Runtime;
+	using Utilities;
 
 	/// <summary>
 	///     Represents a base class for all fault occurrence patterns.
@@ -42,5 +43,15 @@ namespace SafetySharp.Modeling
 		///     Updates the occurrence state. Returns <c>true</c> to indicate that the fault is occurring.
 		/// </summary>
 		public abstract bool Update();
+
+		/// <summary>
+		///     Sets the initial <paramref name="values" /> of the current occurrence pattern's <paramref name="field" />.
+		/// </summary>
+		/// <param name="field">The field whose initial values should be set.</param>
+		/// <param name="values">The initial values of the field.</param>
+		protected static void SetInitialValues<T>(T field, params T[] values)
+		{
+			Requires.CompilationTransformation();
+		}
 	}
 }

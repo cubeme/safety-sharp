@@ -32,11 +32,10 @@ namespace SafetySharp.Compiler.Normalization
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using Runtime;
 
 	/// <summary>
-	///     Replaces all invocations of <see cref="Component.SetInitialValues{T}(T,T[])" /> with
-	///     <see cref="ComponentInfo.Builder.WithInitialValues" />.
+	///     Replaces all invocations of any of the <c>SetInitialValues</c> methods with an invocation of the corresponding metadata
+	///     builder's <c>WithInitialValues</c> method.
 	/// </summary>
 	public sealed class InitialValuesNormalizer : SyntaxNormalizer
 	{
@@ -51,8 +50,15 @@ namespace SafetySharp.Compiler.Normalization
 				return base.VisitExpressionStatement(statement);
 
 			var methodSymbol = invocationExpression.GetReferencedSymbol(SemanticModel);
-			if (!methodSymbol.ContainingType.Equals(Compilation.GetComponentClassSymbol()) || methodSymbol.Name != "SetInitialValues")
-				return statement;
+			if (methodSymbol.Name != "SetInitialValues" || !methodSymbol.IsStatic)
+				return base.VisitExpressionStatement(statement);
+
+			var isComponentMethod = methodSymbol.ContainingType.Equals(Compilation.GetComponentClassSymbol());
+			var isFaultMethod = methodSymbol.ContainingType.Equals(Compilation.GetFaultClassSymbol());
+			var isOccurrenceMethod = methodSymbol.ContainingType.Equals(Compilation.GetOccurrencePatternClassSymbol());
+
+			if (!isComponentMethod && !isFaultMethod && !isOccurrenceMethod)
+				return base.VisitExpressionStatement(statement);
 
 			// MetadataBuilders.GetBuilder(this)
 			var metadataBuilderSymbol = Syntax.TypeExpression(Compilation.GetTypeSymbol(typeof(MetadataBuilders)));
@@ -60,11 +66,7 @@ namespace SafetySharp.Compiler.Normalization
 			var builder = Syntax.InvocationExpression(getBuilderMethod, Syntax.ThisExpression());
 
 			// ReflectionHelpers.GetField(typeof(...), typeof(...), "...")
-			var symbol = invocationExpression.ArgumentList.Arguments[0].Expression.GetReferencedSymbol(SemanticModel);
-			var fieldSymbol = symbol as IFieldSymbol;
-			if (fieldSymbol == null)
-				return statement; // TODO: Remove once the expression overload of SetInitialValues is removed
-
+			var fieldSymbol = invocationExpression.ArgumentList.Arguments[0].Expression.GetReferencedSymbol<IFieldSymbol>(SemanticModel);
 			var fieldInfo = fieldSymbol.GetRuntimeFieldExpression(Syntax);
 
 			// .WithInitialValues()

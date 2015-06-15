@@ -23,6 +23,8 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Linq;
 	using System.Reflection;
 	using CompilerServices;
 	using Modeling;
@@ -36,6 +38,7 @@ namespace SafetySharp.Runtime
 		public class Builder
 		{
 			private readonly Fault _fault;
+			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
 			private OccurrencePatternInfo _occurrencePattern;
 
 			/// <summary>
@@ -46,6 +49,24 @@ namespace SafetySharp.Runtime
 			{
 				Requires.NotNull(fault, () => fault);
 				_fault = fault;
+			}
+
+			/// <summary>
+			///     Sets the initial <paramref name="values" /> of the component's <paramref name="field" />.
+			/// </summary>
+			/// <param name="field">The field whose initial values should be set.</param>
+			/// <param name="values">The initial values of the field.</param>
+			public void WithInitialValues(FieldInfo field, params object[] values)
+			{
+				Requires.NotNull(field, () => field);
+				Requires.NotNull(values, () => values);
+				Requires.That(values.Length > 0, () => values, "At least one value must be provided.");
+				Requires.That(_fields.ContainsKey(field), () => field, "The given field is unknown.");
+
+				var typesMatch = values.All(value => value.GetType() == field.FieldType);
+				Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
+
+				_fields[field] = values;
 			}
 
 			/// <summary>

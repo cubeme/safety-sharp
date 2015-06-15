@@ -127,18 +127,12 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Adds the <paramref name="portBinding" /> to the component's bindings.
+		///     Adds the <paramref name="portBinding" /> to the model's bindings.
 		/// </summary>
 		/// <param name="portBinding">The port binding that should be added.</param>
-		public PortBinding Bind(PortBinding portBinding)
+		public void Bind(PortBinding portBinding)
 		{
-			Requires.NotNull(portBinding, () => portBinding);
-			RequiresNotSealed();
-
-			portBinding.Binder = this;
-			_bindings.Add(portBinding);
-
-			return portBinding;
+			Requires.CompilationTransformation();
 		}
 
 		/// <summary>

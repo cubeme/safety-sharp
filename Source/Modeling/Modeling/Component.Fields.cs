@@ -63,16 +63,6 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		/// <param name="field">The field whose initial values should be set.</param>
 		/// <param name="values">The initial values of the field.</param>
-		protected void SetInitialValues<T>(T field, params T[] values)
-		{
-			throw new NotSupportedException("This method cannot be called at runtime. Use the S# compiler to compile the assembly.");
-		}
-
-		/// <summary>
-		///     Sets the initial <paramref name="values" /> of the component's <paramref name="field" />.
-		/// </summary>
-		/// <param name="field">The field whose initial values should be set.</param>
-		/// <param name="values">The initial values of the field.</param>
 		public void SetInitialValues<T>(Expression<Func<T>> field, params T[] values)
 		{
 			Requires.NotNull(field, () => field);

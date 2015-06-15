@@ -96,5 +96,27 @@ namespace SafetySharp.Modeling
 		private void UpdateBehavior()
 		{
 		}
+
+		/// <summary>
+		///     Sets the initial <paramref name="values" /> of the current component's <paramref name="field" />.
+		/// </summary>
+		/// <param name="field">The field whose initial values should be set.</param>
+		/// <param name="values">The initial values of the field.</param>
+		protected static void SetInitialValues<T>(T field, params T[] values)
+		{
+			Requires.CompilationTransformation();
+		}
+
+		/// <summary>
+		///     Adds the <paramref name="portBinding" /> to the current component's bindings.
+		/// </summary>
+		/// <param name="portBinding">
+		///     The port binding expression of the form
+		///     <c>component1.RequiredPorts.Port1 = component2.ProvidedPorts.Port2</c> that declares the binding.
+		/// </param>
+		protected static void Bind(object portBinding)
+		{
+			Requires.CompilationTransformation();
+		}
 	}
 }

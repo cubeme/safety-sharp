@@ -26,25 +26,21 @@ namespace Tests.Diagnostics.Bindings.Models.Invalid
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
 
-	[Diagnostic(DiagnosticIdentifier.ExpectedPortAssignment, 35, 18, 4)]
-	[Diagnostic(DiagnosticIdentifier.ExpectedPortAssignment, 36, 18, 4)]
+	[Diagnostic(DiagnosticIdentifier.ExpectedPortAssignment, 34, 18, 4)]
 	internal class M1 : Model
 	{
 		private M1()
 		{
 			Bind(null);
-			Bind(null).Delayed();
 		}
 	}
 
-	[Diagnostic(DiagnosticIdentifier.ExpectedPortAssignment, 46, 18, 1)]
-	[Diagnostic(DiagnosticIdentifier.ExpectedPortAssignment, 47, 18, 1)]
+	[Diagnostic(DiagnosticIdentifier.ExpectedPortAssignment, 43, 18, 1)]
 	internal class M2 : Model
 	{
 		private M2(PortBinding p)
 		{
 			Bind(p);
-			Bind(p).Delayed();
 		}
 	}
 }

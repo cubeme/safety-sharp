@@ -102,6 +102,18 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
+		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="OccurrencePattern" /> class within the
+		///     context of the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation the class symbol should be returned for.</param>
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetOccurrencePatternClassSymbol([NotNull] this Compilation compilation)
+		{
+			Requires.NotNull(compilation, () => compilation);
+			return compilation.GetTypeSymbol<OccurrencePattern>();
+		}
+
+		/// <summary>
 		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="OccurrencePatternAttribute" /> class within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>

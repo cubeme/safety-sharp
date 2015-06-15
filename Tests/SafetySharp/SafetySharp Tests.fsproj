@@ -64,7 +64,6 @@
     <Compile Include="Modeling\ModelingTestHelpers.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
-    <Compile Include="Modeling\BindingTests.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Assemblies.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Bindings.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Components.fs" />

@@ -86,6 +86,16 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
+		///     Sets the initial <paramref name="values" /> of the current fault's <paramref name="field" />.
+		/// </summary>
+		/// <param name="field">The field whose initial values should be set.</param>
+		/// <param name="values">The initial values of the field.</param>
+		protected static void SetInitialValues<T>(T field, params T[] values)
+		{
+			Requires.CompilationTransformation();
+		}
+
+		/// <summary>
 		///     Updates the fault's internal state.
 		/// </summary>
 		internal void Update()

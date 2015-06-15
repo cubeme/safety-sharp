@@ -271,11 +271,12 @@ namespace SafetySharp.Utilities
 		}
 
 		/// <summary>
-		///     Throws a <see cref="NotSupportedException" /> indicating that a lifted version of the method should be called instead.
+		///     Throws a <see cref="NotSupportedException" /> indicating that a compiler transformed version of the caller should be
+		///     invoked instead.
 		/// </summary>
-		public static void LiftedCall()
+		public static void CompilationTransformation()
 		{
-			throw new NotSupportedException("This method is not supported by the S# runtime. Call a lifted overload of the method instead.");
+			throw new NotSupportedException("This method cannot be called at runtime. Use the S# compiler to compile the assembly.");
 		}
 
 		/// <summary>

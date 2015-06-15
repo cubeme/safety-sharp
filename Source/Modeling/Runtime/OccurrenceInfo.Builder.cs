@@ -23,6 +23,8 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Linq;
 	using System.Linq.Expressions;
 	using System.Reflection;
 	using Modeling;
@@ -35,6 +37,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public class Builder
 		{
+			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
 			private readonly OccurrencePattern _occurrencePattern;
 
 			internal Builder(OccurrencePattern c)
@@ -51,7 +54,26 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Creates an immutable <see cref="OccurrencePatternInfo" /> instance from the current state of the builder and makes it available
+			///     Sets the initial <paramref name="values" /> of the component's <paramref name="field" />.
+			/// </summary>
+			/// <param name="field">The field whose initial values should be set.</param>
+			/// <param name="values">The initial values of the field.</param>
+			public void WithInitialValues(FieldInfo field, params object[] values)
+			{
+				Requires.NotNull(field, () => field);
+				Requires.NotNull(values, () => values);
+				Requires.That(values.Length > 0, () => values, "At least one value must be provided.");
+				Requires.That(_fields.ContainsKey(field), () => field, "The given field is unknown.");
+
+				var typesMatch = values.All(value => value.GetType() == field.FieldType);
+				Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
+
+				_fields[field] = values;
+			}
+
+			/// <summary>
+			///     Creates an immutable <see cref="OccurrencePatternInfo" /> instance from the current state of the builder and makes it
+			///     available
 			///     to S#'s <see cref="MetadataProvider" />.
 			/// </summary>
 			/// <param name="fault">The fault that is affected by the occurrence pattern.</param>
