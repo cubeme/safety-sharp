@@ -940,7 +940,7 @@ module internal VcGuardWithAssignmentModel =
                 | _ ->
                     Assignments.Deterministic(guard,processWrites stm)
         
-        let processAssumptionsAndAssertions (stm:Stm) : Assignments =
+        let processAssumptionsAndAssertions (guardOfChoice:Expr option,stm:Stm) : Assignments =
             match stm with
                 | Stm.Block(blockSid,statements) ->                    
                     let rec traverseBlock (revAlreadyToAssume:Expr list)
@@ -974,7 +974,7 @@ module internal VcGuardWithAssignmentModel =
                 | Stm.Choice(_,choices) ->
                     choices |> List.map (processAssumptionsAndAssertions)
                 | _ ->
-                    [processAssumptionsAndAssertions stm]
+                    [processAssumptionsAndAssertions (None,stm)]
         {
             GuardWithAssignmentModel.Globals = pgm.Globals;
             GuardWithAssignmentModel.Assignments = processChoices pgm.Body;
