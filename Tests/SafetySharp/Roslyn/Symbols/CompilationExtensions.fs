@@ -86,9 +86,9 @@ module ``GetComponentInterfaceSymbol method`` =
 module ``GetUpdateMethodSymbol method`` =
     [<Test>]
     let ``throws when compilation is null`` () =
-        raisesArgumentNullException "compilation" (fun () -> (null : Compilation).GetUpdateMethodSymbol () |> ignore)
+        raisesArgumentNullException "compilation" (fun () -> (null : Compilation).GetComponentUpdateMethodSymbol () |> ignore)
 
     [<Test>]
     let ``returns the BehaviorAttribute symbol`` () =
         let compilation = TestCompilation ""
-        compilation.CSharpCompilation.GetUpdateMethodSymbol().Name =? "Update"
+        compilation.CSharpCompilation.GetComponentUpdateMethodSymbol().Name =? "Update"

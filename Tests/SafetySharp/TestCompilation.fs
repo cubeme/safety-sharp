@@ -76,7 +76,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     let mutable (assembly : Assembly) = null
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 
-    let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using System; using SafetySharp.Modeling; using SafetySharp.CompilerServices;\n" + csharpCode)
+    let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using System; using SafetySharp.Modeling; using SafetySharp.Modeling.Faults; using SafetySharp.CompilerServices;\n" + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
     let assemblyPath = Path.Combine (Environment.CurrentDirectory, sprintf "tmp_%s.dll" (Guid.NewGuid().ToString ()))

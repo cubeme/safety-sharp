@@ -38,7 +38,7 @@ module ``Occurrence pattern`` =
         errorDiagnostic DiagnosticIdentifier.MissingOccurrencePattern (1, location) (1, location + 1) 
             "Fault '%s' does not declare a default occurrence pattern. Mark it with an attribute derived from '%s'. \
 			You can change the default occurrence pattern dynamically during model initialization time."
-            fault typeof<OccurrencePatternAttribute>.FullName
+            fault typeof<Faults.OccurrencePatternAttribute>.FullName
 
     let ambiguous fault location =
         errorDiagnostic DiagnosticIdentifier.AmbiguousOccurrencePattern (1, location) (1, location + 1) 
@@ -46,7 +46,7 @@ module ``Occurrence pattern`` =
 
     let noEffect fault location =
         warningDiagnostic DiagnosticIdentifier.OccurrencePatternHasNoEffect (1, location) (1, location + 1) 
-            "Occurrence patterns have no effect on classes not derived from 'SafetySharp.Modeling.Fault'."
+            "Occurrence patterns have no effect on classes not derived from 'SafetySharp.Modeling.Faults.Fault'."
 
     [<Test>]
     let ``non-fault class without an occurrence pattern is valid`` () =

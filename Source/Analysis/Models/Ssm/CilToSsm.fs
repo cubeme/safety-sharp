@@ -546,7 +546,7 @@ module internal CilToSsm =
         List.map transform
 
     /// Transforms the given fault.
-    let transformFault (metadata : MetadataProvider) (resolver : GenericResolver) (f : Modeling.Fault) =
+    let transformFault (metadata : MetadataProvider) (resolver : GenericResolver) (f : Faults.Fault) =
         let faultType = metadata.GetTypeReference(f).Resolve ()
         { Fault.Name = f.GetType().Name
           Fault.Methods = transformMethods metadata f faultType resolver }
