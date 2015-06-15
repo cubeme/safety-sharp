@@ -34,10 +34,14 @@ namespace Tests.Utilities
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using SafetySharp.Compiler;
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Compiler.Normalization;
+	using SafetySharp.Compiler.Roslyn.Symbols;
+	using SafetySharp.Compiler.Roslyn.Syntax;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Utilities;
 	using Shouldly;
@@ -81,6 +85,39 @@ namespace Tests.Utilities
 		protected static string GetFileName([CallerFilePath] string filePath = null)
 		{
 			return filePath;
+		}
+
+		/// <summary>
+		///     Executes the <see cref="TestComponent.Check" /> methods of all <see cref="TestComponent" /> instances declared in
+		///     <paramref name="syntaxTree" />.
+		/// </summary>
+		/// <param name="syntaxTree">The syntax tree that should be compiled and tested.</param>
+		protected void ExecuteComponentTests(SyntaxTree syntaxTree)
+		{
+			var compilation = CreateCompilation(syntaxTree);
+			var semanticModel = compilation.GetSemanticModel(syntaxTree);
+
+			var componentTypes = syntaxTree
+				.Descendants<ClassDeclarationSyntax>()
+				.Select(declaration => declaration.GetTypeSymbol(semanticModel))
+				.Where(symbol => !symbol.IsGenericType && !symbol.IsAbstract && symbol.ContainingType == null)
+				.Where(symbol => symbol.IsDerivedFrom(semanticModel.GetTypeSymbol<TestComponent>()))
+				.Select(symbol => symbol.ToDisplayString())
+				.ToArray();
+
+			if (componentTypes.Length == 0)
+				throw new TestException("Unable to find any testable class declarations.");
+
+			var assembly = CompileSafetySharp(compilation);
+
+			foreach (var componentType in componentTypes)
+			{
+				var type = assembly.GetType(componentType);
+				var component = (TestComponent)Activator.CreateInstance(type);
+				MetadataBuilders.GetBuilder(component).RegisterMetadata();
+
+				component.RunTests();
+			}
 		}
 
 		/// <summary>
@@ -168,8 +205,9 @@ namespace Tests.Utilities
 				}
 			}
 		}
+
 		/// <summary>
-		/// Gets a string containing the contents of all syntax tress of the <paramref name="compilation"/>.
+		///     Gets a string containing the contents of all syntax tress of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation whose syntax trees should be written to a string.</param>
 		protected static string SyntaxTreesToString(Compilation compilation)

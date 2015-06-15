@@ -23,6 +23,7 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Collections.Immutable;
 	using System.Reflection;
 	using Modeling;
@@ -89,7 +90,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the field's set of initial values.
 		/// </summary>
-		public ImmutableArray<object> InitialValues { get; private set; }
+		public IEnumerable<object> InitialValues { get; private set; }
 
 		/// <summary>
 		///     Returns a string that represents the current object.
