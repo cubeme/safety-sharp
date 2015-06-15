@@ -114,8 +114,13 @@ module internal VcGuardWithAssignmentModel =
                             | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Choice (rightSid,rightChoices))) ->
                                 // push into Choice. (prepend to each of the rightChoices at the beginning)
                                 let pushCandidate=peepholeLeft.Value
-                                let createNewChoice (choice:Stm) =
-                                    choice.prependStatements uniqueStatementIdGenerator [pushCandidate]
+                                let createNewChoice (choiceExpr:Expr option,choiceStm:Stm) =
+                                    let newChoiceExpr =
+                                        match choiceExpr with
+                                            | Some(choiceExpr) -> Some (choiceExpr.rewriteExpr_varToExpr (_var,leftExpr))
+                                            | None -> None
+                                    let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
+                                    (newChoiceExpr,newChoiceStm)
                                 let newChoiceStm = Stm.Choice(rightSid,rightChoices |> List.map createNewChoice)
                                 assert rightNextToPeephole.IsEmpty // in treeified Stmts there is nothing after stochastic
                                 let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
@@ -123,10 +128,10 @@ module internal VcGuardWithAssignmentModel =
                             | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Stochastic (rightSid,rightStochasticChoices))) ->
                                 // push into Stochastic (prepend to each of the rightStochasticChoices at the beginning). Adapt choiceExprs.
                                 let pushCandidate=peepholeLeft.Value
-                                let createNewChoice (choiceExpr:Expr,choiceStm:Stm) =
-                                    let newChoiceExpr = choiceExpr.rewriteExpr_varToExpr (_var,leftExpr)
+                                let createNewChoice (choiceGuard:Expr,choiceStm:Stm) =
+                                    let newChoiceGuard = choiceGuard.rewriteExpr_varToExpr (_var,leftExpr)
                                     let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
-                                    (newChoiceExpr,newChoiceStm)
+                                    (newChoiceGuard,newChoiceStm)
                                 let newChoiceStm = Stm.Stochastic(rightSid,rightStochasticChoices |> List.map createNewChoice)
                                 assert rightNextToPeephole.IsEmpty // in treeified Stmts there is nothing after stochastic
                                 let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
@@ -161,14 +166,17 @@ module internal VcGuardWithAssignmentModel =
                     else
                         (stm,false)
                     ///////////// End of rewriting Block
-                | Stm.Choice (sid,choices: Stm list) ->
+                | Stm.Choice (sid,choices: (Expr option * Stm) list) ->
                     // We assume a treeified version. Thus this Stm.Choice is at the end of a Block.
                     // Thus nothing happens after this Stm.Choice. Thus this Stm.Choice is independent
                     // from whatever happens after the choice. We do not alter or add anything after the
                     // Stm.Choice, we only manipulate things inside each of the choices. Thus we can
                     // manipulate the choices in parallel.
                     let (newChoices,somethingChanged) =
-                        choices |> List.map findAndPushAssignmentNotAtTheEnd
+                        choices |> List.map (fun (choiceGuard,choiceStm) ->
+                                                            let (newChoiceStm,somethingChanged) = findAndPushAssignmentNotAtTheEnd choiceStm
+                                                            ((choiceGuard,newChoiceStm),somethingChanged)
+                                                        )
                                 |> List.unzip
                     let somethingChanged = somethingChanged |> List.exists id
                     if somethingChanged then
@@ -182,7 +190,7 @@ module internal VcGuardWithAssignmentModel =
                                                             let (newChoiceStm,somethingChanged) = findAndPushAssignmentNotAtTheEnd choiceStm
                                                             ((choiceProb,newChoiceStm),somethingChanged)
                                                         )
-                                            |> List.unzip
+                                         |> List.unzip
                     let somethingChanged = somethingChanged |> List.exists id
                     if somethingChanged then
                         (Stm.Stochastic(sid,newChoices),true)
@@ -239,7 +247,7 @@ module internal VcGuardWithAssignmentModel =
         // * 2) StmBlock1 { Stm... ; StmStochastic {  StmChoice { } } <--- Choice is the direct child of a Stochastic
         // * 3) In a Block:  StmX;StmAssume;StmChoice   => StmX;StmChoice (assume is part of choice)
         // * 4) In a Block:  StmX;StmAssert;StmChoice    => StmX;StmChoice (assert is part of choice)
-
+        
         let! state = getState ()
         let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
 
@@ -268,8 +276,8 @@ module internal VcGuardWithAssignmentModel =
                                 // case 4) In a Block:  StmX;StmAssert;StmChoice
                                 // push into Choice. (prepend to each of the rightChoices at the beginning)
                                 let pushCandidate=peepholeLeft.Value
-                                let createNewChoice (choice:Stm) =
-                                    choice.prependStatements uniqueStatementIdGenerator [pushCandidate]
+                                let createNewChoice (choiceGuard:Expr option,choiceStm:Stm) =
+                                    (choiceGuard,choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate])
                                 let newChoiceStm = Stm.Choice(rightSid,rightChoices |> List.map createNewChoice)
                                 assert rightNextToPeephole.IsEmpty // in treeified Stmts there is nothing after stochastic
                                 let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
@@ -304,14 +312,17 @@ module internal VcGuardWithAssignmentModel =
                     else
                         (stm,false)
                     ///////////// End of rewriting Block
-                | Stm.Choice (sid,choices: Stm list) ->
+                | Stm.Choice (sid,choices: (Expr option*Stm) list) ->
                     // We assume a treeified version. Thus this Stm.Choice is at the end of a Block.
                     // Thus nothing happens after this Stm.Choice. Thus this Stm.Choice is independent
                     // from whatever happens after the choice. We do not alter or add anything after the
                     // Stm.Choice, we only manipulate things inside each of the choices. Thus we can
                     // manipulate the choices in parallel.
                     let (newChoices,somethingChanged) =
-                        choices |> List.map findAndPullChoicesNotAtTheBeginning
+                        choices |> List.map (fun (choiceGuard,choiceStm) ->
+                                                    let newChoiceStm,somethingChanged= findAndPullChoicesNotAtTheBeginning choiceStm
+                                                    ((choiceGuard,newChoiceStm),somethingChanged)
+                                            )
                                 |> List.unzip
                     let somethingChanged = somethingChanged |> List.exists id
                     if somethingChanged then
@@ -333,11 +344,12 @@ module internal VcGuardWithAssignmentModel =
                                         //case 2: ... { StmChoice { } }
                                         let otherStochasticChoicesLeft = revAlreadyTraversed |> List.rev
                                         let otherStochasticChoicesRight = toTraverse.Tail
-                                        let createChoice (choiceInStochastic:Stm) : Stm =
-                                            let stochasticChoiceInTheMiddle = (stochasticChoiceToTraverseExpr,choiceInStochastic)
+                                        let createChoice (choiceInStochasticGuard:Expr option, choiceInStochasticStm:Stm) : Expr option*Stm =
+                                            // stochasticChoiceInTheMiddle contained the Stm.Choice. Only stochasticChoiceInTheMiddle is changed. See above.
+                                            let stochasticChoiceInTheMiddle = (stochasticChoiceToTraverseExpr,choiceInStochasticStm)
                                             let stochasticChoicesInChoice = otherStochasticChoicesLeft@[stochasticChoiceInTheMiddle]@otherStochasticChoicesRight
                                             let stochasticChoiceStm = Stm.Stochastic(stochasticSid,stochasticChoicesInChoice)
-                                            stochasticChoiceStm.recursiveRenumberStatements uniqueStatementIdGenerator
+                                            (choiceInStochasticGuard,stochasticChoiceStm.recursiveRenumberStatements uniqueStatementIdGenerator)
                                         let outerChoices = choiceToPullChoices |> List.map createChoice
                                         (Stm.Choice(choiceToPullSid,outerChoices),true)
                                     | _ ->
@@ -420,26 +432,34 @@ module internal VcGuardWithAssignmentModel =
                     else
                         (stm,None,false)
                     ///////////// End of rewriting Block
-                | Stm.Choice (sid,choices: Stm list) ->
+                | Stm.Choice (sid,choices: (Expr option*Stm) list) ->
                     // We assume a treeified version. Thus this Stm.Choice is at the end of a Block.
                     // Thus nothing happens after this Stm.Choice. Thus this Stm.Choice is independent
                     // from whatever happens after the choice. We do not alter or add anything after the
                     // Stm.Choice, we only manipulate things inside each of the choices. Thus we can
                     // manipulate the choices in parallel.
-                    let (newChoices,statementsToPull,somethingChanged) =
-                        choices |> List.map findAndPull
-                                |> List.unzip3
-                    let somethingChanged = somethingChanged |> List.exists id
-                    let statementsToPull = statementsToPull |> List.collect (fun toPull -> if toPull.IsSome then [toPull.Value] else [])
-                    if somethingChanged then
-                        let newChoiceStm = Stm.Choice(sid,newChoices)
-                        if statementsToPull.IsEmpty = false then
-                            let newId = uniqueStatementIdGenerator()
-                            (Stm.Block(newId,statementsToPull@[newChoiceStm]),None,true)
+                    // We do not pull an assume/assert before a choice, but we could pull statements of a choice as
+                    // first elements of each choice
+                    let pullInChoice (choiceGuard,choiceStm) =
+                        let newChoiceStm,statementToPull,somethingChanged = findAndPull choiceStm
+                        if somethingChanged then
+                            if statementToPull.IsSome then
+                                let newId = uniqueStatementIdGenerator()
+                                ((choiceGuard,Stm.Block(newId,statementToPull.Value::[newChoiceStm])),true)
+                            else
+                                ((choiceGuard,choiceStm),true)
                         else
-                            (newChoiceStm,None,true)
-                    else
+                            ((choiceGuard,choiceStm),false)
+                    let (newChoices,somethingChanged) =
+                        choices |> List.map pullInChoice
+                                |> List.unzip                                
+                    let somethingChanged = somethingChanged |> List.exists id
+                    if somethingChanged then
                         (stm,None,false)
+                    else
+                        let newChoiceStm = Stm.Choice(sid,newChoices)
+                        (newChoiceStm,None,true)
+
                 | Stm.Stochastic (stochasticSid,stochasticChoices: (Expr*Stm) list) ->
                     let rec traverseStochasticChoices (revAlreadyTraversed:(Expr*Stm) list) (toTraverse:(Expr*Stm) list) : (Stm*(Stm option)*bool) = 
                         if toTraverse.IsEmpty then
@@ -525,7 +545,7 @@ module internal VcGuardWithAssignmentModel =
         
     let phase5MergeChoicesAtTheBeginning () : TsamWorkflowFunction<_,unit> = workflow {
         // We need to merge choices with choices:
-        // Example:
+        // Example 1:
         //    choice {                             choice {
         //       { Stm1 }                             { Stm1 }
         //       { Stm2 }                             { Stm2 }
@@ -534,6 +554,17 @@ module internal VcGuardWithAssignmentModel =
         //               {Stm3}                    }
         //               {Stm4}
         //           }
+        //       }
+        //    }
+        // Example 2:
+        //    choice {                                        choice {
+        //       guard1  => { Stm1 }                             guard1             => { Stm1 }
+        //       ---     => { Stm2 }                             ---                => { Stm2 }
+        //       guard34 => {                                    guard34 && guard3  => { Stm3 }
+        //                      choice {            ===>         guard34            => { Stm4 }
+        //                         guard3 => {Stm3}          }
+        //                         ---    => {Stm4}
+        //                      }
         //       }
         //    }
         
@@ -580,26 +611,35 @@ module internal VcGuardWithAssignmentModel =
                     else
                         (stm,false)
                     ///////////// End of rewriting Block
-                | Stm.Choice (sid,choices: Stm list) ->
-                    let rec traverseChoices (revAlreadyTraversed:(Stm) list) (toTraverse:(Stm) list) : (Stm*bool) = 
+                | Stm.Choice (sid,choices: (Expr option * Stm) list) ->
+                    let rec traverseChoices (revAlreadyTraversed:(Expr option * Stm) list) (toTraverse:(Expr option * Stm) list) : (Stm*bool) = 
                         if toTraverse.IsEmpty then
                             (stm,false)
                         else
-                            let choiceToTraverseStm = toTraverse.Head
+                            let (choiceToTraverseGuard,choiceToTraverseStm) = toTraverse.Head                                                       
                             match choiceToTraverseStm with
                                 | Stm.Block(_,Stm.Choice(_,innerChoices)::[])
                                 | Stm.Choice(_,innerChoices) ->
-                                    // The main part of this algorithm
+                                    // The main part of this algorithm                                    
+                                    let mergeGuards (guard1:Expr option) (guard2:Expr option) : Expr option =
+                                        match (guard1,guard2) with
+                                            | Some(guard1),Some(guard2) -> Some(Expr.BExpr(guard1,BOp.And,guard2))
+                                            | Some(guard1),None -> Some(guard1)
+                                            | None,Some(guard2) -> Some(guard2)
+                                            | None,None -> None       
+                                    let newInnerChoices =
+                                        innerChoices |> List.map (fun (innerChoiceGuard,innerChoiceStm) -> (mergeGuards choiceToTraverseGuard innerChoiceGuard,innerChoiceStm) )
                                     let newChoices =
                                         (revAlreadyTraversed |> List.rev)
-                                        @ innerChoices
+                                        @ newInnerChoices
                                         @ toTraverse.Tail
                                     let choiceStatement = Stm.Choice (sid,newChoices)
                                     (choiceStatement,true)
                                 | _ ->
                                     // recursive case (try to change something inside)
                                     // stochastic statement may propagate upwards
-                                    let (traversedChoice,somethingChanged) = findAndMerge choiceToTraverseStm
+                                    let (traversedChoiceStm,somethingChanged) = findAndMerge choiceToTraverseStm
+                                    let traversedChoice = (choiceToTraverseGuard,traversedChoiceStm)
                                     if somethingChanged then
                                         let newChoices =
                                             (revAlreadyTraversed |> List.rev)
@@ -609,7 +649,7 @@ module internal VcGuardWithAssignmentModel =
                                         (choiceStatement,true)
                                     else
                                         //nothing was changed by toTraverse.Head, so try the next candidate in the list
-                                        traverseChoices (choiceToTraverseStm::revAlreadyTraversed) (toTraverse.Tail)
+                                        traverseChoices (toTraverse.Head::revAlreadyTraversed) (toTraverse.Tail)
                     traverseChoices [] choices
                 | _ ->
                     (stm,false)
@@ -687,15 +727,16 @@ module internal VcGuardWithAssignmentModel =
                     else
                         (stm,false)
                     ///////////// End of rewriting Block
-                | Stm.Choice (sid,choices: Stm list) ->
-                    let rec traverseChoices (revAlreadyTraversed:(Stm) list) (toTraverse:(Stm) list) : (Stm*bool) = 
+                | Stm.Choice (sid,choices: (Expr option * Stm) list) ->
+                    let rec traverseChoices (revAlreadyTraversed:(Expr option * Stm) list) (toTraverse:(Expr option * Stm) list) : (Stm*bool) = 
                         if toTraverse.IsEmpty then
                             (stm,false)
                         else
-                            let choiceToTraverseStm = toTraverse.Head
+                            let (choiceToTraverseGuard,choiceToTraverseStm) = toTraverse.Head
                             // recursive case (try to change something inside)
                             // stochastic statement may propagate upwards
-                            let (traversedChoice,somethingChanged) = findAndMerge choiceToTraverseStm
+                            let (traversedChoiceStm,somethingChanged) = findAndMerge choiceToTraverseStm
+                            let traversedChoice = (choiceToTraverseGuard,traversedChoiceStm)
                             if somethingChanged then
                                 let newChoices =
                                     (revAlreadyTraversed |> List.rev)
@@ -705,7 +746,7 @@ module internal VcGuardWithAssignmentModel =
                                 (choiceStatement,true)
                             else
                                 //nothing was changed by toTraverse.Head, so try the next candidate in the list
-                                traverseChoices (choiceToTraverseStm::revAlreadyTraversed) (toTraverse.Tail)
+                                traverseChoices (toTraverse.Head::revAlreadyTraversed) (toTraverse.Tail)
                     traverseChoices [] choices
 
                 | Stm.Stochastic (stochasticSid,stochasticChoices: (Expr*Stm) list) ->
