@@ -22,6 +22,8 @@
 
 namespace SafetySharp.Models
 
+open SafetySharp.Ternary
+
 module internal Tsam =
     // Both the transformation with weakest precondition or strongest postcondition work with a modified Sam-Model.
     
@@ -41,7 +43,25 @@ module internal Tsam =
     type OverflowBehavior = SafetySharp.Modeling.OverflowBehavior
     type Val = SafetySharp.Models.Sam.Val
     type Expr = SafetySharp.Models.Sam.Expr
-    
+        
+    type FormOfGuards =
+        | Unknown
+        // Completely defined / left total syntactically. The syntax of the guards themselves guarantees, that every time at least one choice can be taken
+        | CompletelyDefinedSyntactically
+        // Completely defined / left total contextually. The assignment before guarantees that the guards of the choices are enough.
+        // Example code: "x:=3; choose {x >= 2 => {}}". Pruning some guards may decrease the size of the treeified form.
+        | CompletelyDefinedFromContextually
+        // Completely defined and deterministic / (total) function / left total and right unique syntactically.
+        // Perhaps determinism enables optimized translations if it is known which parts of the program are deterministic
+        | CompletelyDefinedAndDeterministicSyntactically
+        // Completely defined and deterministic / (total) function / left total and right unique contextually.
+        | CompletelyDefinedAndDeterministicContextually
+        // Guards are neither completely defined syntactically or contextually. Thus a statement may deadlock
+        // Example code: "x:=range(1,2); choose { x == 1 => {}}"
+        | MayDeadlock
+        // No choice has a guard
+        | CompletelyUndeterministic
+
     type StatementId = StatementId of int
         with
             member this.id = match this with | StatementId(value)-> value
@@ -50,8 +70,8 @@ module internal Tsam =
         | Assert of SID:StatementId * Expression:Expr       //semantics: wp( Stm.Assert(e), phi) := e && phi (formula to prove is false, when assertion is false)
         | Assume of SID:StatementId * Expression:Expr       //semantics: wp( Stm.Assume(e), phi) := e -> phi
         | Block of SID:StatementId * Statements:Stm list
-        | Choice of SID:StatementId * Choices:Stm list
-        | Stochastic of SID:StatementId * (Expr * Stm) list //Expr must be of type ProbVal
+        | Choice of SID:StatementId * Choices:(Expr option * Stm) list //Expr must be of type BoolVal
+        | Stochastic of SID:StatementId * StochasticChoices:(Expr * Stm) list //Expr must be of type ProbVal
         | Write of SID:StatementId * Variable:Var * Expression:Expr
         with
             member this.GetStatementId : StatementId =
@@ -72,13 +92,31 @@ module internal Tsam =
         | Default
         | SingleAssignments
         | Passive
-        
-    type UsedFeatures = unit
-    (*{
-        Indeterminism : bool;
-        Probabilism : bool;
-        Clocks : bool;
-    }*)
+    
+    type Attributes = {
+        IsStochastic : Ternary;
+        IsDeterminstic : Ternary;
+        AllChoicesWithoutGuards : Ternary;
+        MayDeadlock : Ternary;
+        HasClocks : Ternary;
+        HasPhysicalValues : Ternary;
+        IsSingleAssignment : Ternary;
+        HasAssumptions : Ternary;
+        HasAssertions : Ternary;
+    }
+        with
+            static member fullyUnknown =
+                {
+                    Attributes.IsStochastic = Ternary.Unknown;
+                    Attributes.IsDeterminstic = Ternary.Unknown;
+                    Attributes.AllChoicesWithoutGuards = Ternary.Unknown;
+                    Attributes.MayDeadlock = Ternary.Unknown;
+                    Attributes.HasClocks = Ternary.Unknown;
+                    Attributes.HasPhysicalValues = Ternary.Unknown;
+                    Attributes.IsSingleAssignment = Ternary.Unknown;
+                    Attributes.HasAssumptions = Ternary.Unknown;
+                    Attributes.HasAssertions = Ternary.Unknown;
+                }
 
     type Pgm = {
         Globals : GlobalVarDecl list;
@@ -86,7 +124,7 @@ module internal Tsam =
         //NextGlobal maps to each global variable var_i the variable var_j, which contains the value of var_i, after Body was executed. var_i can be var_j (substitution)
         NextGlobal : Map<Var,Var>;
         CodeForm : CodeForm;
-        UsedFeatures : UsedFeatures;
+        Attributes : Attributes;
         Body : Stm;
         UniqueStatementIdGenerator : unit -> StatementId;
     }
