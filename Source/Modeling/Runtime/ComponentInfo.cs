@@ -77,6 +77,20 @@ namespace SafetySharp.Runtime
 		public ComponentMethodCollection<ProvidedPortInfo> ProvidedPorts { get; private set; }
 
 		/// <summary>
+		///     Gets the root of the component hierarchy.
+		/// </summary>
+		public ComponentInfo RootComponent
+		{
+			get
+			{
+				if (ParentComponent == null)
+					return this;
+
+				return ParentComponent.RootComponent;
+			}
+		}
+
+		/// <summary>
 		///     Gets the user-friendly name of the component.
 		/// </summary>
 		public string Name { get; private set; }

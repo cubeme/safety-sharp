@@ -66,6 +66,9 @@ namespace Tests.Runtime.Bindings
 			Metadata.Bindings[0].Component.Component.ShouldBe(this);
 			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
 			Metadata.Bindings[0].ProvidedPort.ShouldBe(_i.GetComponentInfo().ProvidedPorts[1]);
+
+			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { _i.GetComponentInfo().ProvidedPorts[1] });
+			_i.GetComponentInfo().ProvidedPorts[1].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[0] });
 		}
 	}
 }

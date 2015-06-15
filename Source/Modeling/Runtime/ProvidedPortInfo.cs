@@ -25,6 +25,7 @@ namespace SafetySharp.Runtime
 	using System;
 	using System.Collections.Generic;
 	using System.Reflection;
+	using MetadataAnalysis;
 	using Modeling;
 
 	/// <summary>
@@ -48,7 +49,12 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public IEnumerable<RequiredPortInfo> BoundRequiredPorts
 		{
-			get { throw new NotImplementedException(); }
+			get
+			{
+				var finder = new BoundRequiredPortsFinder(Component.RootComponent, this);
+				finder.WalkPreOrder();
+				return finder.RequiredPorts;
+			}
 		}
 	}
 }

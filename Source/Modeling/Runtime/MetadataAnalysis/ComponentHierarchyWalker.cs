@@ -20,46 +20,52 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime.Bindings
+namespace SafetySharp.Runtime.MetadataAnalysis
 {
 	using System;
-	using System.Linq;
-	using Shouldly;
+	using Utilities;
 
-	internal abstract class X33 : TestComponent
+	/// <summary>
+	///     Analyzes a component hierarchy.
+	/// </summary>
+	internal abstract class ComponentHierarchyWalker
 	{
-		public extern void M();
-	}
+		/// <summary>
+		///     The root of the component hierarchy.
+		/// </summary>
+		private readonly ComponentInfo _root;
 
-	internal class X34 : X33
-	{
-		public X34()
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="root">The root of the component hierarchy.</param>
+		protected ComponentHierarchyWalker(ComponentInfo root)
 		{
-			Bind(RequiredPorts.M = ProvidedPorts.N);
-			Bind(((X33)this).RequiredPorts.M = ProvidedPorts.N);
+			Requires.NotNull(root, () => root);
+			_root = root;
 		}
 
-		private void N()
+		/// <summary>
+		///     Walks the component hierarchy in pre-order.
+		/// </summary>
+		internal void WalkPreOrder()
 		{
+			Action<ComponentInfo> preOrder = null;
+			preOrder = component =>
+			{
+				Visit(component);
+
+				foreach (var subcomponent in component.Subcomponents)
+					preOrder(subcomponent);
+			};
+
+			preOrder(_root);
 		}
 
-		public new extern void M();
-
-		protected override void Check()
-		{
-			Metadata.Bindings.Count().ShouldBe(2);
-
-			Metadata.Bindings[0].Component.Component.ShouldBe(this);
-			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
-			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
-
-			Metadata.Bindings[1].Component.Component.ShouldBe(this);
-			Metadata.Bindings[1].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
-			Metadata.Bindings[1].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
-
-			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[0] });
-			Metadata.RequiredPorts[1].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[0] });
-			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[1], Metadata.RequiredPorts[0] });
-		}
+		/// <summary>
+		///     Visits the <paramref name="componentInfo" />.
+		/// </summary>
+		/// <param name="componentInfo">The component metadata that should be visited.</param>
+		protected abstract void Visit(ComponentInfo componentInfo);
 	}
 }

@@ -23,7 +23,9 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Reflection;
+	using MetadataAnalysis;
 	using Modeling;
 
 	/// <summary>
@@ -42,13 +44,15 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets the metadata of the provided port that has been bound to the required port.
+		///     Gets the metadata of the provided ports that have been bound to the required port.
 		/// </summary>
-		public ProvidedPortInfo BoundProvidedPort
+		public IEnumerable<ProvidedPortInfo> BoundProvidedPorts
 		{
 			get
 			{
-				throw new NotImplementedException();
+				var finder = new BoundProvidedPortsFinder(Component.RootComponent, this);
+				finder.WalkPreOrder();
+				return finder.ProvidedPorts;
 			}
 		}
 	}
