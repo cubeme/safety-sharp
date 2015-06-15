@@ -28,10 +28,10 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that no instances of the <see cref="PortBinding" /> class are created explicitly.
@@ -42,7 +42,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer.
 		/// </summary>
-		private static readonly DiagnosticInfo ExplicitPortBindingInstantiation = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _explicitPortBindingInstantiation = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExplicitPortBindingInstantiation,
 			String.Format("Cannot instantiate an object of type '{0}' using regular constructor syntax. Use a binding expression of " +
 						  "the form 'RequiredPorts.X = ProvidedPorts.Y' instead.", typeof(PortBinding).FullName),
@@ -53,7 +53,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public PortBindingInstantiationAnalyzer()
-			: base(ExplicitPortBindingInstantiation)
+			: base(_explicitPortBindingInstantiation)
 		{
 		}
 
@@ -77,7 +77,7 @@ namespace SafetySharp.Compiler.Analyzers
 
 			var typeSymbol = node.Type.GetReferencedSymbol(semanticModel);
 			if (typeSymbol.Equals(semanticModel.GetTypeSymbol<PortBinding>()))
-				ExplicitPortBindingInstantiation.Emit(context, node);
+				_explicitPortBindingInstantiation.Emit(context, node);
 		}
 	}
 }

@@ -35,7 +35,6 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 
 		public void Update()
 		{
-			throw new NotImplementedException();
 		}
 	}
 }

@@ -27,7 +27,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Modeling;
-	using SafetySharp.Utilities;
+	using Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with <see cref="Compilation" /> instances.

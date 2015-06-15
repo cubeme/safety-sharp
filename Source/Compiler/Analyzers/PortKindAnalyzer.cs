@@ -39,7 +39,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when the update method is extern.
 		/// </summary>
-		private static readonly DiagnosticInfo ExternUpdateMethod = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _externUpdateMethod = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExternUpdateMethod,
 			"A component's Update method cannot be extern.",
 			String.Format("'{{0}}' cannot be extern as it overrides '{0}.Update()'.", typeof(Component).FullName));
@@ -47,7 +47,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a provided port is extern.
 		/// </summary>
-		private static readonly DiagnosticInfo ExternProvidedPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _externProvidedPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExternProvidedPort,
 			String.Format("A method or property marked with '{0}' cannot be extern.", typeof(ProvidedAttribute).FullName),
 			"Provided port '{0}' cannot be extern.");
@@ -55,7 +55,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a required port is not extern.
 		/// </summary>
-		private static readonly DiagnosticInfo NonExternRequiredPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _nonExternRequiredPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.NonExternRequiredPort,
 			String.Format("A method or property marked with '{0}' must be extern.", typeof(RequiredAttribute).FullName),
 			"Required port '{0}' must be extern.");
@@ -63,7 +63,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a required port is virtual.
 		/// </summary>
-		private static readonly DiagnosticInfo VirtualRequiredPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _virtualRequiredPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.VirtualRequiredPort,
 			String.Format("A method or property marked with '{0}' cannot be virtual.", typeof(RequiredAttribute).FullName),
 			"Required port '{0}' cannot be virtual.");
@@ -71,7 +71,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a required port is override.
 		/// </summary>
-		private static readonly DiagnosticInfo OverrideRequiredPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _overrideRequiredPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.OverrideRequiredPort,
 			String.Format("A method or property marked with '{0}' cannot be override.", typeof(RequiredAttribute).FullName),
 			"Required port '{0}' cannot be override.");
@@ -79,13 +79,13 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a port is static.
 		/// </summary>
-		private static readonly DiagnosticInfo StaticPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _staticPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.StaticPort, "A port cannot be static.", "Port '{0}' cannot be static.");
 
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when the update method is marked as a port.
 		/// </summary>
-		private static readonly DiagnosticInfo UpdateMethodMarkedAsPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _updateMethodMarkedAsPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.UpdateMethodMarkedAsPort,
 			String.Format("A component's Update method cannot be marked with '{0}' or '{1}'.",
 				typeof(ProvidedAttribute).FullName,
@@ -98,7 +98,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer if a method or property is marked as both required and provided.
 		/// </summary>
-		private static readonly DiagnosticInfo AmbiguousPortKind = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _ambiguousPortKind = DiagnosticInfo.Error(
 			DiagnosticIdentifier.AmbiguousPortKind,
 			String.Format("A method or property cannot be marked with both '{0}' and '{1}'.",
 				typeof(RequiredAttribute).FullName,
@@ -110,7 +110,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a property accessor is marked as either required or provided.
 		/// </summary>
-		private static readonly DiagnosticInfo PortPropertyAccessor = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _portPropertyAccessor = DiagnosticInfo.Error(
 			DiagnosticIdentifier.PortPropertyAccessor,
 			String.Format("Property getters and setters cannot be marked with either '{0}' or '{1}'.",
 				typeof(RequiredAttribute).FullName,
@@ -122,7 +122,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when an interface method or property is unmarked.
 		/// </summary>
-		private static readonly DiagnosticInfo UnmarkedInterfacePort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _unmarkedInterfacePort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.UnmarkedInterfacePort,
 			String.Format("A method or property within a component interface must be marked with either '{0}' or '{1}'.",
 				typeof(RequiredAttribute).FullName,
@@ -135,8 +135,8 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public PortKindAnalyzer()
-			: base(ExternProvidedPort, NonExternRequiredPort, AmbiguousPortKind, UpdateMethodMarkedAsPort, StaticPort,
-				ExternUpdateMethod, PortPropertyAccessor, UnmarkedInterfacePort, VirtualRequiredPort, OverrideRequiredPort)
+			: base(_externProvidedPort, _nonExternRequiredPort, _ambiguousPortKind, _updateMethodMarkedAsPort, _staticPort,
+				_externUpdateMethod, _portPropertyAccessor, _unmarkedInterfacePort, _virtualRequiredPort, _overrideRequiredPort)
 		{
 		}
 
@@ -168,14 +168,14 @@ namespace SafetySharp.Compiler.Analyzers
 			if (symbol.IsStatic)
 			{
 				if (hasRequiredAttribute || hasProvidedAttribute)
-					StaticPort.Emit(context, symbol, symbol.ToDisplayString());
+					_staticPort.Emit(context, symbol, symbol.ToDisplayString());
 			}
 
 			var isAccessor = methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol;
 			if (isAccessor)
 			{
 				if (hasProvidedAttribute || hasRequiredAttribute)
-					PortPropertyAccessor.Emit(context, symbol, symbol.ToDisplayString());
+					_portPropertyAccessor.Emit(context, symbol, symbol.ToDisplayString());
 
 				return;
 			}
@@ -183,39 +183,39 @@ namespace SafetySharp.Compiler.Analyzers
 			if (methodSymbol != null && methodSymbol.Overrides(compilation.GetUpdateMethodSymbol()))
 			{
 				if (hasRequiredAttribute || hasProvidedAttribute)
-					UpdateMethodMarkedAsPort.Emit(context, symbol, symbol.ToDisplayString());
+					_updateMethodMarkedAsPort.Emit(context, symbol, symbol.ToDisplayString());
 				else if (methodSymbol.IsExtern)
-					ExternUpdateMethod.Emit(context, symbol, symbol.ToDisplayString());
+					_externUpdateMethod.Emit(context, symbol, symbol.ToDisplayString());
 
 				return;
 			}
 
 			if (hasRequiredAttribute && hasProvidedAttribute)
 			{
-				AmbiguousPortKind.Emit(context, symbol, symbol.ToDisplayString());
+				_ambiguousPortKind.Emit(context, symbol, symbol.ToDisplayString());
 				return;
 			}
 
 			if (symbol.ContainingType.TypeKind != TypeKind.Interface)
 			{
 				if (symbol.IsExtern && symbol.IsVirtual)
-					VirtualRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
+					_virtualRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
 
 				if (symbol.IsExtern && symbol.IsOverride)
-					OverrideRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
+					_overrideRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
 			}
 
 			if (symbol.ContainingType.TypeKind == TypeKind.Interface)
 			{
 				if (!hasRequiredAttribute && !hasProvidedAttribute)
-					UnmarkedInterfacePort.Emit(context, symbol, symbol.ToDisplayString());
+					_unmarkedInterfacePort.Emit(context, symbol, symbol.ToDisplayString());
 			}
 			else
 			{
 				if (hasProvidedAttribute && symbol.IsExtern)
-					ExternProvidedPort.Emit(context, symbol, symbol.ToDisplayString());
+					_externProvidedPort.Emit(context, symbol, symbol.ToDisplayString());
 				else if (hasRequiredAttribute && !symbol.IsExtern)
-					NonExternRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
+					_nonExternRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
 			}
 		}
 	}

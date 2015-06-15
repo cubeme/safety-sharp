@@ -216,6 +216,7 @@
       <DependentUpon>ExecutionTests.cs</DependentUpon>
     </Compile>
     <Compile Include="Execution\ExecutionTests.cs" />
+    <Compile Include="Execution\Faults\provided ports.cs" />
     <Compile Include="Execution\ProvidedPorts\generic component.cs" />
     <Compile Include="Execution\ProvidedPorts\replaced.cs" />
     <Compile Include="Execution\ProvidedPorts\overridden.cs" />

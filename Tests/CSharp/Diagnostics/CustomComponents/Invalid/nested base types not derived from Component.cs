@@ -33,7 +33,6 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 		{
 			public void Update()
 			{
-				throw new NotImplementedException();
 			}
 
 			public dynamic RequiredPorts { get; private set; }
@@ -43,12 +42,11 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 
 	internal class W7 : Component
 	{
-		[Diagnostic(DiagnosticIdentifier.CustomComponent, 47, 23, 2, "Tests.Diagnostics.CustomComponents.Invalid.W7.W8")]
+		[Diagnostic(DiagnosticIdentifier.CustomComponent, 46, 23, 2, "Tests.Diagnostics.CustomComponents.Invalid.W7.W8")]
 		private class W8 : IComponent
 		{
 			public void Update()
 			{
-				throw new NotImplementedException();
 			}
 
 			public dynamic RequiredPorts { get; private set; }

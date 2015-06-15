@@ -27,9 +27,9 @@ namespace SafetySharp.Compiler.Analyzers
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that the port kind of an interface implementing method or property matches the port kind of the
@@ -41,7 +41,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a required port is implemented as a provided port.
 		/// </summary>
-		private static readonly DiagnosticInfo RequiredPortImplementedAsProvidedPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _requiredPortImplementedAsProvidedPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.RequiredPortImplementedAsProvidedPort,
 			"Cannot implement an required port as a provided port.",
 			"'{0}' does not implement interface member '{1}'. '{1}' is declared as a required port, but is implemented as a provided port.");
@@ -49,7 +49,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a provided port is implemented as a required port.
 		/// </summary>
-		private static readonly DiagnosticInfo ProvidedPortImplementedAsRequiredPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _providedPortImplementedAsRequiredPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ProvidedPortImplementedAsRequiredPort,
 			"Cannot implement an provided port as a required port.",
 			"'{0}' does not implement interface member '{1}'. '{1}' is declared as a provided port, but is implemented as a required port.");
@@ -58,7 +58,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public PortImplementationAnalyzer()
-			: base(RequiredPortImplementedAsProvidedPort, ProvidedPortImplementedAsRequiredPort)
+			: base(_requiredPortImplementedAsProvidedPort, _providedPortImplementedAsRequiredPort)
 		{
 		}
 
@@ -117,13 +117,13 @@ namespace SafetySharp.Compiler.Analyzers
 
 			if (interfaceIsRequired && !implementationIsRequired)
 			{
-				RequiredPortImplementedAsProvidedPort.Emit(context, implementingMember,
+				_requiredPortImplementedAsProvidedPort.Emit(context, implementingMember,
 					implementingMember.ToDisplayString(), interfaceMember.ToDisplayString());
 			}
 
 			if (interfaceIsProvided && !implementationIsProvided)
 			{
-				ProvidedPortImplementedAsRequiredPort.Emit(context, implementingMember,
+				_providedPortImplementedAsRequiredPort.Emit(context, implementingMember,
 					implementingMember.ToDisplayString(), interfaceMember.ToDisplayString());
 			}
 		}

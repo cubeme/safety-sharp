@@ -43,7 +43,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that a provided port could not be found.
 		/// </summary>
-		private static readonly DiagnosticInfo UnknownProvidedPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _unknownProvidedPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.UnknownProvidedPort,
 			"The component does not declare a provided port of the given name.",
 			"'{0}' does not declare a provided port named '{1}'.");
@@ -51,7 +51,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that a required port could not be found.
 		/// </summary>
-		private static readonly DiagnosticInfo UnknownRequiredPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _unknownRequiredPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.UnknownRequiredPort,
 			"The component does not declare a required port of the given name.",
 			"'{0}' does not declare a required port named '{1}'.");
@@ -59,7 +59,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that a provided port could be found but is inaccessible.
 		/// </summary>
-		private static readonly DiagnosticInfo InaccessibleProvidedPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _inaccessibleProvidedPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.InaccessibleProvidedPort,
 			"The provided port is not accessible from the current location.",
 			"Provided port '{0}.{1}' is inaccessible due to its protection level.");
@@ -67,7 +67,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that a required port could be found but is inaccessible.
 		/// </summary>
-		private static readonly DiagnosticInfo InaccessibleRequiredPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _inaccessibleRequiredPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.InaccessibleRequiredPort,
 			"The required port is not accessible from the current location.",
 			"Required port '{0}.{1}' is inaccessible due to its protection level.");
@@ -76,7 +76,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public PortReferenceAnalyzer()
-			: base(UnknownProvidedPort, UnknownRequiredPort, InaccessibleProvidedPort, InaccessibleRequiredPort)
+			: base(_unknownProvidedPort, _unknownRequiredPort, _inaccessibleProvidedPort, _inaccessibleRequiredPort)
 		{
 		}
 
@@ -109,23 +109,23 @@ namespace SafetySharp.Compiler.Analyzers
 			if (portCollection.ContainsRequiredPorts)
 			{
 				if (!portCollection.Any())
-					UnknownRequiredPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
+					_unknownRequiredPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
 				else
 				{
 					portCollection.RemoveInaccessiblePorts(semanticModel, node.SpanStart);
 					if (!portCollection.Any())
-						InaccessibleRequiredPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
+						_inaccessibleRequiredPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
 				}
 			}
 			else
 			{
 				if (!portCollection.Any())
-					UnknownProvidedPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
+					_unknownProvidedPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
 				else
 				{
 					portCollection.RemoveInaccessiblePorts(semanticModel, node.SpanStart);
 					if (!portCollection.Any())
-						InaccessibleProvidedPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
+						_inaccessibleProvidedPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
 				}
 			}
 		}

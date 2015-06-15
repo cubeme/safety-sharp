@@ -49,14 +49,14 @@
     <Compile Include="CompilerServices\IgnoreAttribute.cs" />
     <Compile Include="Modeling\PortBinding.cs" />
     <Compile Include="Modeling\PortInfo.cs" />
+    <Compile Include="Runtime\ComponentInfo.Builder.cs">
+      <DependentUpon>ComponentInfo.cs</DependentUpon>
+    </Compile>
     <Compile Include="Runtime\MetadataAnalysis\BoundRequiredPortsFinder.cs" />
     <Compile Include="Runtime\MetadataAnalysis\BoundProvidedPortsFinder.cs" />
     <Compile Include="Runtime\MetadataAnalysis\ComponentHierarchyWalker.cs" />
     <Compile Include="Runtime\BehaviorInfo.cs" />
     <Compile Include="Runtime\ComponentFieldInfo.cs" />
-    <Compile Include="Runtime\ComponentInfo.Builder.cs">
-      <DependentUpon>ComponentInfo.cs</DependentUpon>
-    </Compile>
     <Compile Include="Runtime\ComponentMemberCollection.cs" />
     <Compile Include="Runtime\ComponentMethodCollection.cs" />
     <Compile Include="Runtime\ComponentMethodInfo.cs" />

@@ -26,8 +26,8 @@ namespace SafetySharp.Compiler.Roslyn
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using SafetySharp.Utilities;
 	using Symbols;
+	using Utilities;
 
 	/// <summary>
 	///     Analyzes an expression to determine whether it has potential side effects or whether it is guaranteed to be

@@ -225,8 +225,6 @@ namespace SafetySharp.Compiler.Normalization
 			}
 		}
 
-		
-
 		/// <summary>
 		///     Generates the metadata initialization code for faults affecting the <paramref name="type" />.
 		/// </summary>

@@ -27,9 +27,9 @@ namespace SafetySharp.Compiler.Analyzers
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that a fault declaration is marked with exactly one <see cref="OccurrencePatternAttribute" />.
@@ -40,7 +40,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that the occurrence pattern is missing.
 		/// </summary>
-		private static readonly DiagnosticInfo MissingPattern = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _missingPattern = DiagnosticInfo.Error(
 			DiagnosticIdentifier.MissingOccurrencePattern,
 			"A fault must be marked with a default occurrence pattern.",
 			String.Format(
@@ -51,7 +51,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that multiple occurrence patterns are provided.
 		/// </summary>
-		private static readonly DiagnosticInfo AmbiguousPattern = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _ambiguousPattern = DiagnosticInfo.Error(
 			DiagnosticIdentifier.AmbiguousOccurrencePattern,
 			"A fault cannot be marked with more than one default occurrence pattern.",
 			"Fault '{0}' cannot be marked with more than one occurrence pattern.");
@@ -59,7 +59,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that a non-fault class is marked with an occurrence pattern.
 		/// </summary>
-		private static readonly DiagnosticInfo OccurrencePatternHasNoEffect = DiagnosticInfo.Warning(
+		private static readonly DiagnosticInfo _occurrencePatternHasNoEffect = DiagnosticInfo.Warning(
 			DiagnosticIdentifier.OccurrencePatternHasNoEffect,
 			"Marking a non-fault class with an occurrence pattern has no effect.",
 			String.Format("Occurrence patterns have no effect on classes not derived from '{0}'.", typeof(Fault).FullName));
@@ -68,7 +68,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public OccurrencePatternAnalyzer()
-			: base(MissingPattern, AmbiguousPattern, OccurrencePatternHasNoEffect)
+			: base(_missingPattern, _ambiguousPattern, _occurrencePatternHasNoEffect)
 		{
 		}
 
@@ -98,15 +98,15 @@ namespace SafetySharp.Compiler.Analyzers
 			var count = symbol.GetAttributes().Count(attribute => attribute.AttributeClass.IsDerivedFrom(attributeSymbol));
 
 			if (count != 0 && !isFault)
-				OccurrencePatternHasNoEffect.Emit(context, symbol);
+				_occurrencePatternHasNoEffect.Emit(context, symbol);
 
 			if (!isFault)
 				return;
 
 			if (count == 0)
-				MissingPattern.Emit(context, symbol, symbol.ToDisplayString());
+				_missingPattern.Emit(context, symbol, symbol.ToDisplayString());
 			else if (count > 1)
-				AmbiguousPattern.Emit(context, symbol, symbol.ToDisplayString());
+				_ambiguousPattern.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

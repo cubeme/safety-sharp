@@ -20,25 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics.CustomComponents.Invalid
+namespace Tests.Execution.Faults
 {
 	using System;
-	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
+	using Shouldly;
+	using Utilities;
 
-	internal class W9
+	internal class X1 : TestComponent
 	{
-	}
-
-	[Diagnostic(DiagnosticIdentifier.CustomComponent, 34, 20, 3, "Tests.Diagnostics.CustomComponents.Invalid.W10")]
-	internal class W10 : W9, IComponent
-	{
-		public dynamic RequiredPorts { get; private set; }
-
-		public dynamic ProvidedPorts { get; private set; }
-
-		public void Update()
+		private int M()
 		{
+			return 1;
+		}
+
+		protected override void Check()
+		{
+			// TODO - disable fault
+			M().ShouldBe(1);
+
+			// TODO - enable fault
+			//M().ShouldBe(2);
+		}
+
+		[Persistent]
+		private class F : Fault
+		{
+			public int M()
+			{
+				return 2;
+			}
 		}
 	}
 }

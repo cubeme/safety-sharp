@@ -27,7 +27,6 @@ namespace SafetySharp.Compiler
 	using CommandLine;
 	using CommandLine.Text;
 	using JetBrains.Annotations;
-	using SafetySharp.Utilities;
 
 	/// <summary>
 	///     Parses the command line arguments and starts the compilation process.
@@ -136,8 +135,6 @@ namespace SafetySharp.Compiler
 				return -1;
 			}
 		}
-
-		
 
 		/// <summary>
 		///     The entry point to the compiler.

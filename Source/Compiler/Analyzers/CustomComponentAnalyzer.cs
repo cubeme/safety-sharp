@@ -27,9 +27,9 @@ namespace SafetySharp.Compiler.Analyzers
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that no class implements <see cref="IComponent" /> without being derived from <see cref="Component" />.
@@ -40,7 +40,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error emitted by the analyzer when the interface is implemented explicitly.
 		/// </summary>
-		private static readonly DiagnosticInfo CustomComponent = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _customComponent = DiagnosticInfo.Error(
 			DiagnosticIdentifier.CustomComponent,
 			String.Format("A class cannot implement '{0}' when it is not derived from '{1}'.",
 				typeof(IComponent).FullName,
@@ -52,7 +52,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error emitted by the analyzer when the interface is reimplemented by a component class.
 		/// </summary>
-		private static readonly DiagnosticInfo Reimplementation = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _reimplementation = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ComponentInterfaceReimplementation,
 			String.Format("Interface '{0}' cannot be reimplemented by a class derived from '{1}'.",
 				typeof(IComponent).FullName,
@@ -64,7 +64,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public CustomComponentAnalyzer()
-			: base(CustomComponent, Reimplementation)
+			: base(_customComponent, _reimplementation)
 		{
 		}
 
@@ -96,9 +96,9 @@ namespace SafetySharp.Compiler.Analyzers
 			var isComponent = symbol.IsDerivedFromComponent(compilation);
 
 			if (isComponent && symbol.Interfaces.Any(i => i.Equals(interfaceSymbol)))
-				Reimplementation.Emit(context, symbol, symbol.ToDisplayString());
+				_reimplementation.Emit(context, symbol, symbol.ToDisplayString());
 			else if (!isComponent)
-				CustomComponent.Emit(context, symbol, symbol.ToDisplayString());
+				_customComponent.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

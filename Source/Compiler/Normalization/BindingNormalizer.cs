@@ -175,7 +175,7 @@ namespace SafetySharp.Compiler.Normalization
 		private ExpressionSyntax CreatePortExpression(Port port, MemberAccessExpressionSyntax portExpression, string delegateType)
 		{
 			// TODO: property ports
-			
+
 			var portName = port.Symbol.Name;
 			string declaringType;
 			if (port.NonVirtualInvocation)
@@ -197,7 +197,7 @@ namespace SafetySharp.Compiler.Normalization
 			var typeofDelegate = SyntaxFactory.TypeOfExpression(SyntaxFactory.ParseTypeName(delegateType));
 			var reflectedMethod = port.Symbol.GetRuntimeMethodExpression(Syntax, portName, declaringType);
 			var nestedMemberAccess = portExpression.Expression.RemoveParentheses() as MemberAccessExpressionSyntax;
-			
+
 			SyntaxNode targetObject;
 			if (nestedMemberAccess != null && nestedMemberAccess.Expression is BaseExpressionSyntax)
 			{

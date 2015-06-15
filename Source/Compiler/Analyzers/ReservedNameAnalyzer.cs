@@ -41,7 +41,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer.
 		/// </summary>
-		private static readonly DiagnosticInfo ReservedName = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _reservedName = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ReservedName,
 			"The identifier name is reserved for internal use.",
 			"Identifier name '{0}' is reserved for internal use.");
@@ -50,7 +50,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public ReservedNameAnalyzer()
-			: base(ReservedName)
+			: base(_reservedName)
 		{
 		}
 
@@ -85,7 +85,7 @@ namespace SafetySharp.Compiler.Analyzers
 				.Where(identifierName => identifierName.Identifier.IsSynthesized());
 
 			foreach (var invalidNamespace in invalidNamespaces)
-				ReservedName.Emit(context, invalidNamespace.Identifier, invalidNamespace.Identifier.ValueText);
+				_reservedName.Emit(context, invalidNamespace.Identifier, invalidNamespace.Identifier.ValueText);
 		}
 
 		/// <summary>
@@ -109,7 +109,7 @@ namespace SafetySharp.Compiler.Analyzers
 				.Where(name => name.IsSynthesized());
 
 			foreach (var identifier in invalidIdentifiers)
-				ReservedName.Emit(context, identifier, identifier.ValueText);
+				_reservedName.Emit(context, identifier, identifier.ValueText);
 		}
 	}
 }

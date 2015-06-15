@@ -46,5 +46,11 @@ namespace Tests.Execution
 		{
 			ExecuteComponentTests(code);
 		}
+
+		[Theory, MemberData("DiscoverTests", "Faults")]
+		public void Faults(string test, SyntaxTree code)
+		{
+			ExecuteComponentTests(code);
+		}
 	}
 }

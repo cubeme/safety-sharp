@@ -41,7 +41,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer.
 		/// </summary>
-		private static readonly DiagnosticInfo InvalidUpdateCall = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _invalidUpdateCall = DiagnosticInfo.Error(
 			DiagnosticIdentifier.InvalidUpdateCall,
 			"The Update() method of a component can only be called by another Update() method.",
 			"'{0}' cannot be called here. The Update() method of a component can only be called by the parent component's Update() method.");
@@ -50,7 +50,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public UpdateInvocationAnalyzer()
-			: base(InvalidUpdateCall)
+			: base(_invalidUpdateCall)
 		{
 		}
 
@@ -91,13 +91,13 @@ namespace SafetySharp.Compiler.Analyzers
 			var parentMethod = parent as MethodDeclarationSyntax;
 			if (parentMethod == null)
 			{
-				InvalidUpdateCall.Emit(context, node, methodSymbol.ToDisplayString());
+				_invalidUpdateCall.Emit(context, node, methodSymbol.ToDisplayString());
 				return;
 			}
 
 			var parentSymbol = parentMethod.GetMethodSymbol(semanticModel);
 			if (!parentSymbol.Overrides(updateMethodSymbol))
-				InvalidUpdateCall.Emit(context, node, methodSymbol.ToDisplayString());
+				_invalidUpdateCall.Emit(context, node, methodSymbol.ToDisplayString());
 		}
 	}
 }

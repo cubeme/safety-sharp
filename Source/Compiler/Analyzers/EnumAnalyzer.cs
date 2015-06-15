@@ -42,7 +42,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer.
 		/// </summary>
-		private static readonly DiagnosticInfo ExplicitEnumType = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _explicitEnumType = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExplicitEnumType,
 			"Enumeration declarations must not explicitly declare an underlying type.",
 			"Enum '{0}' must not explicitly declare an underlying type.");
@@ -50,7 +50,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer.
 		/// </summary>
-		private static readonly DiagnosticInfo ExplicitEnumMemberValue = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _explicitEnumMemberValue = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExplicitEnumMemberValue,
 			"Values of enumeration members must not be explicitly declared.",
 			"Value of enum member '{0}' cannot be declared explicitly.");
@@ -59,7 +59,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public EnumAnalyzer()
-			: base(ExplicitEnumType, ExplicitEnumMemberValue)
+			: base(_explicitEnumType, _explicitEnumMemberValue)
 		{
 		}
 
@@ -86,7 +86,7 @@ namespace SafetySharp.Compiler.Analyzers
 			{
 				if (enumDeclaration.BaseList != null)
 				{
-					ExplicitEnumType.Emit(context, enumDeclaration.BaseList.Types.First(),
+					_explicitEnumType.Emit(context, enumDeclaration.BaseList.Types.First(),
 						context.SemanticModel.GetDeclaredSymbol(enumDeclaration).ToDisplayString());
 				}
 
@@ -96,7 +96,7 @@ namespace SafetySharp.Compiler.Analyzers
 
 				foreach (var enumMember in enumMembers)
 				{
-					ExplicitEnumMemberValue.Emit(context, enumMember.EqualsValue.Value,
+					_explicitEnumMemberValue.Emit(context, enumMember.EqualsValue.Value,
 						context.SemanticModel.GetDeclaredSymbol(enumMember).ToDisplayString());
 				}
 			}

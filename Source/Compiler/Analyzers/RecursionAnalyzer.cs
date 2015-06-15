@@ -45,7 +45,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a recursive call is made.
 		/// </summary>
-		private static readonly DiagnosticInfo Recursion = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _recursion = DiagnosticInfo.Error(
 			DiagnosticIdentifier.Recursion,
 			"Recursive method or property accessor invocation is not allowed.",
 			"Recursive method or property accessor invocation is not allowed here.");
@@ -53,7 +53,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when recursive call cycle is detected.
 		/// </summary>
-		private static readonly DiagnosticInfo MutualRecursion = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _mutualRecursion = DiagnosticInfo.Error(
 			DiagnosticIdentifier.MutualRecursion,
 			"Mutually recursive method or property accessor invocations are not allowed.",
 			"Mutually recursive method or property accessor invocations are not allowed here. The recursion involves: {0}.");
@@ -62,7 +62,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public RecursionAnalyzer()
-			: base(Recursion, MutualRecursion)
+			: base(_recursion, _mutualRecursion)
 		{
 		}
 
@@ -131,7 +131,7 @@ namespace SafetySharp.Compiler.Analyzers
 			// SSC-based cycle detection below.
 			var edges = methods.Concat(accessors).Concat(expressionGetters).ToArray();
 			foreach (var edge in edges.Where(e => e.Source.Equals(e.Target)))
-				Recursion.Emit(context, edge.Target.Node);
+				_recursion.Emit(context, edge.Target.Node);
 
 			// Construct the sets of strongly connected components of the graph; if there are no cycles, the
 			// number of SCCs matches the number of vertices.
@@ -152,7 +152,7 @@ namespace SafetySharp.Compiler.Analyzers
 			foreach (var cycle in cycles)
 			{
 				var info = String.Join(", ", cycle.Select(c => String.Format("'{0}'", c.Key.Symbol.ToDisplayString())));
-				MutualRecursion.Emit(context, cycle.First().Key.Symbol.Locations[0], info);
+				_mutualRecursion.Emit(context, cycle.First().Key.Symbol.Locations[0], info);
 			}
 		}
 

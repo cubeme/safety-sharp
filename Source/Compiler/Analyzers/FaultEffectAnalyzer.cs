@@ -39,7 +39,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that the fault effect overrides an unknown method port.
 		/// </summary>
-		private static readonly DiagnosticInfo UnknownMethodPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _unknownMethodPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.FaultEffectUnknownMethodPort,
 			"Fault methods must override existing method ports of the affected component.",
 			"Invalid fault method '{0}': Affected component of type '{1}' does not declare a method named '{2}'.");
@@ -47,7 +47,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that the fault effect overrides an unknown property port.
 		/// </summary>
-		private static readonly DiagnosticInfo UnknownPropertyPort = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _unknownPropertyPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.FaultEffectUnknownPropertyPort,
 			"Fault properties must override existing property ports of the affected component.",
 			"Invalid fault property '{0}': Affected component of type '{1}' does not declare a property named '{2}' with the corresponding accessors.");
@@ -55,7 +55,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that the fault effect overrides an unknown port.
 		/// </summary>
-		private static readonly DiagnosticInfo SignatureIncompatible = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _signatureIncompatible = DiagnosticInfo.Error(
 			DiagnosticIdentifier.FaultEffectSignatureIncompatible,
 			"Fault effects must be signature compatible with the overriden port of the affected component.",
 			"Fault effect '{0}' is not signature compatible with '{1}' or any of its overloads.");
@@ -63,7 +63,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that the fault effect overrides a property port of a different type.
 		/// </summary>
-		private static readonly DiagnosticInfo TypeIncompatible = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _typeIncompatible = DiagnosticInfo.Error(
 			DiagnosticIdentifier.FaultEffectIncompatibleType,
 			"Fault effect properties must be declared with the type of the overriden property port of the affected component.",
 			"Fault effect '{0}' must be a property of type '{1}'.");
@@ -71,7 +71,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that the fault effect overrides a member of a base class.
 		/// </summary>
-		private static readonly DiagnosticInfo BaseMember = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _baseMember = DiagnosticInfo.Error(
 			DiagnosticIdentifier.FaultEffectBaseMember,
 			"Fault effects can only override members declared by the affected component.",
 			"Fault effect '{0}' cannot affect inherited member '{1}'.");
@@ -79,7 +79,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     Indicates that the fault effect declares an optional parameter.
 		/// </summary>
-		private static readonly DiagnosticInfo OptionalParameter = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _optionalParameter = DiagnosticInfo.Error(
 			DiagnosticIdentifier.FaultEffectOptionalParameter,
 			"Fault effects cannot declare optional parameters.",
 			"Invalid optional parameter '{0}' declared by fault effect '{1}'.");
@@ -89,7 +89,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// </summary>
 		public FaultEffectAnalyzer()
 			: base(
-				UnknownMethodPort, UnknownPropertyPort, SignatureIncompatible, BaseMember, OptionalParameter, TypeIncompatible)
+				_unknownMethodPort, _unknownPropertyPort, _signatureIncompatible, _baseMember, _optionalParameter, _typeIncompatible)
 		{
 		}
 
@@ -121,7 +121,7 @@ namespace SafetySharp.Compiler.Analyzers
 			{
 				var optionalParameter = method.Parameters.FirstOrDefault(parameter => parameter.IsOptional);
 				if (optionalParameter != null)
-					OptionalParameter.Emit(context, optionalParameter, optionalParameter.Name, method.ToDisplayString());
+					_optionalParameter.Emit(context, optionalParameter, optionalParameter.Name, method.ToDisplayString());
 
 				var candidateMethods = componentSymbol
 					.GetMembers(method.Name)
@@ -152,16 +152,16 @@ namespace SafetySharp.Compiler.Analyzers
 					}
 
 					if (baseCandidateMethods != null && baseCandidateMethods.Length > 0)
-						BaseMember.Emit(context, method, method.ToDisplayString(), baseCandidateMethods[0].ToDisplayString());
+						_baseMember.Emit(context, method, method.ToDisplayString(), baseCandidateMethods[0].ToDisplayString());
 					else
-						UnknownMethodPort.Emit(context, method, method.ToDisplayString(), componentSymbol.ToDisplayString(), method.Name);
+						_unknownMethodPort.Emit(context, method, method.ToDisplayString(), componentSymbol.ToDisplayString(), method.Name);
 
 					continue;
 				}
 
 				var overriddenMethod = candidateMethods.SingleOrDefault(candidate => candidate.IsSignatureCompatibleTo(method));
 				if (overriddenMethod == null)
-					SignatureIncompatible.Emit(context, method, method.ToDisplayString(), candidateMethods[0].ToDisplayString());
+					_signatureIncompatible.Emit(context, method, method.ToDisplayString(), candidateMethods[0].ToDisplayString());
 			}
 
 			var faultProperties = faultSymbol.GetMembers().OfType<IPropertySymbol>();
@@ -190,14 +190,14 @@ namespace SafetySharp.Compiler.Analyzers
 					}
 
 					if (baseProperty != null)
-						BaseMember.Emit(context, property, property.ToDisplayString(), baseProperty.ToDisplayString());
+						_baseMember.Emit(context, property, property.ToDisplayString(), baseProperty.ToDisplayString());
 					else
-						UnknownPropertyPort.Emit(context, property, property.ToDisplayString(), componentSymbol.ToDisplayString(), property.Name);
+						_unknownPropertyPort.Emit(context, property, property.ToDisplayString(), componentSymbol.ToDisplayString(), property.Name);
 				}
 				else
 				{
 					if (!property.Type.Equals(overriddenProperty.Type))
-						TypeIncompatible.Emit(context, property, property.ToDisplayString(), overriddenProperty.Type.ToDisplayString());
+						_typeIncompatible.Emit(context, property, property.ToDisplayString(), overriddenProperty.Type.ToDisplayString());
 
 					var faultHasGetter = property.GetMethod != null;
 					var faultHasSetter = property.SetMethod != null;
@@ -208,7 +208,7 @@ namespace SafetySharp.Compiler.Analyzers
 					var invalidSetter = !componentHasSetter && faultHasSetter;
 
 					if (invalidGetter || invalidSetter)
-						UnknownPropertyPort.Emit(context, property, property.ToDisplayString(), componentSymbol.ToDisplayString(), property.Name);
+						_unknownPropertyPort.Emit(context, property, property.ToDisplayString(), componentSymbol.ToDisplayString(), property.Name);
 				}
 			}
 		}

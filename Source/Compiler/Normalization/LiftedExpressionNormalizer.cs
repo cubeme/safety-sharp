@@ -24,11 +24,11 @@ namespace SafetySharp.Compiler.Normalization
 {
 	using System;
 	using System.Linq;
+	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Roslyn;
 	using Roslyn.Syntax;
-	using SafetySharp.CompilerServices;
 
 	/// <summary>
 	///     Replaces the parameters of method invocations or object creations with a lifted lambda if the corresponding

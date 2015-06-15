@@ -30,10 +30,10 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using SafetySharp.Modeling;
 
 	/// <summary>
 	///     Ensures that bindings resolve to a unique pair of bound ports.
@@ -44,7 +44,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a bind method is called without a port assignment argument.
 		/// </summary>
-		private static readonly DiagnosticInfo ExpectedPortAssignment = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _expectedPortAssignment = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExpectedPortAssignment,
 			String.Format("Instances of '{0}' can only be created using port assignment syntax.", typeof(PortBinding).FullName),
 			String.Format("A port assignment of the form 'component1.RequiredPorts.Port = component2.ProvidedPorts.Port' " +
@@ -53,7 +53,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a bind method is called without a port assignment argument.
 		/// </summary>
-		private static readonly DiagnosticInfo ExpectedPortReference = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _expectedPortReference = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExpectedPortReference,
 			"Expected a reference to a port of the form 'RequiredPorts.Port' or 'ProvidedPorts.Port'.",
 			"Expected a reference to a port of the form 'RequiredPorts.Port' or 'ProvidedPorts.Port'.");
@@ -61,7 +61,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a port is cast to a non-delegate type.
 		/// </summary>
-		private static readonly DiagnosticInfo ExpectedPortDelegateCast = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _expectedPortDelegateCast = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExpectedPortDelegateCast,
 			"Expected port to be cast to a delegate type.",
 			"Expected port to be cast to a delegate type.");
@@ -69,7 +69,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a binding failed.
 		/// </summary>
-		private static readonly DiagnosticInfo BindingFailure = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _bindingFailure = DiagnosticInfo.Error(
 			DiagnosticIdentifier.BindingFailure,
 			"There are no accessible signature-compatible ports that could be bound.",
 			"There are no accessible signature-compatible ports that could be bound. " +
@@ -78,7 +78,7 @@ namespace SafetySharp.Compiler.Analyzers
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a binding is ambiguous.
 		/// </summary>
-		private static readonly DiagnosticInfo AmbiguousBinding = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _ambiguousBinding = DiagnosticInfo.Error(
 			DiagnosticIdentifier.AmbiguousBinding,
 			"There are multiple signature-compatible ports that could be bound.",
 			"Port binding is ambiguous: There are multiple accessible and signature-compatible ports " +
@@ -91,7 +91,7 @@ namespace SafetySharp.Compiler.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public BindingAnalyzer()
-			: base(BindingFailure, AmbiguousBinding, ExpectedPortAssignment, ExpectedPortReference, ExpectedPortDelegateCast)
+			: base(_bindingFailure, _ambiguousBinding, _expectedPortAssignment, _expectedPortReference, _expectedPortDelegateCast)
 		{
 		}
 
@@ -128,7 +128,7 @@ namespace SafetySharp.Compiler.Analyzers
 			var argumentExpression = arguments[0].Expression.RemoveParentheses();
 			if (arguments.Count != 1 || !(argumentExpression is AssignmentExpressionSyntax))
 			{
-				ExpectedPortAssignment.Emit(context, arguments[0].Expression);
+				_expectedPortAssignment.Emit(context, arguments[0].Expression);
 				return;
 			}
 
@@ -151,13 +151,13 @@ namespace SafetySharp.Compiler.Analyzers
 
 			if (leftExpression == null || ((leftPorts = leftExpression.GetReferencedPorts(semanticModel)) == null))
 			{
-				ExpectedPortReference.Emit(context, assignment.Left);
+				_expectedPortReference.Emit(context, assignment.Left);
 				return;
 			}
 
 			if (rightExpression == null || ((rightPorts = rightExpression.GetReferencedPorts(semanticModel)) == null))
 			{
-				ExpectedPortReference.Emit(context, assignment.Right);
+				_expectedPortReference.Emit(context, assignment.Right);
 				return;
 			}
 
@@ -175,7 +175,7 @@ namespace SafetySharp.Compiler.Analyzers
 				var targetSymbol = castExpression.Type.GetReferencedSymbol(semanticModel) as INamedTypeSymbol;
 				if (targetSymbol == null || targetSymbol.TypeKind != TypeKind.Delegate)
 				{
-					ExpectedPortDelegateCast.Emit(context, castExpression.Type);
+					_expectedPortDelegateCast.Emit(context, castExpression.Type);
 					return;
 				}
 
@@ -184,9 +184,9 @@ namespace SafetySharp.Compiler.Analyzers
 
 			var candidates = leftPorts.GetBindingCandidates(rightPorts);
 			if (candidates.Length == 0)
-				BindingFailure.Emit(context, assignment, PortSetToString(leftPorts), PortSetToString(rightPorts));
+				_bindingFailure.Emit(context, assignment, PortSetToString(leftPorts), PortSetToString(rightPorts));
 			else if (candidates.Length > 1)
-				AmbiguousBinding.Emit(context, assignment, PortSetToString(candidates.Select(candidate => candidate.Left)),
+				_ambiguousBinding.Emit(context, assignment, PortSetToString(candidates.Select(candidate => candidate.Left)),
 					PortSetToString(candidates.Select(candidate => candidate.Right)));
 		}
 

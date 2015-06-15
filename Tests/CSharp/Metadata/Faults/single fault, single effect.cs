@@ -24,15 +24,19 @@ namespace Tests.Metadata.Faults
 {
 	using System;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
-	// TODO: Implement tests once component ports are implemented
 	public class X2 : TestComponent
 	{
 		protected override void Check()
 		{
 			Metadata.Faults.Length.ShouldBe(1);
+
+			Metadata.Faults[0].Component.ShouldBe(this.GetComponentInfo());
+			Metadata.Faults[0].Fault.GetType().ShouldBe(typeof(F));
+			Metadata.Faults[0].Name.ShouldBe("F");
 		}
 
 		public void M()
