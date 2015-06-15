@@ -228,7 +228,7 @@ namespace SafetySharp.Runtime
 			///     to S#'s <see cref="MetadataProvider" />.
 			/// </summary>
 			/// <param name="parent">The metadata of the parent component. Can be <c>null</c> for the root of the component hierarchy.</param>
-			internal ComponentInfo RegisterMetadata(ComponentInfo parent = null)
+			internal void RegisterMetadata(ComponentInfo parent = null)
 			{
 				var fields = _fields.Select(field => new ComponentFieldInfo(_component, field.Key, field.Value));
 				var info = new ComponentInfo
@@ -243,6 +243,10 @@ namespace SafetySharp.Runtime
 					ProvidedPorts = new ComponentMethodCollection<ProvidedPortInfo>(_component, _providedPorts),
 					Bindings = new ComponentMemberCollection<BindingInfo>(_component, _bindings)
 				};
+
+				// We have to register the metadata now, even though we'll still have to change it later on; this way,
+				// we prevent stack overflows when the component hierarchy is cyclic
+				MetadataProvider.FinalizeMetadata(_component, info);
 
 				// Get all subcomponent instances
 				var subcomponents = _subcomponents.Select(field =>
@@ -265,9 +269,6 @@ namespace SafetySharp.Runtime
 				// Add the subcomponents to the metadata
 				var subcomponentMetadata = subcomponents.Select(subcomponent => subcomponent.GetComponentInfo());
 				info.Subcomponents = new ComponentMemberCollection<ComponentInfo>(_component, subcomponentMetadata);
-
-				MetadataProvider.FinalizeMetadata(_component, info);
-				return info;
 			}
 		}
 	}

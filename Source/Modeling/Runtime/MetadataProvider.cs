@@ -92,7 +92,6 @@ namespace SafetySharp.Runtime
 
 			lock (_syncObj)
 			{
-				Requires.That(!_metadata.ContainsKey(obj), () => obj, "The object's metadata has already been created.");
 				return _builders.TryGetValue(obj, out builder);
 			}
 		}

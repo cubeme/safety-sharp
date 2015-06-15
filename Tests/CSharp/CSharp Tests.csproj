@@ -308,6 +308,12 @@
       <DependentUpon>RuntimeTests.cs</DependentUpon>
     </Compile>
     <Compile Include="Runtime\RuntimeTests.cs" />
+    <Compile Include="Runtime\Subcomponents\shared components.cs" />
+    <Compile Include="Runtime\Subcomponents\cyclic graph.cs" />
+    <Compile Include="Runtime\Subcomponents\generic component.cs" />
+    <Compile Include="Runtime\Subcomponents\no subcomponents.cs" />
+    <Compile Include="Runtime\Subcomponents\multiple subcomponents.cs" />
+    <Compile Include="Runtime\Subcomponents\single subcomponent.cs" />
     <Compile Include="Utilities\AssertTests\IsNotNullMethod.cs" />
     <Compile Include="Utilities\AssertTests\NotNullOrWhitespaceMethod.cs" />
     <Compile Include="Utilities\AssertTests\IsNullMethod.cs" />

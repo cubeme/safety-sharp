@@ -49,9 +49,9 @@ namespace Tests.Runtime
 			get { return typeof(Component).GetMethod("Update"); }
 		}
 
-		public void Check(ComponentInfo metadata)
+		public void RunTests()
 		{
-			Metadata = metadata;
+			Metadata = this.GetComponentInfo();
 			Metadata.Component.ShouldBe(this);
 
 			Check();
@@ -139,8 +139,9 @@ namespace Tests.Runtime
 			{
 				var type = assembly.GetType(componentType);
 				var component = (TestComponent)Activator.CreateInstance(type);
-				var info = MetadataBuilders.GetBuilder(component).RegisterMetadata();
-				component.Check(info);
+				MetadataBuilders.GetBuilder(component).RegisterMetadata();
+
+				component.RunTests();
 			}
 		}
 

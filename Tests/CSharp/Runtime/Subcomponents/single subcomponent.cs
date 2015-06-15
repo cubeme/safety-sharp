@@ -20,61 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime
+namespace Tests.Runtime.Subcomponents
 {
 	using System;
-	using Microsoft.CodeAnalysis;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
+	using Shouldly;
 
-	public partial class RuntimeTests : Tests
+	internal class C1 : Component
 	{
-		[Theory, MemberData("DiscoverTests", "Fields")]
-		public void Fields(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
+	}
 
-		[Theory, MemberData("DiscoverTests", "Faults")]
-		public void Faults(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
+	internal class X2 : TestComponent
+	{
+		private readonly C1 _c = new C1();
 
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, SyntaxTree code)
+		protected override void Check()
 		{
-			Check(code);
-		}
+			Metadata.Subcomponents.Length.ShouldBe(1);
 
-		[Theory, MemberData("DiscoverTests", "Steps")]
-		public void Steps(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "RequiredPorts")]
-		public void RequiredPorts(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "ProvidedPorts")]
-		public void ProvidedPorts(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Nested")]
-		public void Nested(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Subcomponents")]
-		public void Subcomponents(string test, SyntaxTree code)
-		{
-			Check(code);
+			Metadata.Subcomponents[0].Component.ShouldBe(_c);
+			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetComponentInfo());
 		}
 	}
 }

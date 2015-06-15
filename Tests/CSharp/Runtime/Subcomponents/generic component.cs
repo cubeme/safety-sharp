@@ -20,61 +20,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Runtime
+namespace Tests.Runtime.Subcomponents
 {
 	using System;
-	using Microsoft.CodeAnalysis;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
+	using Shouldly;
 
-	public partial class RuntimeTests : Tests
+	internal interface I2<T> : IComponent
 	{
-		[Theory, MemberData("DiscoverTests", "Fields")]
-		public void Fields(string test, SyntaxTree code)
+	}
+
+	internal class C4<T> : Component
+	{
+	}
+
+	internal class C5<T> : Component, I2<T>
+	{
+	}
+
+	internal abstract class X4<T1, T2> : TestComponent
+	{
+		public T1 _a;
+		public T2 _b;
+
+		protected X4(T1 a, T2 b)
 		{
-			Check(code);
+			_a = a;
+			_b = b;
+		}
+	}
+
+	internal class X5 : X4<I2<int>, C4<bool>>
+	{
+		public X5()
+			: base(new C5<int>(), new C4<bool>())
+		{
 		}
 
-		[Theory, MemberData("DiscoverTests", "Faults")]
-		public void Faults(string test, SyntaxTree code)
+		protected override void Check()
 		{
-			Check(code);
-		}
+			Metadata.Subcomponents.Length.ShouldBe(2);
 
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
+			Metadata.Subcomponents[0].Component.ShouldBe((Component)_a);
+			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetComponentInfo());
 
-		[Theory, MemberData("DiscoverTests", "Steps")]
-		public void Steps(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "RequiredPorts")]
-		public void RequiredPorts(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "ProvidedPorts")]
-		public void ProvidedPorts(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Nested")]
-		public void Nested(string test, SyntaxTree code)
-		{
-			Check(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Subcomponents")]
-		public void Subcomponents(string test, SyntaxTree code)
-		{
-			Check(code);
+			Metadata.Subcomponents[1].Component.ShouldBe(_b);
+			Metadata.Subcomponents[1].ParentComponent.ShouldBe(this.GetComponentInfo());
 		}
 	}
 }
