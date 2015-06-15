@@ -85,7 +85,14 @@ module internal VcStrongestPostcondition =
                 (newFormula,proofObligations.Value)
             | Choice (_,choices) ->
                 let choicesAsExpr,proofObligations =
-                    choices |> List.map (fun (choice:Stm) -> sp (precondition,choice) )
+                    let spOfChoice (choiceGuard:Expr option,choiceStm:Stm) : Expr*(Set<Expr>) =
+                        let preconditionAfterGuard = 
+                            if choiceGuard.IsSome then
+                                Expr.BExpr(precondition,BOp.And,choiceGuard.Value)                            
+                            else
+                                precondition
+                        sp (preconditionAfterGuard,choiceStm)
+                    choices |> List.map spOfChoice
                             |> List.unzip
                 let newFormula = choicesAsExpr |> Expr.createOredExpr
                 let newProofObligations = proofObligations |> Set.unionMany

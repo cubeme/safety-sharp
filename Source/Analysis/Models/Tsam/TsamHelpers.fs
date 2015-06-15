@@ -131,9 +131,12 @@ module internal TsamHelpers =
                             let flatStatements = flatStatementss |> List.collect id
                             let somethingChanged = somethingChanged |> List.exists id
                             (Stm.Block(sid,flatStatements),somethingChanged)
-                        | Stm.Choice (sid,choices: Stm list) ->
+                        | Stm.Choice (sid,choices: (Expr option * Stm) list) ->
                             let (newChoices,somethingChanged) =
-                                choices |> List.map unnestOutOfABlockStm
+                                choices |> List.map (fun (guard,choiceStm) ->
+                                                        let (newChoiceStm,somethingChanged) = unnestOutOfABlockStm choiceStm
+                                                        ((guard,newChoiceStm),somethingChanged)
+                                                    )
                                         |> List.unzip
                             let somethingChanged = somethingChanged |> List.exists id
                             if somethingChanged then
@@ -173,7 +176,7 @@ module internal TsamHelpers =
                     let newStmnts = statements |> List.map (fun stm -> stm.recursiveRenumberStatements uniqueStatementIdGenerator)
                     Tsam.Stm.Block (freshId,newStmnts)                    
                 | Tsam.Stm.Choice (_,choices) ->
-                    let newChoices = choices |> List.map (fun stm -> stm.recursiveRenumberStatements uniqueStatementIdGenerator)
+                    let newChoices = choices |> List.map (fun (guard,stm) -> (guard,stm.recursiveRenumberStatements uniqueStatementIdGenerator))
                     Tsam.Stm.Choice (freshId,newChoices)                    
                 | Tsam.Stm.Stochastic (_,stochasticChoices) ->
                     let newStochasticChoices= stochasticChoices |> List.map (fun (prob,stm) -> (prob,stm.recursiveRenumberStatements uniqueStatementIdGenerator))
@@ -201,7 +204,12 @@ module internal TsamHelpers =
                                 let statementToTreeify = toTreeify.Head
                                 match statementToTreeify with
                                     | Stm.Choice (sid,choices) ->
-                                        let (treeifiedChoices,somethingChanged) = choices |> List.map treeifyStm |> List.unzip
+                                        let (treeifiedChoices,somethingChanged) =
+                                            choices |> List.map (fun (guard,choiceStm) ->
+                                                                               let (newChoiceStm,somethingChanged) = treeifyStm choiceStm
+                                                                               ((guard,newChoiceStm),somethingChanged)
+                                                                           )
+                                                    |> List.unzip
                                         let somethingChanged = somethingChanged |> List.exists id
                                         if toTreeify.Tail.IsEmpty then
                                             // Last statement, everything ok. Nothing to do. We can stop
@@ -215,11 +223,11 @@ module internal TsamHelpers =
                                         else
                                             // there are statements after the choice. We need to append them in the choice
                                             let statementsAfterChoice = toTreeify.Tail
-                                            let appendStatementsAfterChoiceToChoice (choice:Stm) =
+                                            let appendStatementsAfterChoiceToChoice (guard:Expr option,choiceStm:Stm) =
                                                 // this is the heart of the algorithm
-                                                let newChoice = choice.appendStatements uniqueStatementIdGenerator statementsAfterChoice
-                                                let newChoice = newChoice.recursiveRenumberStatements uniqueStatementIdGenerator
-                                                newChoice
+                                                let newChoiceStm = choiceStm.appendStatements uniqueStatementIdGenerator statementsAfterChoice
+                                                let newChoiceStm = newChoiceStm.recursiveRenumberStatements uniqueStatementIdGenerator
+                                                (guard,newChoiceStm)
                                             let newChoiceStm = Stm.Choice(sid,treeifiedChoices |> List.map appendStatementsAfterChoiceToChoice)
                                             // the appended statements do no longer appear after the block. So toTreeify.Tail is no longer necessary.
                                             let newTreeified = ((newChoiceStm::revAlreadyTreeified) |> List.rev)
@@ -262,9 +270,12 @@ module internal TsamHelpers =
                                         treeifyBlockStatements (newRevAlreadyTreeified,newAlreadySomethingChanged) (toTreeify.Tail)
                         treeifyBlockStatements ([],false) statements
                         ///////////// End of rewriting Block
-                    | Stm.Choice (sid,choices: Stm list) ->
+                    | Stm.Choice (sid,choices: (Expr option * Stm) list) ->
                         let (newChoices,somethingChanged) =
-                            choices |> List.map treeifyStm
+                            choices |> List.map (fun (guard,choiceStm) ->
+                                                                let (newChoiceStm,somethingChanged) = treeifyStm choiceStm
+                                                                ((guard,newChoiceStm),somethingChanged)
+                                                            )
                                     |> List.unzip
                         let somethingChanged = somethingChanged |> List.exists id
                         if somethingChanged then
@@ -277,7 +288,7 @@ module internal TsamHelpers =
                                                                 let (newChoiceStm,somethingChanged) = treeifyStm choiceStm
                                                                 ((choiceProb,newChoiceStm),somethingChanged)
                                                             )
-                                                |> List.unzip
+                                             |> List.unzip
                         let somethingChanged = somethingChanged |> List.exists id
                         if somethingChanged then
                             (Stm.Stochastic(sid,newChoices),true)

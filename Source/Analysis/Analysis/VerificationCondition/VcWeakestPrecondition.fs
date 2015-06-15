@@ -50,8 +50,15 @@ module internal VcWeakestPrecondition =
         | Block (_,statements) ->
             List.foldBack wp statements formula
         | Choice (_,choices) ->
+            let wpOfChoice (choiceGuard:Expr option,choiceStm:Stm) : Expr =
+                let wpOfChoiceStm =
+                    wp choiceStm formula
+                if choiceGuard.IsSome then
+                    Expr.BExpr(choiceGuard.Value,BOp.Implies,wpOfChoiceStm)
+                else
+                    wpOfChoiceStm
             let choicesAsExpr =
-                choices |> List.map (fun choice -> wp choice formula)
+                choices |> List.map wpOfChoice
             Expr.createAndedExpr choicesAsExpr            
         | Stochastic _ ->
             failwith "Stochastic case distinction is not supported by boolean only weakest precondition"

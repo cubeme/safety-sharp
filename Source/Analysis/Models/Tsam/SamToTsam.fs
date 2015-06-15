@@ -80,7 +80,7 @@ module internal SamToTsam =
             Tsam.Pgm.Body = translateStm uniqueStatementIdGenerator pgm.Body;
             Tsam.Pgm.NextGlobal = nextGlobals;
             Tsam.Pgm.CodeForm = Tsam.CodeForm.Default;
-            Tsam.Pgm.UsedFeatures = ();
+            Tsam.Pgm.Attributes = Tsam.Attributes.fullyUnknown;
             Tsam.Pgm.UniqueStatementIdGenerator = uniqueStatementIdGenerator
         }
       

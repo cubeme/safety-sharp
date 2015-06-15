@@ -114,7 +114,7 @@ module internal TsamMutable =
                     let newAccs = statements |> List.map (varsWrittenTo acc)
                     newAccs |> Set.unionMany
                 | Tsam.Stm.Choice (sid,choices) ->
-                    let newAccs = choices |> List.map (varsWrittenTo acc)
+                    let newAccs = choices |> List.map (fun (_,stm) -> (varsWrittenTo acc stm))
                     newAccs |> Set.unionMany
                 | Tsam.Stm.Stochastic (sid,stochasticChoices) ->
                     let newAccs = stochasticChoices |> List.map (fun (_,stochasticStm) -> (varsWrittenTo acc stochasticStm))
