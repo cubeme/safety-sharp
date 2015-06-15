@@ -133,6 +133,7 @@ module internal TsamToBoogie =
                 let currentBlockId = ref (context.Value.getBlockIdForVcStmBlock blockStmId currentPart.Value)
                 let currentCASrev = ref ([])
                 let processStmInBlock (stm:Tsam.Stm) : unit  =
+                    let pendingGuards = [] //at this point of time pendingGuards has already been processed and is now empty
                     match stm with
                         | Tsam.Stm.Assert (sid,expr) ->
                             currentCASrev := stm::currentCASrev.Value
@@ -156,7 +157,7 @@ module internal TsamToBoogie =
                             let nextBlockId = context.Value.getBlockIdForVcStmBlock blockStmId nextPart
                             let transferToNextBlockId = BoogieSimplifiedAst.Transfer.Goto([nextBlockId])
                             // create for blockstms new blocks (even if it's not necessary and could be inlined. makes the algorithm easier to read)
-                            context := createTransformationContext None transferToNextBlockId context.Value stm
+                            context := createTransformationContext pendingGuards transferToNextBlockId context.Value stm
                             // reset all collected information and start next part of the block
                             currentPart := nextPart
                             currentBlockId := nextBlockId
@@ -177,7 +178,7 @@ module internal TsamToBoogie =
                             let nextPart = currentPart.Value + 1
                             let nextBlockId = context.Value.getBlockIdForVcStmBlock blockStmId nextPart
                             let transferToNextBlockId = BoogieSimplifiedAst.Transfer.Goto([nextBlockId])
-                            context := createTransformationContext None transferToNextBlockId context.Value stm //here we create the context for the next part of the block. This block has no pending guard. In the context itself is the result of the processed Stm.Choice (stm).
+                            context := createTransformationContext pendingGuards transferToNextBlockId context.Value stm //here we create the context for the next part of the block. This block has no pending guard. In the context itself is the result of the processed Stm.Choice (stm).
                             // reset all collected information and start next part of the block
                             currentPart := nextPart
                             currentBlockId := nextBlockId

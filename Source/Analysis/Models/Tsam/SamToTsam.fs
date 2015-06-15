@@ -52,10 +52,12 @@ module internal SamToTsam =
                         //         Expr.createOredExpr guardsAsExpr
                         let freshIdForAssertion = uniqueStatementIdGenerator ()
                         (Tsam.Stm.Assert(freshIdForAssertion,Tsam.Expr.Literal(Tsam.Val.BoolVal(true))))
-                    let translateClause ( clause :SafetySharp.Models.Sam.Clause) : Tsam.Stm =
-                        let freshIdForGuard = uniqueStatementIdGenerator ()
-                        let freshIdForBlock = uniqueStatementIdGenerator ()
-                        Tsam.Stm.Block(freshIdForBlock,[Tsam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm uniqueStatementIdGenerator clause.Statement]) // the guard is now an assumption
+                    let translateClause ( clause :SafetySharp.Models.Sam.Clause) : (Tsam.Expr option*Tsam.Stm) =
+                        // TODO: Old Code, could be reused for transformation: 
+                        //   let freshIdForGuard = uniqueStatementIdGenerator ()
+                        //   let freshIdForBlock = uniqueStatementIdGenerator ()
+                        //   Tsam.Stm.Block(freshIdForBlock,[Tsam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm uniqueStatementIdGenerator clause.Statement]) // the guard is now an assumption
+                        (Some(clause.Guard),translateStm uniqueStatementIdGenerator clause.Statement)
                     Tsam.Stm.Choice(freshId,clauses |> List.map translateClause)
             | SafetySharp.Models.Sam.Stm.Stochastic (stochasticChoices) -> 
                 let translateStochasticChoice ( (probability,stm) : Sam.Expr * Sam.Stm) : Tsam.Expr * Tsam.Stm =
