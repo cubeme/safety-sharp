@@ -24,6 +24,7 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using Modeling;
+	using Modeling.Faults;
 
 	/// <summary>
 	///     Provides extension methods for working with S# metadata.

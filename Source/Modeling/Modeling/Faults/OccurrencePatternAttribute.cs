@@ -20,19 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Modeling.Faults
 {
 	using System;
 
 	/// <summary>
-	///     Represents a base class for all fault occurrence patterns.
+	///     When applied to a <see cref="Fault" /> declaration, determines the <see cref="OccurrencePattern" /> of the fault.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 	public abstract class OccurrencePatternAttribute : Attribute
 	{
 		/// <summary>
-		///     Updates the occurrence state of the fault. Returns <c>true</c> to indicate that the fault is occurring.
+		///     Initializes a new instance.
 		/// </summary>
-		internal abstract bool UpdateOccurrence();
+		/// <param name="type">The <see cref="OccurrencePattern" /> of the marked fault.</param>
+		protected OccurrencePatternAttribute(Type type)
+		{
+			Type = type;
+		}
+
+		/// <summary>
+		///     Gets the <see cref="OccurrencePattern" /> type.
+		/// </summary>
+		public Type Type { get; private set; }
 	}
 }

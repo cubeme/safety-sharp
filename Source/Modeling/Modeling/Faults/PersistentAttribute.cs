@@ -20,22 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Modeling.Faults
 {
 	using System;
 
 	/// <summary>
-	///     Represents the persistent occurrence pattern where a fault, once active, remains active.
+	///     When applied to a <see cref="Fault" /> declaration, indicates that the fault, once active, remains active.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 	public class PersistentAttribute : OccurrencePatternAttribute
 	{
 		/// <summary>
-		///     Updates the occurrence state of the fault. Returns <c>true</c> to indicate that the fault is occurring.
+		///     Initializes a new instance.
 		/// </summary>
-		internal override bool UpdateOccurrence()
+		public PersistentAttribute()
+			: base(typeof(Persistent))
 		{
-			return false;
 		}
 	}
 }

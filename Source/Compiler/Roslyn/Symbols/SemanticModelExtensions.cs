@@ -26,6 +26,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Modeling;
+	using Modeling.Faults;
 	using Utilities;
 
 	/// <summary>

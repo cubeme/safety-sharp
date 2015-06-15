@@ -20,37 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution.Faults
+namespace SafetySharp.Modeling.Faults
 {
 	using System;
-	using SafetySharp.Modeling;
-	using SafetySharp.Modeling.Faults;
-	using Shouldly;
-	using Utilities;
 
-	internal class X1 : TestComponent
+	/// <summary>
+	///     When applied to a <see cref="Fault" /> declaration, indicates that the fault can come and go at any time.
+	/// </summary>
+	public class TransientAttribute : OccurrencePatternAttribute
 	{
-		private int M()
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		public TransientAttribute()
+			: base(typeof(Transient))
 		{
-			return 1;
-		}
-
-		protected override void Check()
-		{
-			// TODO - disable fault
-			M().ShouldBe(1);
-
-			// TODO - enable fault
-			//M().ShouldBe(2);
-		}
-
-		[Persistent]
-		private class F : Fault
-		{
-			public int M()
-			{
-				return 2;
-			}
 		}
 	}
 }

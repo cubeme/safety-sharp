@@ -20,22 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Modeling.Faults
 {
 	using System;
 
 	/// <summary>
 	///     Represents the transient occurrence pattern where a fault can come and go at any time.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-	public class TransientAttribute : OccurrencePatternAttribute
+	public class Transient : OccurrencePattern
 	{
 		/// <summary>
-		///     Updates the occurrence state of the fault. Returns <c>true</c> to indicate that the fault is occurring.
+		///     Updates the occurrence state. Returns <c>true</c> to indicate that the fault is occurring.
 		/// </summary>
-		internal override bool UpdateOccurrence()
+		public override bool Update()
 		{
-			return false;
+			return true;
 		}
 	}
 }

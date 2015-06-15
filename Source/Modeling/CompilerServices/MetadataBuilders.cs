@@ -24,6 +24,7 @@ namespace SafetySharp.CompilerServices
 {
 	using System;
 	using Modeling;
+	using Modeling.Faults;
 	using Runtime;
 
 	/// <summary>

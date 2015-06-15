@@ -28,6 +28,7 @@ namespace SafetySharp.Runtime
 	using System.Linq.Expressions;
 	using System.Reflection;
 	using Modeling;
+	using Modeling.Faults;
 	using Utilities;
 
 	partial class OccurrencePatternMetadata

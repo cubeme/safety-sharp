@@ -28,6 +28,7 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Modeling;
+	using Modeling.Faults;
 	using Roslyn;
 	using Roslyn.Symbols;
 

@@ -27,6 +27,7 @@ namespace SafetySharp.Modeling
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Reflection;
+	using Faults;
 	using Utilities;
 
 	partial class Component

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Modeling.Faults
 {
 	using System;
 	using System.Linq;
@@ -100,7 +100,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		internal void Update()
 		{
-			Occurring = OccurrencePattern.UpdateOccurrence();
+			//Occurring = OccurrencePattern.UpdateOccurrence();
 		}
 
 		/// <summary>

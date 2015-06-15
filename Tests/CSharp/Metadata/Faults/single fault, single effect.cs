@@ -24,6 +24,7 @@ namespace Tests.Metadata.Faults
 {
 	using System;
 	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;

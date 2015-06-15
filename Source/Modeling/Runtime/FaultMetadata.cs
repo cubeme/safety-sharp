@@ -24,6 +24,7 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using Modeling;
+	using Modeling.Faults;
 	using Utilities;
 
 	/// <summary>

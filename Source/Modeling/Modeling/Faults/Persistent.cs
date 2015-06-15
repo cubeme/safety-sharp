@@ -20,37 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution.Faults
+namespace SafetySharp.Modeling.Faults
 {
 	using System;
-	using SafetySharp.Modeling;
-	using SafetySharp.Modeling.Faults;
-	using Shouldly;
-	using Utilities;
 
-	internal class X1 : TestComponent
+	/// <summary>
+	///     Represents the persistent occurrence pattern where a fault, once active, remains active.
+	/// </summary>
+	public class Persistent : OccurrencePattern
 	{
-		private int M()
+		/// <summary>
+		///     Updates the occurrence state. Returns <c>true</c> to indicate that the fault is occurring.
+		/// </summary>
+		public override bool Update()
 		{
-			return 1;
-		}
-
-		protected override void Check()
-		{
-			// TODO - disable fault
-			M().ShouldBe(1);
-
-			// TODO - enable fault
-			//M().ShouldBe(2);
-		}
-
-		[Persistent]
-		private class F : Fault
-		{
-			public int M()
-			{
-				return 2;
-			}
+			return true;
 		}
 	}
 }
