@@ -187,6 +187,8 @@
     <Compile Include="Diagnostics\Enums\Invalid\explicit values.cs" />
     <Compile Include="Diagnostics\Enums\Invalid\underlying types.cs" />
     <Compile Include="Diagnostics\Enums\Valid\enum declaration.cs" />
+    <Compile Include="Diagnostics\PortKinds\Invalid\overridden required ports.cs" />
+    <Compile Include="Diagnostics\PortKinds\Invalid\static ports.cs" />
     <Compile Include="Diagnostics\PortKinds\Invalid\update method marked as port.cs" />
     <Compile Include="Diagnostics\PortKinds\Invalid\accessors with single attribute.cs" />
     <Compile Include="Diagnostics\PortKinds\Invalid\accessors with both attributes.cs" />
@@ -202,6 +204,7 @@
     <Compile Include="Diagnostics\PortKinds\Valid\extern with Required attribute.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\both attributes outside of component class or interface.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\only one of the attributes.cs" />
+    <Compile Include="Diagnostics\PortKinds\Valid\static members.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\without attributes outside of component interface.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\without attributes.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\extern replaced update method.cs" />
@@ -209,11 +212,30 @@
     <Compile Include="Diagnostics\PortKinds\Valid\non-extern with Required attribute outside of component.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\replaced update method.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\unmarked update methods.cs" />
+    <Compile Include="Execution\ExecutionTests.Helpers.cs">
+      <DependentUpon>ExecutionTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Execution\ExecutionTests.cs" />
+    <Compile Include="Execution\ProvidedPorts\generic component.cs" />
+    <Compile Include="Execution\ProvidedPorts\replaced.cs" />
+    <Compile Include="Execution\ProvidedPorts\overridden.cs" />
+    <Compile Include="Execution\ProvidedPorts\non-inherited.cs" />
+    <Compile Include="Execution\RequiredPorts\generic component.cs" />
+    <Compile Include="Execution\RequiredPorts\explicit interface.cs" />
+    <Compile Include="Execution\RequiredPorts\non-inherited.cs" />
+    <Compile Include="Execution\RequiredPorts\overridden.cs" />
+    <Compile Include="Execution\RequiredPorts\replaced.cs" />
+    <Compile Include="Execution\Steps\base calls.cs" />
+    <Compile Include="Execution\Steps\indirectly overridden.cs" />
+    <Compile Include="Execution\Steps\directly overridden.cs" />
+    <Compile Include="Execution\Steps\not overridden.cs" />
     <Compile Include="Metadata\MetadataTests.Helpers.cs">
       <DependentUpon>MetadataTests.cs</DependentUpon>
     </Compile>
+    <Compile Include="Metadata\ProvidedPorts\synthesized by binding.cs" />
     <Compile Include="Normalization\Bindings\Components\disambiguated, superfluous parantheses.cs" />
     <Compile Include="Normalization\Bindings\Components\disambiguated.cs" />
+    <Compile Include="Normalization\Bindings\Components\base binding.cs" />
     <Compile Include="Normalization\Bindings\Components\replaced ports.cs" />
     <Compile Include="Normalization\Bindings\Components\overridden ports.cs" />
     <Compile Include="Normalization\Bindings\Components\multiple bindings.cs" />
@@ -258,7 +280,6 @@
     <None Include="Normalization\Methods\Required\replaced update method.cs" />
     <Compile Include="Metadata\Bindings\explicit interface provided port.cs" />
     <Compile Include="Metadata\Bindings\explicit interface required port.cs" />
-    <Compile Include="Metadata\Bindings\overridden interface required port.cs" />
     <Compile Include="Metadata\Bindings\overridden interface provided port.cs" />
     <Compile Include="Metadata\Bindings\interface required port.cs" />
     <Compile Include="Metadata\Bindings\interface provided port.cs" />
@@ -273,7 +294,6 @@
     <Compile Include="Metadata\Bindings\many parentheses.cs" />
     <Compile Include="Metadata\Bindings\multiple candidates.cs" />
     <Compile Include="Metadata\Bindings\overridden provided port.cs" />
-    <Compile Include="Metadata\Bindings\overridden required port.cs" />
     <Compile Include="Metadata\Bindings\provided port replaced by required.cs" />
     <Compile Include="Metadata\Bindings\replaced provided port.cs" />
     <Compile Include="Metadata\Bindings\replaced required port.cs" />
@@ -353,9 +373,7 @@
       <Name>Simulation</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Execution\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

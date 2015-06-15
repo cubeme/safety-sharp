@@ -41,6 +41,7 @@ namespace Tests.Normalization.Methods.Required
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
 		public void M1() => this.__backingField0__();
 
+		[SafetySharp.CompilerServices.IgnoreAttribute]
 		private int __Behavior1__(int x)
 		{
 			return x;

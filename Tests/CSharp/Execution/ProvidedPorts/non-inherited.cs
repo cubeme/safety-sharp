@@ -20,40 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Methods.OtherMembers
+namespace Tests.Execution.ProvidedPorts
 {
 	using System;
-	using SafetySharp.Modeling;
+	using Shouldly;
+	using Utilities;
 
-	internal partial class In6 : Component
+	internal class X1 : TestComponent
 	{
-		public override void Update()
+		private int M(int i)
 		{
-			return;
+			return i * 2;
 		}
-	}
 
-	internal partial class Out6 : Component
-	{
-		[SafetySharp.CompilerServices.IgnoreAttribute]
-		private void __Behavior0__()
+		protected override void Check()
 		{
-			return;
+			M(2).ShouldBe(4);
+			M(10).ShouldBe(20);
 		}
-	}
-
-	partial class Out6
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __Delegate0__();
-
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public override void Update() => this.__backingField0__();
 	}
 }

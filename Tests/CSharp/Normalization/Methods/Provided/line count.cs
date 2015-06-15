@@ -44,6 +44,7 @@ namespace Tests.Normalization.Methods.Provided
 	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
 	internal partial class Out1 : Component
 	{
+		[SafetySharp.CompilerServices.IgnoreAttribute]
 		private int __Behavior0__(int x)
 		{
 			return 1;

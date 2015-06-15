@@ -20,40 +20,80 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Methods.OtherMembers
+namespace Tests.Execution.RequiredPorts
 {
 	using System;
-	using SafetySharp.Modeling;
+	using Shouldly;
+	using Utilities;
 
-	internal partial class In6 : Component
+	internal abstract class X2 : TestComponent
 	{
-		public override void Update()
+		protected X2()
 		{
-			return;
+			Bind(RequiredPorts.A = ProvidedPorts.M);
 		}
+
+		protected virtual int M(int i)
+		{
+			return i * 2;
+		}
+
+		protected abstract bool Q(int i);
+
+		protected virtual int N(int i)
+		{
+			return i / 2;
+		}
+
+		protected extern int A(int i);
 	}
 
-	internal partial class Out6 : Component
+	internal class X3 : X2
 	{
-		[SafetySharp.CompilerServices.IgnoreAttribute]
-		private void __Behavior0__()
+		public X3()
 		{
-			return;
+			Bind(RequiredPorts.B = base.ProvidedPorts.M);
+			Bind(RequiredPorts.C = ProvidedPorts.Q);
+			Bind(RequiredPorts.D = ProvidedPorts.N);
+			Bind(RequiredPorts.E = base.ProvidedPorts.N);
 		}
-	}
 
-	partial class Out6
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
+		protected override int M(int i)
+		{
+			return i * i;
+		}
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __Delegate0__();
+		protected override bool Q(int i)
+		{
+			return i % 2 == 0;
+		}
 
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public override void Update() => this.__backingField0__();
+		protected override int N(int i)
+		{
+			return base.N(i) + 2;
+		}
+
+		private extern int B(int i);
+		private extern bool C(int i);
+		private extern int D(int i);
+		private extern int E(int i);
+
+		protected override void Check()
+		{
+			A(3).ShouldBe(9);
+			A(10).ShouldBe(100);
+
+			B(3).ShouldBe(6);
+			B(10).ShouldBe(20);
+
+			C(2).ShouldBe(true);
+			C(3).ShouldBe(false);
+
+			D(10).ShouldBe(7);
+			D(100).ShouldBe(52);
+
+			E(10).ShouldBe(5);
+			E(100).ShouldBe(50);
+		}
 	}
 }

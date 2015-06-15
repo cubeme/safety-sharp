@@ -47,15 +47,15 @@ namespace Tests.Normalization.Methods.Required
 		partial class Out2 : Component
 		{
 			[SafetySharp.Modeling.RequiredAttribute]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-			[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-			internal void M2() => this.__backingField0__();
+			[System.Diagnostics.DebuggerHiddenAttribute]
+			[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField1__")]
+			internal void M2() => this.__backingField1__();
 		}
 
 		[SafetySharp.Modeling.RequiredAttribute]
 		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField1__")]
-		protected internal void M3() => this.__backingField1__();
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField2__")]
+		protected internal void M3() => this.__backingField2__();
 	}
 
 	partial class Out1
@@ -73,10 +73,10 @@ namespace Tests.Normalization.Methods.Required
 	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate1__ __backingField1__;
+		private __Delegate2__ __backingField2__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __Delegate1__();
+		private delegate void __Delegate2__();
 	}
 
 	partial class Out1
@@ -85,10 +85,10 @@ namespace Tests.Normalization.Methods.Required
 		{
 			[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
 			[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-			private __Delegate0__ __backingField0__;
+			private __Delegate1__ __backingField1__;
 
 			[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-			private delegate void __Delegate0__();
+			private delegate void __Delegate1__();
 		}
 	}
 }

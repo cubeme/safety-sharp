@@ -27,7 +27,7 @@ namespace Tests.Normalization.Bindings.Components
 
 	internal class X11 : Component
 	{
-		public virtual extern void N();
+		public extern void N();
 
 		public virtual void M()
 		{
@@ -41,8 +41,6 @@ namespace Tests.Normalization.Bindings.Components
 			Bind(RequiredPorts.N = ProvidedPorts.M);
 		}
 
-		public override extern void N();
-
 		public override void M()
 		{
 		}
@@ -53,11 +51,9 @@ namespace Tests.Normalization.Bindings.Components
 		private Out11()
 		{
 			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In11), "N", new System.Type[] { }, typeof(void))),
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.X11), "N", new System.Type[] { }, typeof(void))),
 				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In11), "M", new System.Type[] { }, typeof(void))));
 		}
-
-		public override extern void N();
 
 		public override void M()
 		{

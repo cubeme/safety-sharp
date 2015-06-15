@@ -35,6 +35,7 @@ namespace Tests.Normalization.Methods.Provided
 
 	internal partial class Out1 : Component
 	{
+		[SafetySharp.CompilerServices.IgnoreAttribute]
 		private void __Behavior0__()
 		{
 			var i = 1 + 2;

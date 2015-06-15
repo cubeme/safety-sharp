@@ -20,40 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Methods.OtherMembers
+namespace Tests.Execution
 {
 	using System;
-	using SafetySharp.Modeling;
+	using System.Collections.Generic;
+	using System.IO;
+	using JetBrains.Annotations;
+	using Xunit.Abstractions;
 
-	internal partial class In6 : Component
+	partial class ExecutionTests
 	{
-		public override void Update()
+		public ExecutionTests(ITestOutputHelper output)
+			: base(output)
 		{
-			return;
 		}
-	}
 
-	internal partial class Out6 : Component
-	{
-		[SafetySharp.CompilerServices.IgnoreAttribute]
-		private void __Behavior0__()
+		[UsedImplicitly]
+		public static IEnumerable<object[]> DiscoverTests(string directory)
 		{
-			return;
+			return EnumerateTestCases(Path.Combine(Path.GetDirectoryName(GetFileName()), directory));
 		}
-	}
-
-	partial class Out6
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __Delegate0__();
-
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public override void Update() => this.__backingField0__();
 	}
 }

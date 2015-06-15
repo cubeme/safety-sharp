@@ -24,6 +24,8 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Linq;
+	using System.Reflection;
+	using CompilerServices;
 	using Modeling;
 	using Utilities;
 
@@ -62,6 +64,19 @@ namespace SafetySharp.Runtime
 			_component = component;
 			_requiredPort = requiredPort;
 			_providedPort = providedPort;
+
+			// We initialize the required port's backing field now instead of waiting until the entire component hierarchy 
+			// metadata is initialized; this basically allows the user to call required ports as soon as their bindings
+			// have been established.
+			var backingField = requiredPort.Method.GetCustomAttribute<BackingFieldAttribute>();
+			Requires.That(backingField != null, () => requiredPort,
+				"Expected to find an instance of '{0}' on the required port.", typeof(BackingFieldAttribute).FullName);
+
+			var field = backingField.GetFieldInfo(requiredPort.Method.DeclaringType);
+			Requires.That(field.GetValue(requiredPort.Target) == null, () => requiredPort, "The required port has already been bound.");
+
+			var adaptedDelegate = Delegate.CreateDelegate(field.FieldType, providedPort.Target, providedPort.Method);
+			field.SetValue(requiredPort.Target, adaptedDelegate);
 		}
 
 		/// <summary>

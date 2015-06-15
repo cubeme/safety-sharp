@@ -20,53 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Bindings
+namespace Tests.Diagnostics.PortKinds.Valid
 {
 	using System;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime;
-	using Shouldly;
-	using Utilities;
 
-	internal interface I4 : IComponent
+	internal class Static : Component
 	{
-		[Required]
-		void M();
-	}
+		private static int A { get; set; }
+		private static int B { get; set; }
 
-	internal class X49 : Component, I4
-	{
-		public virtual extern void M();
-	}
-
-	internal class X50 : X49, I4
-	{
-		public override extern void M();
-	}
-
-	internal class X51 : TestComponent
-	{
-		private readonly I4 _i = new X50();
-
-		public X51()
-		{
-			Bind(_i.RequiredPorts.M = ProvidedPorts.N);
-		}
-
-		public void N()
+		private static void M()
 		{
 		}
 
-		protected override void Check()
-		{
-			Metadata.Bindings.Length.ShouldBe(1);
-
-			Metadata.Bindings[0].Component.Component.ShouldBe(this);
-			Metadata.Bindings[0].RequiredPort.ShouldBe(_i.GetComponentInfo().RequiredPorts[1]);
-			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
-
-			_i.GetComponentInfo().RequiredPorts[1].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[0] });
-			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new[] { _i.GetComponentInfo().RequiredPorts[1] });
-		}
+		private static extern void N();
 	}
 }

@@ -20,57 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Bindings
+namespace Tests.Diagnostics.PortKinds.Invalid
 {
 	using System;
-	using SafetySharp.Runtime;
-	using Shouldly;
-	using Utilities;
+	using SafetySharp.Compiler.Analyzers;
+	using SafetySharp.Modeling;
 
-	internal abstract class X29 : TestComponent
+	[Diagnostic(DiagnosticIdentifier.VirtualRequiredPort, 33, 35, 1, "Tests.Diagnostics.PortKinds.Invalid.Base.A")]
+	[Diagnostic(DiagnosticIdentifier.VirtualRequiredPort, 34, 36, 1, "Tests.Diagnostics.PortKinds.Invalid.Base.M()")]
+	internal abstract class Base : Component
 	{
-		protected X29()
-		{
-			Bind(RequiredPorts.M = ProvidedPorts.Q);
-		}
-
-		private void Q()
-		{
-		}
-
+		public virtual extern int A { get; set; }
 		public virtual extern void M();
 	}
 
-	internal class X30 : X29
+	[Diagnostic(DiagnosticIdentifier.OverrideRequiredPort, 41, 36, 1, "Tests.Diagnostics.PortKinds.Invalid.Derived.A")]
+	[Diagnostic(DiagnosticIdentifier.OverrideRequiredPort, 42, 37, 1, "Tests.Diagnostics.PortKinds.Invalid.Derived.M()")]
+	internal class Derived : Base
 	{
-		public X30()
-		{
-			Bind(RequiredPorts.M = ProvidedPorts.N);
-		}
-
-		private void N()
-		{
-		}
-
+		public override extern int A { get; set; }
 		public override extern void M();
-
-		protected override void Check()
-		{
-			Metadata.Bindings.Length.ShouldBe(2);
-
-			Metadata.Bindings[0].Component.Component.ShouldBe(this);
-			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
-			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
-
-			Metadata.Bindings[1].Component.Component.ShouldBe(this);
-			Metadata.Bindings[1].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
-			Metadata.Bindings[1].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
-
-			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new ProvidedPortInfo[] { });
-			Metadata.RequiredPorts[1].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[0], Metadata.ProvidedPorts[1] });
-
-			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[1] });
-			Metadata.ProvidedPorts[1].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[1] });
-		}
 	}
 }

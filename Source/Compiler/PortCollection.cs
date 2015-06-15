@@ -28,7 +28,7 @@ namespace SafetySharp.Compiler
 	using System.Linq;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
-	using SafetySharp.Utilities;
+	using Utilities;
 
 	/// <summary>
 	///     Represents a set of ports with the same name.
@@ -41,9 +41,10 @@ namespace SafetySharp.Compiler
 		/// <param name="declaringType">The declaring type of the ports.</param>
 		/// <param name="portSymbols">The ports contained in the collection.</param>
 		/// <param name="name">The common name of the ports contained in the collection.</param>
+		/// <param name="nonVirtualInvocation">Indicates whether the ports should be invoked non-virtually.</param>
 		/// <param name="containsRequiredPorts">Indicates whether the collection contains required ports.</param>
 		public PortCollection([NotNull] ITypeSymbol declaringType, [NotNull] IMethodSymbol[] portSymbols, [NotNull] string name,
-							  bool containsRequiredPorts)
+							  bool nonVirtualInvocation, bool containsRequiredPorts)
 		{
 			Requires.NotNull(declaringType, () => declaringType);
 			Requires.NotNull(portSymbols, () => portSymbols);
@@ -53,14 +54,20 @@ namespace SafetySharp.Compiler
 			DeclaringType = declaringType;
 			Name = name;
 			ContainsRequiredPorts = containsRequiredPorts;
+			NonVirtualInvocation = nonVirtualInvocation;
 
 			// We add ports for all property accessors declared by property ports
 			foreach (var port in portSymbols)
-				Add(new Port(port, port.Name, containsRequiredPorts));
+				Add(new Port(port, port.Name, nonVirtualInvocation, containsRequiredPorts));
 
 			Assert.That(this.All(p => p.IsRequiredPort == containsRequiredPorts),
 				"Cannot have required and provided ports in the same collection.");
 		}
+
+		/// <summary>
+		///     Gets a value indicating whether the ports should be invoked non-virtually.
+		/// </summary>
+		public bool NonVirtualInvocation { get; private set; }
 
 		/// <summary>
 		///     Gets the common name of the ports contained in the collection.

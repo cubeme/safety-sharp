@@ -39,7 +39,8 @@ namespace Tests.Normalization.Bindings.Components
 		private In12()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
-			Bind(((X12)this).RequiredPorts.N = ProvidedPorts.M); // TODO
+			Bind(((X12)this).RequiredPorts.N = ProvidedPorts.M);
+			Bind(base.RequiredPorts.N = ProvidedPorts.M);
 		}
 
 		public new extern void N();
@@ -59,6 +60,9 @@ namespace Tests.Normalization.Bindings.Components
 			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
 				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate1__), ((X12)this), SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.X12), "N", new System.Type[] { }, typeof(void))),
 				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate1__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In12), "M", new System.Type[] { }, typeof(void))));
+			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate2__), (global::Tests.Normalization.Bindings.Components.X12)(this), SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.X12), "N", new System.Type[] { }, typeof(void))),
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate2__), this, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Components.In12), "M", new System.Type[] { }, typeof(void))));
 		}
 
 		public new extern void N();
@@ -75,5 +79,8 @@ namespace Tests.Normalization.Bindings.Components
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __BindingDelegate1__();
+
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate void __BindingDelegate2__();
 	}
 }

@@ -20,40 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Methods.OtherMembers
+namespace Tests.Execution
 {
 	using System;
-	using SafetySharp.Modeling;
+	using Microsoft.CodeAnalysis;
+	using Utilities;
+	using Xunit;
 
-	internal partial class In6 : Component
+	public partial class ExecutionTests : Tests
 	{
-		public override void Update()
+		[Theory, MemberData("DiscoverTests", "ProvidedPorts")]
+		public void ProvidedPorts(string test, SyntaxTree code)
 		{
-			return;
+			ExecuteComponentTests(code);
 		}
-	}
 
-	internal partial class Out6 : Component
-	{
-		[SafetySharp.CompilerServices.IgnoreAttribute]
-		private void __Behavior0__()
+		[Theory, MemberData("DiscoverTests", "RequiredPorts")]
+		public void RequiredPorts(string test, SyntaxTree code)
 		{
-			return;
+			ExecuteComponentTests(code);
 		}
-	}
 
-	partial class Out6
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __Delegate0__();
-
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public override void Update() => this.__backingField0__();
+		[Theory, MemberData("DiscoverTests", "Steps")]
+		public void Steps(string test, SyntaxTree code)
+		{
+			ExecuteComponentTests(code);
+		}
 	}
 }

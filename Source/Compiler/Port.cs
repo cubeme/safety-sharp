@@ -26,7 +26,7 @@ namespace SafetySharp.Compiler
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Roslyn.Symbols;
-	using SafetySharp.Utilities;
+	using Utilities;
 
 	/// <summary>
 	///     Represents a port.
@@ -34,12 +34,18 @@ namespace SafetySharp.Compiler
 	public class Port
 	{
 		/// <summary>
+		///     A value indicating whether the port should be invoked non-virtually.
+		/// </summary>
+		private readonly bool _nonVirtualInvocation;
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="symbol">The symbol that represents the port.</param>
 		/// <param name="name">The name of the port.</param>
+		/// <param name="nonVirtualInvocation">Indicates whether the port should be invoked non-virtually.</param>
 		/// <param name="isRequiredPort">Indicates whether the port is a required port.</param>
-		public Port([NotNull] IMethodSymbol symbol, [NotNull] string name, bool isRequiredPort)
+		public Port([NotNull] IMethodSymbol symbol, [NotNull] string name, bool nonVirtualInvocation, bool isRequiredPort)
 		{
 			Requires.NotNull(symbol, () => symbol);
 			Requires.NotNullOrWhitespace(name, () => name);
@@ -47,6 +53,15 @@ namespace SafetySharp.Compiler
 			Symbol = symbol;
 			Name = name;
 			IsRequiredPort = isRequiredPort;
+			_nonVirtualInvocation = nonVirtualInvocation;
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether the port should be invoked non-virtually.
+		/// </summary>
+		public bool NonVirtualInvocation
+		{
+			get { return _nonVirtualInvocation && !IsRequiredPort; }
 		}
 
 		/// <summary>

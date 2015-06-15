@@ -48,6 +48,7 @@ namespace Tests.Normalization.Methods.Provided
 
 	internal partial class Out1 : Component
 	{
+		[SafetySharp.CompilerServices.IgnoreAttribute]
 		private void __Behavior0__()
 		{
 			var i = 1 + 2;
@@ -55,13 +56,15 @@ namespace Tests.Normalization.Methods.Provided
 
 		partial class Out2 : Component
 		{
-			private void __Behavior0__()
+			[SafetySharp.CompilerServices.IgnoreAttribute]
+			private void __Behavior1__()
 			{
 				var i = 1 + 2;
 			}
 		}
 
-		private void __Behavior1__()
+		[SafetySharp.CompilerServices.IgnoreAttribute]
+		private void __Behavior2__()
 		{
 			var i = 1 + 2;
 		}
@@ -88,16 +91,16 @@ namespace Tests.Normalization.Methods.Provided
 	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate1__ __backingField1__;
+		private __Delegate2__ __backingField2__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __Delegate1__();
+		private delegate void __Delegate2__();
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior1__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior2__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField1__")]
-		protected internal void M3() => this.__backingField1__();
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField2__")]
+		protected internal void M3() => this.__backingField2__();
 	}
 
 	partial class Out1
@@ -106,16 +109,16 @@ namespace Tests.Normalization.Methods.Provided
 		{
 			[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
 			[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-			private __Delegate0__ __backingField0__;
+			private __Delegate1__ __backingField1__;
 
 			[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-			private delegate void __Delegate0__();
+			private delegate void __Delegate1__();
 
 			[SafetySharp.Modeling.ProvidedAttribute]
-			[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+			[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior1__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
-			[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-			internal void M2() => this.__backingField0__();
+			[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField1__")]
+			internal void M2() => this.__backingField1__();
 		}
 	}
 }

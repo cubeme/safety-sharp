@@ -53,6 +53,11 @@ namespace SafetySharp.Compiler.Normalization
 		private readonly List<DelegateDeclarationSyntax> _delegates = new List<DelegateDeclarationSyntax>();
 
 		/// <summary>
+		///     The methods that have been synthesized to initialize the bindings.
+		/// </summary>
+		private readonly List<MethodDeclarationSyntax> _synthesizedMethods = new List<MethodDeclarationSyntax>();
+
+		/// <summary>
 		///     The number of bindings established in the compilation.
 		/// </summary>
 		private int _bindingCount;
@@ -61,6 +66,11 @@ namespace SafetySharp.Compiler.Normalization
 		///     Represents the [CompilerGenerated] attribute syntax.
 		/// </summary>
 		private AttributeListSyntax _compilerGeneratedAttribute;
+
+		/// <summary>
+		///     The number of bindings established in the compilation.
+		/// </summary>
+		private int _synthesizedMethodsCount;
 
 		/// <summary>
 		///     Normalizes the syntax trees of the <see cref="Compilation" />.
@@ -78,11 +88,17 @@ namespace SafetySharp.Compiler.Normalization
 		{
 			var normalizedClassDeclaration = (ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration);
 
+			var methods = _synthesizedMethods.ToArray();
 			var delegates = _delegates.Select(d => (MemberDeclarationSyntax)d.AddAttributeLists(_compilerGeneratedAttribute)).ToArray();
+
+			_synthesizedMethods.Clear();
 			_delegates.Clear();
 
 			if (delegates.Length > 0)
 				AddMembers(classDeclaration.GetTypeSymbol(SemanticModel), delegates);
+
+			if (methods.Length > 0)
+				AddMembers(classDeclaration.GetTypeSymbol(SemanticModel), methods);
 
 			return normalizedClassDeclaration;
 		}
@@ -135,8 +151,8 @@ namespace SafetySharp.Compiler.Normalization
 			var delegateType = boundPorts.Left.Symbol.GetSynthesizedDelegateDeclaration(delegateName);
 			_delegates.Add(delegateType);
 
-			var leftPort = CreatePortInfoExpression(boundPorts.Left, leftExpression, delegateType.Identifier.ValueText);
-			var rightPort = CreatePortInfoExpression(boundPorts.Right, rightExpression, delegateType.Identifier.ValueText);
+			var leftPort = CreatePortExpression(boundPorts.Left, leftExpression, delegateType.Identifier.ValueText);
+			var rightPort = CreatePortExpression(boundPorts.Right, rightExpression, delegateType.Identifier.ValueText);
 
 			// MetadataBuilders.GetBuilder(this)
 			var metadataBuilderType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(MetadataBuilders)));
@@ -156,9 +172,22 @@ namespace SafetySharp.Compiler.Normalization
 		/// <param name="port">The port the expression should be created for.</param>
 		/// <param name="portExpression">The port expression that was used to reference the port.</param>
 		/// <param name="delegateType">The type of the delegate the port should be cast to.</param>
-		private ExpressionSyntax CreatePortInfoExpression(Port port, MemberAccessExpressionSyntax portExpression, string delegateType)
+		private ExpressionSyntax CreatePortExpression(Port port, MemberAccessExpressionSyntax portExpression, string delegateType)
 		{
 			// TODO: property ports
+			
+			var portName = port.Symbol.Name;
+			string declaringType;
+			if (port.NonVirtualInvocation)
+			{
+				portName = SynthesizePortMethod(port, portExpression);
+				declaringType = SemanticModel
+					.GetEnclosingSymbol(portExpression.SpanStart)
+					.ContainingType
+					.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+			}
+			else
+				declaringType = port.Symbol.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
 			// Delegate.CreateDelegate(...)
 			var delegateClass = Syntax.TypeExpression(Compilation.GetTypeSymbol<Delegate>());
@@ -166,11 +195,60 @@ namespace SafetySharp.Compiler.Normalization
 
 			// Arguments (typeof(delegateType), targetObject, reflectedMethod)
 			var typeofDelegate = SyntaxFactory.TypeOfExpression(SyntaxFactory.ParseTypeName(delegateType));
-			var reflectedMethod = port.Symbol.GetRuntimeMethodExpression(Syntax);
+			var reflectedMethod = port.Symbol.GetRuntimeMethodExpression(Syntax, portName, declaringType);
 			var nestedMemberAccess = portExpression.Expression.RemoveParentheses() as MemberAccessExpressionSyntax;
-			var targetObject = nestedMemberAccess != null ? nestedMemberAccess.Expression : Syntax.ThisExpression();
+			
+			SyntaxNode targetObject;
+			if (nestedMemberAccess != null && nestedMemberAccess.Expression is BaseExpressionSyntax)
+			{
+				if (!port.NonVirtualInvocation)
+				{
+					var typeSymbol = nestedMemberAccess.Expression.GetReferencedSymbol<IParameterSymbol>(SemanticModel).Type.BaseType;
+					targetObject = Syntax.CastExpression(typeSymbol, Syntax.ThisExpression());
+				}
+				else
+					targetObject = Syntax.ThisExpression();
+			}
+			else if (nestedMemberAccess != null)
+				targetObject = nestedMemberAccess.Expression;
+			else
+				targetObject = Syntax.ThisExpression();
 
 			return (ExpressionSyntax)Syntax.InvocationExpression(createDelegateMethod, typeofDelegate, targetObject, reflectedMethod);
+		}
+
+		/// <summary>
+		///     Synthesized a method for the <paramref name="port" />.
+		/// </summary>
+		/// <param name="port">The port the method should be synthesized for.</param>
+		/// <param name="portExpression">The port expression that was used to reference the port.</param>
+		private string SynthesizePortMethod(Port port, MemberAccessExpressionSyntax portExpression)
+		{
+			var portMember = Syntax.MemberAccessExpression(Syntax.BaseExpression(), port.Symbol.Name);
+			var parameters = port.Symbol.Parameters.Select(p => Syntax.Argument(p.RefKind, Syntax.IdentifierName(p.Name)));
+			var invocation = Syntax.InvocationExpression(portMember, parameters);
+
+			var body = port.Symbol.ReturnsVoid
+				? Syntax.ExpressionStatement(invocation)
+				: Syntax.ReturnStatement(invocation);
+
+			var method = (MethodDeclarationSyntax)Syntax.MethodDeclaration(
+				name: ("SynthesizedPort" + _synthesizedMethodsCount).ToSynthesized(),
+				parameters: port.Symbol.Parameters.Select(p => Syntax.ParameterDeclaration(p)),
+				typeParameters: port.Symbol.TypeParameters.Select(t => t.Name),
+				returnType: Syntax.TypeExpression(port.Symbol.ReturnType),
+				accessibility: Accessibility.Private,
+				statements: new[] { body });
+
+			var providedAttribute = Syntax.Attribute(Syntax.TypeExpression(Compilation.GetTypeSymbol<ProvidedAttribute>()));
+			var compilerGeneratedAttribute = Syntax.Attribute(Syntax.TypeExpression(Compilation.GetTypeSymbol<CompilerGeneratedAttribute>()));
+
+			method = (MethodDeclarationSyntax)Syntax.AddAttributes(method, providedAttribute, compilerGeneratedAttribute);
+
+			_synthesizedMethods.Add(method);
+			++_synthesizedMethodsCount;
+
+			return method.Identifier.ValueText;
 		}
 	}
 }

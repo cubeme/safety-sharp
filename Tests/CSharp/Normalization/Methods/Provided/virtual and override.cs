@@ -37,7 +37,7 @@ namespace Tests.Normalization.Methods.Provided
 	{
 		public override int M(int x)
 		{
-			return 1;//TODO: base.M(x);
+			return base.M(x);
 		}
 	}
 
@@ -51,6 +51,7 @@ namespace Tests.Normalization.Methods.Provided
 
 	internal partial class Out1 : Component
 	{
+		[SafetySharp.CompilerServices.IgnoreAttribute]
 		private int __Behavior0__(int x)
 		{
 			return x;
@@ -59,15 +60,17 @@ namespace Tests.Normalization.Methods.Provided
 
 	internal partial class Out2 : Out1
 	{
-		private int __Behavior0__(int x)
+		[SafetySharp.CompilerServices.IgnoreAttribute]
+		private int __Behavior1__(int x)
 		{
-			return 1;//TODO: base.M(x);
+			return base.M(x);
 		}
 	}
 
 	internal partial class Out3 : Out2
 	{
-		private int __Behavior0__(int x)
+		[SafetySharp.CompilerServices.IgnoreAttribute]
+		private int __Behavior2__(int x)
 		{
 			return 1;
 		}
@@ -93,31 +96,31 @@ namespace Tests.Normalization.Methods.Provided
 	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
+		private __Delegate1__ __backingField1__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate int __Delegate0__(int x);
+		private delegate int __Delegate1__(int x);
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior1__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public override int M(int x) => this.__backingField0__(x);
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField1__")]
+		public override int M(int x) => this.__backingField1__(x);
 	}
 
 	partial class Out3
 	{
 		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
+		private __Delegate2__ __backingField2__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate int __Delegate0__(int x);
+		private delegate int __Delegate2__(int x);
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior2__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public sealed override int M(int x) => this.__backingField0__(x);
+		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField2__")]
+		public sealed override int M(int x) => this.__backingField2__(x);
 	}
 }

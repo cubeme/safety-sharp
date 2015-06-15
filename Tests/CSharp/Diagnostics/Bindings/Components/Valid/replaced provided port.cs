@@ -40,6 +40,7 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
 			Bind(RequiredPorts.N = ((X31)this).ProvidedPorts.M);
+			Bind(RequiredPorts.N = base.ProvidedPorts.M);
 			Bind(RequiredPorts.N = ((X31)_x).ProvidedPorts.M);
 			Bind(RequiredPorts.N = ((X31)_x._x._x).ProvidedPorts.M);
 		}

@@ -20,40 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Methods.OtherMembers
+namespace Tests.Diagnostics.PortKinds.Invalid
 {
 	using System;
+	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
 
-	internal partial class In6 : Component
+	[Diagnostic(DiagnosticIdentifier.StaticPort, 36, 28, 1, "Tests.Diagnostics.PortKinds.Invalid.StaticPorts.A")]
+	[Diagnostic(DiagnosticIdentifier.StaticPort, 39, 35, 1, "Tests.Diagnostics.PortKinds.Invalid.StaticPorts.B")]
+	[Diagnostic(DiagnosticIdentifier.StaticPort, 42, 29, 1, "Tests.Diagnostics.PortKinds.Invalid.StaticPorts.M()")]
+	[Diagnostic(DiagnosticIdentifier.StaticPort, 47, 36, 1, "Tests.Diagnostics.PortKinds.Invalid.StaticPorts.N()")]
+	internal class StaticPorts : Component
 	{
-		public override void Update()
+		[Provided]
+		private static int A { get; set; }
+
+		[Required]
+		private static extern int B { get; set; }
+
+		[Provided]
+		private static void M()
 		{
-			return;
 		}
-	}
 
-	internal partial class Out6 : Component
-	{
-		[SafetySharp.CompilerServices.IgnoreAttribute]
-		private void __Behavior0__()
-		{
-			return;
-		}
-	}
-
-	partial class Out6
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __Delegate0__();
-
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public override void Update() => this.__backingField0__();
+		[Required]
+		private static extern void N();
 	}
 }

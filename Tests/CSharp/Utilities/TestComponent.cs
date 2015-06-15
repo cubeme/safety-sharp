@@ -46,5 +46,10 @@ namespace Tests.Utilities
 		}
 
 		protected abstract void Check();
+
+		protected void DoStep()
+		{
+			Update();
+		}
 	}
 }

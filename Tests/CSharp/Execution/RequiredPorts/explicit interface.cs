@@ -20,40 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Methods.OtherMembers
+namespace Tests.Execution.RequiredPorts
 {
 	using System;
 	using SafetySharp.Modeling;
+	using Shouldly;
+	using Utilities;
 
-	internal partial class In6 : Component
+	internal interface I1 : IComponent
 	{
-		public override void Update()
-		{
-			return;
-		}
+		[Required]
+		int N(int i);
+
+		[Provided]
+		int M(int i);
 	}
 
-	internal partial class Out6 : Component
+	internal class X6 : TestComponent, I1
 	{
-		[SafetySharp.CompilerServices.IgnoreAttribute]
-		private void __Behavior0__()
+		public X6()
 		{
-			return;
+			Bind(((I1)this).RequiredPorts.N = ((I1)this).ProvidedPorts.M);
 		}
-	}
 
-	partial class Out6
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
+		extern int I1.N(int i);
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __Delegate0__();
+		int I1.M(int i)
+		{
+			return i * 3;
+		}
 
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public override void Update() => this.__backingField0__();
+		protected override void Check()
+		{
+			((I1)this).N(2).ShouldBe(6);
+			((I1)this).N(10).ShouldBe(30);
+		}
 	}
 }

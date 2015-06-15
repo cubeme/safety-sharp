@@ -47,6 +47,7 @@ namespace Tests.Normalization.Methods.Provided
 		/// Some documentation.
 		/// </summary>
 		// test
+		[SafetySharp.CompilerServices.IgnoreAttribute]
 		private int __Behavior0__()
 		{
 			return 1;

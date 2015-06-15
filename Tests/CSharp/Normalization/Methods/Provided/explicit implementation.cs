@@ -41,6 +41,7 @@ namespace Tests.Normalization.Methods.Required
 
 	internal partial class Out9 : Component, Tests.Normalization.Methods.Required.I1
 	{
+		[SafetySharp.CompilerServices.IgnoreAttribute]
 		private int __Behavior0__()
 		{
 			return 1;

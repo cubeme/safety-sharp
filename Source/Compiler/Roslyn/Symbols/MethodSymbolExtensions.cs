@@ -138,9 +138,6 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
 				return false;
 
-			if (methodSymbol.Name.IsSynthesized())
-				return false;
-
 			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
 				return false;
 
@@ -187,9 +184,6 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				return false;
 
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
-				return false;
-
-			if (methodSymbol.Name.IsSynthesized())
 				return false;
 
 			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
@@ -314,16 +308,28 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="methodSymbol">The methodSymbol the code should be created for.</param>
 		/// <param name="syntaxGenerator">The syntax generator that should be used.</param>
+		/// <param name="methodName">
+		///     The name of the method that should be used; if <c>null</c>, <see cref="methodSymbol" />'s name is
+		///     used instead.
+		/// </param>
+		/// <param name="declaringType">
+		///     The declaring type that should be used; if <c>null</c>, <see cref="methodSymbol" />'s declaring
+		///     type is used instead.
+		/// </param>
 		public static ExpressionSyntax GetRuntimeMethodExpression([NotNull] this IMethodSymbol methodSymbol,
-																  [NotNull] SyntaxGenerator syntaxGenerator)
+																  [NotNull] SyntaxGenerator syntaxGenerator,
+																  string methodName = null,
+																  string declaringType = null)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);
 
-			var declaringTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)syntaxGenerator.TypeExpression(methodSymbol.ContainingType));
+			var declaringTypeArg = declaringType == null
+				? SyntaxFactory.TypeOfExpression((TypeSyntax)syntaxGenerator.TypeExpression(methodSymbol.ContainingType))
+				: SyntaxFactory.TypeOfExpression(SyntaxFactory.ParseTypeName(declaringType));
 			var parameters = GetParameterTypeArray(methodSymbol, syntaxGenerator);
 			var returnType = SyntaxFactory.TypeOfExpression((TypeSyntax)syntaxGenerator.TypeExpression(methodSymbol.ReturnType));
-			var nameArg = syntaxGenerator.LiteralExpression(methodSymbol.Name);
+			var nameArg = syntaxGenerator.LiteralExpression(methodName ?? methodSymbol.Name);
 			var reflectionHelpersType = SyntaxFactory.ParseTypeName(typeof(ReflectionHelpers).FullName);
 			var getMethodMethod = syntaxGenerator.MemberAccessExpression(reflectionHelpersType, "GetMethod");
 			return (ExpressionSyntax)syntaxGenerator.InvocationExpression(getMethodMethod, declaringTypeArg, nameArg, parameters, returnType);

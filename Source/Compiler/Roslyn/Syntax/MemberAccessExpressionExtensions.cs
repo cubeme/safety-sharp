@@ -73,13 +73,25 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 			var nestedMemberAccess = node.Expression.RemoveParentheses() as MemberAccessExpressionSyntax;
 
 			ITypeSymbol targetSymbol = null;
+			var nonVirtualInvocation = false;
+
 			if (nestedMemberAccess == null)
 				targetSymbol = semanticModel.GetEnclosingSymbol(node.SpanStart).ContainingType;
 			else
 			{
 				var castExpression = nestedMemberAccess.Expression.RemoveParentheses() as CastExpressionSyntax;
 				if (castExpression != null)
+				{
 					targetSymbol = castExpression.Type.GetReferencedSymbol<ITypeSymbol>(semanticModel);
+
+					var uncastSymbol = castExpression.Expression.GetReferencedSymbol(semanticModel) as IParameterSymbol;
+					nonVirtualInvocation = uncastSymbol != null && uncastSymbol.IsThis && uncastSymbol.Type.BaseType.Equals(targetSymbol);
+				}
+				else if (nestedMemberAccess.Expression is BaseExpressionSyntax)
+				{
+					targetSymbol = semanticModel.GetEnclosingSymbol(node.SpanStart).ContainingType.BaseType;
+					nonVirtualInvocation = true;
+				}
 				else
 				{
 					var untypedTargetSymbol = nestedMemberAccess.Expression.GetReferencedSymbol(semanticModel);
@@ -111,7 +123,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 
 			var portSymbols = isRequiredPort ? targetSymbol.GetRequiredPorts(semanticModel) : targetSymbol.GetProvidedPorts(semanticModel);
 			var ports = portSymbols.Where(p => p.Name == portName).ToArray();
-			return new PortCollection(targetSymbol, ports, portName, isRequiredPort);
+			return new PortCollection(targetSymbol, ports, portName, nonVirtualInvocation, isRequiredPort);
 		}
 	}
 }

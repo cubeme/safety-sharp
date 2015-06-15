@@ -102,7 +102,12 @@ namespace SafetySharp.Compiler.Normalization
 		private AttributeListSyntax _debuggerHiddenAttribute;
 
 		/// <summary>
-		///     The number of ports declared by the current component.
+		///     Represents the [Ignore] attribute syntax.
+		/// </summary>
+		private AttributeListSyntax _ignoreAttribute;
+
+		/// <summary>
+		///     The number of ports declared by the compilation.
 		/// </summary>
 		private int _portCount;
 
@@ -119,24 +124,11 @@ namespace SafetySharp.Compiler.Normalization
 			_debuggerHiddenAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(DebuggerHiddenAttribute).FullName);
 			_compilerGeneratedAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(CompilerGeneratedAttribute).FullName);
 			_requiredAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(RequiredAttribute).FullName);
+			_ignoreAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(IgnoreAttribute).FullName);
 			_browsableAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(DebuggerBrowsableAttribute).FullName,
 				Syntax.MemberAccessExpression(Syntax.TypeExpression(Compilation.GetTypeSymbol<DebuggerBrowsableState>()), "Never"));
 
 			return base.Normalize();
-		}
-
-		/// <summary>
-		///     Normalizes the <paramref name="classDeclaration" />.
-		/// </summary>
-		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
-		{
-			var portCount = _portCount;
-			_portCount = 0;
-
-			classDeclaration = (ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration);
-			_portCount = portCount;
-
-			return classDeclaration;
 		}
 
 		/// <summary>
@@ -250,9 +242,16 @@ namespace SafetySharp.Compiler.Normalization
 			var behaviorAttribute = SyntaxBuilder.Attribute(typeof(MethodBehaviorAttribute).FullName, behaviorArgument);
 			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(behaviorAttribute));
 
-			// Add the [DebuggerHidden] attribute if it is not already present
+			// Add the [DebuggerHidden] attribute if not already present
 			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))
 				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(_debuggerHiddenAttribute));
+
+			// Add the [Ignore] attribute if not already present
+			if (!originalDeclaration.HasAttribute<IgnoreAttribute>(SemanticModel))
+			{
+				portImplementation = portImplementation.WithAttributeLists(portImplementation.AttributeLists.Add(_ignoreAttribute));
+				portImplementation = portImplementation.RemoveComments().WithTrivia(originalDeclaration);
+			}
 
 			// Add the backing field attribute and replace the method body
 			methodDeclaration = AddBackingFieldAttribute(methodDeclaration);
