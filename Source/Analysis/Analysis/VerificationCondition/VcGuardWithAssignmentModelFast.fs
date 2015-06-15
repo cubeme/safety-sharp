@@ -81,7 +81,16 @@ module internal VcGuardWithAssignmentModelFast =
                         previousStmBlocks |> List.collect combineWithEveryNewStmBlock
                 statements |> List.fold appendStatementOfBlock []
             | Tsam.Stm.Choice (_,choices) ->
-                choices |> List.collect collectPaths
+                let collectChoice (choiceGuard:Expr option, choiceStm:Tsam.Stm) : AtomicStmBlock list =
+                    let pathsOfChoiceStm = collectPaths choiceStm
+                    if choiceGuard.IsSome then
+                        let assumptionOfAllPaths = AtomicStm.Assume(choiceGuard.Value)                        
+                        let combinePathWithAssumption (AtomicStmBlock.AtomicStmBlock(newStmBlock)) : AtomicStmBlock =
+                            AtomicStmBlock(assumptionOfAllPaths::newStmBlock)
+                        pathsOfChoiceStm |> List.map combinePathWithAssumption
+                    else                        
+                        pathsOfChoiceStm
+                choices |> List.collect collectChoice
             | Tsam.Stm.Stochastic (_,stochasticChoices) ->
                 failwith "not supported"
             | Tsam.Stm.Write (_,variable,expression) ->

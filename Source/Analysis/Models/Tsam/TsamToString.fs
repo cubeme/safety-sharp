@@ -113,9 +113,14 @@ module internal TsamToString =
                 (foreach stmts (fun stm -> exportStm stm >>= newLine)) >>=
                 decreaseIndent >>= (append "}") >>=
                 (append "\t\t\t// ") >>= (exportStatementId sid) >>= newLine
-            | Stm.Choice (sid,choices:Stm list) ->
+            | Stm.Choice (sid,choices:(Expr option * Stm) list) ->                
+                let exportChoice (choiceGuard:Expr option,choiceStm:Stm) : AstToStringStateFunction =
+                    if choiceGuard.IsSome then
+                        exportExpr choiceGuard.Value >>= append " => { " >>= exportStm choiceStm >>= append " } " >>= newLine
+                    else
+                        append  " { " >>= exportStm choiceStm >>= append " } " >>= newLine
                 newLine >>= (append "choice {") >>= newLineAndIncreaseIndent >>= 
-                (foreach choices exportStm) >>=
+                (foreach choices exportChoice) >>=
                 decreaseIndent >>= (append "}") >>=
                 (append "\t\t\t// ") >>= (exportStatementId sid) >>= newLine
             | Stm.Stochastic (sid,stochasticChoices) ->

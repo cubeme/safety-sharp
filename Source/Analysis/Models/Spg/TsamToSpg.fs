@@ -147,29 +147,30 @@ module internal TsamToSpg =
                         collectStatesAndTransitions (spg) (previousState,nextState) stm
                     let alreadyCollectedWithSubstatements = stmts |> List.fold foldSubStatement alreadyCollectedWithNewStates
                     alreadyCollectedWithSubstatements
-            | Stm.Choice (choiceSid,choices:Stm list) ->
-                let traverseSubStatementAndCreateSubProgramGraph (stm:Stm) : (StochasticProgramGraph*State) =
+            | Stm.Choice (choiceSid,choices:(Expr option * Stm) list) ->
+                let traverseSubStatementAndCreateSubProgramGraph (choiceGuard,choiceStm:Stm) : (StochasticProgramGraph*(Expr option*State)) =
                     let newState =
                         {
                             State.StateId = alreadyCollected.UniqueStateIdGenerator ();
-                            State.Label = sprintf "Choice%dNo%d" (choiceSid.id) (stm.GetStatementId.id);
+                            State.Label = sprintf "Choice%dNo%d" (choiceSid.id) (choiceStm.GetStatementId.id);
                         }
                     let alreadyCollectedForSubStatements =
                         let statesInSubGraph = Set.empty<State>.Add(newState).Add(nextState)
                         StochasticProgramGraph.initial (alreadyCollected.Variables) statesInSubGraph newState (alreadyCollected.UniqueStateIdGenerator)
-                    let subProgramGraph = collectStatesAndTransitions alreadyCollectedForSubStatements (newState,nextState) stm
-                    (subProgramGraph,newState)
+                    let subProgramGraph = collectStatesAndTransitions alreadyCollectedForSubStatements (newState,nextState) choiceStm
+                    (subProgramGraph,(choiceGuard,newState))
                 let (subProgramGraphs,connectionStatesToProgramGraphs) =
-                    choices |> List.map traverseSubStatementAndCreateSubProgramGraph |> List.unzip
+                    choices |> List.map traverseSubStatementAndCreateSubProgramGraph
+                            |> List.unzip
                 let stochasticProgramGraphWithSubProgramGraphs =
                     alreadyCollected.unionWithMany subProgramGraphs
 
                 let connectionsToSubProgramGraphs =
-                    let newEntryForConnection (connectionState:State) =
+                    let newEntryForConnection (choiceGuard:Expr option,connectionState:State) =
                         {
                             DeterministicTransition.Label=sprintf "Choice%dNo" (stm.GetStatementId.id);
                             DeterministicTransition.FromState=previousState;
-                            DeterministicTransition.Guard=None;
+                            DeterministicTransition.Guard=choiceGuard;
                             DeterministicTransition.Action=None;
                             DeterministicTransition.ToState=connectionState;
                         }

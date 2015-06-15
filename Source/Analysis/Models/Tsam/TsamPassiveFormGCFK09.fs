@@ -189,16 +189,26 @@ module internal TsamPassiveFormGCFK09 =
                     }
                 newSigma
             | Stm.Choice (sid,choices) ->  
+                let readsOfGuards =
+                    choices |> List.map (fun (choiceGuard,_) ->
+                                            if choiceGuard.IsSome then 
+                                                readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Var*int> choiceGuard.Value
+                                            else
+                                                Set.empty<Var*int>
+                                        )
+                            |> Set.unionMany
+
                 let newSigmas =
-                    choices |> List.map (calculateStatementInfosAcc (sid::stmPath) sigma)                    
+                    choices |> List.map (fun (_,choiceStm) -> calculateStatementInfosAcc (sid::stmPath) sigma choiceStm)
                 let children =
-                    choices |> List.map (fun stm -> stm.GetStatementId) |> Set.ofList
+                    choices |> List.map (fun (_,choiceStm) -> choiceStm.GetStatementId) |> Set.ofList
                                                                     
                 let statementInfos = sigma.StatementInfos.Value
                 let read =
                     children |> Set.toSeq
                              |> Seq.map (fun child -> statementInfos.ReadVersions.Item child)
                              |> Seq.fold Set.union Set.empty<Var*int>
+                             |> Set.union readsOfGuards
                 let write =
                     children |> Set.toSeq
                              |> Seq.map (fun child -> statementInfos.WriteVersions.Item child)
@@ -338,7 +348,16 @@ module internal TsamPassiveFormGCFK09 =
                 let newStmnts = statements |> List.map (replaceVarInStm statementInfos versionedVarToFreshVar varToType)
                 Stm.Block (sid,newStmnts)
             | Stm.Choice (sid,choices) ->
-                let newChoices = choices |> List.map (replaceVarInStm statementInfos versionedVarToFreshVar varToType)
+                let readVersions = statementInfos.FirstRead.Item sid
+                let rewriteChoice (choiceExpr:Expr option,choiceStm) =
+                    let newStochasticExpr =
+                        if choiceExpr.IsSome then
+                            Some(replaceVarInExpr readVersions versionedVarToFreshVar varToType choiceExpr.Value)
+                        else
+                            None
+                    let newStochasticStm = replaceVarInStm statementInfos versionedVarToFreshVar varToType choiceStm
+                    (newStochasticExpr,newStochasticStm)
+                let newChoices = choices |> List.map rewriteChoice
                 Stm.Choice (sid,newChoices)
             | Stm.Stochastic (sid,stochasticChoices) ->
                 let readVersions = statementInfos.FirstRead.Item sid
@@ -366,7 +385,10 @@ module internal TsamPassiveFormGCFK09 =
                 let newStmnts = statements |> List.map (addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar varToType)
                 Stm.Block (sid,newStmnts)
             | Stm.Choice (sid,choices) ->
-                let newChoices = choices |> List.map (addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar varToType)     
+                let recursiveAddMissing (choiceGuard,choiceStm) =
+                    let newChoiceStm = addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar varToType choiceStm
+                    (choiceGuard,newChoiceStm)
+                let newChoices = choices |> List.map recursiveAddMissing
                 let readOfNextNode = statementInfos.MaxLastWrite.Item sid
                 //Note: maxLastWrite of this statement is firstRead of next Statement. Thus we still check the formula int the paper.
                 let addMissingAssignmentsToBranch (branch:Stm) : Stm =
@@ -390,7 +412,7 @@ module internal TsamPassiveFormGCFK09 =
                     branch.appendStatements uniqueStatementIdGenerator missingStatementsOfBranch
                 // check each new branch
                 let newChoices =
-                    newChoices |> List.map addMissingAssignmentsToBranch
+                    newChoices |> List.map (fun (choiceGuard,choiceStm) -> (choiceGuard,addMissingAssignmentsToBranch choiceStm))
                 Stm.Choice (sid,newChoices)
             | Stm.Stochastic (sid,stochasticChoices) ->
                 // adapted just code of Stm.Choice
@@ -437,7 +459,7 @@ module internal TsamPassiveFormGCFK09 =
                 let newStmnts = statements |> List.map replaceAssignmentByAssumption
                 Stm.Block (sid,newStmnts)
             | Stm.Choice (sid,choices) ->
-                let newChoices = choices |> List.map replaceAssignmentByAssumption
+                let newChoices = choices |> List.map (fun (choiceGuard,choiceStm) -> (choiceGuard,replaceAssignmentByAssumption choiceStm))
                 Stm.Choice (sid,newChoices)
             | Stm.Stochastic (sid,stochasticChoices) ->
                 let newChoices = stochasticChoices |> List.map (fun (stochasticExpr,stochasticStm) -> (stochasticExpr,replaceAssignmentByAssumption stochasticStm))

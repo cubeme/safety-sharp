@@ -275,7 +275,6 @@ module internal TsamPassiveFormFS01 =
                 | Expr.UExpr (expr,uop) -> Expr.UExpr(replaceVarsWithCurrentVars sigma expr ,uop)
                 | Expr.BExpr (left, bop, right) -> Expr.BExpr(replaceVarsWithCurrentVars sigma left,bop,replaceVarsWithCurrentVars sigma right)
         
-    
     let rec passify (uniqueStatementIdGenerator:unit->StatementId) (sigma:Substitutions, stm:Stm) : (Substitutions*Stm) =
         match stm with
             | Stm.Assert (statementId,expr) ->
@@ -308,14 +307,28 @@ module internal TsamPassiveFormFS01 =
                 if choices = [] then
                     (sigma,Stm.Assume(statementId,Expr.Literal(Val.BoolVal(false))))
                 else
+                    let passifyChoice (choiceGuard:Expr option,choiceStm:Stm) : Substitutions*Stm =
+                        let guardStm : Stm list =
+                            if choiceGuard.IsSome then
+                                //TODO: optimization missing
+                                let assumeStmId = uniqueStatementIdGenerator ()
+                                let assumeExpr = replaceVarsWithCurrentVars sigma choiceGuard.Value
+                                let assumeStm = Stm.Assume(assumeStmId,assumeExpr)
+                                [assumeStm]
+                            else
+                                []
+                        let (sigma,choiceStm) = passify uniqueStatementIdGenerator (sigma,choiceStm)
+                        let choiceStmWithGuard = choiceStm.prependStatements uniqueStatementIdGenerator guardStm
+                        (sigma,choiceStmWithGuard)
                     let (sigmas,passifiedChoices) =
-                        choices |> List.map (fun choice -> passify uniqueStatementIdGenerator (sigma,choice))
+                        choices |> List.map passifyChoice
                                 |> List.filter (fun (sigma,choice) -> not(sigma.IsBottom))
                                 |> List.unzip
                     let (newSigma,stmtssToAppend) = Substitutions.merge uniqueStatementIdGenerator sigmas
                     let newChoices =
-                        let newBlockStmId = uniqueStatementIdGenerator ()
-                        List.map2 (fun passifiedChoice stmtsToAppend -> Stm.Block(newBlockStmId,passifiedChoice::stmtsToAppend)) passifiedChoices stmtssToAppend
+                        let appendStatements (passifiedChoice:Stm) stmtsToAppend =
+                            (None,passifiedChoice.appendStatements uniqueStatementIdGenerator stmtsToAppend)
+                        List.map2 appendStatements passifiedChoices stmtssToAppend
                     (newSigma,Stm.Choice (statementId,newChoices))
             | Stm.Stochastic (statementId,choices) ->
                 assert (choices.IsEmpty=false)
@@ -324,17 +337,16 @@ module internal TsamPassiveFormFS01 =
                 let passifyChoice (probability,stm) : Substitutions*(Expr*Stm) =
                     let probability = replaceVarsWithCurrentVars sigma probability
                     let (sigma,stm) = passify uniqueStatementIdGenerator (sigma,stm)
-                    (sigma,(probability,stm))                    
+                    (sigma,(probability,stm))
                 let (sigmas,passifiedChoices) =
                     choices |> List.map passifyChoice
                             |> List.filter (fun (sigma,choice) -> not(sigma.IsBottom))
                             |> List.unzip
                 let (newSigma,stmtssToAppend) = Substitutions.merge uniqueStatementIdGenerator sigmas
                 let newChoices =
-                    let newBlockStmId = uniqueStatementIdGenerator ()
-                    let appendPrefixToChoice (passifiedChoiceProb,passifiedChoiceStm) stmtsToAppend =
-                        (passifiedChoiceProb,Stm.Block(newBlockStmId,passifiedChoiceStm::stmtsToAppend))
-                    List.map2 appendPrefixToChoice passifiedChoices stmtssToAppend
+                    let appendStatements (passifiedChoiceProb,passifiedChoiceStm:Stm) stmtsToAppend =
+                        (passifiedChoiceProb,passifiedChoiceStm.appendStatements uniqueStatementIdGenerator stmtsToAppend)
+                    List.map2 appendStatements passifiedChoices stmtssToAppend
                 (newSigma,Stm.Stochastic (statementId,newChoices))
                     
     open SafetySharp.Workflow
