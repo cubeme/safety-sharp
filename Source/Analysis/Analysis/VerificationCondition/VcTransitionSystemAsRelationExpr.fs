@@ -351,7 +351,7 @@ module internal TransitionSystemAsRelationExpr =
                 TransitionSystem.Trans = transExpr;
             }
             
-    // -- TSAM with weakest precondition ------------------------------   
+    // -- TSAM with propagation  ------------------------------   
         
     let transformTsamToTsareWithPropagation (pgm:Tsam.Pgm) : TransitionSystem =
         // Note: Just here for theoretical purposes. Not tested really well!
@@ -401,9 +401,14 @@ module internal TransitionSystemAsRelationExpr =
                                 processBlockStm (newCollectedExpr,stmnts.Tail,valuationAfterNext,containedChoice)
                     processBlockStm (Tsam.Expr.Literal(Tsam.Val.BoolVal(true)) ,statements,currentValuation,false)
                 | Tsam.Stm.Choice (_,choices) ->
-                    let subExpressions,_,_=
-                        choices |> List.map (fun (choice:Tsam.Stm) -> buildFormulaAndPropagateValuation currentValuation choice)
-                                |> List.unzip3
+                    let subExpressionOfChoice (choiceGuard:Expr option,choiceStm) =
+                        let subExpression,_,_ = buildFormulaAndPropagateValuation currentValuation choiceStm
+                        if choiceGuard.IsSome then
+                            let currentGuard = choiceGuard.Value.rewriteExpr_varsToExpr currentValuation
+                            Tsam.Expr.BExpr(currentGuard,Tsam.BOp.And,subExpression)                            
+                        else
+                            subExpression
+                    let subExpressions = choices |> List.map subExpressionOfChoice
                     let newFormula = subExpressions |> Expr.createOredExpr // "or", because we go from left to right like strongest postcondition
                     (newFormula,Map.empty<Var,Expr>,true)
                 | Tsam.Stm.Stochastic _ ->
