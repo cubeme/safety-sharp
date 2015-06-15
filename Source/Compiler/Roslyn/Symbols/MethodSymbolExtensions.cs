@@ -31,6 +31,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Editing;
 	using Modeling;
+	using Modeling.Faults;
 	using Utilities;
 
 	/// <summary>
@@ -88,7 +89,8 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="methodSymbol" /> overrides the <see cref="Component.Update()" /> methodSymbol within the
+		///     Checks whether <paramref name="methodSymbol" /> overrides <see cref="Component.Update()" />,
+		///     <see cref="Fault.Update()" />, or <see cref="OccurrencePattern.Update" /> within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
@@ -99,11 +101,17 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(compilation, () => compilation);
 
-			return methodSymbol.Overrides(compilation.GetUpdateMethodSymbol()) && !methodSymbol.HasAttribute<IgnoreAttribute>(compilation);
+			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
+				return false;
+
+			return methodSymbol.Overrides(compilation.GetComponentUpdateMethodSymbol()) ||
+				   methodSymbol.Overrides(compilation.GetFaultUpdateMethodSymbol()) ||
+				   methodSymbol.Overrides(compilation.GetOccurrencePatternUpdateMethodSymbol());
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="methodSymbol" /> overrides the <see cref="Component.Update()" /> methodSymbol within the
+		///     Checks whether <paramref name="methodSymbol" /> overrides <see cref="Component.Update()" />,
+		///     <see cref="Fault.Update()" />, or <see cref="OccurrencePattern.Update" /> within the
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
@@ -216,6 +224,49 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
+		///     Checks whether <paramref name="methodSymbol" /> represents a fault effect of a S# fault.
+		/// </summary>
+		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsFaultEffect([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(compilation, () => compilation);
+
+			if (methodSymbol.IsStatic)
+				return false;
+
+			if (methodSymbol.MethodKind != MethodKind.Ordinary && methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation)
+				return false;
+
+			if (!methodSymbol.ContainingType.IsDerivedFromFault(compilation))
+				return false;
+
+			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
+				return false;
+
+			if (methodSymbol.IsUpdateMethod(compilation))
+				return false;
+
+			return true;
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="methodSymbol" /> represents a fault effect of a S# fault.
+		/// </summary>
+		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsFaultEffect([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			return methodSymbol.IsFaultEffect(semanticModel.Compilation);
+		}
+
+		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a built-in operator of the <see cref="int" />,
 		///     <see cref="bool" />, or <see cref="decimal" /> types.
 		/// </summary>
@@ -230,6 +281,30 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			return methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<int>()) ||
 				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<bool>()) ||
 				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<decimal>());
+		}
+
+		/// <summary>
+		///     Gets the <see cref="IMethodSymbol" /> representing the method declared by <paramref name="affectedType" /> that is
+		///     affected by <paramref name="faultEffect" />.
+		/// </summary>
+		/// <param name="faultEffect">The fault effect the affected method should be returned for.</param>
+		/// <param name="affectedType">The type that is affected by the fault.</param>
+		[Pure]
+		public static IMethodSymbol GetAffectedMethod([NotNull] this IMethodSymbol faultEffect, INamedTypeSymbol affectedType)
+		{
+			Requires.NotNull(faultEffect, () => faultEffect);
+
+			var candidateMethods = affectedType
+				.GetMembers(faultEffect.Name)
+				.OfType<IMethodSymbol>()
+				.Where(candidate => candidate.MethodKind == MethodKind.Ordinary)
+				.Where(candidate => candidate.IsSignatureCompatibleTo(faultEffect))
+				.ToArray();
+
+			Requires.That(candidateMethods.Length == 1, "Failed to uniquely determine the affected method of fault effect '{0}'.",
+				faultEffect.ToDisplayString());
+
+			return candidateMethods[0];
 		}
 
 		/// <summary>

@@ -28,6 +28,7 @@ namespace SafetySharp.Compiler.Normalization
 	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling.Faults;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
@@ -55,6 +56,12 @@ namespace SafetySharp.Compiler.Normalization
 		{
 			if (typeSymbol.IsDerivedFromComponent(Compilation))
 				GenerateComponentMetadata(typeSymbol);
+
+			if (typeSymbol.IsDerivedFrom(Compilation.GetTypeSymbol<OccurrencePattern>()))
+				GenerateOccurrencePatternMetadata(typeSymbol);
+
+			if (typeSymbol.IsDerivedFromFault(Compilation))
+				GenerateFaultMetadata(typeSymbol);
 		}
 
 		/// <summary>
@@ -69,6 +76,31 @@ namespace SafetySharp.Compiler.Normalization
 				.Union(GetUpdateMethodMetadata(type))
 				.Union(GetSubcomponentMetadata(type))
 				.Union(GetFaultMetadata(type));
+
+			GenerateMetadataMethod(type, members);
+		}
+
+		/// <summary>
+		///     Generates the metadata initialization code for the fault <paramref name="type" />.
+		/// </summary>
+		/// <param name="type">The component type the code should be generated for.</param>
+		private void GenerateFaultMetadata(INamedTypeSymbol type)
+		{
+			var members = GetFieldMetadata(type)
+				.Union(GetUpdateMethodMetadata(type))
+				.Union(GetFaultEffectMetadata(type));
+
+			GenerateMetadataMethod(type, members);
+		}
+
+		/// <summary>
+		///     Generates the metadata initialization code for the occurrence pattern <paramref name="type" />.
+		/// </summary>
+		/// <param name="type">The component type the code should be generated for.</param>
+		private void GenerateOccurrencePatternMetadata(INamedTypeSymbol type)
+		{
+			var members = GetFieldMetadata(type)
+				.Union(GetUpdateMethodMetadata(type));
 
 			GenerateMetadataMethod(type, members);
 		}
@@ -199,6 +231,28 @@ namespace SafetySharp.Compiler.Normalization
 				var invocation = method.OverriddenMethod == null || method.OverriddenMethod.IsAbstract
 					? Syntax.InvocationExpression(withProvidedPort, port)
 					: Syntax.InvocationExpression(withProvidedPort, port, method.OverriddenMethod.GetRuntimeMethodExpression(Syntax));
+
+				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
+			}
+		}
+
+		/// <summary>
+		///     Generates the metadata initialization code for all fault effects of the <paramref name="type" />.
+		/// </summary>
+		/// <param name="type">The type that declares the fault effects the metadata initialization code should be generated for.</param>
+		private IEnumerable<StatementSyntax> GetFaultEffectMetadata(INamedTypeSymbol type)
+		{
+			var methods = type
+				.GetMembers()
+				.OfType<IMethodSymbol>()
+				.Where(method => method.IsFaultEffect(Compilation) && !method.IsAbstract);
+
+			foreach (var method in methods)
+			{
+				var withFaultEffect = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithFaultEffect");
+				var faultEffect = method.GetRuntimeMethodExpression(Syntax);
+				var affectedMethod = method.GetAffectedMethod(type.ContainingType).GetRuntimeMethodExpression(Syntax);
+				var invocation = Syntax.InvocationExpression(withFaultEffect, faultEffect, affectedMethod);
 
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}

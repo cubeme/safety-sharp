@@ -54,7 +54,9 @@
     <Compile Include="Modeling\PortBinding.cs" />
     <Compile Include="Modeling\PortInfo.cs" />
     <Compile Include="Runtime\ComponentMetadata.Builder.cs" />
+    <Compile Include="Runtime\FaultEffectMetadata.cs" />
     <Compile Include="Runtime\FaultMetadata.Builder.cs" />
+    <Compile Include="Runtime\FieldCollectionBuilder.cs" />
     <Compile Include="Runtime\MemberCollection.cs" />
     <Compile Include="Runtime\MetadataAnalysis\BoundRequiredPortsFinder.cs" />
     <Compile Include="Runtime\MetadataAnalysis\BoundProvidedPortsFinder.cs" />

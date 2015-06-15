@@ -27,6 +27,7 @@ namespace SafetySharp.Modeling.Faults
 	/// <summary>
 	///     When applied to a <see cref="Fault" /> declaration, indicates that the fault can come and go at any time.
 	/// </summary>
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 	public class TransientAttribute : OccurrencePatternAttribute
 	{
 		/// <summary>

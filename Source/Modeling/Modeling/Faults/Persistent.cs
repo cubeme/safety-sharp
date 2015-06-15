@@ -30,11 +30,11 @@ namespace SafetySharp.Modeling.Faults
 	public class Persistent : OccurrencePattern
 	{
 		/// <summary>
-		///     Updates the occurrence state. Returns <c>true</c> to indicate that the fault is occurring.
+		///     Updates the internal state of the occurrence pattern.
 		/// </summary>
-		public override bool Update()
+		public override void Update()
 		{
-			return true;
+			IsOccurring = true;
 		}
 	}
 }

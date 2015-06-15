@@ -27,6 +27,7 @@ namespace SafetySharp.Modeling.Faults
 	/// <summary>
 	///     When applied to a <see cref="Fault" /> declaration, indicates that the fault, once active, remains active.
 	/// </summary>
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 	public class PersistentAttribute : OccurrencePatternAttribute
 	{
 		/// <summary>

@@ -25,7 +25,7 @@
     <WarningLevel>4</WarningLevel>
     <WarningsAsErrors>
     </WarningsAsErrors>
-    <NoWarn>0626 0649</NoWarn>
+    <NoWarn>0626 0649 414</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -230,10 +230,26 @@
     <Compile Include="Execution\Steps\indirectly overridden.cs" />
     <Compile Include="Execution\Steps\directly overridden.cs" />
     <Compile Include="Execution\Steps\not overridden.cs" />
-    <Compile Include="Metadata\MetadataTests.Helpers.cs">
-      <DependentUpon>MetadataTests.cs</DependentUpon>
+    <Compile Include="Metadata\Components\Faults\no faults.cs" />
+    <Compile Include="Metadata\Components\Faults\multiple faults.cs" />
+    <Compile Include="Metadata\Components\Faults\single fault.cs" />
+    <Compile Include="Metadata\Faults\Fields\generic component.cs" />
+    <Compile Include="Metadata\Faults\Fields\inherited field.cs" />
+    <Compile Include="Metadata\Faults\Fields\initial values overridden by derived class.cs" />
+    <Compile Include="Metadata\Faults\Fields\initial values, set by constructor.cs" />
+    <Compile Include="Metadata\Faults\Fields\initial values, set outside constructor.cs" />
+    <Compile Include="Metadata\Faults\Fields\multiple fields.cs" />
+    <Compile Include="Metadata\Faults\Fields\multiple initial values.cs" />
+    <Compile Include="Metadata\Faults\Fields\no fields.cs" />
+    <Compile Include="Metadata\Components\ProvidedPorts\synthesized by binding.cs" />
+    <Compile Include="Metadata\FaultMetadataTests.cs" />
+    <Compile Include="Metadata\FaultMetadataTests.Helpers.cs">
+      <DependentUpon>FaultMetadataTests.cs</DependentUpon>
     </Compile>
-    <Compile Include="Metadata\ProvidedPorts\synthesized by binding.cs" />
+    <Compile Include="Metadata\ComponentMetadataTests.Helpers.cs">
+      <DependentUpon>ComponentMetadataTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Metadata\Faults\Fields\single field.cs" />
     <Compile Include="Normalization\Bindings\Components\disambiguated, superfluous parantheses.cs" />
     <Compile Include="Normalization\Bindings\Components\disambiguated.cs" />
     <Compile Include="Normalization\Bindings\Components\base binding.cs" />
@@ -279,62 +295,61 @@
     <None Include="Normalization\Methods\Required\parameters, void-return.cs" />
     <None Include="Normalization\Methods\Required\ref, out, params.cs" />
     <None Include="Normalization\Methods\Required\replaced update method.cs" />
-    <Compile Include="Metadata\Bindings\explicit interface provided port.cs" />
-    <Compile Include="Metadata\Bindings\explicit interface required port.cs" />
-    <Compile Include="Metadata\Bindings\overridden interface provided port.cs" />
-    <Compile Include="Metadata\Bindings\interface required port.cs" />
-    <Compile Include="Metadata\Bindings\interface provided port.cs" />
-    <Compile Include="Metadata\Bindings\generic component.cs" />
-    <Compile Include="Metadata\Steps\generic component.cs" />
-    <Compile Include="Metadata\Steps\multiple overrides.cs" />
-    <Compile Include="Metadata\Steps\indirect override.cs" />
-    <Compile Include="Metadata\Steps\direct override.cs" />
-    <Compile Include="Metadata\Steps\default behavior.cs" />
-    <Compile Include="Metadata\Bindings\no bindings.cs" />
-    <Compile Include="Metadata\Bindings\inaccessible ambiguous candidates.cs" />
-    <Compile Include="Metadata\Bindings\many parentheses.cs" />
-    <Compile Include="Metadata\Bindings\multiple candidates.cs" />
-    <Compile Include="Metadata\Bindings\overridden provided port.cs" />
-    <Compile Include="Metadata\Bindings\provided port replaced by required.cs" />
-    <Compile Include="Metadata\Bindings\replaced provided port.cs" />
-    <Compile Include="Metadata\Bindings\replaced required port.cs" />
-    <Compile Include="Metadata\Bindings\required port replaced by provided.cs" />
-    <Compile Include="Metadata\Bindings\resolve ambiguity.cs" />
-    <Compile Include="Metadata\Bindings\same name, different kind.cs" />
-    <Compile Include="Metadata\Bindings\same name.cs" />
-    <Compile Include="Metadata\Bindings\single candidate.cs" />
-    <Compile Include="Metadata\Faults\single fault, single effect.cs" />
-    <Compile Include="Metadata\Faults\no faults.cs" />
-    <Compile Include="Metadata\Fields\generic component.cs" />
-    <Compile Include="Metadata\Fields\initial values overridden by derived class.cs" />
-    <Compile Include="Metadata\Fields\multiple initial values.cs" />
-    <Compile Include="Metadata\Fields\initial values, set by constructor.cs" />
-    <Compile Include="Metadata\Fields\initial values, set outside constructor.cs" />
-    <Compile Include="Metadata\Fields\multiple fields.cs" />
-    <Compile Include="Metadata\Fields\inherited field.cs" />
-    <Compile Include="Metadata\Fields\single field.cs" />
-    <Compile Include="Metadata\Fields\no fields.cs" />
-    <Compile Include="Metadata\Nested\deeply nested.cs" />
-    <Compile Include="Metadata\Nested\nested in generic class.cs" />
-    <Compile Include="Metadata\Nested\nested in non-generic class.cs" />
-    <Compile Include="Metadata\ProvidedPorts\generic component.cs" />
-    <Compile Include="Metadata\ProvidedPorts\overridden port.cs" />
-    <Compile Include="Metadata\ProvidedPorts\inherited and replaced ports.cs" />
-    <Compile Include="Metadata\ProvidedPorts\multiple ports.cs" />
-    <Compile Include="Metadata\ProvidedPorts\no ports.cs" />
-    <Compile Include="Metadata\ProvidedPorts\single port.cs" />
-    <Compile Include="Metadata\RequiredPorts\inherited port.cs" />
-    <Compile Include="Metadata\RequiredPorts\multiple ports.cs" />
-    <Compile Include="Metadata\RequiredPorts\generic component.cs" />
-    <Compile Include="Metadata\RequiredPorts\single port.cs" />
-    <Compile Include="Metadata\RequiredPorts\no ports.cs" />
-    <Compile Include="Metadata\MetadataTests.cs" />
-    <Compile Include="Metadata\Subcomponents\shared components.cs" />
-    <Compile Include="Metadata\Subcomponents\cyclic graph.cs" />
-    <Compile Include="Metadata\Subcomponents\generic component.cs" />
-    <Compile Include="Metadata\Subcomponents\no subcomponents.cs" />
-    <Compile Include="Metadata\Subcomponents\multiple subcomponents.cs" />
-    <Compile Include="Metadata\Subcomponents\single subcomponent.cs" />
+    <Compile Include="Metadata\Components\Bindings\explicit interface provided port.cs" />
+    <Compile Include="Metadata\Components\Bindings\explicit interface required port.cs" />
+    <Compile Include="Metadata\Components\Bindings\overridden interface provided port.cs" />
+    <Compile Include="Metadata\Components\Bindings\interface required port.cs" />
+    <Compile Include="Metadata\Components\Bindings\interface provided port.cs" />
+    <Compile Include="Metadata\Components\Bindings\generic component.cs" />
+    <Compile Include="Metadata\Components\Steps\generic component.cs" />
+    <Compile Include="Metadata\Components\Steps\multiple overrides.cs" />
+    <Compile Include="Metadata\Components\Steps\indirect override.cs" />
+    <Compile Include="Metadata\Components\Steps\direct override.cs" />
+    <Compile Include="Metadata\Components\Steps\default behavior.cs" />
+    <Compile Include="Metadata\Components\Bindings\no bindings.cs" />
+    <Compile Include="Metadata\Components\Bindings\inaccessible ambiguous candidates.cs" />
+    <Compile Include="Metadata\Components\Bindings\many parentheses.cs" />
+    <Compile Include="Metadata\Components\Bindings\multiple candidates.cs" />
+    <Compile Include="Metadata\Components\Bindings\overridden provided port.cs" />
+    <Compile Include="Metadata\Components\Bindings\provided port replaced by required.cs" />
+    <Compile Include="Metadata\Components\Bindings\replaced provided port.cs" />
+    <Compile Include="Metadata\Components\Bindings\replaced required port.cs" />
+    <Compile Include="Metadata\Components\Bindings\required port replaced by provided.cs" />
+    <Compile Include="Metadata\Components\Bindings\resolve ambiguity.cs" />
+    <Compile Include="Metadata\Components\Bindings\same name, different kind.cs" />
+    <Compile Include="Metadata\Components\Bindings\same name.cs" />
+    <Compile Include="Metadata\Components\Bindings\single candidate.cs" />
+    <None Include="Metadata\Faults\FaultEffects\single effect.cs" />
+    <Compile Include="Metadata\Components\Fields\generic component.cs" />
+    <Compile Include="Metadata\Components\Fields\initial values overridden by derived class.cs" />
+    <Compile Include="Metadata\Components\Fields\multiple initial values.cs" />
+    <Compile Include="Metadata\Components\Fields\initial values, set by constructor.cs" />
+    <Compile Include="Metadata\Components\Fields\initial values, set outside constructor.cs" />
+    <Compile Include="Metadata\Components\Fields\multiple fields.cs" />
+    <Compile Include="Metadata\Components\Fields\inherited field.cs" />
+    <Compile Include="Metadata\Components\Fields\single field.cs" />
+    <Compile Include="Metadata\Components\Fields\no fields.cs" />
+    <Compile Include="Metadata\Components\Nested\deeply nested.cs" />
+    <Compile Include="Metadata\Components\Nested\nested in generic class.cs" />
+    <Compile Include="Metadata\Components\Nested\nested in non-generic class.cs" />
+    <Compile Include="Metadata\Components\ProvidedPorts\generic component.cs" />
+    <Compile Include="Metadata\Components\ProvidedPorts\overridden port.cs" />
+    <Compile Include="Metadata\Components\ProvidedPorts\inherited and replaced ports.cs" />
+    <Compile Include="Metadata\Components\ProvidedPorts\multiple ports.cs" />
+    <Compile Include="Metadata\Components\ProvidedPorts\no ports.cs" />
+    <Compile Include="Metadata\Components\ProvidedPorts\single port.cs" />
+    <Compile Include="Metadata\Components\RequiredPorts\inherited port.cs" />
+    <Compile Include="Metadata\Components\RequiredPorts\multiple ports.cs" />
+    <Compile Include="Metadata\Components\RequiredPorts\generic component.cs" />
+    <Compile Include="Metadata\Components\RequiredPorts\single port.cs" />
+    <Compile Include="Metadata\Components\RequiredPorts\no ports.cs" />
+    <Compile Include="Metadata\ComponentMetadataTests.cs" />
+    <Compile Include="Metadata\Components\Subcomponents\shared components.cs" />
+    <Compile Include="Metadata\Components\Subcomponents\cyclic graph.cs" />
+    <Compile Include="Metadata\Components\Subcomponents\generic component.cs" />
+    <Compile Include="Metadata\Components\Subcomponents\no subcomponents.cs" />
+    <Compile Include="Metadata\Components\Subcomponents\multiple subcomponents.cs" />
+    <Compile Include="Metadata\Components\Subcomponents\single subcomponent.cs" />
     <Compile Include="Utilities\AssertTests\IsNotNullMethod.cs" />
     <Compile Include="Utilities\AssertTests\NotNullOrWhitespaceMethod.cs" />
     <Compile Include="Utilities\AssertTests\IsNullMethod.cs" />

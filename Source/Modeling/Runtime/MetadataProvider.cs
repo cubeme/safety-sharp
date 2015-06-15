@@ -121,10 +121,10 @@ namespace SafetySharp.Runtime
 
 			lock (_syncObj)
 			{
-				ObjectMetadata info;
-				Requires.That(_metadata.TryGetValue(obj, out info), () => obj, "The object's metadata has not yet been created.");
+				ObjectMetadata metadata;
+				Requires.That(_metadata.TryGetValue(obj, out metadata), () => obj, "The object's metadata has not yet been created.");
 
-				return info;
+				return metadata;
 			}
 		}
 

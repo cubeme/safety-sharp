@@ -23,6 +23,8 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Linq;
 	using System.Reflection;
 	using CompilerServices;
 	using Utilities;
@@ -74,7 +76,25 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets a value indicating whether the method is affected by fault effects.
 		/// </summary>
-		public bool IsAffectedByFaultEffects { get; private set; }
+		public bool IsAffectedByFaultEffects
+		{
+			get { return AffectingFaultEffects.Any(); }
+		}
+
+		/// <summary>
+		///     Gets the metadata of the fault effects that affect the method.
+		/// </summary>
+		public IEnumerable<FaultEffectMetadata> AffectingFaultEffects
+		{
+			get
+			{
+				var component = DeclaringObject as ComponentMetadata;
+				if (component == null)
+					return Enumerable.Empty<FaultEffectMetadata>();
+
+				return component.Faults.SelectMany(fault => fault.FaultEffects).Where(effect => effect.AffectedMethod.Method == Method);
+			}
+		}
 
 		/// <summary>
 		///     Gets a value indicating whether the method can be affected by fault effects.

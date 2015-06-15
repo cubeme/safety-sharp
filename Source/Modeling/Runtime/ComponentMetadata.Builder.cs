@@ -41,7 +41,7 @@ namespace SafetySharp.Runtime
 			private readonly List<BindingMetadata> _bindings = new List<BindingMetadata>();
 			private readonly Component _component;
 			private readonly List<FaultMetadata> _faults = new List<FaultMetadata>();
-			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
+			private readonly FieldCollectionBuilder _fields;
 			private readonly List<ProvidedPortMetadata> _providedPorts = new List<ProvidedPortMetadata>();
 			private readonly List<RequiredPortMetadata> _requiredPorts = new List<RequiredPortMetadata>();
 			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
@@ -55,7 +55,9 @@ namespace SafetySharp.Runtime
 			internal Builder(Component component)
 			{
 				Requires.NotNull(component, () => component);
+
 				_component = component;
+				_fields = new FieldCollectionBuilder(component);
 			}
 
 			/// <summary>
@@ -64,13 +66,7 @@ namespace SafetySharp.Runtime
 			/// <param name="field">The field that should be added to the metadata.</param>
 			public void WithField(FieldInfo field)
 			{
-				Requires.NotNull(field, () => field);
-				Requires.That(!_fields.ContainsKey(field), () => field, "The field has already been added.");
-				Requires.That(field.FieldType == typeof(int) || field.FieldType == typeof(bool) ||
-							  field.FieldType == typeof(double) || field.FieldType.IsEnum, () => field,
-					"Invalid field type: Only 'bool', 'int', 'double', and enumeration types are supported.");
-
-				_fields.Add(field, null);
+				_fields.WithField(field);
 			}
 
 			/// <summary>
@@ -80,11 +76,7 @@ namespace SafetySharp.Runtime
 			/// <param name="field">The field that should be added to the metadata.</param>
 			public void WithGenericField(FieldInfo field)
 			{
-				Requires.NotNull(field, () => field);
-				Requires.That(!_fields.ContainsKey(field), () => field, "The field has already been added.");
-
-				if (field.FieldType == typeof(int) || field.FieldType == typeof(bool) || field.FieldType == typeof(double) || field.FieldType.IsEnum)
-					WithField(field);
+				_fields.WithGenericField(field);
 			}
 
 			/// <summary>
@@ -94,15 +86,7 @@ namespace SafetySharp.Runtime
 			/// <param name="values">The initial values of the field.</param>
 			public void WithInitialValues(FieldInfo field, params object[] values)
 			{
-				Requires.NotNull(field, () => field);
-				Requires.NotNull(values, () => values);
-				Requires.That(values.Length > 0, () => values, "At least one value must be provided.");
-				Requires.That(_fields.ContainsKey(field), () => field, "The given field is unknown.");
-
-				var typesMatch = values.All(value => value.GetType() == field.FieldType);
-				Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
-
-				_fields[field] = values;
+				_fields.WithInitialValues(field, values);
 			}
 
 			/// <summary>
@@ -187,7 +171,7 @@ namespace SafetySharp.Runtime
 			{
 				Requires.NotNull(stepMethod, () => stepMethod);
 				Requires.That(baseStepMethod == null || _stepMethods.Any(b => b.Method == baseStepMethod), () => baseStepMethod,
-					"The base behavior is unknown.");
+					"The base step method is unknown.");
 
 				var metadata = new StepMethodMetadata(_component, stepMethod, baseStepMethod);
 				Requires.That(metadata.CanBeAffectedByFaultEffects, () => stepMethod, "Component step methods must be sensitive to fault effects.");
@@ -235,13 +219,12 @@ namespace SafetySharp.Runtime
 			/// <param name="parent">The metadata of the parent component. Can be <c>null</c> for the root of the component hierarchy.</param>
 			internal void RegisterMetadata(ComponentMetadata parent = null)
 			{
-				var fields = _fields.Select(field => new FieldMetadata(_component, field.Key, field.Value));
-				var info = new ComponentMetadata
+				var metadata = new ComponentMetadata
 				{
 					Component = _component,
 					Name = _name,
 					ParentComponent = parent,
-					Fields = new MemberCollection<FieldMetadata>(_component, fields),
+					Fields = _fields.ToImmutableCollection(),
 					Faults = new MemberCollection<FaultMetadata>(_component, _faults),
 					StepMethods = new MemberCollection<StepMethodMetadata>(_component, _stepMethods),
 					RequiredPorts = new MemberCollection<RequiredPortMetadata>(_component, _requiredPorts),
@@ -251,7 +234,7 @@ namespace SafetySharp.Runtime
 
 				// We have to register the metadata now, even though we'll still have to change it later on; this way,
 				// we prevent stack overflows when the component hierarchy is cyclic
-				MetadataProvider.FinalizeMetadata(_component, info);
+				MetadataProvider.FinalizeMetadata(_component, metadata);
 
 				// Get all subcomponent instances
 				var subcomponents = _subcomponents.Select(field =>
@@ -261,19 +244,19 @@ namespace SafetySharp.Runtime
 						field.DeclaringType.FullName, field.Name);
 
 					return component;
-				});
+				}).ToArray();
 
 				// Initialize their metadata, if that hasn't happened already (i.e., when the component graph is cyclic)
 				foreach (var subcomponent in subcomponents)
 				{
 					object builder;
 					if (MetadataProvider.TryGetBuilder(subcomponent, out builder))
-						((Builder)builder).RegisterMetadata(info);
+						((Builder)builder).RegisterMetadata(metadata);
 				}
 
 				// Add the subcomponents to the metadata
 				var subcomponentMetadata = subcomponents.Select(subcomponent => subcomponent.GetMetadata());
-				info.Subcomponents = new MemberCollection<ComponentMetadata>(_component, subcomponentMetadata);
+				metadata.Subcomponents = new MemberCollection<ComponentMetadata>(_component, subcomponentMetadata);
 			}
 		}
 	}

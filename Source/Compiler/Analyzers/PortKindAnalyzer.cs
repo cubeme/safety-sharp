@@ -180,7 +180,7 @@ namespace SafetySharp.Compiler.Analyzers
 				return;
 			}
 
-			if (methodSymbol != null && methodSymbol.Overrides(compilation.GetUpdateMethodSymbol()))
+			if (methodSymbol != null && methodSymbol.Overrides(compilation.GetComponentUpdateMethodSymbol()))
 			{
 				if (hasRequiredAttribute || hasProvidedAttribute)
 					_updateMethodMarkedAsPort.Emit(context, symbol, symbol.ToDisplayString());

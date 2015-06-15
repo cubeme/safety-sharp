@@ -144,12 +144,46 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
 		[Pure, NotNull]
-		public static IMethodSymbol GetUpdateMethodSymbol([NotNull] this Compilation compilation)
+		public static IMethodSymbol GetComponentUpdateMethodSymbol([NotNull] this Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
 
 			return compilation
 				.GetTypeSymbol<Component>()
+				.GetMembers("Update")
+				.OfType<IMethodSymbol>()
+				.Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);
+		}
+
+		/// <summary>
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Fault.Update()" /> method within the
+		///     context of the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
+		[Pure, NotNull]
+		public static IMethodSymbol GetFaultUpdateMethodSymbol([NotNull] this Compilation compilation)
+		{
+			Requires.NotNull(compilation, () => compilation);
+
+			return compilation
+				.GetTypeSymbol<Fault>()
+				.GetMembers("Update")
+				.OfType<IMethodSymbol>()
+				.Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);
+		}
+
+		/// <summary>
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="OccurrencePattern.Update()" /> method within the
+		///     context of the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
+		[Pure, NotNull]
+		public static IMethodSymbol GetOccurrencePatternUpdateMethodSymbol([NotNull] this Compilation compilation)
+		{
+			Requires.NotNull(compilation, () => compilation);
+
+			return compilation
+				.GetTypeSymbol<OccurrencePattern>()
 				.GetMembers("Update")
 				.OfType<IMethodSymbol>()
 				.Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);

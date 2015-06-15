@@ -134,7 +134,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		public static IMethodSymbol GetUpdateMethodSymbol([NotNull] this SemanticModel semanticModel)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
-			return semanticModel.Compilation.GetUpdateMethodSymbol();
+			return semanticModel.Compilation.GetComponentUpdateMethodSymbol();
 		}
 
 		/// <summary>

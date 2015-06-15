@@ -25,7 +25,6 @@ namespace SafetySharp.Runtime
 	using System;
 	using Modeling;
 	using Modeling.Faults;
-	using Utilities;
 
 	/// <summary>
 	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
@@ -35,21 +34,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     The component affected by the fault.
 		/// </summary>
-		private readonly Component _component;
-
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		/// <param name="component">The component affected by the fault.</param>
-		/// <param name="fault">The fault the metadata is provided for.</param>
-		internal FaultMetadata(Component component, Fault fault)
-		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(fault, () => fault);
-
-			_component = component;
-			Fault = fault;
-		}
+		private Component _component;
 
 		/// <summary>
 		///     Gets the metadata of the declaring component.
@@ -62,7 +47,27 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the fault the metadata is provided for.
 		/// </summary>
-		public Fault Fault { get; set; }
+		public Fault Fault { get; private set; }
+
+		/// <summary>
+		///     Gets the fault effects declared by the fault.
+		/// </summary>
+		public MemberCollection<FaultEffectMetadata> FaultEffects { get; private set; }
+
+		/// <summary>
+		///     Gets the step methods declared by the fault.
+		/// </summary>
+		public MemberCollection<StepMethodMetadata> StepMethods { get; private set; }
+
+		/// <summary>
+		///     Gets the fields declared by the fault.
+		/// </summary>
+		public MemberCollection<FieldMetadata> Fields { get; private set; }
+
+		/// <summary>
+		///     Gets the metadata of the occurrence pattern determining the fault's occurrence.
+		/// </summary>
+		public OccurrencePatternMetadata OccurrencePattern { get; private set; }
 
 		/// <summary>
 		///     Gets the name of the fault.

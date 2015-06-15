@@ -39,7 +39,9 @@ namespace SafetySharp.Runtime
 		public class Builder
 		{
 			private readonly Fault _fault;
-			private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
+			private readonly List<FaultEffectMetadata> _faultEffects = new List<FaultEffectMetadata>();
+			private readonly FieldCollectionBuilder _fields;
+			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
 			private OccurrencePatternMetadata _occurrencePattern;
 
 			/// <summary>
@@ -49,40 +51,38 @@ namespace SafetySharp.Runtime
 			internal Builder(Fault fault)
 			{
 				Requires.NotNull(fault, () => fault);
+
 				_fault = fault;
+				_fields = new FieldCollectionBuilder(fault);
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="field" /> to the component's metadata.
+			///     Adds the <paramref name="field" /> to the fault's metadata.
 			/// </summary>
 			/// <param name="field">The field that should be added to the metadata.</param>
 			public void WithField(FieldInfo field)
 			{
-				Requires.NotNull(field, () => field);
-				Requires.That(!_fields.ContainsKey(field), () => field, "The field has already been added.");
-				Requires.That(field.FieldType == typeof(int) || field.FieldType == typeof(bool) ||
-							  field.FieldType == typeof(double) || field.FieldType.IsEnum, () => field,
-					"Invalid field type: Only 'bool', 'int', 'double', and enumeration types are supported.");
-
-				_fields.Add(field, null);
+				_fields.WithField(field);
 			}
 
 			/// <summary>
-			///     Sets the initial <paramref name="values" /> of the component's <paramref name="field" />.
+			///     Adds the <paramref name="field" /> of compile-time generic type to the fault's metadata. The field
+			///     is not added if it is not of a supported field type.
+			/// </summary>
+			/// <param name="field">The field that should be added to the metadata.</param>
+			public void WithGenericField(FieldInfo field)
+			{
+				_fields.WithGenericField(field);
+			}
+
+			/// <summary>
+			///     Sets the initial <paramref name="values" /> of the fault's <paramref name="field" />.
 			/// </summary>
 			/// <param name="field">The field whose initial values should be set.</param>
 			/// <param name="values">The initial values of the field.</param>
 			public void WithInitialValues(FieldInfo field, params object[] values)
 			{
-				Requires.NotNull(field, () => field);
-				Requires.NotNull(values, () => values);
-				Requires.That(values.Length > 0, () => values, "At least one value must be provided.");
-				Requires.That(_fields.ContainsKey(field), () => field, "The given field is unknown.");
-
-				var typesMatch = values.All(value => value.GetType() == field.FieldType);
-				Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
-
-				_fields[field] = values;
+				_fields.WithInitialValues(field, values);
 			}
 
 			/// <summary>
@@ -90,10 +90,12 @@ namespace SafetySharp.Runtime
 			/// </summary>
 			/// <param name="faultEffect">The fault effect that should be added.</param>
 			/// <param name="affectedMethod">The affected method of the affected component.</param>
-			public void WithEffect(MethodInfo faultEffect, MethodInfo affectedMethod)
+			public void WithFaultEffect(MethodInfo faultEffect, MethodInfo affectedMethod)
 			{
 				Requires.NotNull(faultEffect, () => faultEffect);
 				Requires.NotNull(affectedMethod, () => affectedMethod);
+
+				_faultEffects.Add(new FaultEffectMetadata(_fault, faultEffect, affectedMethod));
 			}
 
 			/// <summary>
@@ -107,6 +109,24 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
+			///     Adds the <paramref name="stepMethod" /> to the component's metadata. If <paramref name="stepMethod" /> overrides a step
+			///     method declared by a base type, the <paramref name="baseStepMethod" /> must not be <c>null</c>.
+			/// </summary>
+			/// <param name="stepMethod">The method representing the component's behavior that should be added to the component's metadata.</param>
+			/// <param name="baseStepMethod">The overridden behavior of the base type, if any.</param>
+			public void WithStepMethod(MethodInfo stepMethod, MethodInfo baseStepMethod = null)
+			{
+				Requires.NotNull(stepMethod, () => stepMethod);
+				Requires.That(baseStepMethod == null || _stepMethods.Any(b => b.Method == baseStepMethod), () => baseStepMethod,
+					"The base step method is unknown.");
+
+				var metadata = new StepMethodMetadata(_fault, stepMethod, baseStepMethod);
+				Requires.That(!metadata.CanBeAffectedByFaultEffects, () => stepMethod, "Fault step methods must be sensitive to fault effects.");
+
+				_stepMethods.Add(metadata);
+			}
+
+			/// <summary>
 			///     Creates an immutable <see cref="FaultMetadata" /> instance from the current state of the builder and makes it available
 			///     to S#'s <see cref="MetadataProvider" />.
 			/// </summary>
@@ -115,10 +135,18 @@ namespace SafetySharp.Runtime
 			{
 				Requires.NotNull(component, () => component);
 
-				var info = new FaultMetadata(component, _fault);
-				MetadataProvider.FinalizeMetadata(_fault, info);
+				var metadata = new FaultMetadata
+				{
+					_component = component,
+					Fault = _fault,
+					FaultEffects = new MemberCollection<FaultEffectMetadata>(_fault, _faultEffects),
+					Fields = _fields.ToImmutableCollection(),
+					StepMethods = new MemberCollection<StepMethodMetadata>(_fault, _stepMethods),
+					OccurrencePattern = _occurrencePattern
+				};
 
-				return info;
+				MetadataProvider.FinalizeMetadata(_fault, metadata);
+				return metadata;
 			}
 		}
 	}

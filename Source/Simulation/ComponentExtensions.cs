@@ -47,8 +47,8 @@ namespace SafetySharp.Simulation
 				field.Key.SetValue(component, field.Value[0]);
 
 			// TODO: Respect other initial states
-			foreach (var fault in component.Faults)
-				fault.Occurring = false;
+			//foreach (var fault in component.Faults)
+				//fault.Occurring = false;
 		}
 
 		/// <summary>
@@ -74,7 +74,8 @@ namespace SafetySharp.Simulation
 			where T : Fault
 		{
 			Requires.NotNull(component, () => component);
-			return component.GetFault<T>().Occurring;
+			//return component.GetFault<T>().Occurring;
+			return false;
 		}
 
 		/// <summary>
@@ -87,7 +88,7 @@ namespace SafetySharp.Simulation
 			where T : Fault
 		{
 			Requires.NotNull(component, () => component);
-			component.GetFault<T>().Occurring = enabled;
+			//component.GetFault<T>().Occurring = enabled;
 		}
 
 		/// <summary>
@@ -99,7 +100,7 @@ namespace SafetySharp.Simulation
 			where T : Fault
 		{
 			Requires.NotNull(component, () => component);
-			component.GetFault<T>().Occurring = true;
+			//component.GetFault<T>().Occurring = true;
 		}
 
 		/// <summary>
@@ -111,7 +112,7 @@ namespace SafetySharp.Simulation
 			where T : Fault
 		{
 			Requires.NotNull(component, () => component);
-			component.GetFault<T>().Occurring = false;
+			//component.GetFault<T>().Occurring = false;
 		}
 	}
 }

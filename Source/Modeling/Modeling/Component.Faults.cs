@@ -71,8 +71,8 @@ namespace SafetySharp.Modeling
 				.Select(t => Activator.CreateInstance(t) as Fault)
 				.ToImmutableArray();
 
-			foreach (var fault in _faults)
-				fault.Initialize(this);
+			//foreach (var fault in _faults)
+			//	fault.Initialize(this);
 		}
 	}
 }

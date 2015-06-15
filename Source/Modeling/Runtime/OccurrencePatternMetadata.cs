@@ -23,9 +23,7 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using Modeling;
 	using Modeling.Faults;
-	using Utilities;
 
 	/// <summary>
 	///     Represents the immutable metadata of a S# <see cref="OccurrencePattern" /> instance.
@@ -35,21 +33,17 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     The fault that is affected by the occurrence pattern.
 		/// </summary>
-		private readonly Fault _fault;
+		private Fault _fault;
 
 		/// <summary>
-		///     Initializes a new instance.
+		///     Gets the fields declared by the occurrence pattern.
 		/// </summary>
-		/// <param name="occurrencePattern">The occurrence pattern the metadata is provided for.</param>
-		/// <param name="fault">The fault affected by the occurrence pattern.</param>
-		internal OccurrencePatternMetadata(OccurrencePattern occurrencePattern, Fault fault)
-		{
-			Requires.NotNull(occurrencePattern, () => occurrencePattern);
-			Requires.NotNull(fault, () => fault);
+		public MemberCollection<FieldMetadata> Fields { get; private set; }
 
-			_fault = fault;
-			OccurrencePattern = occurrencePattern;
-		}
+		/// <summary>
+		///     Gets the step methods declared by the occurrence pattern.
+		/// </summary>
+		public MemberCollection<StepMethodMetadata> StepMethods { get; private set; }
 
 		/// <summary>
 		///     Gets the metadata of the fault that is affected by the occurrence pattern.
