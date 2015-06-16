@@ -24,7 +24,6 @@ namespace SafetySharp.Modeling
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using System.Linq;
 	using Runtime;
 	using Utilities;
@@ -42,12 +41,12 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     All of the components contained in the model.
 		/// </summary>
-		private ImmutableArray<Component> _components;
+		private List<Component> _components;
 
 		/// <summary>
 		///     The root components of the model.
 		/// </summary>
-		private ImmutableArray<Component> _roots;
+		private List<Component> _roots;
 
 		/// <summary>
 		///     The synthesized root component of the model that is the parent of all <see cref="_roots" />.
@@ -67,7 +66,7 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Gets the root <see cref="Component" />s of the model.
 		/// </summary>
-		internal ImmutableArray<Component> Roots
+		internal List<Component> Roots
 		{
 			get
 			{
@@ -91,7 +90,7 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Gets all <see cref="Component" />s contained in the model.
 		/// </summary>
-		internal ImmutableArray<Component> Components
+		internal List<Component> Components
 		{
 			get
 			{
@@ -179,8 +178,8 @@ namespace SafetySharp.Modeling
 
 			// Store the root components and collect all components of the model
 			var knownComponents = new HashSet<Component>();
-			_roots = rootComponents.ToImmutableArray();
-			_components = _roots.SelectMany(root => GetAllComponents(knownComponents, root)).ToImmutableArray();
+			_roots = rootComponents.ToList();
+			_components = _roots.SelectMany(root => GetAllComponents(knownComponents, root)).ToList();
 
 			// Ensure that there are no shared components
 			var sharedComponents = _components

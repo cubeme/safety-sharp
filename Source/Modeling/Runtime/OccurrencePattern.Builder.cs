@@ -53,10 +53,6 @@ namespace SafetySharp.Runtime
 				_fields = new FieldCollectionBuilder(occurrencePattern);
 			}
 
-			public void WithUpdateMethod(MethodInfo method, Func<Expression> createBody = null)
-			{
-			}
-
 			/// <summary>
 			///     Adds the <paramref name="field" /> to the occurrence pattern's metadata.
 			/// </summary>
@@ -87,18 +83,23 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="stepMethod" /> to the component's metadata. If <paramref name="stepMethod" /> overrides a step
-			///     method declared by a base type, the <paramref name="baseStepMethod" /> must not be <c>null</c>.
+			///     Adds the <paramref name="stepMethod" /> to the occurrence pattern's metadata. If <paramref name="stepMethod" />
+			///     overrides a step method declared by a base type, the <paramref name="baseStepMethod" /> must not be <c>null</c>.
 			/// </summary>
-			/// <param name="stepMethod">The method representing the component's behavior that should be added to the component's metadata.</param>
-			/// <param name="baseStepMethod">The overridden behavior of the base type, if any.</param>
+			/// <param name="stepMethod">
+			///     The method representing the occurrence pattern's step method that should be added to the occurrence
+			///     pattern's metadata.
+			/// </param>
+			/// <param name="baseStepMethod">The overridden step method of the base type, if any.</param>
 			public void WithStepMethod(MethodInfo stepMethod, MethodInfo baseStepMethod = null)
 			{
 				Requires.NotNull(stepMethod, () => stepMethod);
-				Requires.That(baseStepMethod == null || _stepMethods.Any(b => b.Method == baseStepMethod), () => baseStepMethod,
+				Requires.That(baseStepMethod == null || _stepMethods.Any(method => method.MethodInfo == baseStepMethod), () => baseStepMethod,
 					"The base step method is unknown.");
 
-				var metadata = new StepMethodMetadata(_occurrencePattern, stepMethod, baseStepMethod);
+				var baseMetadata = baseStepMethod != null ? _stepMethods.Single(method => method.MethodInfo == baseStepMethod) : null;
+				var metadata = new StepMethodMetadata(_occurrencePattern, stepMethod, baseMetadata);
+
 				Requires.That(!metadata.CanBeAffectedByFaultEffects, () => stepMethod,
 					"Occurrence pattern step methods must not be sensitive to fault effects.");
 

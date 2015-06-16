@@ -23,7 +23,7 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.Collections.Immutable;
+	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Reflection;
@@ -62,7 +62,7 @@ namespace SafetySharp.Modeling
 		///     The list of subcomponents.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private ImmutableArray<Component> _subcomponents;
+		private List<Component> _subcomponents;
 
 		/// <summary>
 		///     Gets the unique name of the component instance. Returns the empty string if no component name could be determined.
@@ -101,7 +101,7 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Gets the <see cref="Component" /> instances that are direct subcomponents of the current instance.
 		/// </summary>
-		internal ImmutableArray<Component> Subcomponents
+		internal List<Component> Subcomponents
 		{
 			get
 			{
@@ -151,7 +151,7 @@ namespace SafetySharp.Modeling
 				.Where(info => info.Component != null)
 				.ToArray();
 
-			_subcomponents = subcomponentMetadata.Select(info => info.Component).ToImmutableArray();
+			_subcomponents = subcomponentMetadata.Select(info => info.Component).ToList();
 
 			for (var i = 0; i < subcomponentMetadata.Length; ++i)
 			{

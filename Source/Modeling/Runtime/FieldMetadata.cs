@@ -24,7 +24,6 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using System.Reflection;
 	using Utilities;
 
@@ -53,21 +52,21 @@ namespace SafetySharp.Runtime
 
 			_object = obj;
 
-			Field = field;
-			InitialValues = initialValues == null ? ImmutableArray.Create(field.GetValue(obj)) : initialValues.ToImmutableArray();
+			FieldInfo = field;
+			InitialValues = initialValues ?? new[] { field.GetValue(obj) };
 		}
 
 		/// <summary>
 		///     Gets the underlying CLR field.
 		/// </summary>
-		public FieldInfo Field { get; private set; }
+		public FieldInfo FieldInfo { get; private set; }
 
 		/// <summary>
 		///     Gets the name of the field.
 		/// </summary>
 		public string Name
 		{
-			get { return Field.Name; }
+			get { return FieldInfo.Name; }
 		}
 
 		/// <summary>
@@ -83,7 +82,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public Type Type
 		{
-			get { return Field.FieldType; }
+			get { return FieldInfo.FieldType; }
 		}
 
 		/// <summary>

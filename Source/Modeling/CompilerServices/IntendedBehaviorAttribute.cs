@@ -27,17 +27,17 @@ namespace SafetySharp.CompilerServices
 	using Utilities;
 
 	/// <summary>
-	///     When applied to a component member, indicates the method that implements the default behavior in the
-	///     absence of any faults.
+	///     When applied to a method that can be affected by fault effects, indicates the method that implements the intended
+	///     behavior of the method in the absence of any faults.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-	public sealed class MethodBehaviorAttribute : Attribute
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+	public sealed class IntendedBehaviorAttribute : Attribute
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="methodName">The name of the behavior method.</param>
-		public MethodBehaviorAttribute(string methodName)
+		public IntendedBehaviorAttribute(string methodName)
 		{
 			Requires.NotNull(methodName, () => methodName);
 			MethodName = methodName;

@@ -34,10 +34,6 @@
       <HintPath>..\..\Dependencies\Packages\JetBrains.Annotations.9.1.1\lib\net20\JetBrains.Annotations.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Collections.Immutable, Version=1.1.33.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\Dependencies\Packages\System.Collections.Immutable.1.1.33-beta\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
@@ -55,19 +51,23 @@
     <Compile Include="Modeling\PortInfo.cs" />
     <Compile Include="Modeling\PriorityAttribute.cs" />
     <Compile Include="Runtime\ComponentMetadata.Builder.cs" />
+    <Compile Include="Runtime\DeterministicFaultBehavior.cs" />
     <Compile Include="Runtime\FaultEffectMetadata.cs" />
+    <Compile Include="Runtime\FaultInjector.cs" />
     <Compile Include="Runtime\FaultMetadata.Builder.cs" />
     <Compile Include="Runtime\FieldCollectionBuilder.cs" />
+    <Compile Include="Runtime\IntendedBehavior.cs" />
     <Compile Include="Runtime\MemberCollection.cs" />
     <Compile Include="Runtime\MetadataAnalysis\BoundRequiredPortsFinder.cs" />
     <Compile Include="Runtime\MetadataAnalysis\BoundProvidedPortsFinder.cs" />
     <Compile Include="Runtime\MetadataAnalysis\ComponentHierarchyWalker.cs" />
     <Compile Include="Runtime\FieldMetadata.cs" />
+    <Compile Include="Runtime\MethodBehavior.cs" />
     <Compile Include="Runtime\MethodMetadata.cs" />
     <Compile Include="CompilerServices\LiftExpressionAttribute.cs" />
     <Compile Include="CompilerServices\MetadataBuilders.cs" />
     <Compile Include="Runtime\MetadataExtensions.cs" />
-    <Compile Include="CompilerServices\MethodBehaviorAttribute.cs" />
+    <Compile Include="CompilerServices\IntendedBehaviorAttribute.cs" />
     <Compile Include="CompilerServices\SafetySharpAttribute.cs" />
     <Compile Include="Modeling\Faults\OccurrencePattern.cs" />
     <Compile Include="Runtime\BindingMetadata.cs" />
@@ -104,6 +104,7 @@
     <Compile Include="Modeling\OverflowBehavior.cs" />
     <Compile Include="Modeling\ProvidedAttribute.cs" />
     <Compile Include="Modeling\RequiredAttribute.cs" />
+    <Compile Include="Runtime\NondeterministicFaultBehavior.cs" />
     <Compile Include="Runtime\ObjectMetadata.cs" />
     <Compile Include="Runtime\OccurrencePattern.Builder.cs" />
     <Compile Include="Runtime\ProvidedPortMetadata.cs" />

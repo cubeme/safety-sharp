@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,20 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Execution.Faults
 {
 	using System;
+	using SafetySharp.Modeling.Faults;
+	using Shouldly;
+	using Utilities;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Object" /> instance.
-	/// </summary>
-	public abstract class ObjectMetadata
+	internal class X3 : TestComponent
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		internal ObjectMetadata()
+		public X3()
 		{
+			Bind(RequiredPorts.M = ProvidedPorts.N);
+		}
+
+		private extern int M();
+
+		private int N()
+		{
+			return 1;
+		}
+
+		protected override void Check()
+		{
+			Metadata.Faults[0].Fault.IsOccurring = false;
+			M().ShouldBe(1);
+
+			Metadata.Faults[0].Fault.IsOccurring = true;
+			M().ShouldBe(2);
+		}
+
+		[Persistent]
+		private class F : Fault
+		{
+			public int M()
+			{
+				return 2;
+			}
 		}
 	}
 }

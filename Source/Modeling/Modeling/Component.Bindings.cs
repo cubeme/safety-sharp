@@ -24,9 +24,8 @@ namespace SafetySharp.Modeling
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using System.Diagnostics;
-	using Utilities;
+	using System.Linq;
 
 	partial class Component
 	{
@@ -40,12 +39,12 @@ namespace SafetySharp.Modeling
 		///     The component's initialized port bindings.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private ImmutableArray<PortBinding> _initializedBindings;
+		private List<PortBinding> _initializedBindings;
 
 		/// <summary>
 		///     Gets the port bindings of the component.
 		/// </summary>
-		internal ImmutableArray<PortBinding> Bindings
+		internal List<PortBinding> Bindings
 		{
 			get
 			{
@@ -59,7 +58,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		private void InitializeBindings()
 		{
-			_initializedBindings = _bindings.ToImmutableArray();
+			_initializedBindings = _bindings.ToList();
 
 			foreach (var binding in _bindings)
 				binding.FinalizeMetadata();

@@ -23,41 +23,37 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Reflection;
-	using MetadataAnalysis;
-	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Represents the the immutable metadata of a provided port of a S# <see cref="Component" />.
+	///     Represents the intended behavior of a method, disregarding any faults.
 	/// </summary>
-	public sealed class ProvidedPortMetadata : MethodMetadata
+	public sealed class IntendedBehavior : MethodBehavior
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="component">The component the method belongs to.</param>
-		/// <param name="port">The CLR method representing the component's port.</param>
-		/// <param name="basePort">The overridden base port, if any.</param>
-		public ProvidedPortMetadata(Component component, MethodInfo port, MethodMetadata basePort = null)
-			: base(component, port, basePort)
+		/// <param name="obj">The S# object the method belongs to.</param>
+		/// <param name="method">The metadata of the method the behavior belongs to.</param>
+		public IntendedBehavior(object obj, MethodMetadata method)
+			: base(obj, method)
 		{
-			Requires.That(HasImplementation, () => port, "Provided ports must have an implementation.");
-			Requires.That(CanBeAffectedByFaultEffects, () => port, "Provided ports must be sensitive to fault effects.");
 		}
 
 		/// <summary>
-		///     Gets the metadata of the required ports that have been bound to the provided port.
+		///     Binds the intended method behavior. The <paramref name="fallbackBehavior" /> must be <c>null</c> as the intended
+		///     behavior can always be executed and never falls back to another behavior.
 		/// </summary>
-		public IEnumerable<RequiredPortMetadata> BoundRequiredPorts
+		/// <param name="fallbackBehavior">The fallback behavior that should be invoked when the current behavior is inactive.</param>
+		/// <param name="delegateType">The delegate type representing the signature of the method.</param>
+		internal override void Bind(MethodBehavior fallbackBehavior, Type delegateType)
 		{
-			get
-			{
-				var finder = new BoundRequiredPortsFinder(((ComponentMetadata)DeclaringObject).RootComponent, this);
-				finder.WalkPreOrder();
-				return finder.RequiredPorts;
-			}
+			Requires.That(fallbackBehavior == null, () => fallbackBehavior, "The fallback behavior is never invoked.");
+
+			// Set the intended behavior - if the method doesn't have an implementation, the intended behavior
+			// is expected to be set by someone else
+			if (Method.HasImplementation)
+				BindDelegate(Delegate.CreateDelegate(Method.BackingField.FieldType, Object, Method.IntendedBehavior));
 		}
 	}
 }

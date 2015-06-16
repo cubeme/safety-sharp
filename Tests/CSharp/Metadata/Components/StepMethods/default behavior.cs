@@ -33,7 +33,7 @@ namespace Tests.Metadata.Components.StepMethods
 		protected override void Check()
 		{
 			Metadata.StepMethods.Length.ShouldBe(1);
-			Metadata.StepMethods[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
+			Metadata.StepMethods[0].MethodInfo.ShouldBe(typeof(Component).GetMethod("Update"));
 			Metadata.StepMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.StepMethods[0].BaseMethod.ShouldBe(null);
 			Metadata.StepMethods[0].IsOverride.ShouldBe(false);

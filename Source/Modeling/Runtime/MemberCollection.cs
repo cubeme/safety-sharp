@@ -25,7 +25,7 @@ namespace SafetySharp.Runtime
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
+	using System.Linq;
 	using Utilities;
 
 	/// <summary>
@@ -36,26 +36,26 @@ namespace SafetySharp.Runtime
 		where T : class
 	{
 		/// <summary>
+		///     The members contained in the collection.
+		/// </summary>
+		private readonly T[] _members;
+
+		/// <summary>
 		///     The S# object the method collection belongs to.
 		/// </summary>
 		private readonly object _object;
 
 		/// <summary>
-		///     The members contained in the collection.
-		/// </summary>
-		private ImmutableArray<T> _members;
-
-		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="obj">The object the method collection belongs to.</param>
+		/// <param name="obj">The object the member collection belongs to.</param>
 		/// <param name="members">The members that should be contained in the collection.</param>
 		internal MemberCollection(object obj, IEnumerable<T> members)
 		{
 			Requires.NotNull(members, () => members);
 
 			_object = obj;
-			_members = members.ToImmutableArray();
+			_members = members.ToArray();
 		}
 
 		/// <summary>
@@ -102,11 +102,15 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Returns an enumerator that iterates through the collection.
+		///     Executes <paramref name="action" /> for all members of the collection.
 		/// </summary>
-		public ImmutableArray<T>.Enumerator GetEnumerator()
+		/// <param name="action">The action that should be executed for each member of the collection.</param>
+		internal void ForEach(Action<T> action)
 		{
-			return _members.GetEnumerator();
+			Requires.NotNull(action, () => action);
+
+			foreach (var member in _members)
+				action(member);
 		}
 	}
 }

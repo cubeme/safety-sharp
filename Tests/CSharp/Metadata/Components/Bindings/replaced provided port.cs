@@ -62,12 +62,12 @@ namespace Tests.Metadata.Components.Bindings
 
 			Metadata.Bindings[1].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Bindings[1].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
-			Metadata.Bindings[1].ProvidedPort.Method.ShouldBe(typeof(X32).GetMethod("__SynthesizedPort0__",
+			Metadata.Bindings[1].ProvidedPort.MethodInfo.ShouldBe(typeof(X32).GetMethod("__SynthesizedPort0__",
 				BindingFlags.Instance | BindingFlags.NonPublic));
 
 			Metadata.Bindings[2].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Bindings[2].RequiredPort.ShouldBe(Metadata.RequiredPorts[2]);
-			Metadata.Bindings[2].ProvidedPort.Method.ShouldBe(typeof(X32).GetMethod("__SynthesizedPort1__",
+			Metadata.Bindings[2].ProvidedPort.MethodInfo.ShouldBe(typeof(X32).GetMethod("__SynthesizedPort1__",
 				BindingFlags.Instance | BindingFlags.NonPublic));
 
 			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[1] });

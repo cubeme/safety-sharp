@@ -23,32 +23,65 @@
 namespace Tests.Execution.Faults
 {
 	using System;
+	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
 
-	internal class X1 : TestComponent
+	internal class X4 : TestComponent
 	{
-		private int M()
+		public X4()
+		{
+			Bind(RequiredPorts.M = ProvidedPorts.N);
+		}
+
+		private extern int M();
+
+		private int N()
 		{
 			return 1;
 		}
 
 		protected override void Check()
 		{
-			// TODO - disable fault
+			Metadata.Faults[0].Fault.IsOccurring = false;
+			Metadata.Faults[1].Fault.IsOccurring = false;
+
 			M().ShouldBe(1);
 
-			// TODO - enable fault
-			//M().ShouldBe(2);
+			Metadata.Faults[0].Fault.IsOccurring = true;
+			Metadata.Faults[1].Fault.IsOccurring = false;
+
+			M().ShouldBe(2);
+
+			Metadata.Faults[0].Fault.IsOccurring = false;
+			Metadata.Faults[1].Fault.IsOccurring = true;
+
+			M().ShouldBe(3);
+
+			Metadata.Faults[0].Fault.IsOccurring = true;
+			Metadata.Faults[1].Fault.IsOccurring = true;
+
+			M().ShouldBe(3);
 		}
 
 		[Persistent]
-		private class F : Fault
+		private class F1 : Fault
 		{
+			[Priority(1)]
 			public int M()
 			{
 				return 2;
+			}
+		}
+
+		[Persistent]
+		private class F2 : Fault
+		{
+			[Priority(17)]
+			public int M()
+			{
+				return 3;
 			}
 		}
 	}

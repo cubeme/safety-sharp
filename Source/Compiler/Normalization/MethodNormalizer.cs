@@ -239,7 +239,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			// Add the [MethodBehavior] attribute
 			var behaviorArgument = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", methodName));
-			var behaviorAttribute = SyntaxBuilder.Attribute(typeof(MethodBehaviorAttribute).FullName, behaviorArgument);
+			var behaviorAttribute = SyntaxBuilder.Attribute(typeof(IntendedBehaviorAttribute).FullName, behaviorArgument);
 			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(behaviorAttribute));
 
 			// Add the [DebuggerHidden] attribute if not already present

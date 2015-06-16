@@ -86,7 +86,7 @@ namespace Tests.Normalization.Methods.Provided
 		private delegate int __Delegate0__(int x);
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
 		public virtual int M(int x) => this.__backingField0__(x);
@@ -102,7 +102,7 @@ namespace Tests.Normalization.Methods.Provided
 		private delegate int __Delegate1__(int x);
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior1__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior1__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField1__")]
 		public override int M(int x) => this.__backingField1__(x);
@@ -118,7 +118,7 @@ namespace Tests.Normalization.Methods.Provided
 		private delegate int __Delegate2__(int x);
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior2__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior2__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField2__")]
 		public sealed override int M(int x) => this.__backingField2__(x);

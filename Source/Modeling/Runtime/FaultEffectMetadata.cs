@@ -83,15 +83,15 @@ namespace SafetySharp.Runtime
 			{
 				var component = DeclaringFault.DeclaringComponent;
 
-				MethodMetadata metadata = component.ProvidedPorts.SingleOrDefault(port => port.Method == _affectedMethod);
+				MethodMetadata metadata = component.ProvidedPorts.SingleOrDefault(port => port.MethodInfo == _affectedMethod);
 				if (metadata != null)
 					return metadata;
 
-				metadata = component.RequiredPorts.SingleOrDefault(port => port.Method == _affectedMethod);
+				metadata = component.RequiredPorts.SingleOrDefault(port => port.MethodInfo == _affectedMethod);
 				if (metadata != null)
 					return metadata;
 
-				metadata = component.StepMethods.SingleOrDefault(step => step.Method == _affectedMethod);
+				metadata = component.StepMethods.SingleOrDefault(step => step.MethodInfo == _affectedMethod);
 				if (metadata != null)
 					return metadata;
 

@@ -39,13 +39,13 @@ namespace Tests.Metadata.Components.RequiredPorts
 		{
 			Metadata.RequiredPorts.Length.ShouldBe(2);
 
-			Metadata.RequiredPorts[0].Method.ShouldBe(typeof(X6<int, bool>).GetMethod("M"));
+			Metadata.RequiredPorts[0].MethodInfo.ShouldBe(typeof(X6<int, bool>).GetMethod("M"));
 			Metadata.RequiredPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
 			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
 			Metadata.RequiredPorts[0].Name.ShouldBe("M");
 
-			Metadata.RequiredPorts[1].Method.ShouldBe(typeof(X6<int, bool>).GetMethod("N"));
+			Metadata.RequiredPorts[1].MethodInfo.ShouldBe(typeof(X6<int, bool>).GetMethod("N"));
 			Metadata.RequiredPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.RequiredPorts[1].BaseMethod.ShouldBe(null);
 			Metadata.RequiredPorts[1].IsOverride.ShouldBe(false);

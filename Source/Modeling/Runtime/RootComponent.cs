@@ -24,7 +24,6 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using Modeling;
 
 	/// <summary>
@@ -37,7 +36,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		/// <param name="subcomponents">The subcomponents of the component.</param>
 		/// <param name="bindings">The port bindings of the component.</param>
-		internal RootComponent(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
+		internal RootComponent(List<Component> subcomponents, List<PortBinding> bindings)
 			: base(subcomponents, bindings)
 		{
 			FinalizeMetadata(null, SynthesizedRootName);

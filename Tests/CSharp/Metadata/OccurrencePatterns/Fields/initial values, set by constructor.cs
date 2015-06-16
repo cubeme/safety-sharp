@@ -35,19 +35,19 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(4);
 
 			Metadata.Faults[0].OccurrencePattern.Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[0].Field.ShouldBe(typeof(P).GetField("_w", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].OccurrencePattern.Fields[0].FieldInfo.ShouldBe(typeof(P).GetField("_w", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].OccurrencePattern.Fields[0].InitialValues.ShouldBe(new object[] { E.B });
 
 			Metadata.Faults[0].OccurrencePattern.Fields[1].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[1].Field.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].OccurrencePattern.Fields[1].FieldInfo.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].OccurrencePattern.Fields[1].InitialValues.ShouldBe(new object[] { 17 });
 
 			Metadata.Faults[0].OccurrencePattern.Fields[2].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[2].Field.ShouldBe(typeof(P).GetField("_y", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].OccurrencePattern.Fields[2].FieldInfo.ShouldBe(typeof(P).GetField("_y", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].OccurrencePattern.Fields[2].InitialValues.ShouldBe(new object[] { 3.14 });
 
 			Metadata.Faults[0].OccurrencePattern.Fields[3].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[3].Field.ShouldBe(typeof(P).GetField("_z", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].OccurrencePattern.Fields[3].FieldInfo.ShouldBe(typeof(P).GetField("_z", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].OccurrencePattern.Fields[3].InitialValues.ShouldBe(new object[] { true });
 		}
 

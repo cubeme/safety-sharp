@@ -45,18 +45,18 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects.Length.ShouldBe(1);
 			Metadata.Faults[1].FaultEffects.Length.ShouldBe(1);
 
-			Metadata.Faults[0].FaultEffects[0].Method.ShouldBe(typeof(F1).GetMethod("M"));
+			Metadata.Faults[0].FaultEffects[0].MethodInfo.ShouldBe(typeof(F1).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].FaultEffects[0].Implementation.ShouldBe(typeof(F1).GetMethod("M"));
+			Metadata.Faults[0].FaultEffects[0].IntendedBehavior.ShouldBe(typeof(F1).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
 			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(0);
 
-			Metadata.Faults[1].FaultEffects[0].Method.ShouldBe(typeof(F2).GetMethod("M"));
+			Metadata.Faults[1].FaultEffects[0].MethodInfo.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].FaultEffects[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[1].FaultEffects[0].Implementation.ShouldBe(typeof(F2).GetMethod("M"));
+			Metadata.Faults[1].FaultEffects[0].IntendedBehavior.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].FaultEffects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
@@ -96,18 +96,18 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects.Length.ShouldBe(1);
 			Metadata.Faults[1].FaultEffects.Length.ShouldBe(1);
 
-			Metadata.Faults[0].FaultEffects[0].Method.ShouldBe(typeof(F1).GetMethod("M"));
+			Metadata.Faults[0].FaultEffects[0].MethodInfo.ShouldBe(typeof(F1).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].FaultEffects[0].Implementation.ShouldBe(typeof(F1).GetMethod("M"));
+			Metadata.Faults[0].FaultEffects[0].IntendedBehavior.ShouldBe(typeof(F1).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.RequiredPorts[0]);
 			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(0);
 			
-			Metadata.Faults[1].FaultEffects[0].Method.ShouldBe(typeof(F2).GetMethod("M"));
+			Metadata.Faults[1].FaultEffects[0].MethodInfo.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].FaultEffects[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[1].FaultEffects[0].Implementation.ShouldBe(typeof(F2).GetMethod("M"));
+			Metadata.Faults[1].FaultEffects[0].IntendedBehavior.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].FaultEffects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();

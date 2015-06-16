@@ -65,9 +65,9 @@ namespace SafetySharp.Modeling
 				Requires.That(backingField != null, "Expected to find an instance of '{0}' on provided port '{1}'.",
 					typeof(BackingFieldAttribute).FullName, port);
 
-				var behavior = port.GetCustomAttribute<MethodBehaviorAttribute>();
+				var behavior = port.GetCustomAttribute<IntendedBehaviorAttribute>();
 				Requires.That(behavior != null, "Expected to find an instance of '{0}' on provided port '{1}'.",
-					typeof(MethodBehaviorAttribute).FullName, port);
+					typeof(IntendedBehaviorAttribute).FullName, port);
 
 				var field = backingField.GetFieldInfo(port.DeclaringType);
 				var flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;

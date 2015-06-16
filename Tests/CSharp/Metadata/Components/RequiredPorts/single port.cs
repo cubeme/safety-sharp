@@ -36,13 +36,13 @@ namespace Tests.Metadata.Components.RequiredPorts
 		{
 			Metadata.RequiredPorts.Length.ShouldBe(1);
 
-			Metadata.RequiredPorts[0].Method.ShouldBe(typeof(X2).GetMethod("M", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.RequiredPorts[0].MethodInfo.ShouldBe(typeof(X2).GetMethod("M", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.RequiredPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
 			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
 			Metadata.RequiredPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
 			Metadata.RequiredPorts[0].HasImplementation.ShouldBe(false);
-			Metadata.RequiredPorts[0].Implementation.ShouldBe(null);
+			Metadata.RequiredPorts[0].IntendedBehavior.ShouldBe(null);
 			Metadata.RequiredPorts[0].Name.ShouldBe("M");
 		}
 	}

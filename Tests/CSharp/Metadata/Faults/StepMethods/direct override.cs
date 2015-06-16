@@ -33,23 +33,23 @@ namespace Tests.Metadata.Faults.StepMethods
 		{
 			Metadata.Faults[0].StepMethods.Length.ShouldBe(2);
 
-			Metadata.Faults[0].StepMethods[0].Method.ShouldBe(typeof(Fault).GetMethod("UpdateFaultState"));
+			Metadata.Faults[0].StepMethods[0].MethodInfo.ShouldBe(typeof(Fault).GetMethod("UpdateFaultState"));
 			Metadata.Faults[0].StepMethods[0].DeclaringObject.ShouldBe((object)Metadata.Faults[0]);
 			Metadata.Faults[0].StepMethods[0].BaseMethod.ShouldBe(null);
 			Metadata.Faults[0].StepMethods[0].IsOverride.ShouldBe(false);
 			Metadata.Faults[0].StepMethods[0].Name.ShouldBe("UpdateFaultState");
 			Metadata.Faults[0].StepMethods[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].StepMethods[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].StepMethods[0].Implementation.ShouldBe(typeof(Fault).GetMethod("UpdateFaultState"));
+			Metadata.Faults[0].StepMethods[0].IntendedBehavior.ShouldBe(typeof(Fault).GetMethod("UpdateFaultState"));
 
-			Metadata.Faults[0].StepMethods[1].Method.ShouldBe(typeof(F).GetMethod("UpdateFaultState"));
+			Metadata.Faults[0].StepMethods[1].MethodInfo.ShouldBe(typeof(F).GetMethod("UpdateFaultState"));
 			Metadata.Faults[0].StepMethods[1].DeclaringObject.ShouldBe((object)Metadata.Faults[0]);
-			Metadata.Faults[0].StepMethods[1].BaseMethod.ShouldBe(typeof(Fault).GetMethod("UpdateFaultState"));
+			Metadata.Faults[0].StepMethods[1].BaseMethod.MethodInfo.ShouldBe(typeof(Fault).GetMethod("UpdateFaultState"));
 			Metadata.Faults[0].StepMethods[1].IsOverride.ShouldBe(true);
 			Metadata.Faults[0].StepMethods[1].Name.ShouldBe("UpdateFaultState");
 			Metadata.Faults[0].StepMethods[1].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].StepMethods[1].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].StepMethods[1].Implementation.ShouldBe(typeof(F).GetMethod("UpdateFaultState"));
+			Metadata.Faults[0].StepMethods[1].IntendedBehavior.ShouldBe(typeof(F).GetMethod("UpdateFaultState"));
 		}
 
 		[Transient]

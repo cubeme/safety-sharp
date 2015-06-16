@@ -70,7 +70,7 @@ namespace Tests.Normalization.Methods.Provided
 		/// </summary>
 		// test
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
 		public int M1() => this.__backingField0__(); /* test */

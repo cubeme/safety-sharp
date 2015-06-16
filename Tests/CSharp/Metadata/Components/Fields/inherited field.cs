@@ -42,11 +42,11 @@ namespace Tests.Metadata.Components.Fields
 			Metadata.Fields.Length.ShouldBe(2);
 
 			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[0].Field.ShouldBe(typeof(X10).GetField("_x"));
+			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(X10).GetField("_x"));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { ((X10)this)._x });
 
 			Metadata.Fields[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[1].Field.ShouldBe(typeof(X11).GetField("_x", BindingFlags.Instance| BindingFlags.NonPublic));
+			Metadata.Fields[1].FieldInfo.ShouldBe(typeof(X11).GetField("_x", BindingFlags.Instance| BindingFlags.NonPublic));
 			Metadata.Fields[1].InitialValues.ShouldBe(new object[] { _x });
 		}
 	}

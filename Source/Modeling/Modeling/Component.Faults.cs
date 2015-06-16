@@ -23,7 +23,7 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.Collections.Immutable;
+	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Reflection;
@@ -36,12 +36,12 @@ namespace SafetySharp.Modeling
 		///     The list of faults that affect the component.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private ImmutableArray<Fault> _faults;
+		private List<Fault> _faults;
 
 		/// <summary>
 		///     Gets the faults of the component.
 		/// </summary>
-		internal ImmutableArray<Fault> Faults
+		internal List<Fault> Faults
 		{
 			get
 			{
@@ -69,7 +69,7 @@ namespace SafetySharp.Modeling
 				.GetNestedTypes(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic)
 				.Where(t => t.IsClass && typeof(Fault).IsAssignableFrom(t))
 				.Select(t => Activator.CreateInstance(t) as Fault)
-				.ToImmutableArray();
+				.ToList();
 
 			//foreach (var fault in _faults)
 			//	fault.Initialize(this);

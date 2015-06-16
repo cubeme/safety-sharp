@@ -24,7 +24,6 @@ namespace SafetySharp.Modeling
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.Linq;
@@ -44,12 +43,12 @@ namespace SafetySharp.Modeling
 		///     Maps each field of the component to its set of initial values after initialization.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private ImmutableDictionary<FieldInfo, object[]> _initializedFields;
+		private Dictionary<FieldInfo, object[]> _initializedFields;
 
 		/// <summary>
 		///     Gets the fields of the component, including their set of initial values.
 		/// </summary>
-		internal ImmutableDictionary<FieldInfo, object[]> Fields
+		internal Dictionary<FieldInfo, object[]> Fields
 		{
 			get
 			{
@@ -114,7 +113,7 @@ namespace SafetySharp.Modeling
 				_fields.Add(field, new[] { value });
 			}
 
-			_initializedFields = _fields.ToImmutableDictionary();
+			_initializedFields = _fields;
 		}
 	}
 }

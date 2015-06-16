@@ -45,21 +45,21 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(2);
 
 			Metadata.Faults[0].OccurrencePattern.Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[0].Field.ShouldBe(typeof(P<int, bool>).GetField("_x"));
+			Metadata.Faults[0].OccurrencePattern.Fields[0].FieldInfo.ShouldBe(typeof(P<int, bool>).GetField("_x"));
 			Metadata.Faults[0].OccurrencePattern.Fields[0].InitialValues.ShouldBe(new object[] { 0 });
 
 			Metadata.Faults[0].OccurrencePattern.Fields[1].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[1].Field.ShouldBe(typeof(P<int, bool>).GetField("_y"));
+			Metadata.Faults[0].OccurrencePattern.Fields[1].FieldInfo.ShouldBe(typeof(P<int, bool>).GetField("_y"));
 			Metadata.Faults[0].OccurrencePattern.Fields[1].InitialValues.ShouldBe(new object[] { false });
 
 			Metadata.Faults[1].OccurrencePattern.Fields.Length.ShouldBe(2);
 
 			Metadata.Faults[1].OccurrencePattern.Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[1].OccurrencePattern);
-			Metadata.Faults[1].OccurrencePattern.Fields[0].Field.ShouldBe(typeof(P<double, E>).GetField("_x"));
+			Metadata.Faults[1].OccurrencePattern.Fields[0].FieldInfo.ShouldBe(typeof(P<double, E>).GetField("_x"));
 			Metadata.Faults[1].OccurrencePattern.Fields[0].InitialValues.ShouldBe(new object[] { 0.0 });
 
 			Metadata.Faults[1].OccurrencePattern.Fields[1].DeclaringObject.ShouldBe(Metadata.Faults[1].OccurrencePattern);
-			Metadata.Faults[1].OccurrencePattern.Fields[1].Field.ShouldBe(typeof(P<double, E>).GetField("_y"));
+			Metadata.Faults[1].OccurrencePattern.Fields[1].FieldInfo.ShouldBe(typeof(P<double, E>).GetField("_y"));
 			Metadata.Faults[1].OccurrencePattern.Fields[1].InitialValues.ShouldBe(new object[] { E.A });
 		}
 

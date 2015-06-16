@@ -58,7 +58,7 @@ namespace Tests.Normalization.Methods.Required
 		private delegate int __Delegate0__();
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
 		int Tests.Normalization.Methods.Required.I1.M() => this.__backingField0__();

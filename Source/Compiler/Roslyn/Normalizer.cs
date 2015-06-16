@@ -115,7 +115,7 @@ namespace SafetySharp.Compiler.Roslyn
 					? Syntax.NamespaceDeclaration(type.ContainingNamespace.ToDisplayString(), member)
 					: member;
 
-				AddCompilationUnit((CompilationUnitSyntax)Syntax.CompilationUnit(code).NormalizeWhitespace(), fileName);
+				AddCompilationUnit((CompilationUnitSyntax)Syntax.CompilationUnit(code), fileName);
 			}
 		}
 

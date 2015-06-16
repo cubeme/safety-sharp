@@ -51,7 +51,7 @@ namespace Tests.Normalization.Methods.OtherMembers
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __Delegate0__();
 
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
 		public override void Update() => this.__backingField0__();

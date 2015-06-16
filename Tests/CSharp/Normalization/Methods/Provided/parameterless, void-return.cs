@@ -107,7 +107,7 @@ namespace Tests.Normalization.Methods.Provided
 		private delegate void __Delegate0__();
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
 		public void M1() => this.__backingField0__();
@@ -124,7 +124,7 @@ namespace Tests.Normalization.Methods.Provided
 		private delegate void __Delegate1__();
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior1__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior1__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField1__")]
 		internal void M2() => this.__backingField1__();
@@ -141,7 +141,7 @@ namespace Tests.Normalization.Methods.Provided
 		private delegate void __Delegate2__();
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior2__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior2__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField2__")]
 		protected internal void M3() => this.__backingField2__();
@@ -158,7 +158,7 @@ namespace Tests.Normalization.Methods.Provided
 		private delegate void __Delegate3__();
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior3__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior3__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField3__")]
 		protected void M4() => this.__backingField3__();
@@ -175,7 +175,7 @@ namespace Tests.Normalization.Methods.Provided
 		private delegate void __Delegate4__();
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior4__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior4__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField4__")]
 		private void M5() => this.__backingField4__();
@@ -192,7 +192,7 @@ namespace Tests.Normalization.Methods.Provided
 		private delegate void __Delegate5__();
 
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior5__")]
+		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior5__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField5__")]
 		void M6() => this.__backingField5__();

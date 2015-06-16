@@ -38,9 +38,9 @@ namespace Tests.Metadata.Faults.FaultEffects
 		{
 			Metadata.Faults[0].FaultEffects.Length.ShouldBe(1);
 
-			Metadata.Faults[0].FaultEffects[0].Method.ShouldBe(typeof(F).GetMethod("M"));
+			Metadata.Faults[0].FaultEffects[0].MethodInfo.ShouldBe(typeof(F).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].FaultEffects[0].Implementation.ShouldBe(typeof(F).GetMethod("M"));
+			Metadata.Faults[0].FaultEffects[0].IntendedBehavior.ShouldBe(typeof(F).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
@@ -67,9 +67,9 @@ namespace Tests.Metadata.Faults.FaultEffects
 		{
 			Metadata.Faults[0].FaultEffects.Length.ShouldBe(1);
 
-			Metadata.Faults[0].FaultEffects[0].Method.ShouldBe(typeof(F).GetMethod("M"));
+			Metadata.Faults[0].FaultEffects[0].MethodInfo.ShouldBe(typeof(F).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].FaultEffects[0].Implementation.ShouldBe(typeof(F).GetMethod("M"));
+			Metadata.Faults[0].FaultEffects[0].IntendedBehavior.ShouldBe(typeof(F).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBe(new FaultEffectMetadata[] { });
@@ -99,9 +99,9 @@ namespace Tests.Metadata.Faults.FaultEffects
 		{
 			Metadata.Faults[0].FaultEffects.Length.ShouldBe(1);
 
-			Metadata.Faults[0].FaultEffects[0].Method.ShouldBe(typeof(F).GetMethod("Update"));
+			Metadata.Faults[0].FaultEffects[0].MethodInfo.ShouldBe(typeof(F).GetMethod("Update"));
 			Metadata.Faults[0].FaultEffects[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].FaultEffects[0].Implementation.ShouldBe(typeof(F).GetMethod("Update"));
+			Metadata.Faults[0].FaultEffects[0].IntendedBehavior.ShouldBe(typeof(F).GetMethod("Update"));
 			Metadata.Faults[0].FaultEffects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBe(new FaultEffectMetadata[] { });

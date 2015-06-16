@@ -40,19 +40,19 @@ namespace Tests.Metadata.Components.Fields
 			Metadata.Fields.Length.ShouldBe(4);
 
 			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[0].Field.ShouldBe(typeof(X9).GetField("_w", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(X9).GetField("_w", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _w });
 
 			Metadata.Fields[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[1].Field.ShouldBe(typeof(X9).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Fields[1].FieldInfo.ShouldBe(typeof(X9).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[1].InitialValues.ShouldBe(new object[] { _x });
 
 			Metadata.Fields[2].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[2].Field.ShouldBe(typeof(X9).GetField("_y", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Fields[2].FieldInfo.ShouldBe(typeof(X9).GetField("_y", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[2].InitialValues.ShouldBe(new object[] { _y });
 
 			Metadata.Fields[3].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[3].Field.ShouldBe(typeof(X9).GetField("_z", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Fields[3].FieldInfo.ShouldBe(typeof(X9).GetField("_z", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Fields[3].InitialValues.ShouldBe(new object[] { _z });
 		}
 

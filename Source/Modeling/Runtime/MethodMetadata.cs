@@ -40,50 +40,49 @@ namespace SafetySharp.Runtime
 		private readonly object _object;
 
 		/// <summary>
-		///     The metadata of the fault effects that affect the method.
-		/// </summary>
-		private FaultEffectMetadata[] _affectingFaultEffects;
-
-		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The S# object the method belongs to.</param>
 		/// <param name="method">The CLR method the metadata should be provided for.</param>
 		/// <param name="baseMethod">The overridden base method, if any.</param>
-		internal MethodMetadata(object obj, MethodInfo method, MethodInfo baseMethod = null)
+		internal MethodMetadata(object obj, MethodInfo method, MethodMetadata baseMethod = null)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(method, () => method);
-			Requires.That(method != baseMethod, "A method cannot override itself.");
+			Requires.That(baseMethod == null || method != baseMethod.MethodInfo, "A method cannot override itself.");
+			Requires.That(baseMethod == null || obj == baseMethod._object, "The base method must belong to the same object.");
 
 			_object = obj;
-			Method = method;
+			MethodInfo = method;
 			BaseMethod = baseMethod;
 
-			var backingFieldAttribute = Method.GetCustomAttribute<BackingFieldAttribute>();
+			var backingFieldAttribute = MethodInfo.GetCustomAttribute<BackingFieldAttribute>();
 			if (backingFieldAttribute != null)
-				BackingField = backingFieldAttribute.GetFieldInfo(Method.DeclaringType);
+				BackingField = backingFieldAttribute.GetFieldInfo(MethodInfo.DeclaringType);
 
-			var behaviorAttribute = Method.GetCustomAttribute<MethodBehaviorAttribute>();
+			var behaviorAttribute = MethodInfo.GetCustomAttribute<IntendedBehaviorAttribute>();
 			if (behaviorAttribute != null)
-				Implementation = behaviorAttribute.GetMethodInfo(Method.DeclaringType);
+				IntendedBehavior = behaviorAttribute.GetMethodInfo(MethodInfo.DeclaringType);
 
 			if (backingFieldAttribute == null && behaviorAttribute == null)
-				Implementation = Method;
+				IntendedBehavior = MethodInfo;
 
-			if (!HasImplementation || !CanBeAffectedByFaultEffects)
-				return;
-
-			var implementationDelegate = Delegate.CreateDelegate(BackingField.FieldType, obj, Implementation);
-			BackingField.SetValue(obj, implementationDelegate);
+			if (BackingField != null)
+				FaultInjector = new FaultInjector(obj, this);
 		}
+
+		/// <summary>
+		///     Gets the fault injector that injects fault effects into the undependable method. Returns <c>null</c> if
+		///     <see cref="CanBeAffectedByFaultEffects" /> is <c>false</c>.
+		/// </summary>
+		public FaultInjector FaultInjector { get; private set; }
 
 		/// <summary>
 		///     Gets a value indicating whether the method is affected by fault effects.
 		/// </summary>
 		public bool IsAffectedByFaultEffects
 		{
-			get { return _affectingFaultEffects != null && _affectingFaultEffects.Length > 0; }
+			get { return FaultInjector != null && FaultInjector.IsAffectedByFaultEffects; }
 		}
 
 		/// <summary>
@@ -93,22 +92,10 @@ namespace SafetySharp.Runtime
 		{
 			get
 			{
-				if (_affectingFaultEffects == null)
-				{
-					var component = DeclaringObject as ComponentMetadata;
-					if (component == null)
-						_affectingFaultEffects = new FaultEffectMetadata[0];
-					else
-					{
-						_affectingFaultEffects = component
-							.Faults
-							.SelectMany(fault => fault.FaultEffects)
-							.Where(effect => effect.AffectedMethod.Method == Method)
-							.ToArray();
-					}
-				}
+				if (FaultInjector == null)
+					return Enumerable.Empty<FaultEffectMetadata>();
 
-				return _affectingFaultEffects;
+				return FaultInjector.AffectingFaultEffects;
 			}
 		}
 
@@ -117,7 +104,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public bool CanBeAffectedByFaultEffects
 		{
-			get { return BackingField != null; }
+			get { return FaultInjector != null; }
 		}
 
 		/// <summary>
@@ -125,14 +112,14 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public bool HasImplementation
 		{
-			get { return Implementation != null; }
+			get { return IntendedBehavior != null; }
 		}
 
 		/// <summary>
-		///     Gets the CLR method that represents the method's implementation disregarding any active fault effects.
+		///     Gets the CLR method that represents the method's intended behavior disregarding any active fault effects.
 		///     Returns <c>null</c> when <see cref="HasImplementation" /> is <c>false</c>.
 		/// </summary>
-		public MethodInfo Implementation { get; private set; }
+		public MethodInfo IntendedBehavior { get; private set; }
 
 		/// <summary>
 		///     For methods that can be affected by fault effects, gets the backing field that stores the runtime implementation of the
@@ -143,12 +130,27 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the underlying CLR method.
 		/// </summary>
-		public MethodInfo Method { get; private set; }
+		public MethodInfo MethodInfo { get; private set; }
 
 		/// <summary>
-		///     Gets the overridden base method. Returns <c>null</c> when <see cref="Method" /> does not override any other method.
+		///     Gets the type of a delegate that can refer to the method. Returns <c>null</c> when
+		///     <see cref="CanBeAffectedByFaultEffects" /> is <c>false</c>.
 		/// </summary>
-		public MethodInfo BaseMethod { get; private set; }
+		public Type MethodType
+		{
+			get
+			{
+				if (!CanBeAffectedByFaultEffects)
+					return null;
+
+				return BackingField.FieldType;
+			}
+		}
+
+		/// <summary>
+		///     Gets the overridden base method. Returns <c>null</c> when <see cref="MethodInfo" /> does not override any other method.
+		/// </summary>
+		public MethodMetadata BaseMethod { get; private set; }
 
 		/// <summary>
 		///     Gets a value indicating whether the method overrides a method of a base class.
@@ -163,7 +165,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public string Name
 		{
-			get { return Method.Name; }
+			get { return MethodInfo.Name; }
 		}
 
 		/// <summary>
@@ -175,11 +177,20 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
+		///     Gets a delegate to the method that can be used to invoke it on the declaring object.
+		/// </summary>
+		public Delegate CreateDelegate(Type delegateType)
+		{
+			Requires.NotNull(delegateType, () => delegateType);
+			return Delegate.CreateDelegate(delegateType, _object, MethodInfo);
+		}
+
+		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return String.Format("{0} declared by {1}", Method, Method.DeclaringType);
+			return String.Format("{0} declared by {1}", MethodInfo, MethodInfo.DeclaringType);
 		}
 	}
 }

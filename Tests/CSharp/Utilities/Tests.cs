@@ -136,7 +136,7 @@ namespace Tests.Utilities
 		protected static Compilation CreateCompilation(params SyntaxTree[] syntaxTrees)
 		{
 			var compilation = CSharpCompilation
-				.Create("Test")
+				.Create("DynamicTestAssembly")
 				.WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 				.AddSyntaxTrees(syntaxTrees)
 				.AddReferences(MetadataReference.CreateFromAssembly(typeof(object).Assembly))

@@ -35,7 +35,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(1);
 
 			Metadata.Faults[0].OccurrencePattern.Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[0].Field.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].OccurrencePattern.Fields[0].FieldInfo.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].OccurrencePattern.Fields[0].InitialValues.ShouldBe(new object[] { 0 });
 		}
 
@@ -62,7 +62,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(1);
 
 			Metadata.Faults[0].OccurrencePattern.Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[0].Field.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].OccurrencePattern.Fields[0].FieldInfo.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].OccurrencePattern.Fields[0].InitialValues.ShouldBe(new object[] { 0.0 });
 		}
 
@@ -89,7 +89,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(1);
 
 			Metadata.Faults[0].OccurrencePattern.Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[0].Field.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].OccurrencePattern.Fields[0].FieldInfo.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].OccurrencePattern.Fields[0].InitialValues.ShouldBe(new object[] { false });
 		}
 
@@ -116,7 +116,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(1);
 
 			Metadata.Faults[0].OccurrencePattern.Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.Fields[0].Field.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].OccurrencePattern.Fields[0].FieldInfo.ShouldBe(typeof(P).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].OccurrencePattern.Fields[0].InitialValues.ShouldBe(new object[] { E.A });
 		}
 

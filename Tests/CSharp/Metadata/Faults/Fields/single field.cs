@@ -42,7 +42,7 @@ namespace Tests.Metadata.Faults.Fields
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
 
 			Metadata.Faults[0].Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].Fault.GetMetadata());
-			Metadata.Faults[0].Fields[0].Field.ShouldBe(typeof(F).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].Fields[0].FieldInfo.ShouldBe(typeof(F).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].Fields[0].InitialValues.ShouldBe(new object[] { 0 });
 		}
 	}
@@ -60,7 +60,7 @@ namespace Tests.Metadata.Faults.Fields
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
 
 			Metadata.Faults[0].Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].Fault.GetMetadata());
-			Metadata.Faults[0].Fields[0].Field.ShouldBe(typeof(F).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].Fields[0].FieldInfo.ShouldBe(typeof(F).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].Fields[0].InitialValues.ShouldBe(new object[] { 0.0 });
 		}
 	}
@@ -78,7 +78,7 @@ namespace Tests.Metadata.Faults.Fields
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
 
 			Metadata.Faults[0].Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].Fault.GetMetadata());
-			Metadata.Faults[0].Fields[0].Field.ShouldBe(typeof(F).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].Fields[0].FieldInfo.ShouldBe(typeof(F).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].Fields[0].InitialValues.ShouldBe(new object[] { false });
 		}
 	}
@@ -96,7 +96,7 @@ namespace Tests.Metadata.Faults.Fields
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
 
 			Metadata.Faults[0].Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].Fault.GetMetadata());
-			Metadata.Faults[0].Fields[0].Field.ShouldBe(typeof(F).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Faults[0].Fields[0].FieldInfo.ShouldBe(typeof(F).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.Faults[0].Fields[0].InitialValues.ShouldBe(new object[] { E.A });
 		}
 

@@ -51,6 +51,11 @@ namespace SafetySharp.Modeling.Faults
 		}
 
 		/// <summary>
+		///     Gets or sets a value indicating whether the fault is currently occurring.
+		/// </summary>
+		internal bool IsOccurring { get; set; }
+
+		/// <summary>
 		///     Updates the internal state of the fault.
 		/// </summary>
 		public virtual void UpdateFaultState()

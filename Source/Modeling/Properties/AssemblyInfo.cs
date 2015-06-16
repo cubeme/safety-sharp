@@ -38,3 +38,4 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("SafetySharp.Tests")]
 [assembly: InternalsVisibleTo("SafetySharp.Analysis")]
 [assembly: InternalsVisibleTo("SafetySharp.Simulation")]
+[assembly: InternalsVisibleTo("DynamicTestAssembly")]

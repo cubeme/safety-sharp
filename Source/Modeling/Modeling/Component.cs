@@ -24,7 +24,6 @@ namespace SafetySharp.Modeling
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using System.Diagnostics;
 	using CompilerServices;
 	using JetBrains.Annotations;
@@ -60,10 +59,9 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		/// <param name="subcomponents">The subcomponents of the component.</param>
 		/// <param name="bindings">The port bindings of the component.</param>
-		internal Component(ImmutableArray<Component> subcomponents, List<PortBinding> bindings)
+		internal Component(List<Component> subcomponents, List<PortBinding> bindings)
 			: this()
 		{
-			Requires.That(!subcomponents.IsDefault, "Expected some subcomponents.");
 			Requires.NotNull(bindings, () => bindings);
 
 			_subcomponents = subcomponents;
@@ -74,7 +72,7 @@ namespace SafetySharp.Modeling
 		///     Updates the internal state of the component.
 		/// </summary>
 		[BackingField("_updateMethod")]
-		[MethodBehavior("UpdateBehavior")]
+		[IntendedBehavior("UpdateBehavior")]
 		public virtual void Update()
 		{
 			_updateMethod();

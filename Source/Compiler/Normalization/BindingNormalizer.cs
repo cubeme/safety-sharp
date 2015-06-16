@@ -23,7 +23,6 @@
 namespace SafetySharp.Compiler.Normalization
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
 	using CompilerServices;
@@ -47,16 +46,6 @@ namespace SafetySharp.Compiler.Normalization
 	/// </summary>
 	public sealed class BindingNormalizer : SyntaxNormalizer
 	{
-		/// <summary>
-		///     The delegate types used by the bindings of a component.
-		/// </summary>
-		private readonly List<DelegateDeclarationSyntax> _delegates = new List<DelegateDeclarationSyntax>();
-
-		/// <summary>
-		///     The methods that have been synthesized to initialize the bindings.
-		/// </summary>
-		private readonly List<MethodDeclarationSyntax> _synthesizedMethods = new List<MethodDeclarationSyntax>();
-
 		/// <summary>
 		///     The number of bindings established in the compilation.
 		/// </summary>
@@ -82,28 +71,6 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes the <paramref name="classDeclaration" />.
-		/// </summary>
-		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
-		{
-			var normalizedClassDeclaration = (ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration);
-
-			var methods = _synthesizedMethods.ToArray();
-			var delegates = _delegates.Select(d => (MemberDeclarationSyntax)d.AddAttributeLists(_compilerGeneratedAttribute)).ToArray();
-
-			_synthesizedMethods.Clear();
-			_delegates.Clear();
-
-			if (delegates.Length > 0)
-				AddMembers(classDeclaration.GetTypeSymbol(SemanticModel), delegates);
-
-			if (methods.Length > 0)
-				AddMembers(classDeclaration.GetTypeSymbol(SemanticModel), methods);
-
-			return normalizedClassDeclaration;
-		}
-
-		/// <summary>
 		///     Normalizes the <paramref name="statement" /> if it is an invocation of <see cref="Component.Bind" /> or
 		///     <see cref="Model.Bind" />.
 		/// </summary>
@@ -124,6 +91,7 @@ namespace SafetySharp.Compiler.Normalization
 				return statement;
 
 			// We now know that the argument of the invocation is a port binding in the form of an assignment
+			var declaringType = SemanticModel.GetEnclosingSymbol(invocationExpression.SpanStart).ContainingType;
 			var assignment = (AssignmentExpressionSyntax)invocationExpression.ArgumentList.Arguments[0].Expression.RemoveParentheses();
 			var leftExpression = (MemberAccessExpressionSyntax)assignment.Left.RemoveParentheses();
 			var rightExpression = assignment.Right.RemoveParentheses() as MemberAccessExpressionSyntax;
@@ -149,10 +117,11 @@ namespace SafetySharp.Compiler.Normalization
 			var boundPorts = leftPorts.GetBindingCandidates(rightPorts)[0];
 			var delegateName = ("BindingDelegate" + _bindingCount++).ToSynthesized();
 			var delegateType = boundPorts.Left.Symbol.GetSynthesizedDelegateDeclaration(delegateName);
-			_delegates.Add(delegateType);
+			delegateType = delegateType.AddAttributeLists(_compilerGeneratedAttribute);
+			AddMembers(declaringType, delegateType);
 
-			var leftPort = CreatePortExpression(boundPorts.Left, leftExpression, delegateType.Identifier.ValueText);
-			var rightPort = CreatePortExpression(boundPorts.Right, rightExpression, delegateType.Identifier.ValueText);
+			var leftPort = CreatePortExpression(declaringType, boundPorts.Left, leftExpression, delegateType.Identifier.ValueText);
+			var rightPort = CreatePortExpression(declaringType, boundPorts.Right, rightExpression, delegateType.Identifier.ValueText);
 
 			// MetadataBuilders.GetBuilder(this)
 			var metadataBuilderType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(MetadataBuilders)));
@@ -169,10 +138,12 @@ namespace SafetySharp.Compiler.Normalization
 		/// <summary>
 		///     Creates an expression that instantiates a delegate for the given port.
 		/// </summary>
+		/// <param name="type">The type that declares the binding.</param>
 		/// <param name="port">The port the expression should be created for.</param>
 		/// <param name="portExpression">The port expression that was used to reference the port.</param>
 		/// <param name="delegateType">The type of the delegate the port should be cast to.</param>
-		private ExpressionSyntax CreatePortExpression(Port port, MemberAccessExpressionSyntax portExpression, string delegateType)
+		private ExpressionSyntax CreatePortExpression(INamedTypeSymbol type, Port port, MemberAccessExpressionSyntax portExpression,
+													  string delegateType)
 		{
 			// TODO: property ports
 
@@ -180,7 +151,7 @@ namespace SafetySharp.Compiler.Normalization
 			string declaringType;
 			if (port.NonVirtualInvocation)
 			{
-				portName = SynthesizePortMethod(port, portExpression);
+				portName = SynthesizePortMethod(type, port, portExpression);
 				declaringType = SemanticModel
 					.GetEnclosingSymbol(portExpression.SpanStart)
 					.ContainingType
@@ -220,9 +191,10 @@ namespace SafetySharp.Compiler.Normalization
 		/// <summary>
 		///     Synthesized a method for the <paramref name="port" />.
 		/// </summary>
+		/// <param name="type">The type that declares the binding.</param>
 		/// <param name="port">The port the method should be synthesized for.</param>
 		/// <param name="portExpression">The port expression that was used to reference the port.</param>
-		private string SynthesizePortMethod(Port port, MemberAccessExpressionSyntax portExpression)
+		private string SynthesizePortMethod(INamedTypeSymbol type, Port port, MemberAccessExpressionSyntax portExpression)
 		{
 			var portMember = Syntax.MemberAccessExpression(Syntax.BaseExpression(), port.Symbol.Name);
 			var parameters = port.Symbol.Parameters.Select(p => Syntax.Argument(p.RefKind, Syntax.IdentifierName(p.Name)));
@@ -245,7 +217,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			method = (MethodDeclarationSyntax)Syntax.AddAttributes(method, providedAttribute, compilerGeneratedAttribute);
 
-			_synthesizedMethods.Add(method);
+			AddMembers(type, method);
 			++_synthesizedMethodsCount;
 
 			return method.Identifier.ValueText;

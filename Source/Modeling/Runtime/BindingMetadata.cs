@@ -84,7 +84,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public ComponentMetadata DeclaringComponent
 		{
-			get { return (ComponentMetadata)MetadataExtensions.GetMetadata((object)_component); }
+			get { return _component.GetMetadata(); }
 		}
 
 		/// <summary>
@@ -92,7 +92,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public ProvidedPortMetadata ProvidedPort
 		{
-			get { return ((Component)_providedPort.Target).GetMetadata().ProvidedPorts.Single(port => port.Method == _providedPort.Method); }
+			get { return ((Component)_providedPort.Target).GetMetadata().ProvidedPorts.Single(port => port.MethodInfo == _providedPort.Method); }
 		}
 
 		/// <summary>
@@ -100,7 +100,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public RequiredPortMetadata RequiredPort
 		{
-			get { return ((Component)_requiredPort.Target).GetMetadata().RequiredPorts.Single(port => port.Method == _requiredPort.Method); }
+			get { return ((Component)_requiredPort.Target).GetMetadata().RequiredPorts.Single(port => port.MethodInfo == _requiredPort.Method); }
 		}
 	}
 }

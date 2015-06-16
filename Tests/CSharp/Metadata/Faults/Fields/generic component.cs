@@ -45,11 +45,11 @@ namespace Tests.Metadata.Faults.Fields
 			Metadata.Faults[0].Fields.Length.ShouldBe(2);
 
 			Metadata.Faults[0].Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].Fault.GetMetadata());
-			Metadata.Faults[0].Fields[0].Field.ShouldBe(typeof(F).GetField("_x"));
+			Metadata.Faults[0].Fields[0].FieldInfo.ShouldBe(typeof(F).GetField("_x"));
 			Metadata.Faults[0].Fields[0].InitialValues.ShouldBe(new object[] { 0 });
 
 			Metadata.Faults[0].Fields[1].DeclaringObject.ShouldBe(Metadata.Faults[0].Fault.GetMetadata());
-			Metadata.Faults[0].Fields[1].Field.ShouldBe(typeof(F).GetField("_y"));
+			Metadata.Faults[0].Fields[1].FieldInfo.ShouldBe(typeof(F).GetField("_y"));
 			Metadata.Faults[0].Fields[1].InitialValues.ShouldBe(new object[] { false });
 		}
 	}
@@ -68,11 +68,11 @@ namespace Tests.Metadata.Faults.Fields
 			Metadata.Faults[0].Fields.Length.ShouldBe(2);
 
 			Metadata.Faults[0].Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[0].Fault.GetMetadata());
-			Metadata.Faults[0].Fields[0].Field.ShouldBe(typeof(F).GetField("_x"));
+			Metadata.Faults[0].Fields[0].FieldInfo.ShouldBe(typeof(F).GetField("_x"));
 			Metadata.Faults[0].Fields[0].InitialValues.ShouldBe(new object[] { 0.0 });
 
 			Metadata.Faults[0].Fields[1].DeclaringObject.ShouldBe(Metadata.Faults[0].Fault.GetMetadata());
-			Metadata.Faults[0].Fields[1].Field.ShouldBe(typeof(F).GetField("_y"));
+			Metadata.Faults[0].Fields[1].FieldInfo.ShouldBe(typeof(F).GetField("_y"));
 			Metadata.Faults[0].Fields[1].InitialValues.ShouldBe(new object[] { E.A });
 		}
 	}

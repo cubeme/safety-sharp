@@ -48,7 +48,7 @@ namespace Tests.Metadata.Components.Nested
 			Metadata.Fields.Length.ShouldBe(1);
 			
 			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[0].Field.ShouldBe(typeof(X4<int>.Y1).GetField("_x"));
+			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(X4<int>.Y1).GetField("_x"));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _x });
 		}
 	}
@@ -60,11 +60,11 @@ namespace Tests.Metadata.Components.Nested
 			Metadata.Fields.Length.ShouldBe(2);
 
 			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[0].Field.ShouldBe(typeof(X4<int>.Y2<bool>).GetField("_x"));
+			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(X4<int>.Y2<bool>).GetField("_x"));
 			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _x });
 
 			Metadata.Fields[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[1].Field.ShouldBe(typeof(X4<int>.Y2<bool>).GetField("_y"));
+			Metadata.Fields[1].FieldInfo.ShouldBe(typeof(X4<int>.Y2<bool>).GetField("_y"));
 			Metadata.Fields[1].InitialValues.ShouldBe(new object[] { _y });
 		}
 	}

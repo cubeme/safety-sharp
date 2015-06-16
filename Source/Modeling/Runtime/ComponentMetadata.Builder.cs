@@ -139,13 +139,14 @@ namespace SafetySharp.Runtime
 			public void WithProvidedPort(MethodInfo providedPort, MethodInfo basePort = null)
 			{
 				Requires.NotNull(providedPort, () => providedPort);
-				Requires.That(_providedPorts.All(p => p.Method != providedPort), () => providedPort, "The port has already been added.");
+				Requires.That(_providedPorts.All(port => port.MethodInfo != providedPort), () => providedPort, "The port has already been added.");
 				Requires.That(providedPort.HasAttribute<ProvidedAttribute>(), () => providedPort,
 					"The method must be marked with'{0}'.", typeof(ProvidedAttribute).FullName);
-				Requires.That(basePort == null || _providedPorts.Any(p => p.Method == basePort), () => _providedPorts,
+				Requires.That(basePort == null || _providedPorts.Any(port => port.MethodInfo == basePort), () => _providedPorts,
 					"The base port is unknown.");
 
-				_providedPorts.Add(new ProvidedPortMetadata(_component, providedPort, basePort));
+				var baseMetadata = basePort != null ? _providedPorts.Single(method => method.MethodInfo == basePort) : null;
+				_providedPorts.Add(new ProvidedPortMetadata(_component, providedPort, baseMetadata));
 			}
 
 			/// <summary>
@@ -154,7 +155,7 @@ namespace SafetySharp.Runtime
 			public void WithRequiredPort(MethodInfo requiredPort)
 			{
 				Requires.NotNull(requiredPort, () => requiredPort);
-				Requires.That(_requiredPorts.All(p => p.Method != requiredPort), () => requiredPort, "The port has already been added.");
+				Requires.That(_requiredPorts.All(port => port.MethodInfo != requiredPort), () => requiredPort, "The port has already been added.");
 				Requires.That(requiredPort.HasAttribute<RequiredAttribute>(), () => requiredPort,
 					"The method must be marked with'{0}'.", typeof(RequiredAttribute).FullName);
 
@@ -165,15 +166,19 @@ namespace SafetySharp.Runtime
 			///     Adds the <paramref name="stepMethod" /> to the component's metadata. If <paramref name="stepMethod" /> overrides a step
 			///     method declared by a base type, the <paramref name="baseStepMethod" /> must not be <c>null</c>.
 			/// </summary>
-			/// <param name="stepMethod">The method representing the component's behavior that should be added to the component's metadata.</param>
-			/// <param name="baseStepMethod">The overridden behavior of the base type, if any.</param>
+			/// <param name="stepMethod">
+			///     The method representing the component's step method that should be added to the component's metadata.
+			/// </param>
+			/// <param name="baseStepMethod">The overridden step method of the base type, if any.</param>
 			public void WithStepMethod(MethodInfo stepMethod, MethodInfo baseStepMethod = null)
 			{
 				Requires.NotNull(stepMethod, () => stepMethod);
-				Requires.That(baseStepMethod == null || _stepMethods.Any(b => b.Method == baseStepMethod), () => baseStepMethod,
+				Requires.That(baseStepMethod == null || _stepMethods.Any(method => method.MethodInfo == baseStepMethod), () => baseStepMethod,
 					"The base step method is unknown.");
 
-				var metadata = new StepMethodMetadata(_component, stepMethod, baseStepMethod);
+				var baseMetadata = baseStepMethod != null ? _stepMethods.Single(method => method.MethodInfo == baseStepMethod) : null;
+				var metadata = new StepMethodMetadata(_component, stepMethod, baseMetadata);
+
 				Requires.That(metadata.CanBeAffectedByFaultEffects, () => stepMethod, "Component step methods must be sensitive to fault effects.");
 
 				_stepMethods.Add(metadata);
@@ -235,6 +240,11 @@ namespace SafetySharp.Runtime
 				// We have to register the metadata now, even though we'll still have to change it later on; this way,
 				// we prevent stack overflows when the component hierarchy is cyclic
 				MetadataProvider.FinalizeMetadata(_component, metadata);
+
+				// Initialize the fault injections
+				metadata.StepMethods.ForEach(stepMethod => stepMethod.FaultInjector.InjectFaults());
+				metadata.RequiredPorts.ForEach(port => port.FaultInjector.InjectFaults());
+				metadata.ProvidedPorts.ForEach(port => port.FaultInjector.InjectFaults());
 
 				// Get all subcomponent instances
 				var subcomponents = _subcomponents.Select(field =>
