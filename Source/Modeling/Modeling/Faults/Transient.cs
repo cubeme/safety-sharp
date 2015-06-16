@@ -30,11 +30,12 @@ namespace SafetySharp.Modeling.Faults
 	public class Transient : OccurrencePattern
 	{
 		/// <summary>
-		///     Updates the internal state of the occurrence pattern.
+		///     Updates the internal state of the occurrence pattern. Returns <c>true</c> to indicate that the fault is occurring,
+		///     <c>false</c> otherwise.
 		/// </summary>
-		public override void UpdateOccurrenceState()
+		public override bool UpdateOccurrenceState()
 		{
-			IsOccurring = true;
+			return true;
 		}
 	}
 }

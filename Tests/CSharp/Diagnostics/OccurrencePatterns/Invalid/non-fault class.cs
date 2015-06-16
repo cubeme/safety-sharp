@@ -37,12 +37,13 @@ namespace Tests.Diagnostics.OccurrencePatterns.Invalid
 	[Persistent]
 	internal class P : OccurrencePattern
 	{
-		public override void UpdateOccurrenceState()
+		public override bool UpdateOccurrenceState()
 		{
+			return true;
 		}
 	}
 
-	[Diagnostic(DiagnosticIdentifier.OccurrencePatternHasNoEffect, 47, 20, 1)]
+	[Diagnostic(DiagnosticIdentifier.OccurrencePatternHasNoEffect, 48, 20, 1)]
 	[OccurrencePattern(typeof(Transient))]
 	internal class C
 	{

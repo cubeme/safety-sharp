@@ -32,8 +32,9 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 		public T1 _x;
 		public T2 _y;
 
-		public override void UpdateOccurrenceState()
+		public override bool UpdateOccurrenceState()
 		{
+			return true;
 		}
 	}
 

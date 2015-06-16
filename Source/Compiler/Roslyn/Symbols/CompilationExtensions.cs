@@ -186,11 +186,11 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				.GetTypeSymbol<OccurrencePattern>()
 				.GetMembers("UpdateOccurrenceState")
 				.OfType<IMethodSymbol>()
-				.Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);
+				.Single(method => method.Parameters.Length == 0 && method.ReturnType.SpecialType == SpecialType.System_Boolean);
 		}
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Bind(PortBinding)" /> method within
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Bind" /> method within
 		///     the context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
@@ -207,7 +207,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Model.Bind(PortBinding)" /> method
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Model.Bind" /> method
 		///     within the context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>

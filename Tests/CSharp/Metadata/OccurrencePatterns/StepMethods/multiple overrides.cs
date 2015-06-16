@@ -54,15 +54,17 @@ namespace Tests.Metadata.OccurrencePatterns.StepMethods
 
 		private class P1 : OccurrencePattern
 		{
-			public override void UpdateOccurrenceState()
+			public override bool UpdateOccurrenceState()
 			{
+				return true;
 			}
 		}
 
 		private class P2 : P1
 		{
-			public override void UpdateOccurrenceState()
+			public override bool UpdateOccurrenceState()
 			{
+				return true;
 			}
 		}
 

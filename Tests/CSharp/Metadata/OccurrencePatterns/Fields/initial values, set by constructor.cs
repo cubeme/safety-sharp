@@ -66,8 +66,9 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 				_w = E.B;
 			}
 
-			public override void UpdateOccurrenceState()
+			public override bool UpdateOccurrenceState()
 			{
+				return true;
 			}
 		}
 

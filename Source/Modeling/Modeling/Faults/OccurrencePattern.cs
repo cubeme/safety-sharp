@@ -41,14 +41,10 @@ namespace SafetySharp.Modeling.Faults
 		}
 
 		/// <summary>
-		///     Gets or sets a value indicating whether the fault is currently occurring.
+		///     Updates the internal state of the occurrence pattern. Returns <c>true</c> to indicate that the fault is occurring,
+		///     <c>false</c> otherwise.
 		/// </summary>
-		public bool IsOccurring { get; internal protected set; }
-
-		/// <summary>
-		///     Updates the internal state of the occurrence pattern.
-		/// </summary>
-		public abstract void UpdateOccurrenceState();
+		public abstract bool UpdateOccurrenceState();
 
 		/// <summary>
 		///     Sets the initial <paramref name="values" /> of the current occurrence pattern's <paramref name="field" />.

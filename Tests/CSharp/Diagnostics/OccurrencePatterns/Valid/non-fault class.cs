@@ -32,8 +32,9 @@ namespace Tests.Diagnostics.OccurrencePatterns.Valid
 
 	internal class P : OccurrencePattern
 	{
-		public override void UpdateOccurrenceState()
+		public override bool UpdateOccurrenceState()
 		{
+			return true;
 		}
 	}
 }
