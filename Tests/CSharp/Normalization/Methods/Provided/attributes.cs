@@ -57,14 +57,14 @@ namespace Tests.Normalization.Methods.Provided
 	internal partial class Out1 : Component
 	{
 		[Provided]
-		[SafetySharp.CompilerServices.IgnoreAttribute]
+		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
 		private void __Behavior0__()
 		{
 			var i = 1 + 2;
 		}
 
 		[DebuggerHidden]
-		[SafetySharp.CompilerServices.IgnoreAttribute]
+		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
 		private void __Behavior1__()
 		{
 			var i = 1 + 2;
@@ -72,14 +72,14 @@ namespace Tests.Normalization.Methods.Provided
 
 		[DebuggerHidden]
 		[DebuggerStepThrough]
-		[SafetySharp.CompilerServices.IgnoreAttribute]
+		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
 		private void __Behavior2__()
 		{
 			var i = 1 + 2;
 		}
 
 		[DebuggerHidden, DebuggerStepThrough]
-		[SafetySharp.CompilerServices.IgnoreAttribute]
+		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
 		private void __Behavior3__()
 		{
 			var i = 1 + 2;

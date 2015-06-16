@@ -20,24 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics.Faults
+namespace Tests.Diagnostics.Faults.Valid
 {
 	using System;
-	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
-	using SafetySharp.Modeling.Faults;
 
-	internal class X1 : Component
+	internal class X
 	{
-		[Transient]
-		private class F1 : Fault
-		{
-		}
+	}
 
-		[Diagnostic(DiagnosticIdentifier.UnsupportedFaultInheritance, 39, 23, 2, "Tests.Diagnostics.Faults.X1.F2")]
-		[Transient]
-		private class F2 : F1
-		{
-		}
+	internal class Y : X
+	{
+	}
+
+	internal class C : Component
+	{
+	}
+
+	internal class D : C
+	{
 	}
 }

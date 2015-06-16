@@ -20,17 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics.Faults
+namespace Tests.Diagnostics.OccurrencePatterns.Valid
 {
 	using System;
-	using SafetySharp.Compiler.Analyzers;
-	using SafetySharp.Modeling;
-	using SafetySharp.Modeling.Faults;
 
-	internal class X2 : Component
+	internal class A : Attribute
 	{
-		[Transient]
-		private class F1 : Fault
+		public A(Type t)
+		{
+		}
+	}
+
+	[A(typeof(object))]
+	internal class B : A
+	{
+		public B()
+			: base(typeof(object))
 		{
 		}
 	}

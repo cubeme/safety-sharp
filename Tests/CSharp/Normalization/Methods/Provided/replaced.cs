@@ -43,7 +43,7 @@ namespace Tests.Normalization.Methods.Provided
 
 	internal partial class Out1 : X
 	{
-		[SafetySharp.CompilerServices.IgnoreAttribute]
+		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
 		private int __Behavior1__(int x)
 		{
 			return x * x;

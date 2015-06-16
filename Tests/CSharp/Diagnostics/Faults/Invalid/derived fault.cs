@@ -20,40 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Methods.OtherMembers
+namespace Tests.Diagnostics.Faults.Invalid
 {
 	using System;
+	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 
-	internal partial class In6 : Component
+	internal class X1 : Component
 	{
-		public override void Update()
+		[Transient]
+		private class F1 : Fault
 		{
-			return;
 		}
-	}
 
-	internal partial class Out6 : Component
-	{
-		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private void __Behavior0__()
+		[Diagnostic(DiagnosticIdentifier.UnsupportedFaultInheritance, 39, 23, 2, "Tests.Diagnostics.Faults.Invalid.X1.F2")]
+		[Transient]
+		private class F2 : F1
 		{
-			return;
 		}
-	}
-
-	partial class Out6
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __Delegate0__();
-
-		[SafetySharp.CompilerServices.MethodBehaviorAttribute("__Behavior0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public override void Update() => this.__backingField0__();
 	}
 }

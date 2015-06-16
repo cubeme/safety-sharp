@@ -187,8 +187,9 @@
     <Compile Include="Diagnostics\Enums\Invalid\explicit values.cs" />
     <Compile Include="Diagnostics\Enums\Invalid\underlying types.cs" />
     <Compile Include="Diagnostics\Enums\Valid\enum declaration.cs" />
-    <Compile Include="Diagnostics\Faults\valid.cs" />
-    <Compile Include="Diagnostics\Faults\invalid.cs" />
+    <Compile Include="Diagnostics\Faults\Valid\derived non-fault.cs" />
+    <Compile Include="Diagnostics\Faults\Valid\non-derived fault.cs" />
+    <Compile Include="Diagnostics\Faults\Invalid\derived fault.cs" />
     <Compile Include="Diagnostics\OccurrencePatterns\Invalid\multiple patterns.cs" />
     <Compile Include="Diagnostics\OccurrencePatterns\Invalid\missing pattern.cs" />
     <Compile Include="Diagnostics\OccurrencePatterns\Invalid\non-fault class.cs" />
@@ -196,6 +197,7 @@
     <Compile Include="Diagnostics\OccurrencePatterns\Invalid\non-pattern type in attribute.cs" />
     <Compile Include="Diagnostics\OccurrencePatterns\Valid\base occurrence attribute.cs" />
     <Compile Include="Diagnostics\OccurrencePatterns\Valid\derived occurrence attribute.cs" />
+    <Compile Include="Diagnostics\OccurrencePatterns\Valid\other attribute with type argument.cs" />
     <Compile Include="Diagnostics\OccurrencePatterns\Valid\non-fault class.cs" />
     <Compile Include="Diagnostics\PortKinds\Invalid\overridden required ports.cs" />
     <Compile Include="Diagnostics\PortKinds\Invalid\static ports.cs" />

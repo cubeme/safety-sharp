@@ -32,6 +32,9 @@ namespace Tests.Metadata.Faults.StepMethods
 		[Persistent]
 		protected class F : Fault
 		{
+			public override void Update()
+			{
+			}
 		}
 	}
 
