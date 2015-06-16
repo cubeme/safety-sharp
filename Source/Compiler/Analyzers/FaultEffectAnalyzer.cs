@@ -53,6 +53,14 @@ namespace SafetySharp.Compiler.Analyzers
 			"Invalid fault effect '{0}': Affected component of type '{1}' does not declare a property named '{2}' with the corresponding accessors.");
 
 		/// <summary>
+		///     Indicates that the member the fault effect overrides is ambiguous.
+		/// </summary>
+		private static readonly DiagnosticInfo _ambiguousMember = DiagnosticInfo.Error(
+			DiagnosticIdentifier.FaultEffectAmbiguousMember,
+			"The fault effect's affected member is ambiguous.",
+			"Invalid fault effect '{0}': Affected member is ambiguous; could be {1}.");
+
+		/// <summary>
 		///     Indicates that the fault effect overrides an unknown port.
 		/// </summary>
 		private static readonly DiagnosticInfo _signatureIncompatible = DiagnosticInfo.Error(
@@ -98,7 +106,7 @@ namespace SafetySharp.Compiler.Analyzers
 		public FaultEffectAnalyzer()
 			: base(
 				_unknownMethodPort, _unknownPropertyPort, _signatureIncompatible, _baseMember, _optionalParameter,
-				_typeIncompatible, _noEffects)
+				_typeIncompatible, _noEffects, _ambiguousMember)
 		{
 		}
 
@@ -142,9 +150,12 @@ namespace SafetySharp.Compiler.Analyzers
 					_optionalParameter.Emit(context, optionalParameter, optionalParameter.Name, method.ToDisplayString());
 
 				var candidateMethods = componentSymbol
-					.GetMembers(method.Name)
+					.GetMembers()
 					.OfType<IMethodSymbol>()
-					.Where(candidate => candidate.MethodKind == MethodKind.Ordinary)
+					.Where(candidate => candidate.MethodKind == MethodKind.Ordinary || candidate.MethodKind == MethodKind.ExplicitInterfaceImplementation)
+					.Where(candidate => candidate.MethodKind == MethodKind.ExplicitInterfaceImplementation
+						? candidate.ExplicitInterfaceImplementations[0].Name == method.Name
+						: candidate.Name == method.Name)
 					.ToArray();
 
 				if (candidateMethods.Length == 0)
@@ -173,19 +184,32 @@ namespace SafetySharp.Compiler.Analyzers
 						_baseMember.Emit(context, method, method.ToDisplayString(), baseCandidateMethods[0].ToDisplayString());
 					else
 						_unknownMethodPort.Emit(context, method, method.ToDisplayString(), componentSymbol.ToDisplayString(), method.Name);
-
-					continue;
 				}
+				else
+				{
+					var signatureCompatibleMethods = candidateMethods.Where(candidate => candidate.IsSignatureCompatibleTo(method)).ToArray();
 
-				var overriddenMethod = candidateMethods.SingleOrDefault(candidate => candidate.IsSignatureCompatibleTo(method));
-				if (overriddenMethod == null)
-					_signatureIncompatible.Emit(context, method, method.ToDisplayString(), candidateMethods[0].ToDisplayString());
+					if (signatureCompatibleMethods.Length > 1)
+					{
+						_ambiguousMember.Emit(context, method, method.ToDisplayString(),
+							String.Join(", ", candidateMethods.Select(m => String.Format("'{0}'", m.ToDisplayString()))));
+					}
+					else if (signatureCompatibleMethods.Length == 0)
+						_signatureIncompatible.Emit(context, method, method.ToDisplayString(), candidateMethods[0].ToDisplayString());
+				}
 			}
 
 			foreach (var property in faultProperties)
 			{
-				var overriddenProperty = componentSymbol.GetMembers(property.Name).OfType<IPropertySymbol>().FirstOrDefault();
-				if (overriddenProperty == null)
+				var candidateProperties = componentSymbol
+					.GetMembers()
+					.OfType<IPropertySymbol>()
+					.Where(candidate => candidate.ExplicitInterfaceImplementations.Length != 0
+						? candidate.ExplicitInterfaceImplementations[0].Name == property.Name
+						: candidate.Name == property.Name)
+					.ToArray();
+
+				if (candidateProperties.Length == 0)
 				{
 					// There is no port with a matching name; there might be two reasons:
 					// - The affected component doesn't declare a port with the given name
@@ -211,15 +235,22 @@ namespace SafetySharp.Compiler.Analyzers
 					else
 						_unknownPropertyPort.Emit(context, property, property.ToDisplayString(), componentSymbol.ToDisplayString(), property.Name);
 				}
+				else if (candidateProperties.Length > 1)
+				{
+					_ambiguousMember.Emit(context, property, property.ToDisplayString(),
+						String.Join(", ", candidateProperties.Select(m => String.Format("'{0}'", m.ToDisplayString()))));
+				}
 				else
 				{
-					if (!property.Type.Equals(overriddenProperty.Type))
-						_typeIncompatible.Emit(context, property, property.ToDisplayString(), overriddenProperty.Type.ToDisplayString());
+					var candidateProperty = candidateProperties[0];
+
+					if (!property.Type.Equals(candidateProperty.Type))
+						_typeIncompatible.Emit(context, property, property.ToDisplayString(), candidateProperty.Type.ToDisplayString());
 
 					var faultHasGetter = property.GetMethod != null;
 					var faultHasSetter = property.SetMethod != null;
-					var componentHasGetter = overriddenProperty.GetMethod != null;
-					var componentHasSetter = overriddenProperty.SetMethod != null;
+					var componentHasGetter = candidateProperty.GetMethod != null;
+					var componentHasSetter = candidateProperty.SetMethod != null;
 
 					var invalidGetter = !componentHasGetter && faultHasGetter;
 					var invalidSetter = !componentHasSetter && faultHasSetter;

@@ -42,7 +42,18 @@ namespace Tests.Diagnostics.FaultEffects.Invalid
 		void M2();
 	}
 
-	[Diagnostic(DiagnosticIdentifier.FaultEffectAmbiguousMethod, 0, 0, 2, "")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectAmbiguousMember, 78, 24, 2, "Tests.Diagnostics.FaultEffects.Invalid.X13.F.R1",
+		"'Tests.Diagnostics.FaultEffects.Invalid.X13.R1', " +
+		"'Tests.Diagnostics.FaultEffects.Invalid.X13.Tests.Diagnostics.FaultEffects.Invalid.I13.R1'")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectAmbiguousMember, 79, 24, 2, "Tests.Diagnostics.FaultEffects.Invalid.X13.F.R2",
+		"'Tests.Diagnostics.FaultEffects.Invalid.X13.R2', " +
+		"'Tests.Diagnostics.FaultEffects.Invalid.X13.Tests.Diagnostics.FaultEffects.Invalid.I13.R2'")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectAmbiguousMember, 80, 32, 2, "Tests.Diagnostics.FaultEffects.Invalid.X13.F.M1()",
+		"'Tests.Diagnostics.FaultEffects.Invalid.X13.Tests.Diagnostics.FaultEffects.Invalid.I13.M1()', " +
+		"'Tests.Diagnostics.FaultEffects.Invalid.X13.M1()'")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectAmbiguousMember, 82, 25, 2, "Tests.Diagnostics.FaultEffects.Invalid.X13.F.M2()",
+		"'Tests.Diagnostics.FaultEffects.Invalid.X13.Tests.Diagnostics.FaultEffects.Invalid.I13.M2()', " +
+		"'Tests.Diagnostics.FaultEffects.Invalid.X13.M2()'")]
 	internal class X13 : Component, I13
 	{
 		public extern int R1 { get; set; }

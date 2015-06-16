@@ -26,6 +26,7 @@ namespace SafetySharp.Compiler.Analyzers
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Modeling;
 	using Modeling.Faults;
 	using Roslyn;
 	using Roslyn.Symbols;
@@ -37,18 +38,26 @@ namespace SafetySharp.Compiler.Analyzers
 	public sealed class FaultAnalyzer : Analyzer
 	{
 		/// <summary>
-		///     The error diagnostic emitted by the analyzer.
+		///     The error diagnostic emitted by the analyzer when a fault is inherited.
 		/// </summary>
-		private static readonly DiagnosticInfo _unsupportedFaultInheritance = DiagnosticInfo.Error(
+		private static readonly DiagnosticInfo _unsupportedInheritance = DiagnosticInfo.Error(
 			DiagnosticIdentifier.UnsupportedFaultInheritance,
 			String.Format("Faults must directly inherit '{0}'. Fault inheritance is currently unsupported.", typeof(Fault).FullName),
 			String.Format("Fault '{{0}}' must be directly derived from '{0}'. Fault inheritance is currently unsupported.", typeof(Fault).FullName));
 
 		/// <summary>
+		///     The error diagnostic emitted by the analyzer when a fault is declared outside of a component.
+		/// </summary>
+		private static readonly DiagnosticInfo _outsideComponent = DiagnosticInfo.Error(
+			DiagnosticIdentifier.FaultOutsideComponent,
+			String.Format("Faults must be declared as nested types of a '{0}'-derived type.", typeof(Component).FullName),
+			String.Format("Fault '{{0}}' must be declared as a nested type of a '{0}'-derived type.", typeof(Component).FullName));
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public FaultAnalyzer()
-			: base(_unsupportedFaultInheritance)
+			: base(_unsupportedInheritance, _outsideComponent)
 		{
 		}
 
@@ -77,7 +86,10 @@ namespace SafetySharp.Compiler.Analyzers
 				return;
 
 			if (!symbol.BaseType.Equals(compilation.GetFaultClassSymbol()))
-				_unsupportedFaultInheritance.Emit(context, symbol, symbol.ToDisplayString());
+				_unsupportedInheritance.Emit(context, symbol, symbol.ToDisplayString());
+
+			if (symbol.ContainingType == null || !symbol.ContainingType.IsDerivedFromComponent(compilation))
+				_outsideComponent.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

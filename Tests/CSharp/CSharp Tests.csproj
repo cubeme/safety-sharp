@@ -269,6 +269,7 @@
     <Compile Include="Metadata\Components\Faults\single fault.cs" />
     <None Include="Metadata\Faults\FaultEffects\multiple faults, multiple effects, different members.cs" />
     <None Include="Metadata\Faults\FaultEffects\multiple faults, multiple effects, same member.cs" />
+    <None Include="Metadata\Faults\FaultEffects\explicit interface members.cs" />
     <Compile Include="Metadata\Faults\StepMethods\direct override.cs" />
     <Compile Include="Metadata\Faults\StepMethods\generic component.cs" />
     <Compile Include="Metadata\OccurrencePatternsMetadataTests.cs" />

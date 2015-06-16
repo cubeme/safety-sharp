@@ -295,9 +295,12 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			Requires.NotNull(faultEffect, () => faultEffect);
 
 			var candidateMethods = affectedType
-				.GetMembers(faultEffect.Name)
+				.GetMembers()
 				.OfType<IMethodSymbol>()
-				.Where(candidate => candidate.MethodKind == MethodKind.Ordinary)
+				.Where(candidate => candidate.MethodKind == MethodKind.Ordinary || candidate.MethodKind == MethodKind.ExplicitInterfaceImplementation)
+				.Where(candidate => candidate.MethodKind == MethodKind.ExplicitInterfaceImplementation
+						? candidate.ExplicitInterfaceImplementations[0].Name == faultEffect.Name
+						: candidate.Name == faultEffect.Name)
 				.Where(candidate => candidate.IsSignatureCompatibleTo(faultEffect))
 				.ToArray();
 
