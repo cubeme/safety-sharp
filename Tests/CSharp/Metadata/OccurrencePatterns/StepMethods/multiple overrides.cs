@@ -33,35 +33,35 @@ namespace Tests.Metadata.OccurrencePatterns.StepMethods
 		{
 			Metadata.Faults[0].OccurrencePattern.StepMethods.Length.ShouldBe(2);
 
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Method.ShouldBe(typeof(P1).GetMethod("Update"));
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Method.ShouldBe(typeof(P1).GetMethod("UpdateOccurrenceState"));
 			Metadata.Faults[0].OccurrencePattern.StepMethods[0].DeclaringObject.ShouldBe((object)Metadata.Faults[0].OccurrencePattern);
 			Metadata.Faults[0].OccurrencePattern.StepMethods[0].BaseMethod.ShouldBe(null);
 			Metadata.Faults[0].OccurrencePattern.StepMethods[0].IsOverride.ShouldBe(false);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Name.ShouldBe("Update");
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Name.ShouldBe("UpdateOccurrenceState");
 			Metadata.Faults[0].OccurrencePattern.StepMethods[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].OccurrencePattern.StepMethods[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Implementation.ShouldBe(typeof(P1).GetMethod("Update"));
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Implementation.ShouldBe(typeof(P1).GetMethod("UpdateOccurrenceState"));
 
-			Metadata.Faults[0].OccurrencePattern.StepMethods[1].Method.ShouldBe(typeof(P2).GetMethod("Update"));
+			Metadata.Faults[0].OccurrencePattern.StepMethods[1].Method.ShouldBe(typeof(P2).GetMethod("UpdateOccurrenceState"));
 			Metadata.Faults[0].OccurrencePattern.StepMethods[1].DeclaringObject.ShouldBe((object)Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[1].BaseMethod.ShouldBe(typeof(P1).GetMethod("Update"));
+			Metadata.Faults[0].OccurrencePattern.StepMethods[1].BaseMethod.ShouldBe(typeof(P1).GetMethod("UpdateOccurrenceState"));
 			Metadata.Faults[0].OccurrencePattern.StepMethods[1].IsOverride.ShouldBe(true);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[1].Name.ShouldBe("Update");
+			Metadata.Faults[0].OccurrencePattern.StepMethods[1].Name.ShouldBe("UpdateOccurrenceState");
 			Metadata.Faults[0].OccurrencePattern.StepMethods[1].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].OccurrencePattern.StepMethods[1].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[1].Implementation.ShouldBe(typeof(P2).GetMethod("Update"));
+			Metadata.Faults[0].OccurrencePattern.StepMethods[1].Implementation.ShouldBe(typeof(P2).GetMethod("UpdateOccurrenceState"));
 		}
 
 		private class P1 : OccurrencePattern
 		{
-			public override void Update()
+			public override void UpdateOccurrenceState()
 			{
 			}
 		}
 
 		private class P2 : P1
 		{
-			public override void Update()
+			public override void UpdateOccurrenceState()
 			{
 			}
 		}

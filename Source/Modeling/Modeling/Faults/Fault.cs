@@ -53,7 +53,7 @@ namespace SafetySharp.Modeling.Faults
 		/// <summary>
 		///     Updates the internal state of the fault.
 		/// </summary>
-		public virtual void Update()
+		public virtual void UpdateFaultState()
 		{
 		}
 
@@ -63,7 +63,9 @@ namespace SafetySharp.Modeling.Faults
 		[UsedImplicitly]
 		private void InitializeMetadata()
 		{
-			MetadataBuilders.GetBuilder(this).WithStepMethod(ReflectionHelpers.GetMethod(typeof(Fault), "Update", Type.EmptyTypes, typeof(void)));
+			MetadataBuilders
+				.GetBuilder(this)
+				.WithStepMethod(ReflectionHelpers.GetMethod(typeof(Fault), "UpdateFaultState", Type.EmptyTypes, typeof(void)));
 		}
 
 		/// <summary>

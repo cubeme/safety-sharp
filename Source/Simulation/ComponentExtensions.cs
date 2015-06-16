@@ -61,7 +61,7 @@ namespace SafetySharp.Simulation
 			component.RequiresIsSealed();
 
 			foreach (var fault in component.Faults)
-				fault.Update();
+				fault.UpdateFaultState();
 		}
 
 		/// <summary>

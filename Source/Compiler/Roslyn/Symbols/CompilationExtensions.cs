@@ -156,7 +156,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Fault.Update()" /> method within the
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Fault.UpdateFaultState" /> method within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
@@ -167,13 +167,13 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 
 			return compilation
 				.GetTypeSymbol<Fault>()
-				.GetMembers("Update")
+				.GetMembers("UpdateFaultState")
 				.OfType<IMethodSymbol>()
 				.Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);
 		}
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="OccurrencePattern.Update()" /> method within the
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="OccurrencePattern.UpdateOccurrenceState" /> method within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
@@ -184,7 +184,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 
 			return compilation
 				.GetTypeSymbol<OccurrencePattern>()
-				.GetMembers("Update")
+				.GetMembers("UpdateOccurrenceState")
 				.OfType<IMethodSymbol>()
 				.Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);
 		}

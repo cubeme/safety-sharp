@@ -32,7 +32,7 @@ namespace SafetySharp.Modeling.Faults
 		/// <summary>
 		///     Updates the internal state of the occurrence pattern.
 		/// </summary>
-		public override void Update()
+		public override void UpdateOccurrenceState()
 		{
 			IsOccurring = true;
 		}

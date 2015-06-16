@@ -90,7 +90,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> overrides <see cref="Component.Update()" />,
-		///     <see cref="Fault.Update()" />, or <see cref="OccurrencePattern.Update" /> within the
+		///     <see cref="Fault.UpdateFaultState" />, or <see cref="OccurrencePattern.UpdateOccurrenceState" /> within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
@@ -111,7 +111,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> overrides <see cref="Component.Update()" />,
-		///     <see cref="Fault.Update()" />, or <see cref="OccurrencePattern.Update" /> within the
+		///     <see cref="Fault.UpdateFaultState" />, or <see cref="OccurrencePattern.UpdateOccurrenceState" /> within the
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>

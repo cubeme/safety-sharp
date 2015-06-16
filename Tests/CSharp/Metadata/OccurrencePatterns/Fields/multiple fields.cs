@@ -58,7 +58,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 			private readonly double _y = 50;
 			private readonly bool _z = true;
 
-			public override void Update()
+			public override void UpdateOccurrenceState()
 			{
 			}
 		}

@@ -37,7 +37,7 @@ namespace Tests.Diagnostics.OccurrencePatterns.Invalid
 	[Persistent]
 	internal class P : OccurrencePattern
 	{
-		public override void Update()
+		public override void UpdateOccurrenceState()
 		{
 		}
 	}

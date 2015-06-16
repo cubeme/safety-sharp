@@ -43,7 +43,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 		{
 			private readonly int _x = 0;
 
-			public override void Update()
+			public override void UpdateOccurrenceState()
 			{
 			}
 		}
@@ -69,7 +69,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 		{
 			private readonly double _x = 0;
 
-			public override void Update()
+			public override void UpdateOccurrenceState()
 			{
 			}
 		}
@@ -95,7 +95,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 		{
 			private readonly bool _x = false;
 
-			public override void Update()
+			public override void UpdateOccurrenceState()
 			{
 			}
 		}
@@ -121,7 +121,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 		{
 			private readonly E _x = E.A;
 
-			public override void Update()
+			public override void UpdateOccurrenceState()
 			{
 			}
 		}

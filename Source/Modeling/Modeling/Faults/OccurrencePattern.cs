@@ -48,7 +48,7 @@ namespace SafetySharp.Modeling.Faults
 		/// <summary>
 		///     Updates the internal state of the occurrence pattern.
 		/// </summary>
-		public abstract void Update();
+		public abstract void UpdateOccurrenceState();
 
 		/// <summary>
 		///     Sets the initial <paramref name="values" /> of the current occurrence pattern's <paramref name="field" />.
