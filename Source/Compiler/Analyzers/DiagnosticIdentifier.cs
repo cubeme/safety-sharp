@@ -48,6 +48,7 @@ namespace SafetySharp.Compiler.Analyzers
 		FaultEffectSignatureIncompatible,
 		FaultEffectIncompatibleType,
 		FaultEffectOptionalParameter,
+		UnsupportedFaultInheritance,
 
 		// Port diagnostics
 		AmbiguousPortKind = 3000,

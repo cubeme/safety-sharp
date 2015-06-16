@@ -115,6 +115,7 @@
     <Compile Include="Analyzers\BindingAnalyzer.cs" />
     <Compile Include="Analyzers\CustomComponentAnalyzer.cs" />
     <Compile Include="Analyzers\DiagnosticIdentifier.cs" />
+    <Compile Include="Analyzers\FaultAnalyzer.cs" />
     <Compile Include="Analyzers\EnumAnalyzer.cs" />
     <Compile Include="Analyzers\FaultEffectAnalyzer.cs" />
     <Compile Include="Analyzers\OccurrencePatternAnalyzer.cs" />
