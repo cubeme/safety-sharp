@@ -46,7 +46,7 @@ namespace SafetySharp.Modeling.Faults
 			Requires.That(occurrencePattern != null, "Expected fault to be marked with an instance of '{0}'.",
 				typeof(OccurrencePatternAttribute).FullName);
 
-			MetadataBuilders.GetBuilder(this).WithOccurrencePattern((OccurrencePattern)Activator.CreateInstance(occurrencePattern.Type));
+			MetadataBuilders.GetBuilder(this).WithOccurrencePattern(occurrencePattern.CreateInstance());
 			MetadataProvider.InitializeMetadata(this);
 		}
 

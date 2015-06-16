@@ -20,31 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata
+namespace Tests.Metadata.OccurrencePatterns.Fields
 {
 	using System;
-	using Microsoft.CodeAnalysis;
+	using SafetySharp.Modeling.Faults;
+	using Shouldly;
 	using Utilities;
-	using Xunit;
 
-	public partial class FaultMetadataTests : Tests
+	internal class X : TestComponent
 	{
-		[Theory, MemberData("DiscoverTests", "Faults/Fields")]
-		public void Fields(string test, SyntaxTree code)
+		protected override void Check()
 		{
-			ExecuteComponentTests(code);
+			Metadata.Faults.Length.ShouldBe(1);
+
+			Metadata.Faults[0].OccurrencePattern.DeclaringFault.ShouldBe(Metadata.Faults[0]);
+			Metadata.Faults[0].OccurrencePattern.OccurrencePattern.GetType().ShouldBe(typeof(Transient));
+			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(0);
 		}
 
-		[Theory, MemberData("DiscoverTests", "Faults/FaultEffects")]
-		public void FaultEffects(string test, SyntaxTree code)
+		[Transient]
+		private class F : Fault
 		{
-			ExecuteComponentTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Faults/StepMethods")]
-		public void StepMethods(string test, SyntaxTree code)
-		{
-			ExecuteComponentTests(code);
 		}
 	}
 }

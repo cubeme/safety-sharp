@@ -20,31 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata
+namespace Tests.Metadata.OccurrencePatterns.StepMethods
 {
 	using System;
-	using Microsoft.CodeAnalysis;
+	using SafetySharp.Modeling.Faults;
+	using Shouldly;
 	using Utilities;
-	using Xunit;
 
-	public partial class FaultMetadataTests : Tests
+	internal class X2 : TestComponent
 	{
-		[Theory, MemberData("DiscoverTests", "Faults/Fields")]
-		public void Fields(string test, SyntaxTree code)
+		protected override void Check()
 		{
-			ExecuteComponentTests(code);
+			Metadata.Faults[0].OccurrencePattern.StepMethods.Length.ShouldBe(1);
+
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Method.ShouldBe(typeof(P).GetMethod("Update"));
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].DeclaringObject.ShouldBe((object)Metadata.Faults[0].OccurrencePattern);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].BaseMethod.ShouldBe(null);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].IsOverride.ShouldBe(false);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Name.ShouldBe("Update");
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].CanBeAffectedByFaultEffects.ShouldBe(false);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].HasImplementation.ShouldBe(true);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Implementation.ShouldBe(typeof(P).GetMethod("Update"));
 		}
 
-		[Theory, MemberData("DiscoverTests", "Faults/FaultEffects")]
-		public void FaultEffects(string test, SyntaxTree code)
+		private class P : OccurrencePattern
 		{
-			ExecuteComponentTests(code);
+			public override void Update()
+			{
+			}
 		}
 
-		[Theory, MemberData("DiscoverTests", "Faults/StepMethods")]
-		public void StepMethods(string test, SyntaxTree code)
+		[OccurrencePattern(typeof(P))]
+		private class F : Fault
 		{
-			ExecuteComponentTests(code);
 		}
 	}
 }

@@ -47,8 +47,8 @@ namespace Tests.Metadata
 			ExecuteComponentTests(code);
 		}
 
-		[Theory, MemberData("DiscoverTests", "Components/Steps")]
-		public void Steps(string test, SyntaxTree code)
+		[Theory, MemberData("DiscoverTests", "Components/StepMethods")]
+		public void StepMethods(string test, SyntaxTree code)
 		{
 			ExecuteComponentTests(code);
 		}

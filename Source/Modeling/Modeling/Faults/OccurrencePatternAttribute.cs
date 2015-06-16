@@ -23,18 +23,19 @@
 namespace SafetySharp.Modeling.Faults
 {
 	using System;
+	using Utilities;
 
 	/// <summary>
 	///     When applied to a <see cref="Fault" /> declaration, determines the <see cref="OccurrencePattern" /> of the fault.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-	public abstract class OccurrencePatternAttribute : Attribute
+	public class OccurrencePatternAttribute : Attribute
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="type">The <see cref="OccurrencePattern" /> of the marked fault.</param>
-		protected OccurrencePatternAttribute(Type type)
+		public OccurrencePatternAttribute(Type type)
 		{
 			Type = type;
 		}
@@ -43,5 +44,18 @@ namespace SafetySharp.Modeling.Faults
 		///     Gets the <see cref="OccurrencePattern" /> type.
 		/// </summary>
 		public Type Type { get; private set; }
+
+		/// <summary>
+		///     Creates a new instance of the <see cref="OccurrencePattern" />.
+		/// </summary>
+		internal OccurrencePattern CreateInstance()
+		{
+			Requires.That(typeof(OccurrencePattern).IsAssignableFrom(Type),
+				"An occurrence pattern must be derived from '{0}'.", typeof(OccurrencePattern).FullName);
+			Requires.That(Type.GetConstructor(Type.EmptyTypes) != null,
+				"Occurrence pattern '{0}' must declare a default constructor.", Type.FullName);
+
+			return (OccurrencePattern)Activator.CreateInstance(Type);
+		}
 	}
 }

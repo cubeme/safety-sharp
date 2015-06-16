@@ -27,7 +27,6 @@ namespace SafetySharp.Compiler.Analyzers
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Modeling.Faults;
 	using Roslyn;
 	using Roslyn.Symbols;
@@ -45,7 +44,7 @@ namespace SafetySharp.Compiler.Analyzers
 			DiagnosticIdentifier.MissingOccurrencePattern,
 			"A fault must be marked with a default occurrence pattern.",
 			String.Format(
-				"Fault '{{0}}' does not declare a default occurrence pattern. Mark it with an attribute derived from '{0}'. " +
+				"Fault '{{0}}' does not declare a default occurrence pattern. Mark it with an instance of '{0}'. " +
 				"You can change the default occurrence pattern dynamically during model initialization time.",
 				typeof(OccurrencePatternAttribute).FullName));
 
@@ -96,7 +95,9 @@ namespace SafetySharp.Compiler.Analyzers
 
 			var isFault = symbol.IsDerivedFromFault(compilation);
 			var attributeSymbol = compilation.GetOccurrencePatternAttributeSymbol();
-			var count = symbol.GetAttributes().Count(attribute => attribute.AttributeClass.IsDerivedFrom(attributeSymbol));
+			var count = symbol
+				.GetAttributes()
+				.Count(attribute => attribute.AttributeClass.Equals(attributeSymbol) || attribute.AttributeClass.IsDerivedFrom(attributeSymbol));
 
 			if (count != 0 && !isFault)
 				_occurrencePatternHasNoEffect.Emit(context, symbol);

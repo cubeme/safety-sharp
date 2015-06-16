@@ -20,44 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Faults.Fields
+namespace Tests.Metadata.OccurrencePatterns.StepMethods
 {
 	using System;
-	using System.Reflection;
 	using SafetySharp.Modeling.Faults;
-	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
-	internal class X12 : TestComponent
+	internal class X8 : TestComponent
 	{
 		protected override void Check()
 		{
-			Metadata.Faults[1].Fields.Length.ShouldBe(1);
-							
-			Metadata.Faults[1].Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[1].Fault.GetMetadata());
-			Metadata.Faults[1].Fields[0].Field.ShouldBe(typeof(F1).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.Faults[1].Fields[0].InitialValues.ShouldBe(new object[] { 88, 22 });
+			Metadata.Faults[0].OccurrencePattern.StepMethods.Length.ShouldBe(1);
+
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Method.ShouldBe(typeof(P<int>).GetMethod("Update"));
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].DeclaringObject.ShouldBe((object)Metadata.Faults[0].OccurrencePattern);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].BaseMethod.ShouldBe(null);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].IsOverride.ShouldBe(false);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Name.ShouldBe("Update");
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].CanBeAffectedByFaultEffects.ShouldBe(false);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].HasImplementation.ShouldBe(true);
+			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Implementation.ShouldBe(typeof(P<int>).GetMethod("Update"));
 		}
 
-		[Transient]
-		private class F1 : Fault
+		private class P<T> : OccurrencePattern
 		{
-			protected int _x;
-
-			public F1()
+			public override void Update()
 			{
-				SetInitialValues(_x, 1, 2, 3);
 			}
 		}
 
-		[Transient]
-		private class F2 : F1
+		[OccurrencePattern(typeof(P<int>))]
+		private class F : Fault
 		{
-			public F2()
-			{
-				SetInitialValues(_x, 88, 22);
-			}
 		}
 	}
 }

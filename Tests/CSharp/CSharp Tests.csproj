@@ -230,12 +230,15 @@
     <Compile Include="Execution\Steps\indirectly overridden.cs" />
     <Compile Include="Execution\Steps\directly overridden.cs" />
     <Compile Include="Execution\Steps\not overridden.cs" />
-    <Compile Include="Metadata\Components\Faults\no faults.cs" />
+    <None Include="Metadata\Components\Faults\no faults.cs" />
     <Compile Include="Metadata\Components\Faults\multiple faults.cs" />
     <Compile Include="Metadata\Components\Faults\single fault.cs" />
+    <None Include="Metadata\Faults\FaultEffects\multiple faults, multiple effects, different members.cs" />
+    <None Include="Metadata\Faults\FaultEffects\multiple faults, multiple effects, same member.cs" />
+    <Compile Include="Metadata\Faults\StepMethods\direct override.cs" />
+    <Compile Include="Metadata\Faults\StepMethods\generic component.cs" />
+    <Compile Include="Metadata\OccurrencePatternsMetadataTests.cs" />
     <Compile Include="Metadata\Faults\Fields\generic component.cs" />
-    <Compile Include="Metadata\Faults\Fields\inherited field.cs" />
-    <Compile Include="Metadata\Faults\Fields\initial values overridden by derived class.cs" />
     <Compile Include="Metadata\Faults\Fields\initial values, set by constructor.cs" />
     <Compile Include="Metadata\Faults\Fields\initial values, set outside constructor.cs" />
     <Compile Include="Metadata\Faults\Fields\multiple fields.cs" />
@@ -250,6 +253,18 @@
       <DependentUpon>ComponentMetadataTests.cs</DependentUpon>
     </Compile>
     <Compile Include="Metadata\Faults\Fields\single field.cs" />
+    <Compile Include="Metadata\OccurrencePatternsMetadataTests.Helpers.cs">
+      <DependentUpon>OccurrencePatternsMetadataTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Metadata\OccurrencePatterns\Fields\generic pattern.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\Fields\initial values, set by constructor.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\Fields\multiple fields.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\Fields\multiple initial values.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\Fields\no fields.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\Fields\single field.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\StepMethods\direct override.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\StepMethods\generic pattern.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\StepMethods\multiple overrides.cs" />
     <Compile Include="Normalization\Bindings\Components\disambiguated, superfluous parantheses.cs" />
     <Compile Include="Normalization\Bindings\Components\disambiguated.cs" />
     <Compile Include="Normalization\Bindings\Components\base binding.cs" />
@@ -301,11 +316,11 @@
     <Compile Include="Metadata\Components\Bindings\interface required port.cs" />
     <Compile Include="Metadata\Components\Bindings\interface provided port.cs" />
     <Compile Include="Metadata\Components\Bindings\generic component.cs" />
-    <Compile Include="Metadata\Components\Steps\generic component.cs" />
-    <Compile Include="Metadata\Components\Steps\multiple overrides.cs" />
-    <Compile Include="Metadata\Components\Steps\indirect override.cs" />
-    <Compile Include="Metadata\Components\Steps\direct override.cs" />
-    <Compile Include="Metadata\Components\Steps\default behavior.cs" />
+    <Compile Include="Metadata\Components\StepMethods\generic component.cs" />
+    <Compile Include="Metadata\Components\StepMethods\multiple overrides.cs" />
+    <Compile Include="Metadata\Components\StepMethods\indirect override.cs" />
+    <Compile Include="Metadata\Components\StepMethods\direct override.cs" />
+    <Compile Include="Metadata\Components\StepMethods\default behavior.cs" />
     <Compile Include="Metadata\Components\Bindings\no bindings.cs" />
     <Compile Include="Metadata\Components\Bindings\inaccessible ambiguous candidates.cs" />
     <Compile Include="Metadata\Components\Bindings\many parentheses.cs" />

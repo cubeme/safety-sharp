@@ -20,40 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Faults.Fields
+namespace Tests.Metadata
 {
 	using System;
-	using System.Reflection;
-	using SafetySharp.Modeling.Faults;
-	using SafetySharp.Runtime;
-	using Shouldly;
+	using Microsoft.CodeAnalysis;
 	using Utilities;
+	using Xunit;
 
-	internal class X10 : TestComponent
+	public partial class OccurrencePatternsMetadataTests : Tests
 	{
-		protected override void Check()
+		[Theory, MemberData("DiscoverTests", "OccurrencePatterns/Fields")]
+		public void Fields(string test, SyntaxTree code)
 		{
-			Metadata.Faults[1].Fields.Length.ShouldBe(2);
-							
-			Metadata.Faults[1].Fields[0].DeclaringObject.ShouldBe(Metadata.Faults[1].Fault.GetMetadata());
-			Metadata.Faults[1].Fields[0].Field.ShouldBe(typeof(F1).GetField("_x"));
-			Metadata.Faults[1].Fields[0].InitialValues.ShouldBe(new object[] { 11 });
-							
-			Metadata.Faults[1].Fields[1].DeclaringObject.ShouldBe(Metadata.Faults[1].Fault.GetMetadata());
-			Metadata.Faults[1].Fields[1].Field.ShouldBe(typeof(F2).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.Faults[1].Fields[1].InitialValues.ShouldBe(new object[] { 17 });
+			ExecuteComponentTests(code);
 		}
 
-		[Transient]
-		private class F1 : Fault
+		[Theory, MemberData("DiscoverTests", "OccurrencePatterns/StepMethods")]
+		public void StepMethods(string test, SyntaxTree code)
 		{
-			public int _x = 11;
-		}
-
-		[Persistent]
-		private class F2 : F1
-		{
-			private new readonly int _x = 17;
+			ExecuteComponentTests(code);
 		}
 	}
 }

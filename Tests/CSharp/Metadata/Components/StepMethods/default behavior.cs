@@ -20,31 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata
+namespace Tests.Metadata.Components.StepMethods
 {
 	using System;
-	using Microsoft.CodeAnalysis;
+	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
+	using Shouldly;
 	using Utilities;
-	using Xunit;
 
-	public partial class FaultMetadataTests : Tests
+	internal class X1 : TestComponent
 	{
-		[Theory, MemberData("DiscoverTests", "Faults/Fields")]
-		public void Fields(string test, SyntaxTree code)
+		protected override void Check()
 		{
-			ExecuteComponentTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Faults/FaultEffects")]
-		public void FaultEffects(string test, SyntaxTree code)
-		{
-			ExecuteComponentTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Faults/StepMethods")]
-		public void StepMethods(string test, SyntaxTree code)
-		{
-			ExecuteComponentTests(code);
+			Metadata.StepMethods.Length.ShouldBe(1);
+			Metadata.StepMethods[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
+			Metadata.StepMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.StepMethods[0].BaseMethod.ShouldBe(null);
+			Metadata.StepMethods[0].IsOverride.ShouldBe(false);
+			Metadata.StepMethods[0].Name.ShouldBe("Update");
 		}
 	}
 }

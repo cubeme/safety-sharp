@@ -46,9 +46,9 @@ namespace SafetySharp.Runtime
 		public MemberCollection<StepMethodMetadata> StepMethods { get; private set; }
 
 		/// <summary>
-		///     Gets the metadata of the fault that is affected by the occurrence pattern.
+		///     Gets the metadata of the declaring fault that is affected by the occurrence pattern.
 		/// </summary>
-		public FaultMetadata AffectedFault
+		public FaultMetadata DeclaringFault
 		{
 			get { return _fault.GetMetadata(); }
 		}

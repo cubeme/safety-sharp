@@ -20,39 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Components.Steps
+namespace Tests.Metadata
 {
 	using System;
-	using SafetySharp.Modeling;
-	using SafetySharp.Runtime;
-	using Shouldly;
-	using Utilities;
+	using System.Collections.Generic;
+	using System.IO;
+	using JetBrains.Annotations;
+	using Xunit.Abstractions;
 
-	internal abstract class X3 : TestComponent
+	partial class OccurrencePatternsMetadataTests
 	{
-	}
-
-	internal class X4 : X3
-	{
-		public override void Update()
+		public OccurrencePatternsMetadataTests(ITestOutputHelper output)
+			: base(output)
 		{
 		}
 
-		protected override void Check()
+		[UsedImplicitly]
+		public static IEnumerable<object[]> DiscoverTests(string directory)
 		{
-			Metadata.StepMethods.Length.ShouldBe(2);
-
-			Metadata.StepMethods[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
-			Metadata.StepMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.StepMethods[0].BaseMethod.ShouldBe(null);
-			Metadata.StepMethods[0].IsOverride.ShouldBe(false);
-			Metadata.StepMethods[0].Name.ShouldBe("Update");
-
-			Metadata.StepMethods[1].Method.ShouldBe(typeof(X4).GetMethod("Update"));
-			Metadata.StepMethods[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.StepMethods[1].BaseMethod.ShouldBe(ComponentUpdatedMethod);
-			Metadata.StepMethods[1].IsOverride.ShouldBe(true);
-			Metadata.StepMethods[1].Name.ShouldBe("Update");
+			return EnumerateTestCases(Path.Combine(Path.GetDirectoryName(GetFileName()), directory));
 		}
 	}
 }

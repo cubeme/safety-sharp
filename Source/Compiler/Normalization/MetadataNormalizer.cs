@@ -273,8 +273,11 @@ namespace SafetySharp.Compiler.Normalization
 			{
 				var withStepMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithStepMethod");
 				var overridingMethod = method.GetRuntimeMethodExpression(Syntax);
-				var overriddenMethod = method.OverriddenMethod.GetRuntimeMethodExpression(Syntax);
-				var invocation = Syntax.InvocationExpression(withStepMethod, overridingMethod, overriddenMethod);
+
+				var invocation = method.OverriddenMethod == null || method.OverriddenMethod.IsAbstract
+					? Syntax.InvocationExpression(withStepMethod, overridingMethod)
+					: Syntax.InvocationExpression(withStepMethod, overridingMethod, method.OverriddenMethod.GetRuntimeMethodExpression(Syntax));
+
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}

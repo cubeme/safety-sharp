@@ -37,6 +37,7 @@ namespace SafetySharp.Modeling.Faults
 		protected OccurrencePattern()
 		{
 			MetadataProvider.CreateBuilder(this);
+			MetadataProvider.InitializeMetadata(this);
 		}
 
 		/// <summary>

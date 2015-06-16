@@ -152,7 +152,7 @@ namespace SafetySharp.Compiler.Normalization
 			if (methodSymbol.IsProvidedPort(SemanticModel))
 				return NormalizeMethod(methodDeclaration, typeof(ProvidedAttribute));
 
-			if (methodSymbol.IsUpdateMethod(SemanticModel))
+			if (methodSymbol.IsUpdateMethod(SemanticModel) && methodSymbol.ContainingType.IsDerivedFromComponent(Compilation))
 				return NormalizeMethod(methodDeclaration);
 
 			return methodDeclaration;

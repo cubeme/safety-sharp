@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Components.Steps
+namespace Tests.Metadata.Components.StepMethods
 {
 	using System;
 	using SafetySharp.Modeling;
@@ -28,16 +28,40 @@ namespace Tests.Metadata.Components.Steps
 	using Shouldly;
 	using Utilities;
 
-	internal class X1 : TestComponent
+	internal abstract class X5 : TestComponent
 	{
+		public override void Update()
+		{
+		}
+	}
+
+	internal class X6 : X5
+	{
+		public override void Update()
+		{
+		}
+
 		protected override void Check()
 		{
-			Metadata.StepMethods.Length.ShouldBe(1);
+			Metadata.StepMethods.Length.ShouldBe(3);
+
 			Metadata.StepMethods[0].Method.ShouldBe(typeof(Component).GetMethod("Update"));
 			Metadata.StepMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.StepMethods[0].BaseMethod.ShouldBe(null);
 			Metadata.StepMethods[0].IsOverride.ShouldBe(false);
 			Metadata.StepMethods[0].Name.ShouldBe("Update");
+
+			Metadata.StepMethods[1].Method.ShouldBe(typeof(X5).GetMethod("Update"));
+			Metadata.StepMethods[1].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.StepMethods[1].BaseMethod.ShouldBe(ComponentUpdatedMethod);
+			Metadata.StepMethods[1].IsOverride.ShouldBe(true);
+			Metadata.StepMethods[1].Name.ShouldBe("Update");
+
+			Metadata.StepMethods[2].Method.ShouldBe(typeof(X6).GetMethod("Update"));
+			Metadata.StepMethods[2].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.StepMethods[2].BaseMethod.ShouldBe(typeof(X5).GetMethod("Update"));
+			Metadata.StepMethods[2].IsOverride.ShouldBe(true);
+			Metadata.StepMethods[2].Name.ShouldBe("Update");
 		}
 	}
 }
