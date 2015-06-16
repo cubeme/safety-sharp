@@ -20,56 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.FaultEffects.Invalid
 {
 	using System;
-	using Microsoft.CodeAnalysis;
 	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 
-	public partial class DiagnosticsTests : Tests
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 49, 24, 7, "Tests.Diagnostics.FaultEffects.Invalid.X11.F.GetProp()",
+		"Tests.Diagnostics.FaultEffects.Invalid.X11", "GetProp")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 54, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X11.F.SetProp(int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X11", "SetProp")]
+	internal class X11 : Component
 	{
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, SyntaxTree code)
+		public int GetProp
 		{
-			CheckDiagnostics<BindingAnalyzer>(code);
+			get { return 1; }
 		}
 
-		[Theory, MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, SyntaxTree code)
+		public int SetProp
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
+			set { }
 		}
 
-		[Theory, MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, SyntaxTree code)
+		[Transient]
+		private class F : Fault
 		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
+			public int GetProp()
+			{
+				return 1;
+			}
 
-		[Theory, MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "OccurrencePatterns")]
-		public void OccurrencePatterns(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<OccurrencePatternAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Faults")]
-		public void Faults(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<FaultAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "FaultEffects")]
-		public void FaultEffects(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<FaultEffectAnalyzer>(code);
+			public void SetProp(int value)
+			{
+			}
 		}
 	}
 }

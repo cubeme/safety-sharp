@@ -20,56 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.FaultEffects.Invalid
 {
 	using System;
-	using Microsoft.CodeAnalysis;
 	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 
-	public partial class DiagnosticsTests : Tests
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 49, 24, 2, "Tests.Diagnostics.FaultEffects.Invalid.X12.F.P1",
+		"Tests.Diagnostics.FaultEffects.Invalid.X12", "P1")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 50, 24, 2, "Tests.Diagnostics.FaultEffects.Invalid.X12.F.P2",
+		"Tests.Diagnostics.FaultEffects.Invalid.X12", "P2")]
+	internal class X12 : Component
 	{
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, SyntaxTree code)
+		public int P1
 		{
-			CheckDiagnostics<BindingAnalyzer>(code);
+			get { return 1; }
 		}
 
-		[Theory, MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, SyntaxTree code)
+		public int P2
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
+			set { }
 		}
 
-		[Theory, MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, SyntaxTree code)
+		[Transient]
+		private class F : Fault
 		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "OccurrencePatterns")]
-		public void OccurrencePatterns(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<OccurrencePatternAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Faults")]
-		public void Faults(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<FaultAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "FaultEffects")]
-		public void FaultEffects(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<FaultEffectAnalyzer>(code);
+			public int P1 { get; set; }
+			public int P2 { get; set; }
 		}
 	}
 }

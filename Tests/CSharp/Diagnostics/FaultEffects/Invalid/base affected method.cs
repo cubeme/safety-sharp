@@ -20,56 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.FaultEffects.Invalid
 {
 	using System;
-	using Microsoft.CodeAnalysis;
 	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 
-	public partial class DiagnosticsTests : Tests
+	[Diagnostic(DiagnosticIdentifier.FaultEffectBaseMember, 50, 25, 1, "Tests.Diagnostics.FaultEffects.Invalid.X9.F.M(bool)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X8.M(bool)")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 54, 25, 1, "Tests.Diagnostics.FaultEffects.Invalid.X9.F.N()",
+		"Tests.Diagnostics.FaultEffects.Invalid.X9", "N")]
+	internal class X8 : Component
 	{
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, SyntaxTree code)
+		public void M(bool i)
 		{
-			CheckDiagnostics<BindingAnalyzer>(code);
 		}
 
-		[Theory, MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, SyntaxTree code)
+		private void N()
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
 		}
+	}
 
-		[Theory, MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, SyntaxTree code)
+	internal class X9 : X8
+	{
+		[Transient]
+		private class F : Fault
 		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
+			public void M(bool i)
+			{
+			}
 
-		[Theory, MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "OccurrencePatterns")]
-		public void OccurrencePatterns(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<OccurrencePatternAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Faults")]
-		public void Faults(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<FaultAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "FaultEffects")]
-		public void FaultEffects(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<FaultEffectAnalyzer>(code);
+			public void N()
+			{
+			}
 		}
 	}
 }
