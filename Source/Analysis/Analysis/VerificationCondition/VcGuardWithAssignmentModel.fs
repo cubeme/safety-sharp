@@ -455,10 +455,10 @@ module internal VcGuardWithAssignmentModel =
                                 |> List.unzip                                
                     let somethingChanged = somethingChanged |> List.exists id
                     if somethingChanged then
-                        (stm,None,false)
-                    else
                         let newChoiceStm = Stm.Choice(sid,newChoices)
                         (newChoiceStm,None,true)
+                    else
+                        (stm,None,false)
 
                 | Stm.Stochastic (stochasticSid,stochasticChoices: (Expr*Stm) list) ->
                     let rec traverseStochasticChoices (revAlreadyTraversed:(Expr*Stm) list) (toTraverse:(Expr*Stm) list) : (Stm*(Stm option)*bool) = 
@@ -958,7 +958,11 @@ module internal VcGuardWithAssignmentModel =
                                     let alreadyToAssume = revAlreadyToAssume |> List.rev
                                     let restBlock = toTraverse
                                     (alreadyToAssume,Stm.Block(blockSid,restBlock))
-                    let (assumes,restBlock) = traverseBlock [] statements
+                    let initialAlreadyAssumed =
+                        match guardOfChoice with
+                            | Some(guardOfChoice) -> [guardOfChoice]
+                            | None -> []
+                    let (assumes,restBlock) = traverseBlock initialAlreadyAssumed statements
                     let guard = createAndedExpr assumes
                     processStochastic (guard,restBlock)
                 | Stm.Assume(_,expr) ->
