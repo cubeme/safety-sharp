@@ -23,12 +23,17 @@
 namespace SafetySharp.CompilerServices
 {
 	using System;
+	using System.Diagnostics;
 
 	/// <summary>
-	///     When applied to a method or property, the marked element is ignored by the S# compiler.
+	///     When applied to a method or property, all transformations normally done by the S# compiler are
+	///     suppressed for the marked element. This attribute is intended for compiler-internal use and
+	///     testing purposes only. The attribute is compile-time only, meaning that it is not present in
+	///     the resulting assemblies.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
-	public class IgnoreAttribute : Attribute
+	[Conditional("SafetySharpInternal")]
+	public class SuppressTransformationAttribute : Attribute
 	{
 	}
 }

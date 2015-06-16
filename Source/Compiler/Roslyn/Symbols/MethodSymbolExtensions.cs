@@ -101,7 +101,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(compilation, () => compilation);
 
-			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
+			if (methodSymbol.HasAttribute<SuppressTransformationAttribute>(compilation))
 				return false;
 
 			return methodSymbol.Overrides(compilation.GetComponentUpdateMethodSymbol()) ||
@@ -145,7 +145,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
 				return false;
 
-			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
+			if (methodSymbol.HasAttribute<SuppressTransformationAttribute>(compilation))
 				return false;
 
 			switch (methodSymbol.ContainingType.TypeKind)
@@ -193,7 +193,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (!methodSymbol.ContainingType.ImplementsIComponent(compilation))
 				return false;
 
-			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
+			if (methodSymbol.HasAttribute<SuppressTransformationAttribute>(compilation))
 				return false;
 
 			switch (methodSymbol.ContainingType.TypeKind)
@@ -243,7 +243,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (!methodSymbol.ContainingType.IsDerivedFromFault(compilation))
 				return false;
 
-			if (methodSymbol.HasAttribute<IgnoreAttribute>(compilation))
+			if (methodSymbol.HasAttribute<SuppressTransformationAttribute>(compilation))
 				return false;
 
 			if (methodSymbol.IsUpdateMethod(compilation))

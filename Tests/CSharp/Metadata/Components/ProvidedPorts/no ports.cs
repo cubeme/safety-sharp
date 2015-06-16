@@ -29,7 +29,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 
 	internal class X1 : TestComponent
 	{
-		[Ignore]
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.ProvidedPorts.Length.ShouldBe(0);

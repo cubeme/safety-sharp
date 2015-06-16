@@ -46,7 +46,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			return i == 1;
 		}
 
-		[Ignore]
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.ProvidedPorts.Length.ShouldBe(3);

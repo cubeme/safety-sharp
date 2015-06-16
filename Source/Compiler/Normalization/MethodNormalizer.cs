@@ -124,7 +124,7 @@ namespace SafetySharp.Compiler.Normalization
 			_debuggerHiddenAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(DebuggerHiddenAttribute).FullName);
 			_compilerGeneratedAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(CompilerGeneratedAttribute).FullName);
 			_requiredAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(RequiredAttribute).FullName);
-			_ignoreAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(IgnoreAttribute).FullName);
+			_ignoreAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(SuppressTransformationAttribute).FullName);
 			_browsableAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(DebuggerBrowsableAttribute).FullName,
 				Syntax.MemberAccessExpression(Syntax.TypeExpression(Compilation.GetTypeSymbol<DebuggerBrowsableState>()), "Never"));
 
@@ -247,7 +247,7 @@ namespace SafetySharp.Compiler.Normalization
 				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(_debuggerHiddenAttribute));
 
 			// Add the [Ignore] attribute if not already present
-			if (!originalDeclaration.HasAttribute<IgnoreAttribute>(SemanticModel))
+			if (!originalDeclaration.HasAttribute<SuppressTransformationAttribute>(SemanticModel))
 			{
 				portImplementation = portImplementation.WithAttributeLists(portImplementation.AttributeLists.Add(_ignoreAttribute));
 				portImplementation = portImplementation.RemoveComments().WithTrivia(originalDeclaration);

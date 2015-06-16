@@ -46,7 +46,7 @@
   <ItemGroup>
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
     <Compile Include="CompilerServices\MetadataAttribute.cs" />
-    <Compile Include="CompilerServices\IgnoreAttribute.cs" />
+    <Compile Include="CompilerServices\SuppressTransformationAttribute.cs" />
     <Compile Include="Modeling\Faults\Persistent.cs" />
     <Compile Include="Modeling\Faults\PersistentAttribute.cs" />
     <Compile Include="Modeling\Faults\Transient.cs" />

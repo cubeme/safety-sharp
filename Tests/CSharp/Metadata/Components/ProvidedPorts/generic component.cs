@@ -43,7 +43,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 
 	internal class X7 : X6<int, bool>
 	{
-		[Ignore]
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.ProvidedPorts.Length.ShouldBe(2);
