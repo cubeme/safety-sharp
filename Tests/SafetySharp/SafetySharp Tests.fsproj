@@ -91,8 +91,8 @@
     <Compile Include="Models\Tsam\TsamToDotTests.fs" />
     <Compile Include="Models\Transformations\SsmToScmTests.fs" />
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
-    <Compile Include="Analysis\VcGuardWithAssignmentModelTests.fs" />
-    <Compile Include="Utilities\Assert.fs" />
+    <Compile Include="Analysis\VcGuardWithAssignmentModelFastTests.fs" />
+    <Compile Include="Analysis\VcGuardWithAssignmentModelTests.fs" />    <Compile Include="Utilities\Assert.fs" />
     <Compile Include="Utilities\Requires.fs" />
     <Compile Include="Roslyn\Symbols\CompilationExtensions.fs" />
     <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.fs" />

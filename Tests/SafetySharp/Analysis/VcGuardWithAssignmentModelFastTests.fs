@@ -30,40 +30,14 @@ open SafetySharp.Models.Tsam
 open SafetySharp.Workflow
 open SafetySharp.Models
 
-type VcGuardWithAssignmentModelTests(xunitOutput:ITestOutputHelper) =
+type VcGuardWithAssignmentModelFastTests(xunitOutput:ITestOutputHelper) =
     
 
-    static member testdataAll = TestCases.SamSmokeTests.smoketestsAll
     static member testdataDeterministic = TestCases.SamSmokeTests.smoketestsDeterministic  
 
     
     [<Theory>]
-    [<MemberData("testdataAll")>]
-    member this.``convert smokeTest to Gwa Form`` (testname:string) =    
-        let inputFile = """../../Examples/SAM/""" + testname
-        
-        let smokeTestWithGwamWorkflow = workflow {
-                do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
-                do! readFile inputFile
-                do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
-                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToTsamInGuardToAssignmentForm()
-
-                //do! SafetySharp.Workflow.printObjectToStdout ()
-                //do! SafetySharp.Workflow.printNewParagraphToStdout ()
-                do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
-                //do! SafetySharp.Workflow.printToStdout ()
-            }
-        let runSmokeTest (inputFile) =
-            SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
-        let output = runSmokeTest inputFile
-        do xunitOutput.WriteLine (sprintf "%s" output)
-        ()
-
-    
-    [<Theory>]
-    [<MemberData("testdataAll")>]
+    [<MemberData("testdataDeterministic")>]
     member this.``convert smokeTest to Gwa Model`` (testname:string) =    
 
         let inputFile = """../../Examples/SAM/""" + testname
@@ -74,7 +48,7 @@ type VcGuardWithAssignmentModelTests(xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
-                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow()
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.modelToStringWorkflow ()
 
                 //do! SafetySharp.Workflow.printObjectToStdout ()
@@ -86,4 +60,3 @@ type VcGuardWithAssignmentModelTests(xunitOutput:ITestOutputHelper) =
         let output = runSmokeTest inputFile
         do xunitOutput.WriteLine (sprintf "%s" output)
         ()
-        
