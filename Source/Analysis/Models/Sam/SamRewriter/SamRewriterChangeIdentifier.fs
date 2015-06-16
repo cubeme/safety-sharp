@@ -88,6 +88,8 @@ module internal SamChangeIdentifier =
                 Expr.Read(state.OldToNew.Item variable)
             | ReadOld (variable) ->
                 Expr.ReadOld(state.OldToNew.Item variable)
+            | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                Expr.IfThenElseExpr(transformExpr state guardExpr,transformExpr state thenExpr,transformExpr state elseExpr)
 
     let rec transformStm (state:ChangeIdentifierState) (stm:Stm) : Stm =
         match stm with

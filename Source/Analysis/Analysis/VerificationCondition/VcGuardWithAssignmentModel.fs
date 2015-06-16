@@ -65,8 +65,13 @@ module internal VcGuardWithAssignmentModel =
     }
 
     let phase2PushAssignmentsNotAtTheEnd () : TsamWorkflowFunction<_,unit> = workflow {
-        // We assume treeified form.        
+        // We assume treeified form.
+        // Note:
+        //    Every time we push an assignment and change something, we have to ensure, that
+        //    the range is preserved.
+
         let! state = getState ()
+        let varToType = state.Pgm.VarToType
         let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
 
         let rec findAndPushAssignmentNotAtTheEnd (stm:Stm) : (Stm*bool) = //returns true, if change occurred
@@ -93,7 +98,9 @@ module internal VcGuardWithAssignmentModel =
                                 // push over Assertion. Adapt rightExpr
                                 let pushCandidate=peepholeLeft.Value
                                 let newAssertStm =
-                                    let newAssertExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
+                                    let newAssertExpr =
+                                        let leftExprInRange = leftExpr.forceExprToBeInRangeOfVar varToType _var
+                                        rightExpr.rewriteExpr_varToExpr (_var,leftExprInRange)
                                     Stm.Assert(rightSid,newAssertExpr)
                                 let newBlock =
                                     (revAlreadyLookedAt |> List.rev)
@@ -104,7 +111,8 @@ module internal VcGuardWithAssignmentModel =
                                 // push over Assumption. Adapt rightExpr
                                 let pushCandidate=peepholeLeft.Value
                                 let newAssumeStm =
-                                    let newAssumeStmExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
+                                    let leftExprInRange = leftExpr.forceExprToBeInRangeOfVar varToType _var
+                                    let newAssumeStmExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExprInRange)
                                     Stm.Assume(rightSid,newAssumeStmExpr)
                                 let newBlock =
                                     (revAlreadyLookedAt |> List.rev)
@@ -117,7 +125,9 @@ module internal VcGuardWithAssignmentModel =
                                 let createNewChoice (choiceExpr:Expr option,choiceStm:Stm) =
                                     let newChoiceExpr =
                                         match choiceExpr with
-                                            | Some(choiceExpr) -> Some (choiceExpr.rewriteExpr_varToExpr (_var,leftExpr))
+                                            | Some(choiceExpr) ->
+                                                let leftExprInRange = leftExpr.forceExprToBeInRangeOfVar varToType _var
+                                                Some (choiceExpr.rewriteExpr_varToExpr (_var,leftExprInRange))
                                             | None -> None
                                     let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
                                     (newChoiceExpr,newChoiceStm)
@@ -129,7 +139,8 @@ module internal VcGuardWithAssignmentModel =
                                 // push into Stochastic (prepend to each of the rightStochasticChoices at the beginning). Adapt choiceExprs.
                                 let pushCandidate=peepholeLeft.Value
                                 let createNewChoice (choiceGuard:Expr,choiceStm:Stm) =
-                                    let newChoiceGuard = choiceGuard.rewriteExpr_varToExpr (_var,leftExpr)
+                                    let leftExprInRange = leftExpr.forceExprToBeInRangeOfVar varToType _var
+                                    let newChoiceGuard = choiceGuard.rewriteExpr_varToExpr (_var,leftExprInRange)
                                     let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
                                     (newChoiceGuard,newChoiceStm)
                                 let newChoiceStm = Stm.Stochastic(rightSid,rightStochasticChoices |> List.map createNewChoice)
@@ -880,6 +891,8 @@ module internal VcGuardWithAssignmentModel =
     let transformGwaTsamToGwaModel (pgm:Tsam.Pgm) : GuardWithAssignmentModel =
         // The algorithm also ensures variables never written to keep their value
         let skipStm = Stm.Block(pgm.UniqueStatementIdGenerator (),[])
+
+        let varToType = pgm.VarToType
         
         let initialValuation =
             // add for each globalVar a self assignment
@@ -910,7 +923,8 @@ module internal VcGuardWithAssignmentModel =
                             match peepholeStm with
                                 | Stm.Write (_,var,expr) ->
                                     let newExpr = expr.rewriteExpr_varsToExpr currentValuation
-                                    let newValuation = currentValuation.Add(var,newExpr)
+                                    let newExprInRange = newExpr.forceExprToBeInRangeOfVar varToType var
+                                    let newValuation = currentValuation.Add(var,newExprInRange)
                                     traverseBlock (newValuation) (toTraverse.Tail)
                                 | _ ->
                                     failwith "BUG: Structure of Tsam.Pgm.Body was not in GwaTsam Form"
@@ -920,7 +934,8 @@ module internal VcGuardWithAssignmentModel =
                     }
                 | Stm.Write(_,var,expr) ->
                     let newExpr = expr.rewriteExpr_varsToExpr initialValuation
-                    let newValuation = initialValuation.Add(var,newExpr)
+                    let newExprInRange = newExpr.forceExprToBeInRangeOfVar varToType var
+                    let newValuation = initialValuation.Add(var,newExprInRange)
                     {
                         FinalVariableAssignments.Assignments = (newValuation |> redirectFinalVars)
                     }

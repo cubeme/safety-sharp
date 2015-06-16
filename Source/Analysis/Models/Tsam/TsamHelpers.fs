@@ -71,7 +71,12 @@ module internal TsamHelpers =
                     Expr.UExpr (expr.rewriteExpr_varsToExpr currentValuation,uop)
                 | Expr.BExpr (left, bop, right) ->
                     Expr.BExpr (left.rewriteExpr_varsToExpr currentValuation, bop, right.rewriteExpr_varsToExpr currentValuation)
-
+                | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                    Expr.IfThenElseExpr
+                        (guardExpr.rewriteExpr_varsToExpr currentValuation,
+                         thenExpr.rewriteExpr_varsToExpr currentValuation,
+                         elseExpr.rewriteExpr_varsToExpr currentValuation)
+                         
         member expr.rewriteExpr_varToExpr (varToUpdate:Var,assignVarTo:Expr) : Expr =
             match expr with
                 | Expr.Literal (_) -> expr
@@ -82,7 +87,51 @@ module internal TsamHelpers =
                     Expr.UExpr (expr.rewriteExpr_varToExpr (varToUpdate,assignVarTo) ,uop)
                 | Expr.BExpr (left, bop, right) ->
                     Expr.BExpr (left.rewriteExpr_varToExpr (varToUpdate,assignVarTo), bop, right.rewriteExpr_varToExpr (varToUpdate,assignVarTo))
+                | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                    Expr.IfThenElseExpr
+                        (guardExpr.rewriteExpr_varToExpr (varToUpdate,assignVarTo),
+                         thenExpr.rewriteExpr_varToExpr (varToUpdate,assignVarTo),
+                         elseExpr.rewriteExpr_varToExpr (varToUpdate,assignVarTo))
+                                        
+        member expr.forceExprToBeInRangeOfVar (varToType:Map<Var,Type>) (_var:Var)=
+            let rangeOfVar = varToType.Item _var            
+            let newExpr_clampOverflow (minValue:Expr) (maxValue:Expr) : Expr =
+                let greaterEqualMaxThenMaxElse (elseExpr:Expr) =
+                    Expr.IfThenElseExpr(Expr.BExpr(expr,BOp.GreaterEqual,maxValue),maxValue,elseExpr )
+                let lessEqualMinThenMinElse (elseExpr:Expr) =
+                    Expr.IfThenElseExpr(Expr.BExpr(expr,BOp.LessEqual,minValue),minValue,elseExpr )
+                (lessEqualMinThenMinElse (greaterEqualMaxThenMaxElse expr) )
+            match rangeOfVar with
+                | Type.BoolType
+                | Type.IntType 
+                | Type.RealType  ->
+                    expr
+                | Type.RangedIntType (_from,_to,overflowBehavior) ->
+                    let minValue = Expr.Literal(Val.NumbVal(bigint _from))
+                    let maxValue = Expr.Literal(Val.NumbVal(bigint _to))
+                    match overflowBehavior with
+                        | OverflowBehavior.Clamp ->
+                            newExpr_clampOverflow minValue maxValue
+                        | OverflowBehavior.Error ->
+                            expr
+                        | OverflowBehavior.WrapAround ->
+                            failwith "make either modulo or start with min. To determine"
+                        | _ ->
+                            failwith "not determined what it means, yet"
+                | Type.RangedRealType (_from,_to,overflowBehavior) ->
+                    let minValue = Expr.Literal(Val.RealVal(_from))
+                    let maxValue = Expr.Literal(Val.RealVal(_to))
+                    match overflowBehavior with
+                        | OverflowBehavior.Clamp ->
+                            newExpr_clampOverflow minValue maxValue
+                        | OverflowBehavior.Error ->
+                            expr
+                        | OverflowBehavior.WrapAround ->
+                            failwith "make either modulo or start with min. Modulo makes no sense for real types. To determine"
+                        | _ ->
+                            failwith "not determined what it means, yet"
 
+        
     // Extension methods
     type Pgm with
         member this.getTraceables : Traceable list  =

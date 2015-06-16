@@ -16,6 +16,7 @@
 //  II) Different Transformations to merge statements to a big step
 //    1. Transition system <--Weakest Precondition-- IA
 //        * show problem, why it does not work in the indeterministic case
+//        * show that assignment in a range is not really possible when an overflow occurs (clamping, error, wraparound)
 //    2. Transition system <--Weakest Precondition-- IC (Passive Form) <---- IA
 //        * show problem, why it does not work in the indeterministic case
 //        * show that using (from C) reduces the size of the condition, but adds new input variables

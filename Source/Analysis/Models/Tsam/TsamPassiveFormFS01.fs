@@ -274,6 +274,8 @@ module internal TsamPassiveFormFS01 =
                 | Expr.ReadOld (_var) -> expr //old variables keep their value
                 | Expr.UExpr (expr,uop) -> Expr.UExpr(replaceVarsWithCurrentVars sigma expr ,uop)
                 | Expr.BExpr (left, bop, right) -> Expr.BExpr(replaceVarsWithCurrentVars sigma left,bop,replaceVarsWithCurrentVars sigma right)
+                | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                    Expr.IfThenElseExpr(replaceVarsWithCurrentVars sigma guardExpr,replaceVarsWithCurrentVars sigma thenExpr,replaceVarsWithCurrentVars sigma elseExpr)
         
     let rec passify (uniqueStatementIdGenerator:unit->StatementId) (sigma:Substitutions, stm:Stm) : (Substitutions*Stm) =
         match stm with
@@ -367,11 +369,16 @@ module internal TsamPassiveFormFS01 =
             let newLocals =
                 newSigma.VarToType |> Map.toList
                                    |> List.filter (fun (_var,_) -> not(oldGlobalsAsSet.Contains _var) ) // use only those variables, which are not in global
-                                   |> List.map createLocalVarDecl
+                                   |> List.map createLocalVarDecl                            
+            let newVarToType =
+                let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Tsam.Var,Tsam.Type>)
+                let varToTypeWithGlobalsAndLocals = newLocals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
+                varToTypeWithGlobalsAndLocals
             { pgm with
                 Pgm.Body = newBody;
                 Pgm.Globals = pgm.Globals; // globals stay globals
                 Pgm.Locals = newLocals;
+                Pgm.VarToType = newVarToType;
                 Pgm.NextGlobal = newSigma.NextGlobal;
                 Pgm.CodeForm = CodeForm.Passive;
             }            

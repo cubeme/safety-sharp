@@ -125,7 +125,11 @@ module internal TsamPassiveFormGCFK09 =
                 let readsOfLeft = readsOfExpression currentVersions acc left
                 let readsOfRight = readsOfExpression currentVersions acc right
                 Set.union readsOfLeft readsOfRight
-
+            | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->                
+                let readsOfGuard = readsOfExpression currentVersions acc guardExpr
+                let readsOfThen = readsOfExpression currentVersions acc thenExpr
+                let readsOfElse = readsOfExpression currentVersions acc elseExpr
+                Set.unionMany [readsOfGuard;readsOfThen;readsOfElse]
 
     let rec calculateStatementInfosAcc (stmPath:StatementId list) (sigma:CalculationCache) (stm:Stm) : CalculationCache =
         // This function is not side-effect-free. It is only intended as Worker for calculateStatementInfos, which provides
@@ -334,7 +338,9 @@ module internal TsamPassiveFormGCFK09 =
             | Expr.UExpr (expr,uop) ->
                 Expr.UExpr (replaceVarInExpr readVersions versionedVarToFreshVar varToType expr,uop)
             | Expr.BExpr (left, bop, right) ->
-                Expr.BExpr (replaceVarInExpr readVersions versionedVarToFreshVar varToType left, bop, replaceVarInExpr readVersions versionedVarToFreshVar varToType right)
+                Expr.BExpr (replaceVarInExpr readVersions versionedVarToFreshVar varToType left, bop, replaceVarInExpr readVersions versionedVarToFreshVar varToType right)                
+            | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                Expr.IfThenElseExpr (replaceVarInExpr readVersions versionedVarToFreshVar varToType guardExpr, replaceVarInExpr readVersions versionedVarToFreshVar varToType thenExpr, replaceVarInExpr readVersions versionedVarToFreshVar varToType elseExpr)                
 
     let rec replaceVarInStm (statementInfos:StatementInfos) (versionedVarToFreshVar:Map<Var*int,Var>) (varToType:Map<Var,Type>) (stm:Stm) : Stm =
         match stm with
@@ -515,10 +521,15 @@ module internal TsamPassiveFormGCFK09 =
                                            |> List.filter (fun ((_var1,version),_var2) -> _var1 <> _var2)
                                            |> List.map (fun ((_var1,version),_var2) -> createLocalVarDecl (_var2,varToType.Item _var1) ) 
                 (newVersions @ pgm.Locals)
+            let newVarToType =
+                let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Tsam.Var,Tsam.Type>)
+                let varToTypeWithGlobalsAndLocals = newLocals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
+                varToTypeWithGlobalsAndLocals
             { pgm with
                 Pgm.Body = newBodyWithoutMissingAssignments;
                 Pgm.Globals = pgm.Globals; // globals stay globals
                 Pgm.Locals = newLocals;
+                Pgm.VarToType = newVarToType;
                 Pgm.CodeForm = CodeForm.SingleAssignments;
                 Pgm.NextGlobal = mappingToNextGlobal;
             }            

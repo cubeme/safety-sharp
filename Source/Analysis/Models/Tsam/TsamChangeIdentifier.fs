@@ -69,6 +69,8 @@ module internal TsamChangeIdentifier =
                 Expr.Read(state.OldToNew.Item variable)
             | ReadOld (variable) ->
                 Expr.ReadOld(state.OldToNew.Item variable)
+            | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                Expr.IfThenElseExpr(transformExpr state guardExpr,transformExpr state thenExpr,transformExpr state elseExpr)
 
     let rec transformStm (state:ChangeIdentifierState) (stm:Stm) : Stm =
         match stm with
@@ -115,7 +117,13 @@ module internal TsamChangeIdentifier =
                 { localVar with
                     LocalVarDecl.Var = newState.OldToNew.Item localVar.Var
                 }
-            samPgm.Locals |> List.map transformLocal        
+            samPgm.Locals |> List.map transformLocal
+
+        let newVarToType =
+            let varToTypeWithGlobals = newGlobals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Tsam.Var,Tsam.Type>)
+            let varToTypeWithGlobalsAndLocals = newLocals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
+            varToTypeWithGlobalsAndLocals
+
         let newNextGlobal =
             samPgm.NextGlobal |> Map.toList
                               |> List.map (fun (fromOldVar,toOldVar) -> (newState.OldToNew.Item fromOldVar,newState.OldToNew.Item toOldVar) )
@@ -124,6 +132,7 @@ module internal TsamChangeIdentifier =
             { samPgm with
                 Pgm.Globals = newGlobals;
                 Pgm.Locals = newLocals;
+                Pgm.VarToType = newVarToType;
                 Pgm.Body = transformStm newState samPgm.Body;
                 Pgm.NextGlobal = newNextGlobal;
             }
