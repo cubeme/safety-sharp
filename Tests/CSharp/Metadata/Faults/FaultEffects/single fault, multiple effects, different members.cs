@@ -34,9 +34,15 @@ namespace Tests.Metadata.Faults.FaultEffects
 		{
 		}
 
+		public void R(out int i)
+		{
+			i = 1;
+		}
+
 		protected override void Check()
 		{
-			Metadata.Faults[0].FaultEffects.Length.ShouldBe(1);
+			Metadata.Faults.Length.ShouldBe(1);
+			Metadata.Faults[0].FaultEffects.Length.ShouldBe(2);
 
 			Metadata.Faults[0].FaultEffects[0].Method.ShouldBe(typeof(F).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].HasImplementation.ShouldBe(true);
@@ -47,7 +53,17 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
 			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(0);
 
+			Metadata.Faults[0].FaultEffects[1].Method.ShouldBe(typeof(F).GetMethod("R"));
+			Metadata.Faults[0].FaultEffects[1].HasImplementation.ShouldBe(true);
+			Metadata.Faults[0].FaultEffects[1].Implementation.ShouldBe(typeof(F).GetMethod("R"));
+			Metadata.Faults[0].FaultEffects[1].CanBeAffectedByFaultEffects.ShouldBe(false);
+			Metadata.Faults[0].FaultEffects[1].IsAffectedByFaultEffects.ShouldBe(false);
+			Metadata.Faults[0].FaultEffects[1].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.Faults[0].FaultEffects[1].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[1]);
+			Metadata.Faults[0].FaultEffects[1].Priority.ShouldBe(0);
+
 			Metadata.ProvidedPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0] });
+			Metadata.ProvidedPorts[1].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[1] });
 		}
 
 		[Transient]
@@ -55,6 +71,11 @@ namespace Tests.Metadata.Faults.FaultEffects
 		{
 			public void M()
 			{
+			}
+	
+			public void R(out int i)
+			{
+				i = 1;
 			}
 		}
 	}
@@ -62,21 +83,33 @@ namespace Tests.Metadata.Faults.FaultEffects
 	public class X3 : TestComponent
 	{
 		public extern void M();
+		public extern void R(out int i);
 
 		protected override void Check()
 		{
-			Metadata.Faults[0].FaultEffects.Length.ShouldBe(1);
+			Metadata.Faults.Length.ShouldBe(1);
+			Metadata.Faults[0].FaultEffects.Length.ShouldBe(2);
 
 			Metadata.Faults[0].FaultEffects[0].Method.ShouldBe(typeof(F).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].HasImplementation.ShouldBe(true);
 			Metadata.Faults[0].FaultEffects[0].Implementation.ShouldBe(typeof(F).GetMethod("M"));
 			Metadata.Faults[0].FaultEffects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBe(new FaultEffectMetadata[] { });
+			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.RequiredPorts[0]);
 			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(0);
 
+			Metadata.Faults[0].FaultEffects[1].Method.ShouldBe(typeof(F).GetMethod("R"));
+			Metadata.Faults[0].FaultEffects[1].HasImplementation.ShouldBe(true);
+			Metadata.Faults[0].FaultEffects[1].Implementation.ShouldBe(typeof(F).GetMethod("R"));
+			Metadata.Faults[0].FaultEffects[1].CanBeAffectedByFaultEffects.ShouldBe(false);
+			Metadata.Faults[0].FaultEffects[1].IsAffectedByFaultEffects.ShouldBe(false);
+			Metadata.Faults[0].FaultEffects[1].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.Faults[0].FaultEffects[1].AffectedMethod.ShouldBe(Metadata.RequiredPorts[1]);
+			Metadata.Faults[0].FaultEffects[1].Priority.ShouldBe(0);
+
 			Metadata.RequiredPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0] });
+			Metadata.RequiredPorts[1].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[1] });
 		}
 
 		[Transient]
@@ -85,37 +118,10 @@ namespace Tests.Metadata.Faults.FaultEffects
 			public void M()
 			{
 			}
-		}
-	}
-
-	public class X4 : TestComponent
-	{
-		public override void Update()
-		{
-			base.Update();
-		}
-
-		protected override void Check()
-		{
-			Metadata.Faults[0].FaultEffects.Length.ShouldBe(1);
-
-			Metadata.Faults[0].FaultEffects[0].Method.ShouldBe(typeof(F).GetMethod("Update"));
-			Metadata.Faults[0].FaultEffects[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].FaultEffects[0].Implementation.ShouldBe(typeof(F).GetMethod("Update"));
-			Metadata.Faults[0].FaultEffects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBe(new FaultEffectMetadata[] { });
-			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.StepMethods[1]);
-			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(0);
-
-			Metadata.StepMethods[1].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0] });
-		}
-
-		[Transient]
-		private class F : Fault
-		{
-			public void Update()
+	
+			public void R(out int i)
 			{
+				i = 1;
 			}
 		}
 	}

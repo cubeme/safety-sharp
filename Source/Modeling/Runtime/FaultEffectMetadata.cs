@@ -25,6 +25,7 @@ namespace SafetySharp.Runtime
 	using System;
 	using System.Linq;
 	using System.Reflection;
+	using Modeling;
 	using Modeling.Faults;
 	using Utilities;
 
@@ -52,6 +53,10 @@ namespace SafetySharp.Runtime
 			Requires.NotNull(affectedMethod, () => affectedMethod);
 
 			_affectedMethod = affectedMethod;
+
+			var priorityAttribute = faultEffect.GetCustomAttribute<PriorityAttribute>();
+			if (priorityAttribute != null)
+				Priority = priorityAttribute.Priority;
 		}
 
 		/// <summary>
@@ -61,6 +66,13 @@ namespace SafetySharp.Runtime
 		{
 			get { return (FaultMetadata)DeclaringObject; }
 		}
+
+		/// <summary>
+		///     Gets the priority of the fault effect. Fault effect with higher priority values
+		///     take precedence over fault effects with lower values when both fault effects affect
+		///     the same method at the same time.
+		/// </summary>
+		public int Priority { get; private set; }
 
 		/// <summary>
 		///     Gets the metadata of the affected method.

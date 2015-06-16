@@ -52,6 +52,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
+			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(0);
 
 			Metadata.ProvidedPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0] });
 		}
@@ -86,6 +87,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBe(new FaultEffectMetadata[] { });
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(0);
 
 			Metadata.RequiredPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0] });
 		}

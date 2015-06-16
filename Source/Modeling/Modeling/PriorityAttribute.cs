@@ -20,36 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution.Faults
+namespace SafetySharp.Modeling
 {
 	using System;
-	using SafetySharp.Modeling.Faults;
-	using Shouldly;
-	using Utilities;
 
-	internal class X1 : TestComponent
+	/// <summary>
+	///     When a applied to a method or property, indicates the priority of the marked member. Members with higher priority values
+	///     take precedence over members with lower values.
+	/// </summary>
+	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+	public sealed class PriorityAttribute : Attribute
 	{
-		private int M()
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="priority">
+		///     The priority of the marked member. Members with higher priority values
+		///     take precedence over members with lower values.
+		/// </param>
+		public PriorityAttribute(int priority)
 		{
-			return 1;
+			Priority = priority;
 		}
 
-		protected override void Check()
-		{
-			// TODO - disable fault
-			M().ShouldBe(1);
-
-			// TODO - enable fault
-			//M().ShouldBe(2);
-		}
-
-		[Persistent]
-		private class F : Fault
-		{
-			public int M()
-			{
-				return 2;
-			}
-		}
+		/// <summary>
+		///     Gets the priority of the marked member. Members with higher priority values
+		///     take precedence over members with lower values.
+		/// </summary>
+		public int Priority { get; private set; }
 	}
 }

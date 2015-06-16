@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Faults.FaultEffects
 {
 	using System;
+	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -48,6 +49,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
+			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(3);
 
 			Metadata.Faults[1].FaultEffects[0].Method.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].FaultEffects[0].HasImplementation.ShouldBe(true);
@@ -56,6 +58,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[1].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[1].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
+			Metadata.Faults[1].FaultEffects[0].Priority.ShouldBe(7);
 
 			Metadata.ProvidedPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0], Metadata.Faults[1].FaultEffects[0] });
 		}
@@ -63,6 +66,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 		[Transient]
 		private class F1 : Fault
 		{
+			[Priority(3)]
 			public int M(ref int i)
 			{
 				return i;
@@ -72,6 +76,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 		[Transient]
 		private class F2 : Fault
 		{
+			[Priority(7)]
 			public int M(ref int i)
 			{
 				return i;
@@ -96,6 +101,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(3);
 
 			Metadata.Faults[1].FaultEffects[0].Method.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].FaultEffects[0].HasImplementation.ShouldBe(true);
@@ -104,6 +110,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[1].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[1].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.Faults[1].FaultEffects[0].Priority.ShouldBe(7);
 
 			Metadata.RequiredPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0], Metadata.Faults[1].FaultEffects[0] });
 		}
@@ -111,6 +118,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 		[Transient]
 		private class F1 : Fault
 		{
+			[Priority(3)]
 			public int M(ref int i)
 			{
 				return i;
@@ -120,6 +128,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 		[Transient]
 		private class F2 : Fault
 		{
+			[Priority(7)]
 			public int M(ref int i)
 			{
 				return i;
@@ -146,6 +155,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.StepMethods[1]);
+			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(31);
 
 			Metadata.Faults[1].FaultEffects[0].Method.ShouldBe(typeof(F2).GetMethod("Update"));
 			Metadata.Faults[1].FaultEffects[0].HasImplementation.ShouldBe(true);
@@ -154,6 +164,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[1].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[1].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.StepMethods[1]);
+			Metadata.Faults[1].FaultEffects[0].Priority.ShouldBe(-1);
 
 			Metadata.StepMethods[1].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0], Metadata.Faults[1].FaultEffects[0] });
 		}
@@ -161,6 +172,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 		[Transient]
 		private class F1 : Fault
 		{
+			[Priority(31)]
 			public void Update()
 			{
 			}
@@ -169,6 +181,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 		[Transient]
 		private class F2 : Fault
 		{
+			[Priority(-1)]
 			public void Update()
 			{
 			}

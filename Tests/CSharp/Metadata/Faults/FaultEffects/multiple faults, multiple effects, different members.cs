@@ -52,6 +52,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
+			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(0);
 
 			Metadata.Faults[1].FaultEffects[0].Method.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].FaultEffects[0].HasImplementation.ShouldBe(true);
@@ -60,6 +61,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[1].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[1].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[1]);
+			Metadata.Faults[1].FaultEffects[0].Priority.ShouldBe(0);
 
 			Metadata.ProvidedPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0] });
 			Metadata.ProvidedPorts[1].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[1].FaultEffects[0] });
@@ -101,7 +103,8 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.RequiredPorts[0]);
-
+			Metadata.Faults[0].FaultEffects[0].Priority.ShouldBe(0);
+			
 			Metadata.Faults[1].FaultEffects[0].Method.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].FaultEffects[0].HasImplementation.ShouldBe(true);
 			Metadata.Faults[1].FaultEffects[0].Implementation.ShouldBe(typeof(F2).GetMethod("M"));
@@ -109,6 +112,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[1].FaultEffects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].FaultEffects[0].AffectingFaultEffects.ShouldBeEmpty();
 			Metadata.Faults[1].FaultEffects[0].AffectedMethod.ShouldBe(Metadata.RequiredPorts[1]);
+			Metadata.Faults[1].FaultEffects[0].Priority.ShouldBe(0);
 
 			Metadata.RequiredPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].FaultEffects[0] });
 			Metadata.RequiredPorts[1].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[1].FaultEffects[0] });

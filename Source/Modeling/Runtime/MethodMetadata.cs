@@ -40,6 +40,11 @@ namespace SafetySharp.Runtime
 		private readonly object _object;
 
 		/// <summary>
+		///     The metadata of the fault effects that affect the method.
+		/// </summary>
+		private FaultEffectMetadata[] _affectingFaultEffects;
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The S# object the method belongs to.</param>
@@ -78,7 +83,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public bool IsAffectedByFaultEffects
 		{
-			get { return AffectingFaultEffects.Any(); }
+			get { return _affectingFaultEffects != null && _affectingFaultEffects.Length > 0; }
 		}
 
 		/// <summary>
@@ -88,11 +93,22 @@ namespace SafetySharp.Runtime
 		{
 			get
 			{
-				var component = DeclaringObject as ComponentMetadata;
-				if (component == null)
-					return Enumerable.Empty<FaultEffectMetadata>();
+				if (_affectingFaultEffects == null)
+				{
+					var component = DeclaringObject as ComponentMetadata;
+					if (component == null)
+						_affectingFaultEffects = new FaultEffectMetadata[0];
+					else
+					{
+						_affectingFaultEffects = component
+							.Faults
+							.SelectMany(fault => fault.FaultEffects)
+							.Where(effect => effect.AffectedMethod.Method == Method)
+							.ToArray();
+					}
+				}
 
-				return component.Faults.SelectMany(fault => fault.FaultEffects).Where(effect => effect.AffectedMethod.Method == Method);
+				return _affectingFaultEffects;
 			}
 		}
 

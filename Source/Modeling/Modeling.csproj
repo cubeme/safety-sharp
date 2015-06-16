@@ -53,6 +53,7 @@
     <Compile Include="Modeling\Faults\TransientAttribute.cs" />
     <Compile Include="Modeling\PortBinding.cs" />
     <Compile Include="Modeling\PortInfo.cs" />
+    <Compile Include="Modeling\PriorityAttribute.cs" />
     <Compile Include="Runtime\ComponentMetadata.Builder.cs" />
     <Compile Include="Runtime\FaultEffectMetadata.cs" />
     <Compile Include="Runtime\FaultMetadata.Builder.cs" />
