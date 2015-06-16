@@ -27,9 +27,14 @@ namespace Tests.Diagnostics.FaultEffects.Invalid
 	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
 
-	[Diagnostic(DiagnosticIdentifier.FaultEffectIncompatibleType, 42, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X6.F.GetProp", "int")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectIncompatibleType, 47, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X6.F.SetProp", "int")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectIncompatibleType, 52, 25, 4, "Tests.Diagnostics.FaultEffects.Invalid.X6.F.Prop", "int")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 47, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X6.F.GetProp",
+		"Tests.Diagnostics.FaultEffects.Invalid.X6", "GetProp", "bool", "getter")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 52, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X6.F.SetProp",
+		"Tests.Diagnostics.FaultEffects.Invalid.X6", "SetProp", "bool", "setter")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 57, 25, 4, "Tests.Diagnostics.FaultEffects.Invalid.X6.F.Prop",
+		"Tests.Diagnostics.FaultEffects.Invalid.X6", "Prop", "bool", "getter")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 57, 25, 4, "Tests.Diagnostics.FaultEffects.Invalid.X6.F.Prop",
+		"Tests.Diagnostics.FaultEffects.Invalid.X6", "Prop", "bool", "setter")]
 	internal class X6 : Component
 	{
 		public extern int GetProp { get; }

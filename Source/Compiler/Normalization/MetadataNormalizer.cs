@@ -32,6 +32,7 @@ namespace SafetySharp.Compiler.Normalization
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
+	using Utilities;
 
 	/// <summary>
 	///     Adds the metadata initialization code to the various S# types.
@@ -251,9 +252,10 @@ namespace SafetySharp.Compiler.Normalization
 			{
 				var withFaultEffect = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithFaultEffect");
 				var faultEffect = method.GetRuntimeMethodExpression(Syntax);
-				var affectedMethod = method.GetAffectedMethod(type.ContainingType).GetRuntimeMethodExpression(Syntax);
-				var invocation = Syntax.InvocationExpression(withFaultEffect, faultEffect, affectedMethod);
+				var affectedMethods = method.GetAffectedMethodCandidates(type.ContainingType);
+				Requires.That(affectedMethods.Length == 1, "Failed to uniquely determine the affected method of fault effect '{0}'.", faultEffect);
 
+				var invocation = Syntax.InvocationExpression(withFaultEffect, faultEffect, affectedMethods[0].GetRuntimeMethodExpression(Syntax));
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}

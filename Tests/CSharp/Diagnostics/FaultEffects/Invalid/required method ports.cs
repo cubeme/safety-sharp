@@ -27,16 +27,26 @@ namespace Tests.Diagnostics.FaultEffects.Invalid
 	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
 
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 53, 25, 9, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Void2Void(int)", "Tests.Diagnostics.FaultEffects.Invalid.X3.Void2Void()")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 57, 24, 9, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Void2Void()", "Tests.Diagnostics.FaultEffects.Invalid.X3.Void2Void()")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 62, 24, 7, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Int2Int(bool)", "Tests.Diagnostics.FaultEffects.Invalid.X3.Int2Int(int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 67, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Int2Int(int)", "Tests.Diagnostics.FaultEffects.Invalid.X3.Int2Int(int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 72, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Int2Int()", "Tests.Diagnostics.FaultEffects.Invalid.X3.Int2Int(int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 76, 25, 10, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Overloaded()", "Tests.Diagnostics.FaultEffects.Invalid.X3.Overloaded(int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 81, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Ref(out int)", "Tests.Diagnostics.FaultEffects.Invalid.X3.Ref(ref int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 86, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Out(ref int)", "Tests.Diagnostics.FaultEffects.Invalid.X3.Out(out int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 91, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Ref(int)", "Tests.Diagnostics.FaultEffects.Invalid.X3.Ref(ref int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 96, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Out(int)", "Tests.Diagnostics.FaultEffects.Invalid.X3.Out(out int)")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 63, 25, 9, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Void2Void(int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Void2Void")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 67, 24, 9, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Void2Void()",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Void2Void")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 72, 24, 7, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Int2Int(bool)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Int2Int")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 77, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Int2Int(int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Int2Int")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 82, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Int2Int()",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Int2Int")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 86, 25, 10, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Overloaded()",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Overloaded")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 91, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Ref(out int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Ref")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 96, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Out(ref int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Out")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 101, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Ref(int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Ref")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 106, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X3.F.Out(int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X3", "Out")]
 	internal class X3 : Component
 	{
 		public extern void Void2Void();

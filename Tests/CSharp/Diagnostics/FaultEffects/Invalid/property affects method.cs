@@ -28,9 +28,9 @@ namespace Tests.Diagnostics.FaultEffects.Invalid
 	using SafetySharp.Modeling.Faults;
 
 	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 48, 24, 13, "Tests.Diagnostics.FaultEffects.Invalid.X10.F.GetMethodProp",
-		"Tests.Diagnostics.FaultEffects.Invalid.X10", "GetMethodProp")]
+		"Tests.Diagnostics.FaultEffects.Invalid.X10", "GetMethodProp", "int", "getter")]
 	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 53, 24, 13, "Tests.Diagnostics.FaultEffects.Invalid.X10.F.SetMethodProp",
-		"Tests.Diagnostics.FaultEffects.Invalid.X10", "SetMethodProp")]
+		"Tests.Diagnostics.FaultEffects.Invalid.X10", "SetMethodProp", "int", "setter")]
 	internal class X10 : Component
 	{
 		public int get_GetMethodProp()

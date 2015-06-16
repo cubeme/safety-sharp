@@ -27,16 +27,26 @@ namespace Tests.Diagnostics.FaultEffects.Invalid
 	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
 
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 75, 25, 9, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Void2Void(int)", "Tests.Diagnostics.FaultEffects.Invalid.X2.Void2Void()")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 79, 24, 9, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Void2Void()", "Tests.Diagnostics.FaultEffects.Invalid.X2.Void2Void()")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 84, 24, 7, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Int2Int(bool)", "Tests.Diagnostics.FaultEffects.Invalid.X2.Int2Int(int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 89, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Int2Int(int)", "Tests.Diagnostics.FaultEffects.Invalid.X2.Int2Int(int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 94, 25, 7 , "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Int2Int()", "Tests.Diagnostics.FaultEffects.Invalid.X2.Int2Int(int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 98, 25, 10 , "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Overloaded()", "Tests.Diagnostics.FaultEffects.Invalid.X2.Overloaded(int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 103, 25, 3 , "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Ref(out int)", "Tests.Diagnostics.FaultEffects.Invalid.X2.Ref(ref int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 108, 25, 3 , "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Out(ref int)", "Tests.Diagnostics.FaultEffects.Invalid.X2.Out(out int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 113, 25, 3 , "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Ref(int)", "Tests.Diagnostics.FaultEffects.Invalid.X2.Ref(ref int)")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectSignatureIncompatible, 118, 25, 3 , "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Out(int)", "Tests.Diagnostics.FaultEffects.Invalid.X2.Out(out int)")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 85, 25, 9, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Void2Void(int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Void2Void")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 89, 24, 9, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Void2Void()",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Void2Void")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 94, 24, 7, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Int2Int(bool)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Int2Int")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 99, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Int2Int(int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Int2Int")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 104, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Int2Int()",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Int2Int")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 108, 25, 10, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Overloaded()",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Overloaded")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 113, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Ref(out int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Ref")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 118, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Out(ref int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Out")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 123, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Ref(int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Ref")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownMethod, 128, 25, 3, "Tests.Diagnostics.FaultEffects.Invalid.X2.F.Out(int)",
+		"Tests.Diagnostics.FaultEffects.Invalid.X2", "Out")]
 	internal class X2 : Component
 	{
 		public void Void2Void()

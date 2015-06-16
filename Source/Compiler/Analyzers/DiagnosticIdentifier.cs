@@ -46,8 +46,6 @@ namespace SafetySharp.Compiler.Analyzers
 		FaultEffectUnknownProperty,
 		FaultEffectAmbiguousMember,
 		FaultEffectBaseMember,
-		FaultEffectSignatureIncompatible,
-		FaultEffectIncompatibleType,
 		FaultEffectOptionalParameter,
 		UnsupportedFaultInheritance,
 		FaultWithoutEffects,

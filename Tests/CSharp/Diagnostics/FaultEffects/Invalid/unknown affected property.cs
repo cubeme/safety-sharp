@@ -27,9 +27,14 @@ namespace Tests.Diagnostics.FaultEffects.Invalid
 	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
 
-	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 38, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X4.F.GetProp", "Tests.Diagnostics.FaultEffects.Invalid.X4", "GetProp")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 43, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X4.F.SetProp", "Tests.Diagnostics.FaultEffects.Invalid.X4", "SetProp")]
-	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 48, 25, 4, "Tests.Diagnostics.FaultEffects.Invalid.X4.F.Prop", "Tests.Diagnostics.FaultEffects.Invalid.X4", "Prop")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 43, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X4.F.GetProp",
+		"Tests.Diagnostics.FaultEffects.Invalid.X4", "GetProp", "bool", "getter")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 48, 25, 7, "Tests.Diagnostics.FaultEffects.Invalid.X4.F.SetProp",
+		"Tests.Diagnostics.FaultEffects.Invalid.X4", "SetProp", "bool", "setter")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 53, 25, 4, "Tests.Diagnostics.FaultEffects.Invalid.X4.F.Prop",
+		"Tests.Diagnostics.FaultEffects.Invalid.X4", "Prop", "bool", "getter")]
+	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 53, 25, 4, "Tests.Diagnostics.FaultEffects.Invalid.X4.F.Prop",
+		"Tests.Diagnostics.FaultEffects.Invalid.X4", "Prop", "bool", "setter")]
 	internal class X4 : Component
 	{
 		[Transient]

@@ -284,30 +284,59 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol" /> representing the method declared by <paramref name="affectedType" /> that is
-		///     affected by <paramref name="faultEffect" />.
+		///     Gets the candidate set of <see cref="IMethodSymbol" />s representing the methods declared by
+		///     <paramref name="affectedType" /> that are affected by <paramref name="faultEffect" />.
 		/// </summary>
 		/// <param name="faultEffect">The fault effect the affected method should be returned for.</param>
 		/// <param name="affectedType">The type that is affected by the fault.</param>
 		[Pure]
-		public static IMethodSymbol GetAffectedMethod([NotNull] this IMethodSymbol faultEffect, INamedTypeSymbol affectedType)
+		public static IMethodSymbol[] GetAffectedMethodCandidates([NotNull] this IMethodSymbol faultEffect,
+																  [NotNull] INamedTypeSymbol affectedType)
 		{
 			Requires.NotNull(faultEffect, () => faultEffect);
+			Requires.NotNull(affectedType, () => affectedType);
 
-			var candidateMethods = affectedType
+			return affectedType
 				.GetMembers()
 				.OfType<IMethodSymbol>()
-				.Where(candidate => candidate.MethodKind == MethodKind.Ordinary || candidate.MethodKind == MethodKind.ExplicitInterfaceImplementation)
-				.Where(candidate => candidate.MethodKind == MethodKind.ExplicitInterfaceImplementation
-						? candidate.ExplicitInterfaceImplementations[0].Name == faultEffect.Name
-						: candidate.Name == faultEffect.Name)
-				.Where(candidate => candidate.IsSignatureCompatibleTo(faultEffect))
+				.Where(candidate =>
+				{
+					var associatedProperty = candidate.AssociatedSymbol as IPropertySymbol;
+					var correctKind =
+						candidate.IsPropertyAccessor() ||
+						candidate.MethodKind == MethodKind.Ordinary ||
+						candidate.MethodKind == MethodKind.ExplicitInterfaceImplementation;
+
+					if (!correctKind)
+						return false;
+
+					if (candidate.IsPropertyAccessor() != faultEffect.IsPropertyAccessor())
+						return false;
+
+					if (!candidate.IsSignatureCompatibleTo(faultEffect))
+						return false;
+
+					var name = candidate.Name;
+					if (associatedProperty != null && associatedProperty.ExplicitInterfaceImplementations.Length != 0)
+					{
+						switch (candidate.MethodKind)
+						{
+							case MethodKind.PropertyGet:
+								if (associatedProperty.ExplicitInterfaceImplementations[0].GetMethod != null)
+									name = associatedProperty.ExplicitInterfaceImplementations[0].GetMethod.Name;
+								break;
+							case MethodKind.PropertySet:
+								if (associatedProperty.ExplicitInterfaceImplementations[0].SetMethod != null)
+									name = associatedProperty.ExplicitInterfaceImplementations[0].SetMethod.Name;
+								break;
+						}
+					}
+					else if (associatedProperty == null && candidate.MethodKind == MethodKind.ExplicitInterfaceImplementation)
+						name = candidate.ExplicitInterfaceImplementations[0].Name;
+
+					return faultEffect.Name == name;
+				})
 				.ToArray();
-
-			Requires.That(candidateMethods.Length == 1, "Failed to uniquely determine the affected method of fault effect '{0}'.",
-				faultEffect.ToDisplayString());
-
-			return candidateMethods[0];
 		}
 
 		/// <summary>
@@ -358,6 +387,30 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				.WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PrivateKeyword)))
 				.WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
 				.NormalizeWhitespace();
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether <paramref name="methodSymbol" /> represents a getter or setter accessor of an
+		///     <see cref="IPropertySymbol" />.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		public static bool IsPropertyAccessor([NotNull] this IMethodSymbol methodSymbol)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			return methodSymbol.MethodKind == MethodKind.PropertyGet || methodSymbol.MethodKind == MethodKind.PropertySet;
+		}
+
+		/// <summary>
+		///     Gets the <see cref="IPropertySymbol" /> of which <paramref name="methodSymbol" /> represents the getter or setter
+		///     accessor.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol the property symbol should be returned for.</param>
+		public static IPropertySymbol GetPropertySymbol([NotNull] this IMethodSymbol methodSymbol)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.That(methodSymbol.IsPropertyAccessor(), () => methodSymbol, "Method must be a property accessor.");
+
+			return (IPropertySymbol)methodSymbol.AssociatedSymbol;
 		}
 
 		/// <summary>

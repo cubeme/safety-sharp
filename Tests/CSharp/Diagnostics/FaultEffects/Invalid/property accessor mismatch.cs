@@ -28,9 +28,9 @@ namespace Tests.Diagnostics.FaultEffects.Invalid
 	using SafetySharp.Modeling.Faults;
 
 	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 49, 24, 2, "Tests.Diagnostics.FaultEffects.Invalid.X12.F.P1",
-		"Tests.Diagnostics.FaultEffects.Invalid.X12", "P1")]
+		"Tests.Diagnostics.FaultEffects.Invalid.X12", "P1", "int", "setter")]
 	[Diagnostic(DiagnosticIdentifier.FaultEffectUnknownProperty, 50, 24, 2, "Tests.Diagnostics.FaultEffects.Invalid.X12.F.P2",
-		"Tests.Diagnostics.FaultEffects.Invalid.X12", "P2")]
+		"Tests.Diagnostics.FaultEffects.Invalid.X12", "P2", "int", "getter")]
 	internal class X12 : Component
 	{
 		public int P1
