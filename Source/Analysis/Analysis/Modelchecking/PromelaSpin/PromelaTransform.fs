@@ -136,6 +136,11 @@ module internal SamToPromela =
             | Sam.Expr.Read (variable) ->
                 let varref = transformSamVarToVarref variable
                 PrExpression.Varref varref
+            | Sam.Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                let guardExpr = transformSamExpr guardExpr
+                let thenExpr = transformSamExpr thenExpr
+                let elseExpr = transformSamExpr elseExpr
+                PrExpression.IfThenElse(guardExpr,thenExpr,elseExpr)
             | Sam.Expr.ReadOld (variable) ->
                 failwith "NotImplementedYet"
 

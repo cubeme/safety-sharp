@@ -77,6 +77,9 @@ module internal Sam =
 
         /// Represents the application of a binary operator to two subexpressions.
         | BExpr of LeftExpression : Expr * Operator : BOp * RightExpression : Expr
+        
+        /// Represents the if then else operator ("the" ternary operator
+        | IfThenElseExpr of GuardExpr : Expr * ThenExpr : Expr * ElseExpr : Expr
     
         /// Represents a read operation of a variable.
         | Read of Variable : Var
@@ -123,7 +126,7 @@ module internal Sam =
     type internal GlobalVarDecl = {
         Var : Var
         Type : Type
-        Init : Val list 
+        Init : Val list //Initial values are expected to be in range of type
     }
 
 

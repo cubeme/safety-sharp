@@ -103,6 +103,8 @@ module internal TransitionSystemAsRelationExpr =
                     Expr.Read(addPrimeToNextVariable variable)
                 | Tsam.Expr.ReadOld (variable) ->
                     Expr.ReadOld(addPrimeToNextVariable variable)
+                | Tsam.Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                    Tsam.Expr.IfThenElseExpr(addPrimeToNextVariableInExpr guardExpr,addPrimeToNextVariableInExpr thenExpr,addPrimeToNextVariableInExpr elseExpr)
         let exportExpr (expr:Expr) =
             let exported = TsamToString.exportExpr expr SamToStringHelpers.AstToStringState.initial
             exported.ToString()

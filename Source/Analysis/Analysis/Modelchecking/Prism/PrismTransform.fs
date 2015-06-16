@@ -87,6 +87,11 @@ module internal GenericToPrism =
                     | Tsam.BOp.LessEqual ->    Prism.BinaryLessEqual(left,right)
                     | Tsam.BOp.Greater ->      Prism.BinaryGreaterThan(left,right)
                     | Tsam.BOp.GreaterEqual -> Prism.BinaryGreaterEqual(left,right)
+            | Tsam.Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                let guardExpr = translateExpression prismVariables guardExpr
+                let thenExpr = translateExpression prismVariables thenExpr
+                let elseExpr = translateExpression prismVariables elseExpr
+                Prism.TenaryIfThenElse(guardExpr,thenExpr,elseExpr)
 
                     
     let generateInitCondition (varDecls:Tsam.GlobalVarDecl list) : Tsam.Expr =

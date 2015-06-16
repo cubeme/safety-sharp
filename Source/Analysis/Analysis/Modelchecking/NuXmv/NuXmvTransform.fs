@@ -111,6 +111,11 @@ module internal GenericToNuXmv =
                         | Tsam.BOp.Greater -> NuXmv.BinaryOperator.GreaterThan
                         | Tsam.BOp.GreaterEqual -> NuXmv.BinaryOperator.GreaterEqual
                 NuXmvBasicExpression.BinaryExpression(translateExpression (virtualNextVarToVar,nuXmvVariables) left,operator,translateExpression (virtualNextVarToVar,nuXmvVariables) right)
+            | Tsam.Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                let guardExpr = translateExpression (virtualNextVarToVar,nuXmvVariables) guardExpr
+                let thenExpr = translateExpression (virtualNextVarToVar,nuXmvVariables) thenExpr
+                let elseExpr = translateExpression (virtualNextVarToVar,nuXmvVariables) elseExpr
+                NuXmvBasicExpression.TenaryIfThenElseExpression(guardExpr,thenExpr,elseExpr)
                 
     let noVirtualNextVarToVar = Map.empty<Tsam.Var,Tsam.Var>
 

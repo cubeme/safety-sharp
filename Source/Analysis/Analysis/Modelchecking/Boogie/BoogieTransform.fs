@@ -254,6 +254,8 @@ module internal TsamToBoogie =
                     BoogieSimplifiedAst.Expr.Read (variable)
                 | Tsam.Expr.ReadOld  (variable) ->
                     failwith "NotSupportedYet"
+                | Tsam.Expr.IfThenElseExpr  (guardExpr, thenExpr, elseExpr) ->
+                    failwith "NotSupportedYet" // not sure, if boogie supports guard ? then : else
 
         let transformHybridCodeBlock (entry:HybridCodeBlock) : BoogieSimplifiedAst.CodeBlock =
             let transformAtomicStatement (stm:Tsam.Stm) : BoogieSimplifiedAst.Stm =

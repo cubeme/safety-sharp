@@ -36,6 +36,7 @@ module internal VcWeakestPrecondition =
             | Expr.ReadOld (_var) -> expr //old variables keep their value
             | Expr.UExpr (expr,uop) -> Expr.UExpr(wp_rewriteExpr_varsToExpr (variable,toExpr) expr ,uop)
             | Expr.BExpr (left, bop, right) -> Expr.BExpr(wp_rewriteExpr_varsToExpr (variable,toExpr) left,bop,wp_rewriteExpr_varsToExpr (variable,toExpr) right)
+            | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) -> Expr.IfThenElseExpr(wp_rewriteExpr_varsToExpr (variable,toExpr) guardExpr,wp_rewriteExpr_varsToExpr (variable,toExpr) thenExpr,wp_rewriteExpr_varsToExpr (variable,toExpr) elseExpr)
 
     
     // http://en.wikipedia.org/wiki/Predicate_transformer_semantics

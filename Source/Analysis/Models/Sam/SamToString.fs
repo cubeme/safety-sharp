@@ -218,6 +218,10 @@ module internal SamToString =
                 (append "(") >>= (exportExpr exprLeft) >>= (append ")")  >>=
                 (exportBOp bop) >>=
                 (append "(") >>= (exportExpr exprRight) >>= (append ")") 
+            | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
+                (append "(") >>= (exportExpr guardExpr) >>= (append ") ?")  >>=
+                (append "(") >>= (exportExpr thenExpr) >>= (append ") :")  >>=
+                (append "(") >>= (exportExpr elseExpr) >>= (append ")") 
        
     let rec exportStm (stm:Stm) : AstToStringStateFunction =
         match stm with

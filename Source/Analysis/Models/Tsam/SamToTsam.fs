@@ -70,6 +70,10 @@ module internal SamToTsam =
         let nextGlobals =
             pgm.Globals |> List.map (fun varDecl -> (varDecl.Var,varDecl.Var) ) //map to the same variable
                         |> Map.ofList
+        let varToType =
+            let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Tsam.Var,Tsam.Type>)
+            let varToTypeWithGlobalsAndLocals = pgm.Globals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
+            varToTypeWithGlobalsAndLocals
         let uniqueStatementIdGenerator =
             let stmIdCounter : int ref = ref 0 // this stays in the closure
             let generator () : Tsam.StatementId =
@@ -79,6 +83,7 @@ module internal SamToTsam =
         {
             Tsam.Pgm.Globals = pgm.Globals;
             Tsam.Pgm.Locals = pgm.Locals;
+            Tsam.Pgm.VarToType = varToType;
             Tsam.Pgm.Body = translateStm uniqueStatementIdGenerator pgm.Body;
             Tsam.Pgm.NextGlobal = nextGlobals;
             Tsam.Pgm.CodeForm = Tsam.CodeForm.Default;

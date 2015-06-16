@@ -188,8 +188,11 @@ module internal NuXmvToString =
                                 | BinaryOperator.BitShiftRight          -> ">>"
                                 | BinaryOperator.BitShiftLeft           -> "<<"
                 sprintf "( %s %s %s )" left opStr right
-            | TenaryExpression -> 
-                "" //TODO
+            | TenaryIfThenElseExpression (guardExpr, thenExpr, elseExpr) ->
+                let guardExpr = exportBasicExpression guardExpr
+                let thenExpr = exportBasicExpression thenExpr
+                let elseExpr = exportBasicExpression elseExpr
+                sprintf "( %s ? %s : %s )" guardExpr thenExpr elseExpr
             | IndexSubscriptExpression (expressionLeadingToArray:BasicExpression, index:BasicExpression) -> 
                 //TODO: Validation, Index has to be word or integer
                 sprintf "%s[%s]" (exportBasicExpression expressionLeadingToArray) (exportBasicExpression index)

@@ -117,11 +117,11 @@ and internal BasicExpression =
     | ComplexIdentifierExpression of Identifier:ComplexIdentifier //Identifier is the reference to a variable or a define. Might be hierarchical.
     | UnaryExpression of Operator:UnaryOperator * Operand:BasicExpression
     | BinaryExpression of Left:BasicExpression * Operator:BinaryOperator * Right:BasicExpression
-    | TenaryExpression //TODO
     | IndexSubscriptExpression of ExpressionLeadingToArray:BasicExpression * Index:BasicExpression //TODO: Validation, Index has to be word or integer
     | SetExpression of SetBodyExpressions:(BasicExpression list) // TODO there is another way to gain set-expressions by the union-operator. See page 19. Here we use the way by enumerating every possible value
     | CaseExpression of CaseBody:(CaseConditionAndEffect list)
     | BasicNextExpression of Expression:BasicExpression // TODO: Description reads as if argument is a SimpleExpression. Maybe introduce a validator or use simpleexpression. Basically it is also a unary operator, but with different validations
+    | TenaryIfThenElseExpression of Guard:BasicExpression * Then:BasicExpression * Else:BasicExpression
 
 and internal SimpleExpression = BasicExpression //validation: next forbidden //TODO: Define implicit and explicit conversions, which validate, if conditions in chapter "2.2.4 Simple and Next Expressions" on page 21 are fulfilled. From BasicExpression to SimpleExpression and back again. The conversation step makes the validation
 and internal NextExpression = BasicExpression //validation: next allowed
