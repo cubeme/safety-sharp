@@ -59,7 +59,9 @@
     <Compile Include="..\AstTestHelpers.fs">
       <Link>AstTestHelpers.fs</Link>
     </Compile>
-    <Compile Include="TestCases\SamSmokeTests.fs" />
+    <Compile Include="..\TestCases\SamSmokeTests.fs">
+      <Link>SamSmokeTests.fs</Link>
+    </Compile>
     <Compile Include="Modelchecking\NuXmv\NuXmvModels.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvAstToFileTests.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvInterpretResultTests.fs" />
