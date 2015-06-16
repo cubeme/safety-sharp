@@ -92,7 +92,8 @@
     <Compile Include="Models\Transformations\SsmToScmTests.fs" />
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
     <Compile Include="Analysis\VcGuardWithAssignmentModelFastTests.fs" />
-    <Compile Include="Analysis\VcGuardWithAssignmentModelTests.fs" />    <Compile Include="Utilities\Assert.fs" />
+    <Compile Include="Analysis\VcGuardWithAssignmentModelTests.fs" />
+    <Compile Include="Utilities\Assert.fs" />
     <Compile Include="Utilities\Requires.fs" />
     <Compile Include="Roslyn\Symbols\CompilationExtensions.fs" />
     <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.fs" />
@@ -109,7 +110,6 @@
     <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.fs" />
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.fs" />
     <Compile Include="Roslyn\SideEffectAnalyzer.fs" />
-    <Compile Include="Analyzers\FaultEffectAnalyzer.fs" />
     <Compile Include="Analyzers\OccurrencePatternAnalyzer.fs" />
     <Compile Include="Analyzers\PortBindingInstantiationAnalyzer.fs" />
     <Compile Include="Analyzers\PortImplementationAnalyzer.fs" />
