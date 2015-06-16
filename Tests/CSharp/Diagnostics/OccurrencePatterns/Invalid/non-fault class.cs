@@ -20,44 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.OccurrencePatterns.Invalid
 {
 	using System;
-	using Microsoft.CodeAnalysis;
 	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 
-	public partial class DiagnosticsTests : Tests
+	[Diagnostic(DiagnosticIdentifier.OccurrencePatternHasNoEffect, 32, 20, 2)]
+	[Transient]
+	internal class X1 : Component
 	{
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<BindingAnalyzer>(code);
-		}
+	}
 
-		[Theory, MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, SyntaxTree code)
+	[Diagnostic(DiagnosticIdentifier.OccurrencePatternHasNoEffect, 38, 20, 1)]
+	[Persistent]
+	internal class P : OccurrencePattern
+	{
+		public override void Update()
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
 		}
+	}
 
-		[Theory, MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "OccurrencePatterns")]
-		public void OccurrencePatterns(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<OccurrencePatternAnalyzer>(code);
-		}
+	[Diagnostic(DiagnosticIdentifier.OccurrencePatternHasNoEffect, 47, 20, 1)]
+	[OccurrencePattern(typeof(Transient))]
+	internal class C
+	{
 	}
 }

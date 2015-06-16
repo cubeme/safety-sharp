@@ -20,44 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.OccurrencePatterns.Invalid
 {
 	using System;
-	using Microsoft.CodeAnalysis;
 	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 
-	public partial class DiagnosticsTests : Tests
+	internal class X2 : Component
 	{
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, SyntaxTree code)
+		[Diagnostic(DiagnosticIdentifier.MissingOccurrencePattern, 33, 23, 2, "Tests.Diagnostics.OccurrencePatterns.Invalid.X2.F1")]
+		private class F1 : Fault
 		{
-			CheckDiagnostics<BindingAnalyzer>(code);
 		}
 
-		[Theory, MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, SyntaxTree code)
+		private class X : Component
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "OccurrencePatterns")]
-		public void OccurrencePatterns(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<OccurrencePatternAnalyzer>(code);
+			[Diagnostic(DiagnosticIdentifier.MissingOccurrencePattern, 40, 27, 2, "Tests.Diagnostics.OccurrencePatterns.Invalid.X2.X.F2")]
+			private class F2 : Fault
+			{
+			}
 		}
 	}
 }

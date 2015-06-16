@@ -20,44 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics
+namespace Tests.Diagnostics.OccurrencePatterns.Invalid
 {
 	using System;
-	using Microsoft.CodeAnalysis;
 	using SafetySharp.Compiler.Analyzers;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 
-	public partial class DiagnosticsTests : Tests
+	internal class X3 : Component
 	{
-		[Theory, MemberData("DiscoverTests", "Bindings")]
-		public void Bindings(string test, SyntaxTree code)
+		[Diagnostic(DiagnosticIdentifier.AmbiguousOccurrencePattern, 34, 23, 2, "Tests.Diagnostics.OccurrencePatterns.Invalid.X3.F1")]
+		[Transient, Persistent]
+		private class F1 : Fault
 		{
-			CheckDiagnostics<BindingAnalyzer>(code);
 		}
 
-		[Theory, MemberData("DiscoverTests", "Enums")]
-		public void Enums(string test, SyntaxTree code)
+		private class X : Component
 		{
-			CheckDiagnostics<EnumAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "CustomComponents")]
-		public void CustomComponents(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<CustomComponentAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "PortKinds")]
-		public void PortKinds(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<PortKindAnalyzer>(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "OccurrencePatterns")]
-		public void OccurrencePatterns(string test, SyntaxTree code)
-		{
-			CheckDiagnostics<OccurrencePatternAnalyzer>(code);
+			[Diagnostic(DiagnosticIdentifier.AmbiguousOccurrencePattern, 42, 27, 2, "Tests.Diagnostics.OccurrencePatterns.Invalid.X3.X.F2")]
+			[Transient, OccurrencePattern(typeof(Transient))]
+			private class F2 : Fault
+			{
+			}
 		}
 	}
 }

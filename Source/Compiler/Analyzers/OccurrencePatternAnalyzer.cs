@@ -26,10 +26,13 @@ namespace SafetySharp.Compiler.Analyzers
 	using System.Linq;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Modeling.Faults;
 	using Roslyn;
 	using Roslyn.Symbols;
+	using Roslyn.Syntax;
 
 	/// <summary>
 	///     Ensures that a fault declaration is marked with exactly one <see cref="OccurrencePatternAttribute" />.
@@ -65,10 +68,19 @@ namespace SafetySharp.Compiler.Analyzers
 			String.Format("Occurrence patterns have no effect on classes not derived from '{0}'.", typeof(Fault).FullName));
 
 		/// <summary>
+		///     Indicates that a non-<see cref="OccurrencePattern" />-derived class is passed to the constructor of the
+		///     <see cref="OccurrencePatternAttribute" />.
+		/// </summary>
+		private static readonly DiagnosticInfo _nonOccurrencePatternType = DiagnosticInfo.Warning(
+			DiagnosticIdentifier.NonOccurrencePatternType,
+			String.Format("Occurrence patterns must be derived from '{0}'.", typeof(OccurrencePattern).FullName),
+			String.Format("Expected a type derived from '{0}'.", typeof(OccurrencePattern).FullName));
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public OccurrencePatternAnalyzer()
-			: base(_missingPattern, _ambiguousPattern, _occurrencePatternHasNoEffect)
+			: base(_missingPattern, _ambiguousPattern, _occurrencePatternHasNoEffect, _nonOccurrencePatternType)
 		{
 		}
 
@@ -79,6 +91,50 @@ namespace SafetySharp.Compiler.Analyzers
 		public override void Initialize(AnalysisContext context)
 		{
 			context.RegisterSymbolAction(Analyze, SymbolKind.NamedType);
+			context.RegisterSyntaxNodeAction(AnalyzeConstructorDeclaration, SyntaxKind.ConstructorDeclaration);
+			context.RegisterSyntaxNodeAction(AnalyzeAttribute, SyntaxKind.Attribute);
+		}
+
+		/// <summary>
+		///     Checks whether the constructor assigns an invalid type to <see cref="OccurrencePatternAttribute" />'s
+		///     constructor argument.
+		/// </summary>
+		/// <param name="context">The context in which the analysis should be performed.</param>
+		private static void AnalyzeAttribute(SyntaxNodeAnalysisContext context)
+		{
+			var semanticModel = context.SemanticModel;
+			var attributeArgument = (AttributeSyntax)context.Node;
+			var constructorSymbol = semanticModel.GetSymbolInfo(attributeArgument).Symbol;
+
+			if (!constructorSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<OccurrencePatternAttribute>()))
+				return;
+
+			var typeofExpression = (TypeOfExpressionSyntax)attributeArgument.ArgumentList.Arguments[0].Expression;
+			var occurrencePatternTypeSymbol = typeofExpression.Type.GetReferencedSymbol<INamedTypeSymbol>(semanticModel);
+
+			if (!occurrencePatternTypeSymbol.IsDerivedFrom(semanticModel.GetTypeSymbol<OccurrencePattern>()))
+				_nonOccurrencePatternType.Emit(context, typeofExpression.Type, occurrencePatternTypeSymbol.ToDisplayString());;
+		}
+
+		/// <summary>
+		///     Checks whether the constructor assigns an invalid type to <see cref="OccurrencePatternAttribute" />'s
+		///     constructor argument.
+		/// </summary>
+		/// <param name="context">The context in which the analysis should be performed.</param>
+		private static void AnalyzeConstructorDeclaration(SyntaxNodeAnalysisContext context)
+		{
+			var semanticModel = context.SemanticModel;
+			var constructorDeclaration = (ConstructorDeclarationSyntax)context.Node;
+			var constructorSymbol = constructorDeclaration.GetMethodSymbol(semanticModel);
+
+			if (!constructorSymbol.ContainingType.IsDerivedFrom(semanticModel.GetTypeSymbol<OccurrencePatternAttribute>()))
+				return;
+
+			var typeofExpression = (TypeOfExpressionSyntax)constructorDeclaration.Initializer.ArgumentList.Arguments[0].Expression;
+			var occurrencePatternTypeSymbol = typeofExpression.Type.GetReferencedSymbol<INamedTypeSymbol>(semanticModel);
+
+			if (!occurrencePatternTypeSymbol.IsDerivedFrom(semanticModel.GetTypeSymbol<OccurrencePattern>()))
+				_nonOccurrencePatternType.Emit(context, typeofExpression.Type, occurrencePatternTypeSymbol.ToDisplayString());
 		}
 
 		/// <summary>

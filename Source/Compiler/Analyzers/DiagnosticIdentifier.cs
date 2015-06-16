@@ -41,6 +41,7 @@ namespace SafetySharp.Compiler.Analyzers
 		MissingOccurrencePattern = 2000,
 		AmbiguousOccurrencePattern,
 		OccurrencePatternHasNoEffect,
+		NonOccurrencePatternType,
 		FaultEffectUnknownMethodPort,
 		FaultEffectUnknownPropertyPort,
 		FaultEffectBaseMember,
