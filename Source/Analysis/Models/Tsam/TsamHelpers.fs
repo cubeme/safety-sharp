@@ -101,6 +101,7 @@ module internal TsamHelpers =
                 let lessEqualMinThenMinElse (elseExpr:Expr) =
                     Expr.IfThenElseExpr(Expr.BExpr(expr,BOp.LessEqual,minValue),minValue,elseExpr )
                 (lessEqualMinThenMinElse (greaterEqualMaxThenMaxElse expr) )
+                //((greaterEqualMaxThenMaxElse expr) )
             match rangeOfVar with
                 | Type.BoolType
                 | Type.IntType 

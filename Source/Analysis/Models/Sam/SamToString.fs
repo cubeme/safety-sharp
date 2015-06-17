@@ -151,6 +151,78 @@ module internal SamToStringHelpers =
 
     let newLineAndDecreaseIndent : AstToStringStateFunction =
         newLine >>= decreaseIndent
+            
+    let private splitStringIntoTokens (str:string) : string array =
+        // in the result between two elements there was a %s
+        let stringLength = str.Length
+        let currentToken = new System.Text.StringBuilder()
+        let rec splitString (revProcessedTokens:string list) (currentPosition:int,previousWasPercent:bool) : string list =
+            if currentPosition = stringLength then
+                let lastToken = currentToken.ToString ()
+                let completeRev = lastToken :: revProcessedTokens
+                completeRev |> List.rev
+            else
+                let currentChar = str.Chars currentPosition
+                let currentIsPercent = (currentChar = '%')
+                match (previousWasPercent,currentChar) with
+                    | (true,'%') ->
+                        do currentToken.Append(currentChar) |> ignore
+                        splitString revProcessedTokens (currentPosition+1,false)
+                    | (true,'s') ->
+                        let completeToken = currentToken.ToString()
+                        do currentToken.Clear() |> ignore
+                        let newRevProcessedTokens = completeToken :: revProcessedTokens
+                        splitString newRevProcessedTokens (currentPosition+1,false)
+                    | (true,_) ->
+                        failwith "Not expected anything else than %s in a format string at this point"
+                    | (false,'%') ->
+                        splitString revProcessedTokens (currentPosition+1,true)
+                    | (false,currentChar) ->
+                        do currentToken.Append(currentChar) |> ignore
+                        splitString revProcessedTokens (currentPosition+1,false)
+        splitString [] (0,false) |> Array.ofList
+        
+    let splitStringIntoTokensBuffer = new System.Collections.Generic.Dictionary<string,string array> ()
+    let private splitStringIntoTokens_buffered (str:string) : string array =
+        if splitStringIntoTokensBuffer.ContainsKey str then
+            splitStringIntoTokensBuffer.Item str
+        else
+            let newElement = splitStringIntoTokens str
+            do splitStringIntoTokensBuffer.Add(str,newElement)
+            newElement
+            
+    let mprintf0 : Printf.StringFormat<string> -> AstToStringStateFunction =
+        let behavior (stringFormat:Printf.StringFormat<string>) : AstToStringStateFunction =
+            append stringFormat.Value
+        behavior
+
+    let mprintf1 : Printf.StringFormat<string->string> -> AstToStringStateFunction -> AstToStringStateFunction =
+        let behavior (stringFormat:Printf.StringFormat<string->string>) (elem1:AstToStringStateFunction) : AstToStringStateFunction =            
+            let splitted = splitStringIntoTokens_buffered stringFormat.Value
+            assert (splitted.Length = 2)
+            append (splitted.[0]) >>= elem1 >>= append (splitted.[1])
+        behavior
+        
+    let mprintf2 : Printf.StringFormat<string->string->string> -> AstToStringStateFunction -> AstToStringStateFunction -> AstToStringStateFunction =
+        let behavior (stringFormat:Printf.StringFormat<string->string->string>) (elem1:AstToStringStateFunction) (elem2:AstToStringStateFunction) : AstToStringStateFunction =            
+            let splitted = splitStringIntoTokens_buffered stringFormat.Value
+            assert (splitted.Length = 3)
+            append (splitted.[0]) >>= elem1 >>= append (splitted.[1]) >>= elem2 >>= append (splitted.[2])
+        behavior
+        
+    let mprintf3 : Printf.StringFormat<string->string->string->string> -> AstToStringStateFunction -> AstToStringStateFunction -> AstToStringStateFunction -> AstToStringStateFunction =
+        let behavior (stringFormat:Printf.StringFormat<string->string->string->string>) (elem1:AstToStringStateFunction) (elem2:AstToStringStateFunction) (elem3:AstToStringStateFunction) : AstToStringStateFunction =            
+            let splitted = splitStringIntoTokens_buffered stringFormat.Value
+            assert (splitted.Length = 4)
+            append (splitted.[0]) >>= elem1 >>= append (splitted.[1]) >>= elem2 >>= append (splitted.[2]) >>= elem3 >>= append (splitted.[3])
+        behavior
+
+    let mprintf4 : Printf.StringFormat<string->string->string->string->string> -> AstToStringStateFunction -> AstToStringStateFunction -> AstToStringStateFunction -> AstToStringStateFunction -> AstToStringStateFunction =
+        let behavior (stringFormat:Printf.StringFormat<string->string->string->string->string>) (elem1:AstToStringStateFunction) (elem2:AstToStringStateFunction) (elem3:AstToStringStateFunction) (elem4:AstToStringStateFunction) : AstToStringStateFunction =            
+            let splitted = splitStringIntoTokens_buffered stringFormat.Value
+            assert (splitted.Length = 5)
+            append (splitted.[0]) >>= elem1 >>= append (splitted.[1]) >>= elem2 >>= append (splitted.[2]) >>= elem3 >>= append (splitted.[3]) >>= elem4 >>= append (splitted.[4])
+        behavior
 
 module internal SamToString =
     open SamToStringHelpers
