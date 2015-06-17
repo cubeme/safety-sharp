@@ -20,16 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution.Faults
+namespace Tests.Execution.Faults.RequiredPorts
 {
 	using System;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
 
-	internal class X1 : TestComponent
+	internal class X3 : TestComponent
 	{
-		private int M()
+		public X3()
+		{
+			Bind(RequiredPorts.M = ProvidedPorts.N);
+		}
+
+		private extern int M();
+
+		private int N()
 		{
 			return 1;
 		}

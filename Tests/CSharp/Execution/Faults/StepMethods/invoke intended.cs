@@ -20,42 +20,74 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution.Faults
+namespace Tests.Execution.Faults.StepMethods
 {
 	using System;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
 
-	internal class X3 : TestComponent
+	internal class X7 : TestComponent
 	{
-		public X3()
-		{
-			Bind(RequiredPorts.M = ProvidedPorts.N);
-		}
+		private int _x;
 
-		private extern int M();
-
-		private int N()
+		public override void Update()
 		{
-			return 1;
+			_x = 3;
 		}
 
 		protected override void Check()
 		{
-			Metadata.Faults[0].Fault.IsOccurring = false;
-			M().ShouldBe(1);
-
 			Metadata.Faults[0].Fault.IsOccurring = true;
-			M().ShouldBe(2);
+			DoStep();
+			_x.ShouldBe(3);
 		}
 
 		[Persistent]
-		private class F : Fault
+		private class F : Fault<X7>
 		{
-			public int M()
+			public void Update()
 			{
-				return 2;
+				Component._x = 8;
+				Component.Update();
+			}
+		}
+	}
+
+	internal class X8 : TestComponent
+	{
+		private int _x;
+
+		public override void Update()
+		{
+			_x = 3;
+		}
+
+		protected override void Check()
+		{
+			Metadata.Faults[0].Fault.IsOccurring = true;
+			Metadata.Faults[1].Fault.IsOccurring = true;
+			DoStep();
+			_x.ShouldBe(3);
+		}
+
+		[Persistent]
+		private class F1 : Fault<X8>
+		{
+			public void Update()
+			{
+				Component._x = 8;
+				Component.Update();
+			}
+		}
+
+		[Persistent]
+		private class F2 : Fault<X8>
+		{
+			public void Update()
+			{
+				Component._x = 18;
+				Component.Update();
 			}
 		}
 	}

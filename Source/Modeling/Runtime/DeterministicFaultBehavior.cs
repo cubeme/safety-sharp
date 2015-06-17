@@ -64,8 +64,15 @@ namespace SafetySharp.Runtime
 		[UsedImplicitly]
 		private bool UseFallbackBehavior
 		{
-			get { return !FaultEffect.DeclaringFault.Fault.IsOccurring; }
+			// If the behavior is already running, we have to forward to the fallback behavior to avoid stack overflows
+			get { return IsRunning || !FaultEffect.DeclaringFault.Fault.IsOccurring; }
 		}
+
+		/// <summary>
+		///     Gets or sets a value indicating whether the behavior is currently running.
+		/// </summary>
+		[UsedImplicitly]
+		private bool IsRunning { get; set; }
 
 		/// <summary>
 		///     Binds the method behavior, using the <paramref name="fallbackBehavior" /> when the current behavior is inactive.
@@ -83,10 +90,19 @@ namespace SafetySharp.Runtime
 			// -------------------------------------------------------------
 			// ret M(params) 
 			// {
-			//     if (this.UseFallbackBehavior())
-			//         return fallbackBehavior(params);
-			//     else
-			//         return faultEffect(params);
+			//     try
+			//     {
+			//         var useFallback = this.UseFallbackBehavior();
+			//         this.IsRunning = true;
+			//	       if (useFallback)
+			//	           return this.FallbackBehavior(params);
+			//	       else
+			//	           return this.FaultEffect(params);
+			//     }
+			//     finally 
+			//     {
+			//          this.IsRunning = false;
+			//     }
 			// }
 			// -------------------------------------------------------------
 
@@ -95,17 +111,27 @@ namespace SafetySharp.Runtime
 			var methodBehavior = Expression.Constant(this);
 			var fallbackDelegate = Expression.Constant(fallbackBehavior.Delegate, Method.MethodType);
 			var faultEffectDelegate = Expression.Constant(FaultEffect.CreateDelegate(delegateType));
+			var localVariable = Expression.Parameter(typeof(bool));
+
+			// IsRunning updates
+			var isRunningProperty = Expression.Property(methodBehavior, "IsRunning");
+			var setIsRunningTrue = Expression.Assign(isRunningProperty, Expression.Constant(true));
+			var setIsRunningFalse = Expression.Assign(isRunningProperty, Expression.Constant(false));
 
 			// Invocations
-			var useFallback = Expression.Property(methodBehavior, "UseFallbackBehavior");
+			var useFallback = Expression.Assign(localVariable, Expression.Property(methodBehavior, "UseFallbackBehavior"));
 			var invokeFallback = Expression.Invoke(fallbackDelegate, parameters);
 			var invokeFaultEffect = Expression.Invoke(faultEffectDelegate, parameters);
 
-			// Conditional
-			var conditional = Expression.Condition(useFallback, invokeFallback, invokeFaultEffect);
+			// Try block
+			var conditional = Expression.Condition(localVariable, invokeFallback, invokeFaultEffect);
+			var tryBlock = Expression.Block(new[] { localVariable }, useFallback, setIsRunningTrue, conditional);
+
+			// Try-finally statement
+			var tryFinally = Expression.TryFinally(tryBlock, setIsRunningFalse);
 
 			// Create and compile the method and bind the resulting delegate
-			var lambda = Expression.Lambda(Method.MethodType, conditional, parameters);
+			var lambda = Expression.Lambda(Method.MethodType, tryFinally, parameters);
 			BindDelegate(lambda.Compile());
 		}
 	}

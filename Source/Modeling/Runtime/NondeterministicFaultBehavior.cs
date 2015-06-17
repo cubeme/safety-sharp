@@ -34,7 +34,11 @@ namespace SafetySharp.Runtime
 	///     the fallback behavior when one or more of its corresponding faults are active.
 	/// </summary>
 	public sealed class NondeterministicFaultBehavior : MethodBehavior
-	{
+	{/// <summary>
+		///     Gets or sets a value indicating whether the behavior is currently running.
+		/// </summary>
+		[UsedImplicitly]
+		private bool IsRunning { get; set; }
 		/// <summary>
 		///     The random number generator that is used to nondeterministically select one of the enabled fault effects.
 		/// </summary>
@@ -102,6 +106,10 @@ namespace SafetySharp.Runtime
 		[UsedImplicitly]
 		private int ChooseCase()
 		{
+			// If the behavior is already running, we have to forward to the fallback behavior to avoid stack overflows
+			if (IsRunning)
+				return _faultEffects.Length;
+
 			_enabledFaultEffects.Clear();
 
 			// Determine the enabled fault effects
@@ -151,13 +159,22 @@ namespace SafetySharp.Runtime
 			// -------------------------------------------------------------
 			// ret M(params) 
 			// {
-			//     switch (ChooseCase())
+			//     try
 			//     {
-			//         case 0: return FaultEffects[0](params);
-			//         case 1: return FaultEffects[1](params);
-			//			  ...
-			//         case n: return FaultEffects[n](params);
-			//         default: return FallbackBehavior(params);
+			//         var chosenCase = this.ChooseCase();
+			//         this.IsRunning = false;
+			//         switch (chosenCase)
+			//         {
+			//             case 0: return this.FaultEffects[0](params);
+			//             case 1: return this.FaultEffects[1](params);
+			//		     	  ...
+			//             case n: return this.FaultEffects[n](params);
+			//             default: return this.FallbackBehavior(params);
+			//         }
+			//     }
+			//     finally
+			//     {
+			//         this.IsRunning = false;
 			//     }
 			// }
 			// -------------------------------------------------------------
@@ -167,18 +184,28 @@ namespace SafetySharp.Runtime
 			var methodBehavior = Expression.Constant(this);
 			var fallbackDelegate = Expression.Constant(fallbackBehavior.Delegate, Method.MethodType);
 			var faultEffectDelegates = FaultEffects.Select(faultEffect => Expression.Constant(faultEffect.CreateDelegate(delegateType)));
+			var localVariable = Expression.Parameter(typeof(int));
+
+			// IsRunning updates
+			var isRunningProperty = Expression.Property(methodBehavior, "IsRunning");
+			var setIsRunningTrue = Expression.Assign(isRunningProperty, Expression.Constant(true));
+			var setIsRunningFalse = Expression.Assign(isRunningProperty, Expression.Constant(false));
 
 			// Invocations
-			var chooseCaseInvocation = Expression.Call(methodBehavior, "ChooseCase", Type.EmptyTypes);
+			var chooseCaseInvocation = Expression.Assign(localVariable, Expression.Call(methodBehavior, "ChooseCase", Type.EmptyTypes));
 			var invokeFallback = Expression.Invoke(fallbackDelegate, parameters);
 			var invokeFaultEffects = faultEffectDelegates.Select(faultEffectDelegate => Expression.Invoke(faultEffectDelegate, parameters));
 
-			// Switch statement
+			// Try block
 			var cases = invokeFaultEffects.Select((invocation, index) => Expression.SwitchCase(invocation, Expression.Constant(index)));
-			var switchStatement = Expression.Switch(chooseCaseInvocation, invokeFallback, cases.ToArray());
+			var switchStatement = Expression.Switch(localVariable, invokeFallback, cases.ToArray());
+			var tryBlock = Expression.Block(new[] { localVariable }, chooseCaseInvocation, setIsRunningTrue, switchStatement);
+
+			// Try-finally statement
+			var tryFinally = Expression.TryFinally(tryBlock, setIsRunningFalse);
 
 			// Create and compile the method and bind the resulting delegate
-			var lambda = Expression.Lambda(Method.MethodType, switchStatement, parameters);
+			var lambda = Expression.Lambda(Method.MethodType, tryFinally, parameters);
 			BindDelegate(lambda.Compile());
 		}
 	}

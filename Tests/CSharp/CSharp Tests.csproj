@@ -251,15 +251,18 @@
       <DependentUpon>ExecutionTests.cs</DependentUpon>
     </Compile>
     <Compile Include="Execution\ExecutionTests.cs" />
-    <Compile Include="Execution\Faults\step method, nondeterministic.cs" />
-    <Compile Include="Execution\Faults\required port, nondeterministic.cs" />
-    <Compile Include="Execution\Faults\provided port, nondeterministic.cs" />
-    <Compile Include="Execution\Faults\step method, prioritized faults.cs" />
-    <Compile Include="Execution\Faults\required port, prioritized faults.cs" />
-    <Compile Include="Execution\Faults\provided port, prioritized faults.cs" />
-    <Compile Include="Execution\Faults\step method, single fault.cs" />
-    <Compile Include="Execution\Faults\required port, single fault.cs" />
-    <Compile Include="Execution\Faults\provided port, single fault.cs" />
+    <Compile Include="Execution\Faults\ProvidedPorts\invoke intended.cs" />
+    <Compile Include="Execution\Faults\RequiredPorts\invoke intended.cs" />
+    <Compile Include="Execution\Faults\StepMethods\nondeterministic.cs" />
+    <Compile Include="Execution\Faults\RequiredPorts\nondeterministic.cs" />
+    <Compile Include="Execution\Faults\ProvidedPorts\nondeterministic.cs" />
+    <Compile Include="Execution\Faults\StepMethods\prioritized faults.cs" />
+    <Compile Include="Execution\Faults\RequiredPorts\prioritized faults.cs" />
+    <Compile Include="Execution\Faults\ProvidedPorts\prioritized faults.cs" />
+    <Compile Include="Execution\Faults\StepMethods\invoke intended.cs" />
+    <Compile Include="Execution\Faults\StepMethods\single fault.cs" />
+    <Compile Include="Execution\Faults\RequiredPorts\single fault.cs" />
+    <Compile Include="Execution\Faults\ProvidedPorts\single fault.cs" />
     <Compile Include="Execution\ProvidedPorts\generic component.cs" />
     <Compile Include="Execution\ProvidedPorts\replaced.cs" />
     <Compile Include="Execution\ProvidedPorts\overridden.cs" />

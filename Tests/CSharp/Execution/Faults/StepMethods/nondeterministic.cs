@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution.Faults
+namespace Tests.Execution.Faults.StepMethods
 {
 	using System;
 	using System.Diagnostics;
@@ -29,16 +29,24 @@ namespace Tests.Execution.Faults
 	using Shouldly;
 	using Utilities;
 
-	internal class X7 : TestComponent
+	internal class X9 : TestComponent
 	{
+		private int _x;
+
+		public override void Update()
+		{
+			_x = -1;
+		}
+
 		private int M()
 		{
-			return -1;
+			DoStep();
+			return _x;
 		}
 
 		protected override void Check()
 		{
-			var nondeterministicBehavior = (NondeterministicFaultBehavior)Metadata.ProvidedPorts[0].FaultInjector.InjectedBehaviors[0];
+			var nondeterministicBehavior = (NondeterministicFaultBehavior)Metadata.StepMethods[1].FaultInjector.InjectedBehaviors[0];
 
 			// N faults
 			Metadata.Faults[0].Fault.IsOccurring = false;
@@ -129,7 +137,7 @@ namespace Tests.Execution.Faults
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 			Metadata.Faults[2].Fault.IsOccurring = false;
-			
+
 			nondeterministicBehavior.PriorityOverrides[0] = 17;
 			M().ShouldBe(1);
 
@@ -177,29 +185,29 @@ namespace Tests.Execution.Faults
 		}
 
 		[Persistent]
-		private class F1 : Fault
+		private class F1 : Fault<X9>
 		{
-			public int M()
+			public void Update()
 			{
-				return 1;
+				Component._x = 1;
 			}
 		}
 
 		[Persistent]
-		private class F2 : Fault<X7>
+		private class F2 : Fault<X9>
 		{
-			public int M()
+			public void Update()
 			{
-				return 2;
+				Component._x = 2;
 			}
 		}
 
 		[Persistent]
-		private class F3 : Fault<X7>
+		private class F3 : Fault<X9>
 		{
-			public int M()
+			public void Update()
 			{
-				return 3;
+				Component._x = 3;
 			}
 		}
 	}

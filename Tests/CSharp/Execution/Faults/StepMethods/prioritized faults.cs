@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution.Faults
+namespace Tests.Execution.Faults.StepMethods
 {
 	using System;
 	using SafetySharp.Modeling;
@@ -28,53 +28,63 @@ namespace Tests.Execution.Faults
 	using Shouldly;
 	using Utilities;
 
-	internal class X2 : TestComponent
+	internal class X6 : TestComponent
 	{
-		private int M()
+		private int _x;
+
+		public override void Update()
 		{
-			return 1;
+			_x = 3;
 		}
 
 		protected override void Check()
 		{
+			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = false;
 			Metadata.Faults[1].Fault.IsOccurring = false;
 
-			M().ShouldBe(1);
+			DoStep();
+			_x.ShouldBe(3);
 
+			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = false;
 
-			M().ShouldBe(2);
+			DoStep();
+			_x.ShouldBe(7);
 
+			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = false;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
-			M().ShouldBe(3);
+			DoStep();
+			_x.ShouldBe(21);
 
+			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
-			M().ShouldBe(3);
+			DoStep();
+			_x.ShouldBe(21);
 		}
 
 		[Persistent]
-		private class F1 : Fault
+		private class F1 : Fault<X6>
 		{
 			[Priority(1)]
-			public int M()
+			public void Update()
 			{
-				return 2;
+				Component._x = 7;
 			}
 		}
 
 		[Persistent]
-		private class F2 : Fault<X2>
+		private class F2 : Fault<X6>
 		{
 			[Priority(17)]
-			public int M()
+			public void Update()
 			{
-				return 3;
+				Component._x = 21;
 			}
 		}
 	}
