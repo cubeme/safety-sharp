@@ -97,6 +97,7 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Gets a value indicating whether the object's metadata has been finalized.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		internal bool IsMetadataFinalized
 		{
 			get { return _metadata != null; }

@@ -20,52 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.MetadataAnalysis
+namespace SafetySharp.Runtime
 {
 	using System;
 	using Utilities;
 
 	/// <summary>
-	///     Analyzes a component hierarchy.
+	///     Raised when a component is found in multiple locations of a component hierarchy.
 	/// </summary>
-	internal abstract class ComponentHierarchyWalker
+	public class ComponentHierarchyException : Exception
 	{
-		/// <summary>
-		///     The root of the component hierarchy.
-		/// </summary>
-		private readonly ComponentMetadata _root;
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="root">The root of the component hierarchy.</param>
-		protected ComponentHierarchyWalker(ComponentMetadata root)
+		/// <param name="component">The metadata of the component that was found in multiple locations of a component hierarchy.</param>
+		internal ComponentHierarchyException(ComponentMetadata component)
+			: base("A component has been found in multiple locations of the component hierarchy; " +
+				   "the 'Component' property contains the metadata of the component that violated the hierarchy constraint.")
 		{
-			Requires.NotNull(root, () => root);
-			_root = root;
+			Requires.NotNull(component, () => component);
+			Component = component;
 		}
 
 		/// <summary>
-		///     Walks the component hierarchy in pre-order.
+		///     Gets the metadata of the component that was found in multiple locations of a component hierarchy.
 		/// </summary>
-		internal void WalkPreOrder()
-		{
-			Action<ComponentMetadata> preOrder = null;
-			preOrder = component =>
-			{
-				Visit(component);
-
-				foreach (var subcomponent in component.Subcomponents)
-					preOrder(subcomponent);
-			};
-
-			preOrder(_root);
-		}
-
-		/// <summary>
-		///     Visits the <paramref name="metadata" />.
-		/// </summary>
-		/// <param name="metadata">The component metadata that should be visited.</param>
-		protected abstract void Visit(ComponentMetadata metadata);
+		public ComponentMetadata Component { get; private set; }
 	}
 }

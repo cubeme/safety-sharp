@@ -67,7 +67,7 @@ namespace SafetySharp.Simulation
 			Requires.NotNull(model, () => model);
 			Requires.That(SynchronizationContext.Current != null, "The simulator requires a valid synchronization context to be set.");
 
-			model.FinalizeMetadata();
+			model.Seal();
 
 			_stepDelay = stepDelay;
 			_model = model;

@@ -24,8 +24,8 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 	using System.Reflection;
-	using MetadataAnalysis;
 	using Modeling;
 	using Utilities;
 
@@ -54,9 +54,17 @@ namespace SafetySharp.Runtime
 		{
 			get
 			{
-				var finder = new BoundRequiredPortsFinder(((ComponentMetadata)DeclaringObject).RootComponent, this);
-				finder.WalkPreOrder();
-				return finder.RequiredPorts;
+				var requiredPorts = new List<RequiredPortMetadata>();
+				var rootComponent = ((ComponentMetadata)DeclaringObject).RootComponent;
+
+				rootComponent.WalkPreOrder(metadata =>
+				{
+					requiredPorts.AddRange(from binding in metadata.Bindings
+										   where binding.ProvidedPort == this
+										   select binding.RequiredPort);
+				});
+
+				return requiredPorts;
 			}
 		}
 	}

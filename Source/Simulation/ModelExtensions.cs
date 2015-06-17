@@ -24,6 +24,7 @@ namespace SafetySharp.Simulation
 {
 	using System;
 	using Modeling;
+	using Runtime;
 	using Utilities;
 
 	/// <summary>
@@ -39,17 +40,7 @@ namespace SafetySharp.Simulation
 		internal static void ExecuteStep(this Model model)
 		{
 			Requires.NotNull(model, () => model);
-
-			Action<Component> update = null;
-			update = component =>
-			{
-				foreach (var subcomponent in component.Subcomponents)
-					update(subcomponent);
-
-				component.Update();
-			};
-
-			update(model.SynthesizedRoot);
+			model.GetMetadata().RootComponent.WalkPreOrder(metadata => metadata.Component.Update());
 		}
 
 		/// <summary>
@@ -59,17 +50,7 @@ namespace SafetySharp.Simulation
 		internal static void Reset(this Model model)
 		{
 			Requires.NotNull(model, () => model);
-
-			Action<Component> reset = null;
-			reset = component =>
-			{
-				foreach (var subcomponent in component.Subcomponents)
-					reset(subcomponent);
-
-				component.Reset();
-			};
-
-			reset(model.SynthesizedRoot);
+			model.GetMetadata().RootComponent.WalkPreOrder(metadata => metadata.Component.Reset());
 		}
 	}
 }

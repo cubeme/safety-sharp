@@ -45,7 +45,7 @@ namespace SafetySharp.Simulation
 			Requires.NotNull(model, () => model);
 
 			_model = model;
-			_model.FinalizeMetadata();
+			_model.Seal();
 		}
 
 		/// <summary>

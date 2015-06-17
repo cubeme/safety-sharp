@@ -52,7 +52,7 @@ namespace PressureTank
 		{
 			Controller = new Controller(Sensor, Pump, Timer);
 
-			SetRootComponents(Tank, Controller);
+			AddRootComponents(Tank, Controller);
 
 			Bind(Sensor.RequiredPorts.CheckPhysicalPressure = Tank.ProvidedPorts.PressureLevel);
 			Bind(Tank.RequiredPorts.IsBeingFilled = Pump.ProvidedPorts.IsEnabled);

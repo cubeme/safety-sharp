@@ -23,8 +23,8 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
-	using MetadataAnalysis;
 	using Modeling;
 	using Utilities;
 
@@ -85,15 +85,19 @@ namespace SafetySharp.Runtime
 			{
 				_builder.FinalizeMetadata();
 
-				var componentCollector = new ComponentCollector(_rootComponent.Metadata);
-				componentCollector.WalkPreOrder();
+				var components = new HashSet<ComponentMetadata>();
+				_rootComponent.Metadata.WalkPreOrder(metadata =>
+				{
+					if (!components.Add(metadata))
+						throw new ComponentHierarchyException(metadata);
+				});
 
 				_model.Metadata = new ModelMetadata
 				{
 					Model = _model,
 					RootComponent = _rootComponent.Metadata,
 					Bindings = _rootComponent.Metadata.Bindings,
-					Components = componentCollector.Components.ToArray()
+					Components = components.ToArray()
 				};
 			}
 

@@ -58,7 +58,8 @@ namespace Elbtunnel
 			var heightControl = new HeightControl(preControl, mainControl, endControl, trafficLights);
 			var vehicles = new VehicleCollection(vehicle1, vehicle2, vehicle3);
 
-			_model = new Model(heightControl, vehicles);
+			_model = new Model();
+			_model.AddRootComponents(heightControl, vehicles);
 
 			Bind(vehicles, lightBarrier1);
 			Bind(vehicles, lightBarrier2);
@@ -66,7 +67,7 @@ namespace Elbtunnel
 			Bind(vehicles, detectorRight);
 			Bind(vehicles, detectorFinal);
 
-			_model.Bind(vehicles.RequiredPorts.IsTunnelClosed = trafficLights.ProvidedPorts.IsRed).Delayed();
+			_model.Bind(vehicles.RequiredPorts.IsTunnelClosed = trafficLights.ProvidedPorts.IsRed);
 		}
 
 		private Model _model;

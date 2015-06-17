@@ -24,7 +24,7 @@ namespace Tests.Metadata.Models.Components
 {
 	using System;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime.MetadataAnalysis;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 

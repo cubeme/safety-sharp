@@ -24,6 +24,7 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using Modeling;
+	using Utilities;
 
 	/// <summary>
 	///     Represents the immutable metadata of a S# <see cref="Component" /> instance.
@@ -94,5 +95,25 @@ namespace SafetySharp.Runtime
 		///     Gets the user-friendly name of the component.
 		/// </summary>
 		public string Name { get; private set; }
+
+		/// <summary>
+		///     Walks the component hierarchy in pre-order. For each component found within the hierarchy, invokes the
+		///     <paramref name="action" /> on the components' metadata.
+		/// </summary>
+		public void WalkPreOrder(Action<ComponentMetadata> action)
+		{
+			Requires.NotNull(action, () => action);
+
+			Action<ComponentMetadata> preOrder = null;
+			preOrder = component =>
+			{
+				action(component);
+
+				foreach (var subcomponent in component.Subcomponents)
+					preOrder(subcomponent);
+			};
+
+			preOrder(this);
+		}
 	}
 }
