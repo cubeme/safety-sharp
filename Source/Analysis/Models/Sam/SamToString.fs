@@ -35,7 +35,7 @@ module internal SamToStringHelpers =
     type AstToStringState = {
         Indent : int;
         NewLineStyle : NewLineStyle;
-        CurrentLine : string;
+        CurrentLine : System.Text.StringBuilder;
         TextBuffer : string list;
     }
         with
@@ -43,11 +43,11 @@ module internal SamToStringHelpers =
                 {
                     AstToStringState.Indent = 0;
                     AstToStringState.NewLineStyle = NewLineStyle.NoNewLine;
-                    AstToStringState.CurrentLine = "";
+                    AstToStringState.CurrentLine = new System.Text.StringBuilder();
                     AstToStringState.TextBuffer = [];
                 }                
             override state.ToString() : string =
-                (state.CurrentLine :: state.TextBuffer)
+                (state.CurrentLine.ToString() :: state.TextBuffer)
                     |> List.rev
                     |> String.concat System.Environment.NewLine
 
@@ -85,14 +85,14 @@ module internal SamToStringHelpers =
                 state
             | NewLineStyle.NewLine ->
                 { state with
-                    AstToStringState.TextBuffer = state.CurrentLine::state.TextBuffer
-                    AstToStringState.CurrentLine = String.replicate state.Indent "  ";
+                    AstToStringState.TextBuffer = state.CurrentLine.ToString() :: state.TextBuffer
+                    AstToStringState.CurrentLine = new System.Text.StringBuilder( String.replicate state.Indent "  " );
                     AstToStringState.NewLineStyle = NewLineStyle.NoNewLine;
                 }
             | NewLineStyle.NewParagraph ->
                 { state with
-                    AstToStringState.TextBuffer = ""::state.CurrentLine::state.TextBuffer
-                    AstToStringState.CurrentLine = String.replicate state.Indent "  ";
+                    AstToStringState.TextBuffer = ""::state.CurrentLine.ToString()::state.TextBuffer
+                    AstToStringState.CurrentLine = new System.Text.StringBuilder(String.replicate state.Indent "  ");
                     AstToStringState.NewLineStyle = NewLineStyle.NoNewLine;
                 }
         
@@ -100,7 +100,7 @@ module internal SamToStringHelpers =
     let append (str:string) (state:AstToStringState) : AstToStringState =
         let newState = appendTrail state
         { newState with
-            AstToStringState.CurrentLine = newState.CurrentLine + str;
+            AstToStringState.CurrentLine = newState.CurrentLine.Append(str);
         }
 
     let rec foreach (elements:'a list) (writer: 'a -> AstToStringState -> AstToStringState) (state:AstToStringState): AstToStringState =
