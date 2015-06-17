@@ -78,7 +78,7 @@ module internal Reflection =
         /// Computes the inheritance level of a component, i.e., the distance to the System.Object base class
         /// in the inheritance chain.
         let rec getInheritanceLevel (t : TypeDefinition) =
-            if t.FullName = typeof<obj>.FullName || t.BaseType = null then 0
+            if t.FullName = typeof<obj>.FullName || t.BaseType = null then -1
             else (getInheritanceLevel (t.BaseType.Resolve ())) + 1
 
         /// Returns a unique name for the given field name and inheritance level.
@@ -87,7 +87,7 @@ module internal Reflection =
 
         /// Returns a unique name for the given method name, inheritance level and overload index.
         let makeUniqueMethodName methodName inheritanceLevel overloadIndex =
-            sprintf "%s%s%s" methodName (String (InheritanceToken, inheritanceLevel)) (String (OverloadToken, overloadIndex))
+            sprintf "%s%s%s" methodName (String (InheritanceToken, if inheritanceLevel < 0 then 0 else inheritanceLevel)) (String (OverloadToken, overloadIndex))
 
         /// Gets a unique name for the given field within the declaring type's inheritance hierarchy.
         let getUniqueFieldName (f : FieldReference) =

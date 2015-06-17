@@ -34,7 +34,7 @@ open SafetySharp.Models.Ssm
 module ``Scheduling`` =
 
     let private transform csharpCode roots = 
-        let csharpCode = sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" csharpCode roots
+        let csharpCode = sprintf "%s class TestModel : Model { public TestModel() { AddRootComponents(%s); } }" csharpCode roots
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
         CilToSsm.transformModel model |> SsmLowering.lowerScheduling
@@ -92,7 +92,7 @@ module ``Scheduling`` =
         transform "class X : Component { Y y1 = new Y(); Z a = new Z(); Z z = new Z(); Y y2 = new Y(); } class Y : Component {} class Z : Component {}" "new X()" 
         |> checkSchedule (fun c -> c.Subs.[0]) ["y1@0"; "a@1"; "z@2"; "y2@3"]
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``inherited component schedules four subcomponents in correct order`` () =
         transform "class W : Component { Y y1 = new Y(); Z a = new Z(); } class X : W { Z z = new Z(); Y y2 = new Y(); } class Y : Component {} class Z : Component {}" "new X()" 
         |> checkSchedule (fun c -> c.Subs.[0]) ["y1@0"; "a@1"; "z@2"; "y2@3"]

@@ -27,7 +27,7 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	///     Indicates the kind of a binding.
 	/// </summary>
-	public enum BindingKind
+	internal enum BindingKind
 	{
 		/// <summary>
 		///     Indicates that the binding is instantaneous.

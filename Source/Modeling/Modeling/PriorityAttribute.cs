@@ -35,8 +35,8 @@ namespace SafetySharp.Modeling
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="priority">
-		///     The priority of the marked member. Members with higher priority values
-		///     take precedence over members with lower values.
+		///     The priority of the marked member. Members with higher priority values take precedence over members
+		///     with lower values.
 		/// </param>
 		public PriorityAttribute(int priority)
 		{
@@ -44,8 +44,8 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets the priority of the marked member. Members with higher priority values
-		///     take precedence over members with lower values.
+		///     Gets the priority of the marked member. Members with higher priority values take precedence over
+		///     members with lower values.
 		/// </summary>
 		public int Priority { get; private set; }
 	}

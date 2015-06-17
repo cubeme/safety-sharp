@@ -20,48 +20,65 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace Tests.Metadata.Components.Fields
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using System.Linq;
+	using System.Reflection;
+	using SafetySharp.Runtime;
+	using Shouldly;
+	using Utilities;
 
-	partial class Component
+	internal abstract class C1<T> : TestComponent
 	{
-		/// <summary>
-		///     The component's port bindings during initialization.
-		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private readonly List<PortBinding> _bindings = new List<PortBinding>();
+		private T _x;
 
-		/// <summary>
-		///     The component's initialized port bindings.
-		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private List<PortBinding> _initializedBindings;
-
-		/// <summary>
-		///     Gets the port bindings of the component.
-		/// </summary>
-		internal List<PortBinding> Bindings
+		protected C1(params T[] values)
 		{
-			get
-			{
-				RequiresIsSealed();
-				return _initializedBindings;
-			}
+			SetInitialValues(_x, values);
+		}
+	}
+
+	internal class C2 : C1<C2.E>
+	{
+		public C2()
+			: base(E.A, E.B)
+		{
 		}
 
-		/// <summary>
-		///     Initializes the bindings of the component.
-		/// </summary>
-		private void InitializeBindings()
+		protected override void Check()
 		{
-			_initializedBindings = _bindings.ToList();
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(C1<E>).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { E.A, E.B });
+		}
 
-			foreach (var binding in _bindings)
-				binding.FinalizeMetadata();
+		internal enum E
+		{
+			A,
+			B,
+			C
+		}
+	}
+
+	internal class C3 : C1<int>
+	{
+		public C3()
+			: base(6, 8, 9)
+		{
+		}
+
+		protected override void Check()
+		{
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(C1<E>).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { 6, 8, 9 });
+		}
+
+		internal enum E
+		{
+			A,
+			B,
+			C
 		}
 	}
 }

@@ -24,12 +24,11 @@ namespace PressureTank
 {
 	using System;
 	using System.Diagnostics;
-	using System.Threading;
 	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.Analysis;
 	using SafetySharp.Simulation;
-	using Timer = SharedComponents.Timer;
+	using SharedComponents;
 
 	[TestFixture]
 	public class ModelCheckingTests
@@ -45,11 +44,7 @@ namespace PressureTank
 		{
 			var watch = new Stopwatch();
 			watch.Start();
-			SpinModelChecker spin;
-			var T = new Thread(
-				() => { spin = new SpinModelChecker(new PressureTankModel()); }, 1024 * 1024 * 8); //HACK: for a bigger stack
-			T.Start();
-			T.Join();
+			var spin = new SpinModelChecker(new PressureTankModel());
 
 			Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
 		}

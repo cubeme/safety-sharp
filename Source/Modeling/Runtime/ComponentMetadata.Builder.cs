@@ -26,7 +26,6 @@ namespace SafetySharp.Runtime
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
-	using CompilerServices;
 	using Modeling;
 	using Modeling.Faults;
 	using Utilities;

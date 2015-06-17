@@ -32,7 +32,7 @@ open SafetySharp.Models.Ssm
 [<AutoOpen>]
 module TestHelpers =
     let compile baseClass csharpCode additionalMembers fields replaceReturns = 
-        let model = TestCompilation.CreateModel (sprintf "class TestModel : Model { public TestModel() { SetRootComponents(new O()); }} class O : Component { public %s %s %s }" csharpCode additionalMembers fields)
+        let model = TestCompilation.CreateModel (sprintf "class TestModel : Model { public TestModel() { AddRootComponents(new O()); }} class O : Component { public %s %s %s }" csharpCode additionalMembers fields)
         model.FinalizeMetadata ()
         let root = CilToSsm.transformModel model
         let transformedMethod = root.Subs.[0].Methods |> Seq.find (fun m -> m.Name = methodName "M" 2 0) |> SsmToCSharp.transform

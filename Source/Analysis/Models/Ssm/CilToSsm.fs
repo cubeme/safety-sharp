@@ -33,6 +33,7 @@ module internal CilToSsm =
     open System.Reflection
     open SafetySharp
     open SafetySharp.Modeling
+    open SafetySharp.Runtime
     open SafetySharp.CompilerServices
     open SafetySharp.Reflection
     open Cil
@@ -527,26 +528,26 @@ module internal CilToSsm =
     /// Transforms all methods of the given type to an SSM method with structured control flow.
     let private transformMethods (metadata : MetadataProvider) (o : obj) (t : TypeDefinition) (resolver : GenericResolver) =
         t.GetMethods()
-        |> Seq.filter (fun m -> not m.HasOverrides || m.Overrides |> Seq.forall (fun m -> m.DeclaringType.FullName <> "SafetySharp.Modeling.IComponent"))
+        |> Seq.filter (fun m -> not m.HasOverrides || m.Overrides |> Seq.forall (fun m -> m.DeclaringType.FullName <> "SafetySharp.Modeling.IComponent" && m.DeclaringType.FullName <> "SafetySharp.Modeling.IMetadataObject" && m.DeclaringType.FullName <> "SafetySharp.Modeling.Component" && not( m.DeclaringType.FullName.StartsWith("SafetySharp.Modeling.MetadataObject"))))
         |> Seq.map (transformMethod metadata o resolver)
         |> List.ofSeq
 
     /// Transforms the given bindings.
     let private transformBindings (metadata : MetadataProvider) =
-        let resolveComponent (port : PortInfo) = (port.Component :?> Component).Name
-        let resolvePort (port : PortInfo) = metadata.Resolve(port.Method) |> Renaming.getUniqueMethodName
+        let resolveComponent (o : obj) = (o :?> ComponentMetadata).Component.Name
+        let resolvePort (port : MethodInfo) = metadata.Resolve(port) |> Renaming.getUniqueMethodName
         
-        let transform (binding : PortBinding) =
-          { SourceComp = binding.SourcePort |> resolveComponent
-            SourcePort = binding.SourcePort |> resolvePort
-            TargetComp = binding.TargetPort |> resolveComponent 
-            TargetPort = binding.TargetPort |> resolvePort
-            Kind       = binding.Kind }
+        let transform (binding : BindingMetadata) =
+          { SourceComp = binding.ProvidedPort.DeclaringObject |> resolveComponent
+            SourcePort = binding.ProvidedPort.MethodInfo |> resolvePort
+            TargetComp = binding.RequiredPort.DeclaringObject |> resolveComponent 
+            TargetPort = binding.RequiredPort.MethodInfo |> resolvePort
+            Kind       = BindingKind.Instantaneous }
 
         List.map transform
 
     /// Transforms the given fault.
-    let transformFault (metadata : MetadataProvider) (resolver : GenericResolver) (f : Faults.Fault) =
+    let transformFault (metadata : MetadataProvider) (resolver : GenericResolver) (f : FaultMetadata) =
         let faultType = metadata.GetTypeReference(f).Resolve ()
         { Fault.Name = f.GetType().Name
           Fault.Methods = transformMethods metadata f faultType resolver }

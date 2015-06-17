@@ -34,7 +34,7 @@ open SafetySharp.Models.Ssm
 module Bindings =
    
     let private transform componentCode initCode = 
-        let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)
+        let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { AddRootComponents(%s); } }" componentCode initCode)
         model.FinalizeMetadata ()
         let root = CilToSsm.transformModel model
         root.Subs.[0].Bindings
@@ -45,14 +45,14 @@ module Bindings =
 
     [<Test>]
     let ``component with single delayed binding`` () =
-        transform "class X : Component { extern void N(); void M() {} public X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" "new X()" =? 
+        transform "class X : Component { extern void N(); void M() {} public X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "R.X0@0"
                     SourceComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = BindingKind.Instantaneous
                 }
             ]
 
@@ -71,7 +71,7 @@ module Bindings =
 
     [<Test>]
     let ``component with multiple bindings`` () =
-        transform "class X : Component { extern void N(); void M() {} extern int Q(int i); int P(int i) { return i; } public X() { Bind(RequiredPorts.N = ProvidedPorts.M); Bind(RequiredPorts.Q = ProvidedPorts.P).Delayed(); } }" "new X()" =? 
+        transform "class X : Component { extern void N(); void M() {} extern int Q(int i); int P(int i) { return i; } public X() { Bind(RequiredPorts.N = ProvidedPorts.M); Bind(RequiredPorts.Q = ProvidedPorts.P); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "R.X0@0"
@@ -85,50 +85,50 @@ module Bindings =
                     SourceComp = "R.X0@0"
                     TargetPort = methodName "Q" 2 0
                     SourcePort = methodName "P" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = BindingKind.Instantaneous
                 }
             ]
 
     [<Test>]
     let ``subcomponent as source`` () =
-        transform "class Y : Component { public extern void N(); } class X : Component { Y y = new Y(); void M() {} public X() { Bind(y.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" "new X()" =? 
+        transform "class Y : Component { public extern void N(); } class X : Component { Y y = new Y(); void M() {} public X() { Bind(y.RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "R.X0@0.y@0"
                     SourceComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = BindingKind.Instantaneous
                 }
             ]
 
     [<Test>]
     let ``subcomponent as target`` () =
-        transform "class Y : Component { public void N() {} } class X : Component { Y y = new Y(); extern void M(); public X() { Bind(RequiredPorts.M = y.ProvidedPorts.N).Delayed(); } }" "new X()" =? 
+        transform "class Y : Component { public void N() {} } class X : Component { Y y = new Y(); extern void M(); public X() { Bind(RequiredPorts.M = y.ProvidedPorts.N); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "R.X0@0"
                     SourceComp = "R.X0@0.y@0"
                     TargetPort = methodName "M" 2 0
                     SourcePort = methodName "N" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = BindingKind.Instantaneous
                 }
             ]
 
     [<Test>]
     let ``subcomponent as source and target`` () =
-        transform "class Y : Component { public void N() {} public extern void M(); } class X : Component { Y y = new Y(); public X() { Bind(y.RequiredPorts.M = y.ProvidedPorts.N).Delayed(); } }" "new X()" =? 
+        transform "class Y : Component { public void N() {} public extern void M(); } class X : Component { Y y = new Y(); public X() { Bind(y.RequiredPorts.M = y.ProvidedPorts.N); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "R.X0@0.y@0"
                     SourceComp = "R.X0@0.y@0"
                     TargetPort = methodName "M" 2 0
                     SourcePort = methodName "N" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = BindingKind.Instantaneous
                 }
             ]
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``multiple inherited and non-inherited bindings`` () =
         transform "class Y : Component { public void N() {} public void N(out int i) { i = 0; } public extern void M(); } 
                    class Z : Y { public void Q() {} } 
@@ -137,8 +137,8 @@ module Bindings =
                         extern void Q();
                         
                         public W() {
-                            Bind(RequiredPorts.Q = z.ProvidedPorts.N).Delayed();
-                            Bind(z.RequiredPorts.M = z.ProvidedPorts.Q).Delayed();
+                            Bind(RequiredPorts.Q = z.ProvidedPorts.N);
+                            Bind(z.RequiredPorts.M = z.ProvidedPorts.Q);
                         }
                    }
                    delegate void D(out int i);
@@ -148,7 +148,7 @@ module Bindings =
                         Y y = new Y();
                         
                         public X() { 
-                            Bind(RequiredPorts.Q = (D)y.ProvidedPorts.N).Delayed(); 
+                            Bind(RequiredPorts.Q = (D)y.ProvidedPorts.N); 
                         }
                    }" "new X()" =? 
             [
@@ -157,21 +157,21 @@ module Bindings =
                     SourceComp = "R.X0@0.z@0"
                     TargetPort = methodName "Q" 2 0
                     SourcePort = methodName "N" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = BindingKind.Instantaneous
                 }
                 { 
                     TargetComp =  "R.X0@0.z@0"
                     SourceComp = "R.X0@0.z@0"
                     TargetPort = methodName "M" 2 0
                     SourcePort = methodName "Q" 3 0
-                    Kind = BindingKind.Delayed
+                    Kind = BindingKind.Instantaneous
                 }
                 { 
                     TargetComp =  "R.X0@0"
                     SourceComp = "R.X0@0.y@1"
                     TargetPort = methodName "Q" 3 1
                     SourcePort = methodName "N" 2 1
-                    Kind = BindingKind.Delayed
+                    Kind = BindingKind.Instantaneous
                 }
             ]
 

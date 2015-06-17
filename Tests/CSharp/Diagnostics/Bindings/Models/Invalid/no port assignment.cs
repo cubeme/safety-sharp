@@ -38,7 +38,7 @@ namespace Tests.Diagnostics.Bindings.Models.Invalid
 	[Diagnostic(DiagnosticIdentifier.ExpectedPortAssignment, 43, 18, 1)]
 	internal class M2 : Model
 	{
-		private M2(PortBinding p)
+		private M2(object p)
 		{
 			Bind(p);
 		}

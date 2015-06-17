@@ -35,7 +35,7 @@ module ``Port signatures`` =
     let private className = "X"
 
     let private transform methodDefinition= 
-        let csharpCode = sprintf "class %s : Component { %s } class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" className methodDefinition
+        let csharpCode = sprintf "class %s : Component { %s } class TestModel : Model { public TestModel() { AddRootComponents(new X()); } }" className methodDefinition
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
         let metadataProvider = model.GetMetadataProvider ()

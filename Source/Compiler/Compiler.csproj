@@ -119,7 +119,6 @@
     <Compile Include="Analyzers\EnumAnalyzer.cs" />
     <Compile Include="Analyzers\FaultEffectAnalyzer.cs" />
     <Compile Include="Analyzers\OccurrencePatternAnalyzer.cs" />
-    <Compile Include="Analyzers\PortBindingInstantiationAnalyzer.cs" />
     <Compile Include="Analyzers\PortImplementationAnalyzer.cs" />
     <Compile Include="Analyzers\PortKindAnalyzer.cs" />
     <Compile Include="Analyzers\PortReferenceAnalyzer.cs" />

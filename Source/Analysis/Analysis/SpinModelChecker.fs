@@ -38,7 +38,6 @@ type SpinModelChecker (model : Model) =
         model 
         |> CilToSsm.transformModel 
         |> SsmLowering.lowerPreValidation model
-        |> SsmValidation.validate model
         |> SsmLowering.lowerPostValidation model 
         |> SsmToScm.transform
 

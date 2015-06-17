@@ -35,9 +35,9 @@ open SafetySharp.Models.Ssm
 module Assemblies =
     let private transform supportingCode mainCode instantiations =
         let supportCompilation = TestCompilation supportingCode
-        let supportAssembly = supportCompilation.Compile ()
-        let compilation = TestCompilation (sprintf "class T : Model { public T() { SetRootComponents(%s); } } %s" instantiations mainCode, supportAssembly)
-        let assembly = compilation.Compile ()
+        let supportAssembly = supportCompilation.CompileSSharp (true)
+        let compilation = TestCompilation (sprintf "class T : Model { public T() { AddRootComponents(%s); } } %s" instantiations mainCode, supportAssembly)
+        let assembly = compilation.CompileSSharp (true)
         let modelType = assembly.GetType "T"
         let model = Activator.CreateInstance modelType :?> Model
         model.FinalizeMetadata ()

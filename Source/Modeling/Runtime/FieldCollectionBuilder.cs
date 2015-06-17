@@ -88,6 +88,10 @@ namespace SafetySharp.Runtime
 			Requires.That(values.Length > 0, () => values, "At least one value must be provided.");
 			Requires.That(_fields.ContainsKey(field), () => field, "The given field is unknown.");
 
+			// Check if the values were provided as an array...
+			if (values.Length == 1 && values[0].GetType().IsArray)
+				values = ((IEnumerable<object>)values[0]).ToArray();
+
 			var typesMatch = values.All(value => value.GetType() == field.FieldType);
 			Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
 

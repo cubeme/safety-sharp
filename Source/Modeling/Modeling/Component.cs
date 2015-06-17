@@ -23,7 +23,6 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Diagnostics;
 	using CompilerServices;
 	using JetBrains.Annotations;
@@ -34,13 +33,13 @@ namespace SafetySharp.Modeling
 	///     Represents a S# component.
 	/// </summary>
 	[Metadata("InitializeMetadata")]
-	public abstract partial class Component : MetadataObject<ComponentMetadata, ComponentMetadata.Builder>, IComponent
+	public abstract class Component : MetadataObject<ComponentMetadata, ComponentMetadata.Builder>, IComponent
 	{
 		/// <summary>
 		///     The user-provided name of the component.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private string _name;
+		private readonly string _name;
 
 		[UsedImplicitly]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -65,17 +64,21 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Initializes a new instance.
+		///     Gets all required ports declared by the component that are accessible from the location of the caller.
 		/// </summary>
-		/// <param name="subcomponents">The subcomponents of the component.</param>
-		/// <param name="bindings">The port bindings of the component.</param>
-		internal Component(List<Component> subcomponents, List<PortBinding> bindings)
-			: this()
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		public dynamic RequiredPorts
 		{
-			Requires.NotNull(bindings, () => bindings);
+			get { throw new InvalidOperationException("This property cannot be used outside of a port binding expression."); }
+		}
 
-			_subcomponents = subcomponents;
-			_bindings = bindings;
+		/// <summary>
+		///     Gets all provided ports declared by the component that are accessible from the location of the caller.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		public dynamic ProvidedPorts
+		{
+			get { throw new InvalidOperationException("This property cannot be used outside of a port binding expression."); }
 		}
 
 		/// <summary>

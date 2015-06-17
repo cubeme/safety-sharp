@@ -44,6 +44,7 @@
     <Compile Include="CompilerServices\MetadataAttribute.cs" />
     <Compile Include="CompilerServices\MetadataBuilders.cs" />
     <Compile Include="CompilerServices\SuppressTransformationAttribute.cs" />
+    <Compile Include="Modeling\BindingKind.cs" />
     <Compile Include="Modeling\Faults\Fault.cs" />
     <Compile Include="Modeling\Faults\Persistent.cs" />
     <Compile Include="Modeling\Faults\PersistentAttribute.cs" />
@@ -51,8 +52,6 @@
     <Compile Include="Modeling\Faults\TransientAttribute.cs" />
     <Compile Include="Modeling\IMetadataObject.cs" />
     <Compile Include="Modeling\MetadataObject.cs" />
-    <Compile Include="Modeling\PortBinding.cs" />
-    <Compile Include="Modeling\PortInfo.cs" />
     <Compile Include="Modeling\PriorityAttribute.cs" />
     <Compile Include="Runtime\ComponentHierarchyException.cs" />
     <Compile Include="Runtime\ModelMetadata.Builder.cs" />
@@ -76,30 +75,8 @@
     <Compile Include="Runtime\BindingMetadata.cs" />
     <Compile Include="Runtime\ComponentMetadata.cs" />
     <Compile Include="Runtime\FaultMetadata.cs" />
-    <Compile Include="Modeling\BindingKind.cs" />
-    <Compile Include="Modeling\Model.Immutability.cs">
-      <DependentUpon>Model.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Modeling\Component.Ports.cs">
-      <DependentUpon>Component.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Modeling\Component.Faults.cs">
-      <DependentUpon>Component.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Modeling\Component.Hierarchy.cs">
-      <DependentUpon>Component.cs</DependentUpon>
-    </Compile>
     <Compile Include="Modeling\Choose.cs" />
-    <Compile Include="Modeling\Component.Bindings.cs">
-      <DependentUpon>Component.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Modeling\Component.Immutability.cs">
-      <DependentUpon>Component.cs</DependentUpon>
-    </Compile>
     <Compile Include="Modeling\Component.cs" />
-    <Compile Include="Modeling\Component.Fields.cs">
-      <DependentUpon>Component.cs</DependentUpon>
-    </Compile>
     <Compile Include="Modeling\Faults\Fault`1.cs" />
     <Compile Include="Modeling\IComponent.cs" />
     <Compile Include="Modeling\Model.cs" />
@@ -112,8 +89,6 @@
     <Compile Include="Runtime\OccurrencePattern.Builder.cs" />
     <Compile Include="Runtime\ProvidedPortMetadata.cs" />
     <Compile Include="Runtime\RequiredPortMetadata.cs" />
-    <Compile Include="Runtime\RootComponent.cs" />
-    <Compile Include="Modeling\SharedComponentsException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Runtime\OccurrencePatternMetadata.cs" />
     <Compile Include="CompilerServices\ReflectionHelpers.cs" />

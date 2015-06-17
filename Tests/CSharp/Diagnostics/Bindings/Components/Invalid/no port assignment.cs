@@ -38,7 +38,7 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 	[Diagnostic(DiagnosticIdentifier.ExpectedPortAssignment, 43, 18, 1)]
 	internal class X2 : Component
 	{
-		private X2(PortBinding p)
+		private X2(object p)
 		{
 			Bind(p);
 		}

@@ -34,7 +34,7 @@ open SafetySharp.Models.Ssm
 module ``Virtual dispatch`` =
 
     let private transform csharpCode = 
-        let csharpCode = sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" csharpCode
+        let csharpCode = sprintf "%s class TestModel : Model { public TestModel() { AddRootComponents(new X()); } }" csharpCode
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
         let metadataProvider = model.GetMetadataProvider ()

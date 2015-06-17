@@ -34,7 +34,7 @@ open SafetySharp.Models.Ssm
 module Fields =
 
     let private transform componentCode initCode = 
-        let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)
+        let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { AddRootComponents(%s); } }" componentCode initCode)
         model.FinalizeMetadata ()
         let root = CilToSsm.transformModel model
         root.Subs.[0].Fields
@@ -47,10 +47,6 @@ module Fields =
     [<Test>]
     let ``component without fields`` () =
         transform "class C : Component {}" "new C()" =? []
-
-    [<Test>]
-    let ``component without fields; fields with unsupported types are ignored`` () =
-        transform "class C : Component { string s; Component c; }" "new C()" =? []
 
     [<Test>]
     let ``constant fields should be ignored`` () =
@@ -70,12 +66,6 @@ module Fields =
         let c = "class C<T> : Component { T _field; }"
         transform c "new C<int>()" =? [ field "_field" 2 IntType [IntVal 0] ]
         transform c "new C<bool>()" =? [ field "_field" 2 BoolType [BoolVal false] ]
-
-    [<Test>]
-    let ``generic component with generic field of unsupported type`` () =
-        let c = "class C<T> : Component { T _field; }"
-        transform c "new C<string>()" =? []
-        transform c "new C<Component>()" =? []
 
     [<Test>]
     let ``renaming: inherited component with non-conflicting field names`` () =
@@ -134,15 +124,15 @@ module Fields =
 
     [<Test>]
     let ``field with multiple initial values`` () =
-        transform "class X : Component { int _f; public X() { SetInitialValues(() => _f, -1, 0, 17); } }" "new X()" =?
+        transform "class X : Component { int _f; public X() { SetInitialValues(_f, -1, 0, 17); } }" "new X()" =?
             [field "_f" 2 IntType [IntVal -1; IntVal 0; IntVal 17]]
 
-        transform "class X : Component { bool _f; public X() { SetInitialValues(() => _f, true, false); } }" "new X()" =?
+        transform "class X : Component { bool _f; public X() { SetInitialValues(_f, true, false); } }" "new X()" =?
             [field "_f" 2 BoolType [BoolVal true; BoolVal false]]
 
     [<Test>]
     let ``inherited fields with initial values`` () =
-        let c = "class C : Component { int _field1 = 3; bool _field2; public C() { SetInitialValues(() => _field2, true, false); } } class D : C { bool _field1 = true; bool _field2; }"
+        let c = "class C : Component { int _field1 = 3; bool _field2; public C() { SetInitialValues(_field2, true, false); } } class D : C { bool _field1 = true; bool _field2; }"
         transform c "new D()" =? 
             [ 
                 field "_field1" 2 IntType [IntVal 3]
@@ -153,7 +143,7 @@ module Fields =
 
     [<Test>]
     let ``generic fields of inherited component`` () =
-        let c = "class C : Component { int b = 3; } class D<T> : C { T b; public D(params T[] v) { SetInitialValues(() => b, v); }}"
+        let c = "class C : Component { int b = 3; } class D<T> : C { T b; public D(params T[] v) { SetInitialValues(b, v); }}"
         transform c "new D<int>(16, 3, -1)" =? [field "b" 2 IntType [IntVal 3]; field "b" 3 IntType [IntVal 16; IntVal 3; IntVal -1] ]
         transform c "new D<bool>(true, false)" =? [field "b" 2 IntType [IntVal 3]; field "b" 3 BoolType [BoolVal true; BoolVal false] ]
 
@@ -164,7 +154,7 @@ module Fields =
 
     [<Test>]
     let ``generic fields of generic inherited generic component`` () =
-        let c = "class C<T> : Component { T b; public C(params T[] v) { SetInitialValues(() => b, v); } } class D<T, R> : C<T> { R b; public D(R v1, params T[] v2) : base(v2) { SetInitialValues(() => b, v1); }}"
+        let c = "class C<T> : Component { T b; public C(params T[] v) { SetInitialValues(b, v); } } class D<T, R> : C<T> { R b; public D(R v1, params T[] v2) : base(v2) { SetInitialValues(b, v1); }}"
         transform c "new D<int, bool>(false, -4, 2, 1)" =? [field "b" 2 IntType [IntVal -4; IntVal 2; IntVal 1]; field "b" 3 BoolType [BoolVal false] ]
         transform c "new D<int, bool>(true, 0)" =? [field "b" 2 IntType [IntVal 0]; field "b" 3 BoolType [BoolVal true] ]
         transform c "new D<bool, int>(17, true, false)" =? [field "b" 2 BoolType [BoolVal true; BoolVal false]; field "b" 3 IntType [IntVal 17] ]
@@ -172,6 +162,6 @@ module Fields =
 
     [<Test>]
     let ``field of enum type`` () =
-        let c = "enum X { A, B, C} class C : Component { X x; public C(params X[] values) { SetInitialValues(() => x, values); } }" 
+        let c = "enum X { A, B, C} class C : Component { X x; public C(params X[] values) { SetInitialValues(x, values); } }" 
         transform c "new C(X.A)" =? [field "x" 2 IntType [IntVal 0]]
         transform c "new C(X.A, X.C, X.B)" =? [field "x" 2 IntType [IntVal 0; IntVal 2; IntVal 1]]

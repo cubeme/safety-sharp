@@ -30,7 +30,6 @@ namespace SafetySharp.Compiler.Analyzers
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
@@ -46,9 +45,8 @@ namespace SafetySharp.Compiler.Analyzers
 		/// </summary>
 		private static readonly DiagnosticInfo _expectedPortAssignment = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExpectedPortAssignment,
-			String.Format("Instances of '{0}' can only be created using port assignment syntax.", typeof(PortBinding).FullName),
-			String.Format("A port assignment of the form 'component1.RequiredPorts.Port = component2.ProvidedPorts.Port' " +
-						  "is required to initialize an instance of '{0}'.", typeof(PortBinding).FullName));
+			"Bindings can only be created by using a binding expression.",
+			"Expected a binding expression of the form 'component1.RequiredPorts.Port = component2.ProvidedPorts.Port'.");
 
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a bind method is called without a port assignment argument.

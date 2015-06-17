@@ -64,9 +64,6 @@
     <Compile Include="..\TestCases\SamSmokeTests.fs">
       <Link>SamSmokeTests.fs</Link>
     </Compile>
-    <Compile Include="Modeling\ModelingTestHelpers.fs" />
-    <Compile Include="Modeling\ComponentTests.fs" />
-    <Compile Include="Modeling\ModelTests.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Assemblies.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Bindings.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Components.fs" />
@@ -77,7 +74,6 @@
     <Compile Include="Models\Ssm\SsmLowering.LocalBindings.fs" />
     <Compile Include="Models\Ssm\SsmLowering.VirtualDispatch.fs" />
     <Compile Include="Models\Ssm\SsmLowering.Scheduling.fs" />
-    <Compile Include="Models\Ssm\SsmValidations.fs" />
     <Compile Include="Models\Ssm\SsmLowering.StepInlining.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterLevelUpTests.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
@@ -110,7 +106,6 @@
     <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.fs" />
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.fs" />
     <Compile Include="Roslyn\SideEffectAnalyzer.fs" />
-    <Compile Include="Analyzers\PortBindingInstantiationAnalyzer.fs" />
     <Compile Include="Analyzers\PortImplementationAnalyzer.fs" />
     <Compile Include="Analyzers\PortReferenceAnalyzer.fs" />
     <Compile Include="Analyzers\RecursionAnalyzer.fs" />
