@@ -76,10 +76,16 @@ namespace Tests.Normalization.Bindings.Components
 	{
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __BindingDelegate0__();
+	}
 
+	partial class Out12
+	{
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __BindingDelegate1__();
+	}
 
+	partial class Out12
+	{
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __BindingDelegate2__();
 	}

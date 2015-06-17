@@ -315,7 +315,7 @@ module ``Bind method`` =
     [<Test>]
     let ``returns delayed port binding of a component`` () =
         bindings "class X : Component { public void M() {} public extern void N(); }" "var x = new X(); Bind(x.RequiredPorts.N = x.ProvidedPorts.M).Delayed();" "x"
-        component'.Bindings.Length =? 1
+        component'.Bindings.Count =? 1
         component'.Bindings.[0].Kind =? BindingKind.Delayed
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
         component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> IComponent)
@@ -327,7 +327,7 @@ module ``Bind method`` =
     [<Test>]
     let ``returns instantaneous port binding of a component`` () =
         bindings "class X : Component { public void M() {} public extern void N(); }" "var x = new X(); Bind(x.RequiredPorts.N = x.ProvidedPorts.M);" "x"
-        component'.Bindings.Length =? 1
+        component'.Bindings.Count =? 1
         component'.Bindings.[0].Kind =? BindingKind.Instantaneous
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
         component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> IComponent)
@@ -339,7 +339,7 @@ module ``Bind method`` =
     [<Test>]
     let ``returns multiple port binding between subcomponents`` () =
         bindings "class Y : Component { public void M() {} public extern void N(); } class X : Component { public Y y1 = new Y(); public Y y2 = new Y(); }" "var x = new X(); Bind(x.y1.RequiredPorts.N = x.y2.ProvidedPorts.M); Bind(x.y2.RequiredPorts.N = x.y1.ProvidedPorts.M).Delayed();" "x"
-        component'.Bindings.Length =? 2
+        component'.Bindings.Count =? 2
         component'.Bindings.[0].Kind =? BindingKind.Instantaneous
         component'.Bindings.[0].TargetPort.IsRequiredPort =? true
         component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0].Subcomponents.[0] :> IComponent)

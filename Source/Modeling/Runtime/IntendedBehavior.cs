@@ -55,5 +55,20 @@ namespace SafetySharp.Runtime
 			if (Method.HasImplementation)
 				BindDelegate(Delegate.CreateDelegate(Method.BackingField.FieldType, Object, Method.IntendedBehavior));
 		}
+
+		/// <summary>
+		///     Binds the externally provided intended behavior of the method.
+		/// </summary>
+		internal void BindExternal()
+		{
+			if (Method.HasImplementation)
+				return;
+
+			// We allow the external behavior to be null to simplify testing (otherwise all required ports
+			// would have to be bound in all tests). We'll detect unbound required ports later
+			var externalBehavior = Method.BackingField.GetValue(Object) as Delegate;
+			if (externalBehavior != null)
+				BindDelegate(externalBehavior);
+		}
 	}
 }

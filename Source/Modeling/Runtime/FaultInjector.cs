@@ -110,8 +110,12 @@ namespace SafetySharp.Runtime
 
 			// Complete the list of injected behaviors by appending the intended behavior at the end
 			Assert.That(InjectedBehaviors.Count == 1, "Expected to find the intended behavior.");
-			Assert.OfType<IntendedBehavior>(InjectedBehaviors[0], "Expected to find the intended behavior.");
-			behaviors.Add(InjectedBehaviors[0]);
+
+			var intendedBehavior = InjectedBehaviors[0] as IntendedBehavior;
+			Assert.NotNull(intendedBehavior, "Expected to find the intended behavior.");
+
+			intendedBehavior.BindExternal();
+			behaviors.Add(intendedBehavior);
 
 			InjectedBehaviors = behaviors.AsReadOnly();
 

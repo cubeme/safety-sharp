@@ -87,7 +87,10 @@ namespace Tests.Normalization.Bindings.Components
 	{
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __BindingDelegate0__();
+	}
 
+	partial class Out14
+	{
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate int __BindingDelegate1__(int i, out bool b);
 	}
@@ -100,7 +103,10 @@ namespace Tests.Normalization.Bindings.Components
 		{
 			base.M();
 		}
+	}
 
+	partial class Out14
+	{
 		[global::SafetySharp.Modeling.ProvidedAttribute]
 		[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private System.Int32 __SynthesizedPort1__(System.Int32 i, out System.Boolean b)

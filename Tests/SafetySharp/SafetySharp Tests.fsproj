@@ -110,7 +110,6 @@
     <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.fs" />
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.fs" />
     <Compile Include="Roslyn\SideEffectAnalyzer.fs" />
-    <Compile Include="Analyzers\OccurrencePatternAnalyzer.fs" />
     <Compile Include="Analyzers\PortBindingInstantiationAnalyzer.fs" />
     <Compile Include="Analyzers\PortImplementationAnalyzer.fs" />
     <Compile Include="Analyzers\PortReferenceAnalyzer.fs" />
