@@ -85,7 +85,10 @@ namespace SafetySharp.Compiler.Analyzers
 			if (!symbol.IsDerivedFromFault(compilation))
 				return;
 
-			if (!symbol.BaseType.Equals(compilation.GetFaultClassSymbol()))
+			var nonFaultBase = !symbol.BaseType.OriginalDefinition.Equals(compilation.GetGenericFaultClassSymbol()) &&
+							   !symbol.BaseType.Equals(compilation.GetFaultClassSymbol());
+
+			if (nonFaultBase)
 				_unsupportedInheritance.Emit(context, symbol, symbol.ToDisplayString());
 
 			if (symbol.ContainingType == null || !symbol.ContainingType.IsDerivedFromComponent(compilation))

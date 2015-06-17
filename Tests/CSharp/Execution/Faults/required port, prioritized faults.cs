@@ -66,7 +66,7 @@ namespace Tests.Execution.Faults
 		}
 
 		[Persistent]
-		private class F1 : Fault
+		private class F1 : Fault<X4>
 		{
 			[Priority(1)]
 			public int M()

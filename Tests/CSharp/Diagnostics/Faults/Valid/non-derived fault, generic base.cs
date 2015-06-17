@@ -20,51 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Components.Faults
+using System;
+
+namespace Tests.Diagnostics.Faults.Valid
 {
 	using System;
+	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
-	using SafetySharp.Runtime;
-	using Shouldly;
-	using Utilities;
 
-	public class X2 : TestComponent
+	internal class X4 : Component
 	{
-		protected override void Check()
-		{
-			Metadata.Faults.Length.ShouldBe(2);
-
-			Metadata.Faults[0].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Faults[0].Fault.GetType().ShouldBe(typeof(F1));
-			Metadata.Faults[0].Name.ShouldBe("F1");
-			Metadata.Faults[0].Fault.Component.ShouldBe(this);
-			Metadata.Faults[0].OccurrencePattern.OccurrencePattern.GetType().ShouldBe(typeof(Transient));
-
-			Metadata.Faults[1].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Faults[1].Fault.GetType().ShouldBe(typeof(F2));
-			Metadata.Faults[1].Name.ShouldBe("F2");
-			Metadata.Faults[1].Fault.Component.ShouldBe(this);
-			Metadata.Faults[1].OccurrencePattern.OccurrencePattern.GetType().ShouldBe(typeof(Persistent));
-		}
-
-		public void M()
-		{
-		}
-
 		[Transient]
-		private class F1 : Fault
+		private class F1 : Fault<X4>
 		{
-			public void M()
-			{
-			}
-		}
-
-		[Persistent]
-		private class F2 : Fault<X2>
-		{
-			public void M()
-			{
-			}
 		}
 	}
 }

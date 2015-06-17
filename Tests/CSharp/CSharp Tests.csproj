@@ -210,6 +210,7 @@
     <Compile Include="Diagnostics\FaultEffects\Valid\provided method ports.cs" />
     <Compile Include="Diagnostics\Faults\Invalid\fault outside component.cs" />
     <Compile Include="Diagnostics\Faults\Valid\derived non-fault.cs" />
+    <Compile Include="Diagnostics\Faults\Valid\non-derived fault, generic base.cs" />
     <Compile Include="Diagnostics\Faults\Valid\non-derived fault.cs" />
     <Compile Include="Diagnostics\Faults\Invalid\derived fault.cs" />
     <Compile Include="Diagnostics\OccurrencePatterns\Invalid\multiple patterns.cs" />
@@ -276,6 +277,9 @@
     <None Include="Metadata\Faults\FaultEffects\multiple faults, multiple effects, same member.cs" />
     <None Include="Metadata\Faults\FaultEffects\explicit interface members.cs" />
     <None Include="Metadata\Faults\FaultEffects\single fault, multiple effects, different members.cs" />
+    <None Include="Metadata\Faults\FaultEffects\generic base.cs" />
+    <Compile Include="Metadata\Faults\Fields\generic base.cs" />
+    <Compile Include="Metadata\Faults\StepMethods\generic fault base.cs" />
     <Compile Include="Metadata\Faults\StepMethods\direct override.cs" />
     <Compile Include="Metadata\Faults\StepMethods\generic component.cs" />
     <Compile Include="Metadata\OccurrencePatternsMetadataTests.cs" />

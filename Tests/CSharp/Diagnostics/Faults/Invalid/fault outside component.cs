@@ -24,19 +24,35 @@ namespace Tests.Diagnostics.Faults.Invalid
 {
 	using System;
 	using SafetySharp.Compiler.Analyzers;
+	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
 
-	[Diagnostic(DiagnosticIdentifier.FaultOutsideComponent, 31, 20, 1, "Tests.Diagnostics.Faults.Invalid.F")]
+	[Diagnostic(DiagnosticIdentifier.FaultOutsideComponent, 32, 20, 1, "Tests.Diagnostics.Faults.Invalid.F")]
 	[Transient]
 	internal class F : Fault
 	{
 	}
 
-	[Diagnostic(DiagnosticIdentifier.FaultOutsideComponent, 39, 24, 1, "Tests.Diagnostics.Faults.Invalid.X2.F")]
+	[Diagnostic(DiagnosticIdentifier.FaultOutsideComponent, 40, 24, 1, "Tests.Diagnostics.Faults.Invalid.X2.F")]
 	internal class X2
 	{
 		[Transient]
 		internal class F : Fault
+		{
+		}
+	}
+
+	[Diagnostic(DiagnosticIdentifier.FaultOutsideComponent, 47, 20, 1, "Tests.Diagnostics.Faults.Invalid.G")]
+	[Transient]
+	internal class G : Fault<Component>
+	{
+	}
+
+	[Diagnostic(DiagnosticIdentifier.FaultOutsideComponent, 55, 24, 1, "Tests.Diagnostics.Faults.Invalid.X3.F")]
+	internal class X3
+	{
+		[Transient]
+		internal class F : Fault<Component>
 		{
 		}
 	}

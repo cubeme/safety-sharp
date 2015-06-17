@@ -46,14 +46,15 @@ namespace Tests.Execution.Faults
 			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			DoStep();
-			_x.ShouldBe(0);
+			_x.ShouldBe(7);
 		}
 
 		[Persistent]
-		private class F : Fault
+		private class F : Fault<X5>
 		{
 			public void Update()
 			{
+				Component._x = 7;
 			}
 		}
 	}

@@ -43,6 +43,7 @@
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
     <Compile Include="CompilerServices\MetadataAttribute.cs" />
     <Compile Include="CompilerServices\SuppressTransformationAttribute.cs" />
+    <Compile Include="Modeling\Faults\Fault.cs" />
     <Compile Include="Modeling\Faults\Persistent.cs" />
     <Compile Include="Modeling\Faults\PersistentAttribute.cs" />
     <Compile Include="Modeling\Faults\Transient.cs" />
@@ -97,7 +98,7 @@
     <Compile Include="Modeling\Component.Fields.cs">
       <DependentUpon>Component.cs</DependentUpon>
     </Compile>
-    <Compile Include="Modeling\Faults\Fault.cs" />
+    <Compile Include="Modeling\Faults\Fault`1.cs" />
     <Compile Include="Modeling\IComponent.cs" />
     <Compile Include="Modeling\Model.cs" />
     <Compile Include="Modeling\Faults\OccurrencePatternAttribute.cs" />

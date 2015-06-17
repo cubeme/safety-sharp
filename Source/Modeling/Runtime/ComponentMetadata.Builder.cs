@@ -120,13 +120,15 @@ namespace SafetySharp.Runtime
 			/// <summary>
 			///     Adds the <paramref name="fault" /> to the component's metadata.
 			/// </summary>
+			/// <typeparam name="TFault">The type of the fault that should be added to the component's metadata.</typeparam>
 			/// <param name="fault">The fault that should be added.</param>
-			public void WithFault<T>(T fault)
-				where T : Fault
+			public void WithFault<TFault>(TFault fault)
+				where TFault : Fault
 			{
 				Requires.NotNull(fault, () => fault);
-				Requires.That(!_faults.Any(f => f.Fault is T), () => fault, "The fault has already been added.");
+				Requires.That(!_faults.Any(f => f.Fault is TFault), () => fault, "The fault has already been added.");
 
+				fault.Component = _component;
 				_faults.Add(MetadataBuilders.GetBuilder(fault).RegisterMetadata(_component));
 			}
 

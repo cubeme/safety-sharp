@@ -37,6 +37,7 @@ namespace Tests.Metadata.Faults
 			Metadata.Faults[0].DeclaringComponent.ShouldBe(this.GetMetadata());
 			Metadata.Faults[0].Fault.GetType().ShouldBe(typeof(F));
 			Metadata.Faults[0].Name.ShouldBe("F");
+			Metadata.Faults[0].Fault.Component.ShouldBe(this);
 			Metadata.Faults[0].OccurrencePattern.OccurrencePattern.GetType().ShouldBe(typeof(Transient));
 		}
 

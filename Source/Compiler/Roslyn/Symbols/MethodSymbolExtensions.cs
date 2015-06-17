@@ -56,7 +56,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (!methodSymbol.IsOverride)
 				return false;
 
-			if (methodSymbol.OverriddenMethod.Equals(overriddenMethod))
+			if (methodSymbol.OverriddenMethod.OriginalDefinition.Equals(overriddenMethod))
 				return true;
 
 			return methodSymbol.OverriddenMethod.Overrides(overriddenMethod);

@@ -49,7 +49,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			Requires.NotNull(baseType, () => baseType);
 
 			// Check the interfaces implemented by the type
-			if (baseType.TypeKind == TypeKind.Interface && typeSymbol.AllInterfaces.Any(baseType.Equals))
+			if (baseType.TypeKind == TypeKind.Interface && typeSymbol.AllInterfaces.Any(baseType.OriginalDefinition.Equals))
 				return true;
 
 			// We've reached the top of the inheritance chain without finding baseType
@@ -57,7 +57,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				return false;
 
 			// Check whether the base matches baseType
-			if (baseType.TypeKind == TypeKind.Class && typeSymbol.BaseType.Equals(baseType))
+			if (baseType.TypeKind == TypeKind.Class && typeSymbol.BaseType.OriginalDefinition.Equals(baseType))
 				return true;
 
 			// Recursively check the base
@@ -82,7 +82,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="typeSymbol" /> is directly or indirectly derived from the <see cref="Fault" />
+		///     Checks whether <paramref name="typeSymbol" /> is directly or indirectly derived from the <see cref="Fault{T}" />
 		///     class within the context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
@@ -182,7 +182,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			var inheritedPorts = Enumerable.Empty<IMethodSymbol>();
 			if (typeSymbol.TypeKind == TypeKind.Interface)
 				inheritedPorts = typeSymbol.AllInterfaces.SelectMany(i => i.GetPorts(semanticModel, filter));
-			else if (typeSymbol.BaseType != null)
+			else if (typeSymbol.BaseType != null && !typeSymbol.BaseType.Equals(semanticModel.GetComponentClassSymbol()))
 				inheritedPorts = typeSymbol.BaseType.GetPorts(semanticModel, filter);
 
 			var members = typeSymbol.GetMembers();

@@ -69,7 +69,7 @@ namespace Tests.Execution.Faults
 		}
 
 		[Persistent]
-		private class F2 : Fault
+		private class F2 : Fault<X2>
 		{
 			[Priority(17)]
 			public int M()

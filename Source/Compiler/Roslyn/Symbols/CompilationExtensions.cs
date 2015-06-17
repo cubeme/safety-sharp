@@ -91,6 +91,18 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
+		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="Fault{T}" /> class within the
+		///     context of the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation the class symbol should be returned for.</param>
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetGenericFaultClassSymbol([NotNull] this Compilation compilation)
+		{
+			Requires.NotNull(compilation, () => compilation);
+			return compilation.GetTypeSymbol(typeof(Fault<>));
+		}
+
+		/// <summary>
 		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="Fault" /> class within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
@@ -99,7 +111,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		public static INamedTypeSymbol GetFaultClassSymbol([NotNull] this Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
-			return compilation.GetTypeSymbol<Fault>();
+			return compilation.GetTypeSymbol(typeof(Fault));
 		}
 
 		/// <summary>

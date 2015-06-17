@@ -51,38 +51,40 @@ namespace Tests.Execution.Faults
 			Metadata.Faults[1].Fault.IsOccurring = false;
 
 			DoStep();
-			_x.ShouldBe(0);
+			_x.ShouldBe(7);
 
 			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = false;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
 			DoStep();
-			_x.ShouldBe(0);
+			_x.ShouldBe(21);
 
 			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
 			DoStep();
-			_x.ShouldBe(0);
+			_x.ShouldBe(21);
 		}
 
 		[Persistent]
-		private class F1 : Fault
+		private class F1 : Fault<X6>
 		{
 			[Priority(1)]
 			public void Update()
 			{
+				Component._x = 7;
 			}
 		}
 
 		[Persistent]
-		private class F2 : Fault
+		private class F2 : Fault<X6>
 		{
 			[Priority(17)]
 			public void Update()
 			{
+				Component._x = 21;
 			}
 		}
 	}

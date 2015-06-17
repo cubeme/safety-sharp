@@ -20,51 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Components.Faults
+namespace SafetySharp.Modeling.Faults
 {
 	using System;
-	using SafetySharp.Modeling.Faults;
-	using SafetySharp.Runtime;
-	using Shouldly;
-	using Utilities;
 
-	public class X2 : TestComponent
+	/// <summary>
+	///     Represents a base class for all faults affecting the behavior of <see cref="Component" />s of type
+	///     <typeparamref name="TComponent" />.
+	/// </summary>
+	/// <typeparam name="TComponent">The type of the <see cref="Component" /> affected by the fault.</typeparam>
+	public abstract class Fault<TComponent> : Fault
+		where TComponent : Component
 	{
-		protected override void Check()
+		/// <summary>
+		///     Gets the <see cref="Component" /> instance affected by the fault.
+		/// </summary>
+		protected new TComponent Component
 		{
-			Metadata.Faults.Length.ShouldBe(2);
-
-			Metadata.Faults[0].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Faults[0].Fault.GetType().ShouldBe(typeof(F1));
-			Metadata.Faults[0].Name.ShouldBe("F1");
-			Metadata.Faults[0].Fault.Component.ShouldBe(this);
-			Metadata.Faults[0].OccurrencePattern.OccurrencePattern.GetType().ShouldBe(typeof(Transient));
-
-			Metadata.Faults[1].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Faults[1].Fault.GetType().ShouldBe(typeof(F2));
-			Metadata.Faults[1].Name.ShouldBe("F2");
-			Metadata.Faults[1].Fault.Component.ShouldBe(this);
-			Metadata.Faults[1].OccurrencePattern.OccurrencePattern.GetType().ShouldBe(typeof(Persistent));
-		}
-
-		public void M()
-		{
-		}
-
-		[Transient]
-		private class F1 : Fault
-		{
-			public void M()
-			{
-			}
-		}
-
-		[Persistent]
-		private class F2 : Fault<X2>
-		{
-			public void M()
-			{
-			}
+			get { return (TComponent)base.Component; }
 		}
 	}
 }

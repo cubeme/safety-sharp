@@ -30,7 +30,8 @@ namespace SafetySharp.Modeling.Faults
 	using Utilities;
 
 	/// <summary>
-	///     Represents a base class for all faults.
+	///     Represents a base class for all faults affecting the behavior of <see cref="Component" />s, where the actual type of the
+	///     affected <see cref="Component" /> instance is irrelevant.
 	/// </summary>
 	[Metadata("InitializeMetadata")]
 	public abstract class Fault
@@ -49,6 +50,11 @@ namespace SafetySharp.Modeling.Faults
 			MetadataBuilders.GetBuilder(this).WithOccurrencePattern(occurrencePattern.CreateInstance());
 			MetadataProvider.InitializeMetadata(this);
 		}
+
+		/// <summary>
+		///     Gets the <see cref="Component" /> instance affected by the fault.
+		/// </summary>
+		protected internal Component Component { get; internal set; }
 
 		/// <summary>
 		///     Gets or sets a value indicating whether the fault is currently occurring.

@@ -77,7 +77,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 		}
 
 		[OccurrencePattern(typeof(P))]
-		private class F : Fault
+		private class F : Fault<X3>
 		{
 		}
 	}
