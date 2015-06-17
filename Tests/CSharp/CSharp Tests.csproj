@@ -298,6 +298,7 @@
     <Compile Include="Metadata\Models\Bindings\throws when sealed.cs" />
     <Compile Include="Metadata\Models\Components\complex hierarchy.cs" />
     <Compile Include="Metadata\Models\Components\cyclic graph.cs" />
+    <Compile Include="Metadata\Models\Components\inline construction.cs" />
     <Compile Include="Metadata\Models\Components\multiple roots.cs" />
     <Compile Include="Metadata\Models\Components\shared components.cs" />
     <Compile Include="Metadata\Models\Components\single root.cs" />

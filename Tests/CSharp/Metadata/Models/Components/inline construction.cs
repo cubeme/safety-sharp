@@ -20,65 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Components.Fields
+namespace Tests.Metadata.Models.Components
 {
 	using System;
-	using System.Reflection;
-	using SafetySharp.Runtime;
+	using SafetySharp.Modeling;
 	using Shouldly;
 	using Utilities;
 
-	internal abstract class C1<T> : TestComponent
+	internal class C : Component
 	{
-		private T _x;
+		private int _x;
 
-		protected C1(params T[] values)
+		public C(params int[] values)
 		{
 			SetInitialValues(_x, values);
 		}
 	}
 
-	internal class C2 : C1<C2.E>
+	internal class M9 : TestModel
 	{
-		public C2()
-			: base(E.A, E.B)
+		public M9()
 		{
+			AddRootComponents(new C(1, 2, 3));
 		}
 
 		protected override void Check()
 		{
-			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(C1<E>).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { E.A, E.B });
-		}
-
-		internal enum E
-		{
-			A,
-			B,
-			C
+			Metadata.RootComponent.Subcomponents[0].Fields[0].InitialValues.ShouldBe(new object[] { 1, 2, 3 });
 		}
 	}
 
-	internal class C3 : C1<int>
+	internal class M11 : TestObject
 	{
-		public C3()
-			: base(6, 8, 9)
-		{
-		}
-
 		protected override void Check()
 		{
-			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(C1<int>).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { 6, 8, 9 });
-		}
+			var m = new Model();
+			m.AddRootComponents(new C(1, 2, 3));
+			m.Seal();
 
-		internal enum E
-		{
-			A,
-			B,
-			C
+			m.Metadata.RootComponent.Subcomponents[0].Fields[0].InitialValues.ShouldBe(new object[] { 1, 2, 3 });
 		}
 	}
 }

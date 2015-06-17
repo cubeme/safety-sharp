@@ -34,7 +34,9 @@ open SafetySharp.Models.Ssm
 module Fields =
 
     let private transform componentCode initCode = 
-        let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { AddRootComponents(%s); } }" componentCode initCode)
+        let code = sprintf "%s class TestModel : Model { public TestModel() { AddRootComponents(%s); } }" componentCode initCode
+        printf "%s" code
+        let model = TestCompilation.CreateModel (code)
         model.FinalizeMetadata ()
         let root = CilToSsm.transformModel model
         root.Subs.[0].Fields

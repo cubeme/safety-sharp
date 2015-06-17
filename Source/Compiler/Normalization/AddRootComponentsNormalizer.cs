@@ -65,7 +65,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			// .WithRootComponents(components)
 			var withRootComponents = Syntax.MemberAccessExpression(getBuilder, "WithRootComponents");
-			var arguments = invocationExpression.Descendants<ArgumentSyntax>();
+			var arguments = invocationExpression.ArgumentList.Arguments;
 			return Syntax.ExpressionStatement(Syntax.InvocationExpression(withRootComponents, arguments)).EnsureLineCount(statement);
 		}
 	}

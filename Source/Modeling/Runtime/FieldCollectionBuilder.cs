@@ -23,6 +23,7 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
@@ -90,7 +91,7 @@ namespace SafetySharp.Runtime
 
 			// Check if the values were provided as an array...
 			if (values.Length == 1 && values[0].GetType().IsArray)
-				values = ((IEnumerable<object>)values[0]).ToArray();
+				values = ((IEnumerable)values[0]).Cast<object>().ToArray();
 
 			var typesMatch = values.All(value => value.GetType() == field.FieldType);
 			Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
