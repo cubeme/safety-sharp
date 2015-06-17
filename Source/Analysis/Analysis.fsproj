@@ -91,6 +91,7 @@
     <Compile Include="Models\Sam\SamRewriter\SamRewriterSimplifyBlocks.fs" />
     <Compile Include="Models\Sam\SamRewriter\SamRewriterChangeIdentifier.fs" />
     <Compile Include="Models\Tsam\Tsam.fs" />
+    <Compile Include="Models\Tsam\TsamEngineOptions.fs" />
     <Compile Include="Models\Tsam\TsamHelpers.fs" />
     <Compile Include="Models\Tsam\TsamTracer.fs" />
     <Compile Include="Models\Tsam\TsamChecks.fs" />
