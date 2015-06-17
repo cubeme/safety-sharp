@@ -251,6 +251,9 @@
       <DependentUpon>ExecutionTests.cs</DependentUpon>
     </Compile>
     <Compile Include="Execution\ExecutionTests.cs" />
+    <Compile Include="Execution\Faults\step method, nondeterministic.cs" />
+    <Compile Include="Execution\Faults\required port, nondeterministic.cs" />
+    <Compile Include="Execution\Faults\provided port, nondeterministic.cs" />
     <Compile Include="Execution\Faults\step method, prioritized faults.cs" />
     <Compile Include="Execution\Faults\required port, prioritized faults.cs" />
     <Compile Include="Execution\Faults\provided port, prioritized faults.cs" />

@@ -43,10 +43,25 @@ namespace SafetySharp.Compiler.Normalization
 	public sealed class LiftedExpressionNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
+		///     Ensures that we don't try to lift the arguments of an array access; we can't get a symbol for
+		///     array's [] operator.
+		/// </summary>
+		public override SyntaxNode VisitElementAccessExpression(ElementAccessExpressionSyntax elementAccess)
+		{
+			if (elementAccess.Expression.GetExpressionType(SemanticModel).TypeKind == TypeKind.Array)
+				return elementAccess;
+
+			return base.VisitElementAccessExpression(elementAccess);
+		}
+
+		/// <summary>
 		///     Lifts the expression represented by <paramref name="argument" />, if necessary.
 		/// </summary>
 		public override SyntaxNode VisitArgument(ArgumentSyntax argument)
 		{
+			if (argument.Parent.Parent is ElementAccessExpressionSyntax)
+				return base.VisitArgument(argument);
+
 			var requiresLifting = argument.HasAttribute<LiftExpressionAttribute>(SemanticModel);
 			argument = (ArgumentSyntax)base.VisitArgument(argument);
 

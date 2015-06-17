@@ -93,30 +93,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 					nonVirtualInvocation = true;
 				}
 				else
-				{
-					var untypedTargetSymbol = nestedMemberAccess.Expression.GetReferencedSymbol(semanticModel);
-
-					var parameterSymbol = untypedTargetSymbol as IParameterSymbol;
-					var localSymbol = untypedTargetSymbol as ILocalSymbol;
-					var fieldSymbol = untypedTargetSymbol as IFieldSymbol;
-					var propertySymbol = untypedTargetSymbol as IPropertySymbol;
-					var methodSymbol = untypedTargetSymbol as IMethodSymbol;
-
-					if (parameterSymbol != null)
-						targetSymbol = parameterSymbol.Type;
-
-					if (localSymbol != null)
-						targetSymbol = localSymbol.Type;
-
-					if (fieldSymbol != null)
-						targetSymbol = fieldSymbol.Type;
-
-					if (propertySymbol != null)
-						targetSymbol = propertySymbol.Type;
-
-					if (methodSymbol != null)
-						targetSymbol = methodSymbol.ReturnType;
-				}
+					targetSymbol = nestedMemberAccess.Expression.GetExpressionType(semanticModel);
 			}
 
 			Assert.NotNull(targetSymbol, "Failed to determine the target symbol.");

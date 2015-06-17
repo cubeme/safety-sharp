@@ -406,7 +406,8 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="line">The original line number.</param>
 		/// <param name="filePath">The path of the original file; if null, only the line numbering will be affected by the directive.</param>
-		private static SyntaxTrivia CreateLineDirective(int line, string filePath)
+		[Pure]
+		private static SyntaxTrivia CreateLineDirective(int line, [NotNull] string filePath)
 		{
 			var lineToken = SyntaxFactory.Literal(line);
 			var lineDirective = String.IsNullOrWhiteSpace(filePath)
@@ -422,6 +423,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 		/// <param name="syntaxNode">The syntax node the directive should be added to.</param>
 		/// <param name="line">The original line number.</param>
 		/// <param name="filePath">The path of the original file; if null, only the line numbering will be affected by the directive.</param>
+		[Pure, NotNull]
 		public static T PrependLineDirective<T>([NotNull] this T syntaxNode, int line, string filePath = null)
 			where T : SyntaxNode
 		{
@@ -436,6 +438,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 		/// <param name="syntaxNode">The syntax node the directive should be added to.</param>
 		/// <param name="line">The original line number.</param>
 		/// <param name="filePath">The path of the original file; if null, only the line numbering will be affected by the directive.</param>
+		[Pure, NotNull]
 		public static T AppendLineDirective<T>([NotNull] this T syntaxNode, int line, string filePath = null)
 			where T : SyntaxNode
 		{
@@ -449,6 +452,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that is not allowed to change the line count.</param>
 		/// <param name="templateNode">The template node that defines the original line count.</param>
+		[Pure, NotNull]
 		public static T EnsureLineCount<T>([NotNull] this T syntaxNode, T templateNode)
 			where T : SyntaxNode
 		{
@@ -457,6 +461,45 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 
 			var line = templateNode.GetLastToken(true, true, true, true).GetLocation().GetMappedLineSpan().EndLinePosition.Line;
 			return syntaxNode.AppendLineDirective(line + 2);
+		}
+
+		/// <summary>
+		///     Gets the <see cref="ITypeSymbol" /> representing the type of <paramref name="syntaxNode" /> within the context of the
+		///     <paramref name="semanticModel" />.
+		/// </summary>
+		/// <param name="syntaxNode">The expression the type should be returned for.</param>
+		/// <param name="semanticModel">The semantic model that should be used for semantic analysis.</param>
+		[Pure, NotNull]
+		public static ITypeSymbol GetExpressionType([NotNull] this ExpressionSyntax syntaxNode, [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			var symbol = syntaxNode.GetReferencedSymbol(semanticModel);
+
+			var parameterSymbol = symbol as IParameterSymbol;
+			var localSymbol = symbol as ILocalSymbol;
+			var fieldSymbol = symbol as IFieldSymbol;
+			var propertySymbol = symbol as IPropertySymbol;
+			var methodSymbol = symbol as IMethodSymbol;
+
+			if (parameterSymbol != null)
+				return parameterSymbol.Type;
+
+			if (localSymbol != null)
+				return localSymbol.Type;
+
+			if (fieldSymbol != null)
+				return fieldSymbol.Type;
+
+			if (propertySymbol != null)
+				return propertySymbol.Type;
+
+			if (methodSymbol != null)
+				return methodSymbol.ReturnType;
+
+			Requires.That(false, "Failed to determine the type of the referenced symbol.");
+			return null;
 		}
 	}
 }
