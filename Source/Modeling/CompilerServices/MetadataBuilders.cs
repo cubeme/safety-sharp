@@ -24,45 +24,23 @@ namespace SafetySharp.CompilerServices
 {
 	using System;
 	using Modeling;
-	using Modeling.Faults;
 	using Runtime;
 
 	/// <summary>
-	///     Provides access to and manages the lifetime of the various metadata builder kinds.
+	///     Provides access to the metadata builders of <see cref="MetadataObject{TMetadata,TMetadataBuilder}" /> instances.
 	/// </summary>
 	public static class MetadataBuilders
 	{
 		/// <summary>
-		///     Gets the <see cref="ComponentMetadata.Builder" /> instance for <paramref name="component" />. Throws a
-		///     <see cref="InvalidOperationException" /> when <paramref name="component" />'s metadata has already
-		///     been fully initialized.
+		///     Gets the <paramref name="obj" />'s <typeparamref name="TMetadataBuilder" /> if its metadata has not yet been
+		///     initialized.
 		/// </summary>
-		/// <param name="component">The component instance the builder should be returned for.</param>
-		public static ComponentMetadata.Builder GetBuilder(Component component)
+		/// <param name="obj">The object the builder should be returned for.</param>
+		public static TMetadataBuilder GetBuilder<TMetadata, TMetadataBuilder>(MetadataObject<TMetadata, TMetadataBuilder> obj)
+			where TMetadata : ObjectMetadata
+			where TMetadataBuilder : class
 		{
-			return (ComponentMetadata.Builder)MetadataProvider.GetBuilder(component);
-		}
-
-		/// <summary>
-		///     Gets the <see cref="FaultMetadata.Builder" /> instance for <paramref name="fault" />. Throws a
-		///     <see cref="InvalidOperationException" /> when <paramref name="fault" />'s metadata has already
-		///     been fully initialized.
-		/// </summary>
-		/// <param name="fault">The fault instance the builder should be returned for.</param>
-		public static FaultMetadata.Builder GetBuilder(Fault fault)
-		{
-			return (FaultMetadata.Builder)MetadataProvider.GetBuilder(fault);
-		}
-
-		/// <summary>
-		///     Gets the <see cref="OccurrencePatternMetadata.Builder" /> instance for <paramref name="occurrencePattern" />. Throws a
-		///     <see cref="InvalidOperationException" /> when <paramref name="occurrencePattern" />'s metadata has already
-		///     been fully initialized.
-		/// </summary>
-		/// <param name="occurrencePattern">The occurrence pattern instance the builder should be returned for.</param>
-		public static OccurrencePatternMetadata.Builder GetBuilder(OccurrencePattern occurrencePattern)
-		{
-			return (OccurrencePatternMetadata.Builder)MetadataProvider.GetBuilder(occurrencePattern);
+			return obj.MetadataBuilder;
 		}
 	}
 }

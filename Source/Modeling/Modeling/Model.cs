@@ -31,7 +31,7 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	///     Represents a model of a safety-critical system.
 	/// </summary>
-	public partial class Model : IDisposable
+	public partial class Model : MetadataObject<ModelMetadata, ModelMetadata.Builder>
 	{
 		/// <summary>
 		///     The list of port bindings established by the model.
@@ -56,11 +56,9 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="rootComponents">The root components of the model.</param>
-		public Model(params Component[] rootComponents)
+		public Model()
+			: base(obj => new ModelMetadata.Builder((Model)obj))
 		{
-			if (rootComponents != null && rootComponents.Length > 0)
-				SetRootComponents(rootComponents);
 		}
 
 		/// <summary>
@@ -100,35 +98,41 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Cleans up all allocated metadata information of the model and its components.
+		///     Adds the <see cref="rootComponent" /> to the model.
 		/// </summary>
-		public void Dispose()
+		/// <param name="rootComponent">The root component that should be added.</param>
+		public void AddRootComponent(IComponent rootComponent)
 		{
-			OnDisposing(true);
+			Requires.CompilationTransformation();
 		}
 
 		/// <summary>
-		///     Cleans up all allocated metadata information of the model and its components.
+		///     Adds the <see cref="rootComponents" /> to the model.
 		/// </summary>
-		protected virtual void OnDisposing(bool disposing)
+		/// <param name="rootComponents">The root components that should be added.</param>
+		public void AddRootComponent(params IComponent[] rootComponents)
 		{
-			// TODO:
-			// - Cleanup ComponentInfos
-			// - Cleanup BindingTable
+			Requires.CompilationTransformation();
 		}
 
 		/// <summary>
-		///     Cleans up all allocated metadata information of the model and its components.
+		///     Explicitely seals the model, preventing any future metadata changes such as adding new root components or bindings. This
+		///     method is called implicitly when the model is analyzed or simulated. If the model has already been sealed, this method
+		///     is a no-op.
 		/// </summary>
-		~Model()
+		public void Seal()
 		{
-			OnDisposing(false);
+			if (!IsMetadataFinalized)
+				MetadataBuilder.FinalizeMetadata();
 		}
 
 		/// <summary>
 		///     Adds the <paramref name="portBinding" /> to the model's bindings.
 		/// </summary>
-		/// <param name="portBinding">The port binding that should be added.</param>
+		/// <param name="portBinding">
+		///     The port binding expression of the form
+		///     <c>component1.RequiredPorts.Port1 = component2.ProvidedPorts.Port2</c> that declares the binding.
+		/// </param>
 		public void Bind(PortBinding portBinding)
 		{
 			Requires.CompilationTransformation();

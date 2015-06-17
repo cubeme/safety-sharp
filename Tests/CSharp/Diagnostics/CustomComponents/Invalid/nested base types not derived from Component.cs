@@ -25,32 +25,39 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 	using System;
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 
 	internal class W5
 	{
-		[Diagnostic(DiagnosticIdentifier.CustomComponent, 32, 23, 2, "Tests.Diagnostics.CustomComponents.Invalid.W5.W6")]
+		[Diagnostic(DiagnosticIdentifier.CustomComponent, 33, 23, 2, "Tests.Diagnostics.CustomComponents.Invalid.W5.W6")]
 		private class W6 : IComponent
 		{
+			public dynamic RequiredPorts { get; private set; }
+			public dynamic ProvidedPorts { get; private set; }
+
 			public void Update()
 			{
 			}
 
-			public dynamic RequiredPorts { get; private set; }
-			public dynamic ProvidedPorts { get; private set; }
+			public bool IsMetadataFinalized { get; private set; }
+			public ObjectMetadata Metadata { get; private set; }
 		}
 	}
 
 	internal class W7 : Component
 	{
-		[Diagnostic(DiagnosticIdentifier.CustomComponent, 46, 23, 2, "Tests.Diagnostics.CustomComponents.Invalid.W7.W8")]
+		[Diagnostic(DiagnosticIdentifier.CustomComponent, 50, 23, 2, "Tests.Diagnostics.CustomComponents.Invalid.W7.W8")]
 		private class W8 : IComponent
 		{
+			public dynamic RequiredPorts { get; private set; }
+			public dynamic ProvidedPorts { get; private set; }
+
 			public void Update()
 			{
 			}
 
-			public dynamic RequiredPorts { get; private set; }
-			public dynamic ProvidedPorts { get; private set; }
+			public bool IsMetadataFinalized { get; private set; }
+			public ObjectMetadata Metadata { get; private set; }
 		}
 	}
 }

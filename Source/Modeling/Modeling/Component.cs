@@ -34,8 +34,14 @@ namespace SafetySharp.Modeling
 	///     Represents a S# component.
 	/// </summary>
 	[Metadata("InitializeMetadata")]
-	public abstract partial class Component : IComponent
+	public abstract partial class Component : MetadataObject<ComponentMetadata, ComponentMetadata.Builder>, IComponent
 	{
+		/// <summary>
+		///     The user-provided name of the component.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private string _name;
+
 		[UsedImplicitly]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private Action _updateMethod = null;
@@ -45,13 +51,9 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		/// <param name="name">The (optional) name of the component.</param>
 		protected Component(string name = null)
+			: base(obj => new ComponentMetadata.Builder((Component)obj))
 		{
-			MetadataProvider.CreateBuilder(this);
-
-			if (!String.IsNullOrWhiteSpace(name))
-				MetadataBuilders.GetBuilder(this).WithName(name);
-
-			MetadataProvider.InitializeMetadata(this);
+			_name = name;
 		}
 
 		/// <summary>
@@ -84,7 +86,9 @@ namespace SafetySharp.Modeling
 		[UsedImplicitly]
 		private void InitializeMetadata()
 		{
-			MetadataBuilders.GetBuilder(this).WithStepMethod(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
+			if (!String.IsNullOrWhiteSpace(_name))
+				MetadataBuilder.WithName(_name);
+			MetadataBuilder.WithStepMethod(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
 		}
 
 		/// <summary>

@@ -23,58 +23,32 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
 	using Modeling;
-	using Modeling.Faults;
 
 	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Fault" /> instance.
+	///     Represents the immutable metadata of a S# <see cref="Model" /> instance.
 	/// </summary>
-	public sealed partial class FaultMetadata : ObjectMetadata
+	public sealed partial class ModelMetadata : ObjectMetadata
 	{
 		/// <summary>
-		///     The component affected by the fault.
+		///     Gets the metadata of the synthesized root component of the model.
 		/// </summary>
-		private Component _component;
+		public ComponentMetadata RootComponent { get; private set; }
 
 		/// <summary>
-		///     Gets the metadata of the declaring component.
+		///     Gets the <see cref="Model" /> instance the metadata is provided for.
 		/// </summary>
-		public ComponentMetadata DeclaringComponent
-		{
-			get { return _component.Metadata; }
-		}
+		public Model Model { get; private set; }
 
 		/// <summary>
-		///     Gets the fault the metadata is provided for.
+		///     Gets the metadata of all components the model consists of.
 		/// </summary>
-		public Fault Fault { get; private set; }
+		public IEnumerable<ComponentMetadata> Components { get; private set; }
 
 		/// <summary>
-		///     Gets the fault effects declared by the fault.
+		///     Gets the port bindings declared by the model.
 		/// </summary>
-		public MemberCollection<FaultEffectMetadata> FaultEffects { get; private set; }
-
-		/// <summary>
-		///     Gets the step methods declared by the fault.
-		/// </summary>
-		public MemberCollection<StepMethodMetadata> StepMethods { get; private set; }
-
-		/// <summary>
-		///     Gets the fields declared by the fault.
-		/// </summary>
-		public MemberCollection<FieldMetadata> Fields { get; private set; }
-
-		/// <summary>
-		///     Gets the metadata of the occurrence pattern determining the fault's occurrence.
-		/// </summary>
-		public OccurrencePatternMetadata OccurrencePattern { get; private set; }
-
-		/// <summary>
-		///     Gets the name of the fault.
-		/// </summary>
-		public string Name
-		{
-			get { return Fault.GetType().Name; }
-		}
+		public MemberCollection<BindingMetadata> Bindings { get; private set; }
 	}
 }

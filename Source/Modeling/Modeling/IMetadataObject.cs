@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,39 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling.Faults
+namespace SafetySharp.Modeling
 {
 	using System;
+	using System.Diagnostics;
 	using Runtime;
-	using Utilities;
 
 	/// <summary>
-	///     Represents a base class for all fault occurrence patterns.
+	///     Represents a S# object that provides S# metadata.
 	/// </summary>
-	public abstract class OccurrencePattern : MetadataObject<OccurrencePatternMetadata, OccurrencePatternMetadata.Builder>
+	public interface IMetadataObject
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     Gets a value indicating whether the object's metadata has been finalized.
 		/// </summary>
-		protected OccurrencePattern()
-			: base(obj => new OccurrencePatternMetadata.Builder((OccurrencePattern)obj))
-		{
-		}
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		bool IsMetadataFinalized { get; }
 
 		/// <summary>
-		///     Updates the internal state of the occurrence pattern. Returns <c>true</c> to indicate that the fault is occurring,
-		///     <c>false</c> otherwise.
+		///     Gets the object's metadata.
 		/// </summary>
-		public abstract bool UpdateOccurrenceState();
-
-		/// <summary>
-		///     Sets the initial <paramref name="values" /> of the current occurrence pattern's <paramref name="field" />.
-		/// </summary>
-		/// <param name="field">The field whose initial values should be set.</param>
-		/// <param name="values">The initial values of the field.</param>
-		protected static void SetInitialValues<T>(T field, params T[] values)
-		{
-			Requires.CompilationTransformation();
-		}
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		ObjectMetadata Metadata { get; }
 	}
 }

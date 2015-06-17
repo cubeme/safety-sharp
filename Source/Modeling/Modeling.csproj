@@ -42,15 +42,20 @@
   <ItemGroup>
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
     <Compile Include="CompilerServices\MetadataAttribute.cs" />
+    <Compile Include="CompilerServices\MetadataBuilders.cs" />
     <Compile Include="CompilerServices\SuppressTransformationAttribute.cs" />
     <Compile Include="Modeling\Faults\Fault.cs" />
     <Compile Include="Modeling\Faults\Persistent.cs" />
     <Compile Include="Modeling\Faults\PersistentAttribute.cs" />
     <Compile Include="Modeling\Faults\Transient.cs" />
     <Compile Include="Modeling\Faults\TransientAttribute.cs" />
+    <Compile Include="Modeling\IMetadataObject.cs" />
+    <Compile Include="Modeling\MetadataObject.cs" />
     <Compile Include="Modeling\PortBinding.cs" />
     <Compile Include="Modeling\PortInfo.cs" />
     <Compile Include="Modeling\PriorityAttribute.cs" />
+    <Compile Include="Runtime\ModelMetadata.Builder.cs" />
+    <Compile Include="Runtime\ModelMetadata.cs" />
     <Compile Include="Runtime\ComponentMetadata.Builder.cs" />
     <Compile Include="Runtime\DeterministicFaultBehavior.cs" />
     <Compile Include="Runtime\FaultEffectMetadata.cs" />
@@ -66,7 +71,6 @@
     <Compile Include="Runtime\MethodBehavior.cs" />
     <Compile Include="Runtime\MethodMetadata.cs" />
     <Compile Include="CompilerServices\LiftExpressionAttribute.cs" />
-    <Compile Include="CompilerServices\MetadataBuilders.cs" />
     <Compile Include="Runtime\MetadataExtensions.cs" />
     <Compile Include="CompilerServices\IntendedBehaviorAttribute.cs" />
     <Compile Include="CompilerServices\SafetySharpAttribute.cs" />
@@ -115,7 +119,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Runtime\OccurrencePatternMetadata.cs" />
     <Compile Include="CompilerServices\ReflectionHelpers.cs" />
-    <Compile Include="Runtime\MetadataProvider.cs" />
     <Compile Include="Runtime\StepMethodMetadata.cs" />
     <Compile Include="Utilities\Assert.cs" />
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />

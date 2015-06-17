@@ -35,12 +35,6 @@ namespace SafetySharp.Modeling
 		internal const string SynthesizedRootName = "R";
 
 		/// <summary>
-		///     The name of the component.
-		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private string _name = String.Empty;
-
-		/// <summary>
 		///     The component's parent component. <c>null</c> for the root of the hierarchy.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]

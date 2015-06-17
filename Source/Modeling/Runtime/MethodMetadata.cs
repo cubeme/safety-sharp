@@ -27,6 +27,7 @@ namespace SafetySharp.Runtime
 	using System.Linq;
 	using System.Reflection;
 	using CompilerServices;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -37,7 +38,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     The S# object the method belongs to.
 		/// </summary>
-		private readonly object _object;
+		private readonly IMetadataObject _object;
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -45,7 +46,7 @@ namespace SafetySharp.Runtime
 		/// <param name="obj">The S# object the method belongs to.</param>
 		/// <param name="method">The CLR method the metadata should be provided for.</param>
 		/// <param name="baseMethod">The overridden base method, if any.</param>
-		internal MethodMetadata(object obj, MethodInfo method, MethodMetadata baseMethod = null)
+		internal MethodMetadata(IMetadataObject obj, MethodInfo method, MethodMetadata baseMethod = null)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(method, () => method);
@@ -173,7 +174,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public ObjectMetadata DeclaringObject
 		{
-			get { return _object.GetMetadata(); }
+			get { return _object.Metadata; }
 		}
 
 		/// <summary>

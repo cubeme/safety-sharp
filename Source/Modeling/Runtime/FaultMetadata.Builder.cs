@@ -26,7 +26,6 @@ namespace SafetySharp.Runtime
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
-	using CompilerServices;
 	using Modeling;
 	using Modeling.Faults;
 	using Utilities;
@@ -105,7 +104,9 @@ namespace SafetySharp.Runtime
 			public void WithOccurrencePattern(OccurrencePattern occurrencePattern)
 			{
 				Requires.NotNull(occurrencePattern, () => occurrencePattern);
-				_occurrencePattern = MetadataBuilders.GetBuilder(occurrencePattern).RegisterMetadata(_fault);
+
+				occurrencePattern.MetadataBuilder.FinalizeMetadata(_fault);
+				_occurrencePattern = occurrencePattern.Metadata;
 			}
 
 			/// <summary>
@@ -129,15 +130,14 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Creates an immutable <see cref="FaultMetadata" /> instance from the current state of the builder and makes it available
-			///     to S#'s <see cref="MetadataProvider" />.
+			///     Creates an immutable <see cref="FaultMetadata" /> instance from the current state of the builder.
 			/// </summary>
 			/// <param name="component">The component that is affected by the fault.</param>
-			internal FaultMetadata RegisterMetadata(Component component)
+			internal void FinalizeMetadata(Component component)
 			{
 				Requires.NotNull(component, () => component);
 
-				var metadata = new FaultMetadata
+				_fault.Metadata = new FaultMetadata
 				{
 					_component = component,
 					Fault = _fault,
@@ -146,9 +146,6 @@ namespace SafetySharp.Runtime
 					StepMethods = new MemberCollection<StepMethodMetadata>(_fault, _stepMethods),
 					OccurrencePattern = _occurrencePattern
 				};
-
-				MetadataProvider.FinalizeMetadata(_fault, metadata);
-				return metadata;
 			}
 		}
 	}

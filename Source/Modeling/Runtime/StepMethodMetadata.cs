@@ -24,6 +24,7 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Reflection;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -37,7 +38,7 @@ namespace SafetySharp.Runtime
 		/// <param name="obj">The S# object the method belongs to.</param>
 		/// <param name="stepMethod">The CLR method the metadata should be provided for.</param>
 		/// <param name="baseStepMethod">The overridden base step method, if any.</param>
-		public StepMethodMetadata(object obj, MethodInfo stepMethod, MethodMetadata baseStepMethod = null)
+		internal StepMethodMetadata(IMetadataObject obj, MethodInfo stepMethod, MethodMetadata baseStepMethod = null)
 			: base(obj, stepMethod, baseStepMethod)
 		{
 			Requires.That(HasImplementation, () => stepMethod, "Step methods must have an implementation.");

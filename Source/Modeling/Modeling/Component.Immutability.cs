@@ -35,14 +35,6 @@ namespace SafetySharp.Modeling
 		private bool _isSealed;
 
 		/// <summary>
-		///     Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
-		/// </summary>
-		internal bool IsMetadataFinalized
-		{
-			get { return _isSealed; }
-		}
-
-		/// <summary>
 		///     Finalizes the component's metadata, disallowing any future metadata modifications.
 		/// </summary>
 		/// <param name="parent">The parent component of the component.</param>

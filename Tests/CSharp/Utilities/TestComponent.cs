@@ -25,13 +25,10 @@ namespace Tests.Utilities
 	using System;
 	using System.Reflection;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime;
 	using Shouldly;
 
 	public abstract class TestComponent : Component
 	{
-		protected ComponentMetadata Metadata { get; private set; }
-
 		protected MethodInfo ComponentUpdatedMethod
 		{
 			get { return typeof(Component).GetMethod("Update"); }
@@ -39,9 +36,7 @@ namespace Tests.Utilities
 
 		public void RunTests()
 		{
-			Metadata = this.GetMetadata();
 			Metadata.Component.ShouldBe(this);
-
 			Check();
 		}
 

@@ -45,7 +45,8 @@ namespace SafetySharp.Runtime
 			private readonly List<ProvidedPortMetadata> _providedPorts = new List<ProvidedPortMetadata>();
 			private readonly List<RequiredPortMetadata> _requiredPorts = new List<RequiredPortMetadata>();
 			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
-			private readonly List<FieldInfo> _subcomponents = new List<FieldInfo>();
+			private readonly List<FieldInfo> _subcomponentFields = new List<FieldInfo>();
+			private readonly List<IComponent> _subcomponents = new List<IComponent>();
 			private string _name;
 
 			/// <summary>
@@ -90,17 +91,30 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
+			///     Adds the <paramref name="subcomponent" /> to the component's metadata.
+			/// </summary>
+			/// <param name="subcomponent">The subcomponent that should be added..</param>
+			public void WithSubcomponent(IComponent subcomponent)
+			{
+				Requires.NotNull(subcomponent, () => subcomponent);
+				Requires.That(!_subcomponents.Contains(subcomponent), () => subcomponent, "The subcomponent has already been added.");
+				Requires.OfType<Component>(subcomponent, () => subcomponent);
+
+				_subcomponents.Add(subcomponent);
+			}
+
+			/// <summary>
 			///     Adds the subcomponent stored in <see cref="field" /> to the component's metadata.
 			/// </summary>
 			/// <param name="field">The field holding the subcomponent reference.</param>
 			public void WithSubcomponent(FieldInfo field)
 			{
 				Requires.NotNull(field, () => field);
-				Requires.That(!_subcomponents.Contains(field), () => field, "The subcomponent has already been added.");
+				Requires.That(!_subcomponentFields.Contains(field), () => field, "The subcomponent has already been added.");
 				Requires.That(typeof(IComponent).IsAssignableFrom(field.FieldType), () => field, "The subcomponent must implement '{0}'.",
 					typeof(IComponent).FullName);
 
-				_subcomponents.Add(field);
+				_subcomponentFields.Add(field);
 			}
 
 			/// <summary>
@@ -111,10 +125,10 @@ namespace SafetySharp.Runtime
 			public void WithGenericSubcomponent(FieldInfo field)
 			{
 				Requires.NotNull(field, () => field);
-				Requires.That(!_subcomponents.Contains(field), () => field, "The subcomponent has already been added.");
+				Requires.That(!_subcomponentFields.Contains(field), () => field, "The subcomponent has already been added.");
 
 				if (typeof(IComponent).IsAssignableFrom(field.FieldType))
-					_subcomponents.Add(field);
+					_subcomponentFields.Add(field);
 			}
 
 			/// <summary>
@@ -129,7 +143,9 @@ namespace SafetySharp.Runtime
 				Requires.That(!_faults.Any(f => f.Fault is TFault), () => fault, "The fault has already been added.");
 
 				fault.Component = _component;
-				_faults.Add(MetadataBuilders.GetBuilder(fault).RegisterMetadata(_component));
+				fault.MetadataBuilder.FinalizeMetadata(_component);
+
+				_faults.Add(fault.Metadata);
 			}
 
 			/// <summary>
@@ -219,14 +235,14 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Creates an immutable <see cref="ComponentMetadata" /> instance from the current state of the builder and makes it
-			///     available
-			///     to S#'s <see cref="MetadataProvider" />.
+			///     Creates an immutable <see cref="ComponentMetadata" /> instance from the current state of the builder.
 			/// </summary>
 			/// <param name="parent">The metadata of the parent component. Can be <c>null</c> for the root of the component hierarchy.</param>
-			internal void RegisterMetadata(ComponentMetadata parent = null)
+			internal void FinalizeMetadata(ComponentMetadata parent = null)
 			{
-				var metadata = new ComponentMetadata
+				// We have to register the metadata now, even though we'll still have to change it later on; this way,
+				// we prevent stack overflows when the component hierarchy is cyclic
+				_component.Metadata = new ComponentMetadata
 				{
 					Component = _component,
 					Name = _name,
@@ -239,36 +255,35 @@ namespace SafetySharp.Runtime
 					Bindings = new MemberCollection<BindingMetadata>(_component, _bindings)
 				};
 
-				// We have to register the metadata now, even though we'll still have to change it later on; this way,
-				// we prevent stack overflows when the component hierarchy is cyclic
-				MetadataProvider.FinalizeMetadata(_component, metadata);
-
 				// Initialize the fault injections
-				metadata.StepMethods.ForEach(stepMethod => stepMethod.FaultInjector.InjectFaults());
-				metadata.RequiredPorts.ForEach(port => port.FaultInjector.InjectFaults());
-				metadata.ProvidedPorts.ForEach(port => port.FaultInjector.InjectFaults());
+				_component.Metadata.StepMethods.ForEach(stepMethod => stepMethod.FaultInjector.InjectFaults());
+				_component.Metadata.RequiredPorts.ForEach(port => port.FaultInjector.InjectFaults());
+				_component.Metadata.ProvidedPorts.ForEach(port => port.FaultInjector.InjectFaults());
 
 				// Get all subcomponent instances
-				var subcomponents = _subcomponents.Select(field =>
-				{
-					var component = field.GetValue(_component) as Component;
-					Requires.That(component != null, "Subcomponent field '{0}.{1}' does not contain a valid component instance.",
-						field.DeclaringType.FullName, field.Name);
+				var subcomponents = _subcomponentFields
+					.Select(field =>
+					{
+						var component = field.GetValue(_component) as Component;
+						Requires.That(component != null, "Subcomponent field '{0}.{1}' does not contain a valid component instance.",
+							field.DeclaringType.FullName, field.Name);
 
-					return component;
-				}).ToArray();
+						return component;
+					})
+					.Concat(_subcomponents)
+					.Cast<Component>()
+					.ToArray();
 
 				// Initialize their metadata, if that hasn't happened already (i.e., when the component graph is cyclic)
 				foreach (var subcomponent in subcomponents)
 				{
-					object builder;
-					if (MetadataProvider.TryGetBuilder(subcomponent, out builder))
-						((Builder)builder).RegisterMetadata(metadata);
+					if (!subcomponent.IsMetadataFinalized)
+						subcomponent.MetadataBuilder.FinalizeMetadata(_component.Metadata);
 				}
 
 				// Add the subcomponents to the metadata
-				var subcomponentMetadata = subcomponents.Select(subcomponent => subcomponent.GetMetadata());
-				metadata.Subcomponents = new MemberCollection<ComponentMetadata>(_component, subcomponentMetadata);
+				var subcomponentMetadata = subcomponents.Select(subcomponent => subcomponent.Metadata);
+				_component.Metadata.Subcomponents = new MemberCollection<ComponentMetadata>(_component, subcomponentMetadata);
 			}
 		}
 	}

@@ -25,6 +25,7 @@ namespace SafetySharp.Runtime
 	using System;
 	using System.Collections.Generic;
 	using System.Reflection;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -35,7 +36,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     The S# object the field belongs to.
 		/// </summary>
-		private readonly object _object;
+		private readonly IMetadataObject _object;
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -45,7 +46,7 @@ namespace SafetySharp.Runtime
 		/// <param name="initialValues">
 		///     The set of initial values. A value of <c>null</c> indicates that the current field value should be used.
 		/// </param>
-		internal FieldMetadata(object obj, FieldInfo field, object[] initialValues)
+		internal FieldMetadata(IMetadataObject obj, FieldInfo field, object[] initialValues)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(field, () => field);
@@ -74,7 +75,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public ObjectMetadata DeclaringObject
 		{
-			get { return _object.GetMetadata(); }
+			get { return _object.Metadata; }
 		}
 
 		/// <summary>

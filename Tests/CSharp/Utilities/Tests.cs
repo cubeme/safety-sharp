@@ -114,7 +114,7 @@ namespace Tests.Utilities
 			{
 				var type = assembly.GetType(componentType);
 				var component = (TestComponent)Activator.CreateInstance(type);
-				MetadataBuilders.GetBuilder(component).RegisterMetadata();
+				MetadataBuilders.GetBuilder(component).FinalizeMetadata();
 
 				component.RunTests();
 			}

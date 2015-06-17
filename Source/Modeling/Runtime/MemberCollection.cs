@@ -26,6 +26,7 @@ namespace SafetySharp.Runtime
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -43,14 +44,14 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     The S# object the method collection belongs to.
 		/// </summary>
-		private readonly object _object;
+		private readonly IMetadataObject _object;
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The object the member collection belongs to.</param>
 		/// <param name="members">The members that should be contained in the collection.</param>
-		internal MemberCollection(object obj, IEnumerable<T> members)
+		internal MemberCollection(IMetadataObject obj, IEnumerable<T> members)
 		{
 			Requires.NotNull(members, () => members);
 
@@ -63,7 +64,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public ObjectMetadata DeclaringObject
 		{
-			get { return _object.GetMetadata(); }
+			get { return _object.Metadata; }
 		}
 
 		/// <summary>

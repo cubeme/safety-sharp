@@ -107,26 +107,20 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Creates an immutable <see cref="OccurrencePatternMetadata" /> instance from the current state of the builder and makes
-			///     it
-			///     available
-			///     to S#'s <see cref="MetadataProvider" />.
+			///     Creates an immutable <see cref="OccurrencePatternMetadata" /> instance from the current state of the builder.
 			/// </summary>
 			/// <param name="fault">The fault that is affected by the occurrence pattern.</param>
-			internal OccurrencePatternMetadata RegisterMetadata(Fault fault)
+			internal void FinalizeMetadata(Fault fault)
 			{
 				Requires.NotNull(fault, () => fault);
 
-				var metadata = new OccurrencePatternMetadata
+				_occurrencePattern.Metadata = new OccurrencePatternMetadata
 				{
 					_fault = fault,
 					OccurrencePattern = _occurrencePattern,
 					Fields = _fields.ToImmutableCollection(),
 					StepMethods = new MemberCollection<StepMethodMetadata>(_occurrencePattern, _stepMethods)
 				};
-
-				MetadataProvider.FinalizeMetadata(_occurrencePattern, metadata);
-				return metadata;
 			}
 		}
 	}

@@ -25,16 +25,19 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 	using System;
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 
-	[Diagnostic(DiagnosticIdentifier.CustomComponent, 30, 20, 2, "Tests.Diagnostics.CustomComponents.Invalid.W4")]
+	[Diagnostic(DiagnosticIdentifier.CustomComponent, 31, 20, 2, "Tests.Diagnostics.CustomComponents.Invalid.W4")]
 	internal class W4 : IComponent
 	{
 		public dynamic RequiredPorts { get; private set; }
-
 		public dynamic ProvidedPorts { get; private set; }
 
 		public void Update()
 		{
 		}
+
+		public bool IsMetadataFinalized { get; private set; }
+		public ObjectMetadata Metadata { get; private set; }
 	}
 }

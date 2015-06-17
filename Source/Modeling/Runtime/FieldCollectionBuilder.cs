@@ -26,6 +26,7 @@ namespace SafetySharp.Runtime
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -34,13 +35,13 @@ namespace SafetySharp.Runtime
 	internal sealed class FieldCollectionBuilder
 	{
 		private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
-		private readonly object _object;
+		private readonly IMetadataObject _object;
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The objects that declares the fields.</param>
-		public FieldCollectionBuilder(object obj)
+		public FieldCollectionBuilder(IMetadataObject obj)
 		{
 			Requires.NotNull(obj, () => obj);
 			_object = obj;

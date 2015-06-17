@@ -25,20 +25,23 @@ namespace Tests.Diagnostics.CustomComponents.Invalid
 	using System;
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 
 	internal class W9
 	{
 	}
 
-	[Diagnostic(DiagnosticIdentifier.CustomComponent, 34, 20, 3, "Tests.Diagnostics.CustomComponents.Invalid.W10")]
+	[Diagnostic(DiagnosticIdentifier.CustomComponent, 35, 20, 3, "Tests.Diagnostics.CustomComponents.Invalid.W10")]
 	internal class W10 : W9, IComponent
 	{
+		public ObjectMetadata Metadata { get; private set; }
 		public dynamic RequiredPorts { get; private set; }
-
 		public dynamic ProvidedPorts { get; private set; }
 
 		public void Update()
 		{
 		}
+
+		public bool IsMetadataFinalized { get; private set; }
 	}
 }

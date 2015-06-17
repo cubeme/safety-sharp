@@ -24,7 +24,7 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using Modeling;
-	using Modeling.Faults;
+	using Utilities;
 
 	/// <summary>
 	///     Provides extension methods for working with S# metadata.
@@ -32,42 +32,35 @@ namespace SafetySharp.Runtime
 	public static class MetadataExtensions
 	{
 		/// <summary>
+		///     Gets the <typeparamref name="TMetadata" /> instance for the <paramref name="obj" />.
+		/// </summary>
+		/// <param name="obj">The object the <typeparamref name="TMetadata" /> instance should be retrieved for.</param>
+		/// <remarks>
+		///     S# users call this method to retrieve the metadata of a S# metadata object. Since this is usually not needed when
+		///     modeling components, the <see cref="MetadataObject{TMetadata,TMetadataBuilder}.Metadata" /> property is <c>internal</c>
+		///     so as to not clutter up IntelliSense too much.
+		/// </remarks>
+		public static TMetadata GetMetadata<TMetadata, TMetadataBuilder>(this MetadataObject<TMetadata, TMetadataBuilder> obj)
+			where TMetadata : ObjectMetadata
+			where TMetadataBuilder : class
+		{
+			Requires.NotNull(obj, () => obj);
+			return obj.Metadata;
+		}
+
+		/// <summary>
 		///     Gets the <see cref="ObjectMetadata" /> instance for the <paramref name="obj" />.
 		/// </summary>
-		/// <param name="obj">The component the <see cref="ObjectMetadata" /> instance should be retrieved for.</param>
-		public static ObjectMetadata GetMetadata(this object obj)
+		/// <param name="obj">The object the <see cref="ObjectMetadata" /> instance should be retrieved for.</param>
+		/// <remarks>
+		///     S# users call this method to retrieve the metadata of a S# metadata object. Since this is usually not needed when
+		///     modeling components, the <see cref="IMetadataObject.Metadata" /> property is implemented explicitly
+		///     so as to not clutter up IntelliSense too much.
+		/// </remarks>
+		public static ObjectMetadata GetMetadata(this IMetadataObject obj)
 		{
-			return MetadataProvider.GetMetadata(obj);
-		}
-
-		/// <summary>
-		///     Gets the <see cref="ComponentMetadata" /> instance for the <paramref name="component" /> instance.
-		/// </summary>
-		/// <param name="component">The component the <see cref="ComponentMetadata" /> instance should be retrieved for.</param>
-		public static ComponentMetadata GetMetadata(this IComponent component)
-		{
-			return (ComponentMetadata)MetadataProvider.GetMetadata(component);
-		}
-
-		/// <summary>
-		///     Gets the <see cref="FaultMetadata" /> instance for the <paramref name="fault" /> instance.
-		/// </summary>
-		/// <param name="fault">The fault the <see cref="FaultMetadata" /> instance should be retrieved for.</param>
-		public static FaultMetadata GetMetadata(this Fault fault)
-		{
-			return (FaultMetadata)MetadataProvider.GetMetadata(fault);
-		}
-
-		/// <summary>
-		///     Gets the <see cref="OccurrencePatternMetadata" /> instance for the <paramref name="occurrencePattern" /> instance.
-		/// </summary>
-		/// <param name="occurrencePattern">
-		///     The occurrence pattern the <see cref="OccurrencePatternMetadata" /> instance should be retrieved
-		///     for.
-		/// </param>
-		public static OccurrencePatternMetadata GetMetadata(this OccurrencePattern occurrencePattern)
-		{
-			return (OccurrencePatternMetadata)MetadataProvider.GetMetadata(occurrencePattern);
+			Requires.NotNull(obj, () => obj);
+			return obj.Metadata;
 		}
 	}
 }

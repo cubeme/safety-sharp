@@ -34,21 +34,14 @@ namespace SafetySharp.Modeling.Faults
 	///     affected <see cref="Component" /> instance is irrelevant.
 	/// </summary>
 	[Metadata("InitializeMetadata")]
-	public abstract class Fault
+	public abstract class Fault : MetadataObject<FaultMetadata, FaultMetadata.Builder>
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		protected Fault()
+			: base(obj => new FaultMetadata.Builder((Fault)obj))
 		{
-			MetadataProvider.CreateBuilder(this);
-
-			var occurrencePattern = GetType().GetCustomAttribute<OccurrencePatternAttribute>();
-			Requires.That(occurrencePattern != null, "Expected fault to be marked with an instance of '{0}'.",
-				typeof(OccurrencePatternAttribute).FullName);
-
-			MetadataBuilders.GetBuilder(this).WithOccurrencePattern(occurrencePattern.CreateInstance());
-			MetadataProvider.InitializeMetadata(this);
 		}
 
 		/// <summary>
@@ -74,9 +67,13 @@ namespace SafetySharp.Modeling.Faults
 		[UsedImplicitly]
 		private void InitializeMetadata()
 		{
-			MetadataBuilders
-				.GetBuilder(this)
-				.WithStepMethod(ReflectionHelpers.GetMethod(typeof(Fault), "UpdateFaultState", Type.EmptyTypes, typeof(void)));
+			MetadataBuilder.WithStepMethod(ReflectionHelpers.GetMethod(typeof(Fault), "UpdateFaultState", Type.EmptyTypes, typeof(void)));
+
+			var occurrencePattern = GetType().GetCustomAttribute<OccurrencePatternAttribute>();
+			Requires.That(occurrencePattern != null, "Expected fault to be marked with an instance of '{0}'.",
+				typeof(OccurrencePatternAttribute).FullName);
+
+			MetadataBuilder.WithOccurrencePattern(occurrencePattern.CreateInstance());
 		}
 
 		/// <summary>
