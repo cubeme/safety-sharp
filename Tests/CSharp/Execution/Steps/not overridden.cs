@@ -30,7 +30,7 @@ namespace Tests.Execution.Steps
 		protected override void Check()
 		{
 			// No exception
-			DoStep();
+			ExecuteUpdate();
 		}
 	}
 }

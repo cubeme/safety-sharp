@@ -23,8 +23,6 @@
 namespace SafetySharp.Compiler.Normalization
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Linq;
 	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -32,16 +30,18 @@ namespace SafetySharp.Compiler.Normalization
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
+	using Runtime;
 
 	/// <summary>
-	///     Replaces all invocations of any of the <c>SetInitialValues</c> methods with an invocation of the corresponding metadata
-	///     builder's <c>WithInitialValues</c> method.
+	///     Replaces all invocations of the <see cref="Model.AddRootComponent" /> and
+	///     <see cref="Model.AddRootComponents" /> methods with an invocation of
+	///     <see cref="ModelMetadata.Builder.WithRootComponents" />
 	/// </summary>
-	public sealed class InitialValuesNormalizer : SyntaxNormalizer
+	public sealed class AddRootComponentsNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
 		///     Normalizes the <paramref name="statement" /> if it is an invocation of
-		///     <see cref="Component.SetInitialValues{T}(T,T[])" />.
+		///     <see cref="Model.AddRootComponent" /> or <see cref="Model.AddRootComponents" />.
 		/// </summary>
 		public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax statement)
 		{
@@ -50,30 +50,23 @@ namespace SafetySharp.Compiler.Normalization
 				return base.VisitExpressionStatement(statement);
 
 			var methodSymbol = invocationExpression.GetReferencedSymbol(SemanticModel);
-			if (methodSymbol.Name != "SetInitialValues" || !methodSymbol.IsStatic)
+			if (methodSymbol.Name != "AddRootComponent" && methodSymbol.Name != "AddRootComponents")
 				return base.VisitExpressionStatement(statement);
 
-			var isComponentMethod = methodSymbol.ContainingType.Equals(Compilation.GetComponentClassSymbol());
-			var isFaultMethod = methodSymbol.ContainingType.Equals(Compilation.GetFaultClassSymbol());
-			var isOccurrenceMethod = methodSymbol.ContainingType.Equals(Compilation.GetOccurrencePatternClassSymbol());
-
-			if (!isComponentMethod && !isFaultMethod && !isOccurrenceMethod)
+			if (!methodSymbol.ContainingType.Equals(Compilation.GetModelClassSymbol()))
 				return base.VisitExpressionStatement(statement);
 
-			// MetadataBuilders.GetBuilder(this)
-			var metadataBuilderSymbol = Syntax.TypeExpression(Compilation.GetTypeSymbol(typeof(MetadataBuilders)));
-			var getBuilderMethod = Syntax.MemberAccessExpression(metadataBuilderSymbol, "GetBuilder");
-			var builder = Syntax.InvocationExpression(getBuilderMethod, Syntax.ThisExpression());
+			// MetadataBuilders.GetBuilder(target)
+			var metadataBuilderType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(MetadataBuilders)));
+			var getBuilderMethod = Syntax.MemberAccessExpression(metadataBuilderType, "GetBuilder");
+			var invokedMemberExpression = invocationExpression.Expression as MemberAccessExpressionSyntax;
+			var builderTarget = invokedMemberExpression == null ? Syntax.ThisExpression() : invokedMemberExpression.Expression.RemoveTrivia();
+			var getBuilder = Syntax.InvocationExpression(getBuilderMethod, builderTarget);
 
-			// ReflectionHelpers.GetField(typeof(...), typeof(...), "...")
-			var fieldSymbol = invocationExpression.ArgumentList.Arguments[0].Expression.GetReferencedSymbol<IFieldSymbol>(SemanticModel);
-			var fieldInfo = fieldSymbol.GetRuntimeFieldExpression(Syntax);
-
-			// .WithInitialValues()
-			var withInitialValues = Syntax.MemberAccessExpression(builder, "WithInitialValues");
-			var arguments = new List<ArgumentSyntax>(invocationExpression.ArgumentList.Arguments.Skip(1));
-			arguments.Insert(0, (ArgumentSyntax)Syntax.Argument(fieldInfo));
-			return Syntax.ExpressionStatement(Syntax.InvocationExpression(withInitialValues, arguments)).EnsureLineCount(statement);
+			// .WithRootComponents(components)
+			var withRootComponents = Syntax.MemberAccessExpression(getBuilder, "WithRootComponents");
+			var arguments = invocationExpression.Descendants<ArgumentSyntax>();
+			return Syntax.ExpressionStatement(Syntax.InvocationExpression(withRootComponents, arguments)).EnsureLineCount(statement);
 		}
 	}
 }

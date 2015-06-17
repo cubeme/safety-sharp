@@ -123,10 +123,12 @@ namespace SafetySharp.Compiler.Normalization
 			var leftPort = CreatePortExpression(declaringType, boundPorts.Left, leftExpression, delegateType.Identifier.ValueText);
 			var rightPort = CreatePortExpression(declaringType, boundPorts.Right, rightExpression, delegateType.Identifier.ValueText);
 
-			// MetadataBuilders.GetBuilder(this)
+			// MetadataBuilders.GetBuilder(target)
 			var metadataBuilderType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(MetadataBuilders)));
 			var getBuilderMethod = Syntax.MemberAccessExpression(metadataBuilderType, "GetBuilder");
-			var getBuilder = Syntax.InvocationExpression(getBuilderMethod, Syntax.ThisExpression());
+			var invokedMemberExpression = invocationExpression.Expression as MemberAccessExpressionSyntax;
+			var builderTarget = invokedMemberExpression == null ? Syntax.ThisExpression() : invokedMemberExpression.Expression.RemoveTrivia();
+			var getBuilder = Syntax.InvocationExpression(getBuilderMethod, builderTarget);
 
 			// .WithBinding(leftPort, rightPort)
 			var withBindingMethod = Syntax.MemberAccessExpression(getBuilder, "WithBinding");

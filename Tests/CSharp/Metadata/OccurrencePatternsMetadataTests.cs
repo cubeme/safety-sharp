@@ -32,13 +32,13 @@ namespace Tests.Metadata
 		[Theory, MemberData("DiscoverTests", "OccurrencePatterns/Fields")]
 		public void Fields(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "OccurrencePatterns/StepMethods")]
 		public void StepMethods(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 	}
 }

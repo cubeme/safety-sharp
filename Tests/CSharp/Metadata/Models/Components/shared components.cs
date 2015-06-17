@@ -20,41 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Bindings.Models
+namespace Tests.Metadata.Models.Components
 {
 	using System;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.MetadataAnalysis;
+	using Shouldly;
+	using Utilities;
 
-	internal class X1 : Component
+	internal class C7 : Component
 	{
-		public void M()
-		{
-		}
+		private X8 _a;
+		private X8 _b;
 
-		public extern void N();
-	}
-
-	partial class In1 : Model
-	{
-		private In1(X1 x1, X1 x2)
+		public C7(X8 a, X8 b)
 		{
-			Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
+			_a = a;
+			_b = b;
 		}
 	}
 
-	partial class Out1 : Model
+	internal class X8 : Component
 	{
-		private Out1(X1 x1, X1 x2)
-		{
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x1, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "N", new System.Type[]{}, typeof(void))),
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x2, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "M", new System.Type[]{}, typeof(void))));
-		}
 	}
 
-	partial class Out1
+	internal class M8 : TestObject
 	{
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __BindingDelegate0__();
+		protected override void Check()
+		{
+			var b = new X8();
+			var c = new C7(b, b);
+			var m = new Model();
+			m.AddRootComponents(c);
+
+			Tests.RaisesWith<ComponentHierarchyException>(() => m.Seal(), e => e.Component.ShouldBe(b.Metadata));
+		}
 	}
 }

@@ -36,17 +36,44 @@ namespace Tests.Normalization.Bindings.Models
 
 	partial class In2
 	{
+		private In2 In
+		{
+			get { return null; }
+		}
+
 		private void Q(X2 x1, X2 x2, Model m)
 		{
 			m.Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
+			this.In.GetModel().Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
+		}
+
+		private Model GetModel()
+		{
+			return null;
 		}
 	}
 
 	partial class Out2
 	{
+		private Out2 In
+		{
+			get { return null; }
+		}
+		
 		private void Q(X2 x1, X2 x2, Model m)
 		{
-			//global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(m).WithBinding((__BindingDelegate0__)(x1.N), (__BindingDelegate0__)(x2.M));
+			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(m).WithBinding(
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x1, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X2), "N", new System.Type[]{}, typeof(void))),
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x2, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X2), "M", new System.Type[]{}, typeof(void))));
+
+			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this.In.GetModel()).WithBinding(
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate1__), x1, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X2), "N", new System.Type[]{}, typeof(void))),
+				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate1__), x2, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X2), "M", new System.Type[]{}, typeof(void))));
+		}
+
+		private Model GetModel()
+		{
+			return null;
 		}
 	}
 
@@ -54,5 +81,11 @@ namespace Tests.Normalization.Bindings.Models
 	{
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __BindingDelegate0__();
+	}
+
+	partial class Out2
+	{
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate void __BindingDelegate1__();
 	}
 }

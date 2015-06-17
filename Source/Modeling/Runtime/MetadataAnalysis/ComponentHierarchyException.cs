@@ -20,41 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Bindings.Models
+namespace SafetySharp.Runtime.MetadataAnalysis
 {
 	using System;
-	using SafetySharp.Modeling;
+	using Utilities;
 
-	internal class X1 : Component
+	/// <summary>
+	///     Raised when a component is found in multiple locations of a component hierarchy.
+	/// </summary>
+	public class ComponentHierarchyException : Exception
 	{
-		public void M()
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="component">The metadata of the component that was found in multiple locations of a component hierarchy.</param>
+		public ComponentHierarchyException(ComponentMetadata component)
+			: base("A component has been found in multiple locations of the component hierarchy; " +
+				   "the 'Component' property contains the metadata of the component that violated the hierarchy constraint.")
 		{
+			Requires.NotNull(component, () => component);
+			Component = component;
 		}
 
-		public extern void N();
-	}
-
-	partial class In1 : Model
-	{
-		private In1(X1 x1, X1 x2)
-		{
-			Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
-		}
-	}
-
-	partial class Out1 : Model
-	{
-		private Out1(X1 x1, X1 x2)
-		{
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x1, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "N", new System.Type[]{}, typeof(void))),
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x2, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "M", new System.Type[]{}, typeof(void))));
-		}
-	}
-
-	partial class Out1
-	{
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __BindingDelegate0__();
+		/// <summary>
+		///     Gets the metadata of the component that was found in multiple locations of a component hierarchy.
+		/// </summary>
+		public ComponentMetadata Component { get; private set; }
 	}
 }

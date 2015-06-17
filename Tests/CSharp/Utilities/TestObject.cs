@@ -20,41 +20,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Bindings.Models
+namespace Tests.Utilities
 {
 	using System;
-	using SafetySharp.Modeling;
+	using JetBrains.Annotations;
+	using SafetySharp.Utilities;
+	using Xunit.Abstractions;
 
-	internal class X1 : Component
+	/// <summary>
+	///     Represents a base class for testable objects that are compiled and instantiated dynamically during test execution.
+	/// </summary>
+	public abstract class TestObject : ITestableObject
 	{
-		public void M()
+		/// <summary>
+		///     Writes to the test output stream.
+		/// </summary>
+		private ITestOutputHelper _output;
+
+		/// <summary>
+		///     Executes the tests of the object.
+		/// </summary>
+		public void Test(ITestOutputHelper output)
 		{
+			_output = output;
+			Check();
 		}
 
-		public extern void N();
-	}
+		/// <summary>
+		///     Checks the test assertions.
+		/// </summary>
+		protected abstract void Check();
 
-	partial class In1 : Model
-	{
-		private In1(X1 x1, X1 x2)
+		/// <summary>
+		///     Writes the formatted <paramref name="message" /> to the test output stream.
+		/// </summary>
+		/// <param name="message">The formatted message that should be written.</param>
+		/// <param name="args">The format arguments of the message.</param>
+		[StringFormatMethod("message")]
+		protected void Log(string message, params object[] args)
 		{
-			Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
+			Assert.NotNull(_output, "A test output helper is not available.");
+			_output.WriteLine(message, args);
 		}
-	}
-
-	partial class Out1 : Model
-	{
-		private Out1(X1 x1, X1 x2)
-		{
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x1, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "N", new System.Type[]{}, typeof(void))),
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x2, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "M", new System.Type[]{}, typeof(void))));
-		}
-	}
-
-	partial class Out1
-	{
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __BindingDelegate0__();
 	}
 }

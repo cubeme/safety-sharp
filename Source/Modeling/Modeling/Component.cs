@@ -49,8 +49,16 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
+		protected Component()
+			: this(null)
+		{
+		}
+
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
 		/// <param name="name">The (optional) name of the component.</param>
-		protected Component(string name = null)
+		protected Component(string name)
 			: base(obj => new ComponentMetadata.Builder((Component)obj))
 		{
 			_name = name;

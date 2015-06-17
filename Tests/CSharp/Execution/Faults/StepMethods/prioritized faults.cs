@@ -43,28 +43,28 @@ namespace Tests.Execution.Faults.StepMethods
 			Metadata.Faults[0].Fault.IsOccurring = false;
 			Metadata.Faults[1].Fault.IsOccurring = false;
 
-			DoStep();
+			ExecuteUpdate();
 			_x.ShouldBe(3);
 
 			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = false;
 
-			DoStep();
+			ExecuteUpdate();
 			_x.ShouldBe(7);
 
 			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = false;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
-			DoStep();
+			ExecuteUpdate();
 			_x.ShouldBe(21);
 
 			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
-			DoStep();
+			ExecuteUpdate();
 			_x.ShouldBe(21);
 		}
 

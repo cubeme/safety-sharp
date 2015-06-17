@@ -20,41 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Bindings.Models
+namespace Tests.Metadata.Models.Bindings
 {
 	using System;
 	using SafetySharp.Modeling;
+	using Utilities;
 
-	internal class X1 : Component
+	internal class X : Component
 	{
+		public extern void N();
+
 		public void M()
 		{
 		}
-
-		public extern void N();
 	}
 
-	partial class In1 : Model
+	internal class T : TestObject
 	{
-		private In1(X1 x1, X1 x2)
+		protected override void Check()
 		{
-			Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
-		}
-	}
+			var x = new X();
+			var m = new Model();
+			m.Seal();
 
-	partial class Out1 : Model
-	{
-		private Out1(X1 x1, X1 x2)
+			Tests.RaisesInvalidOpException(() => Bind(m, x));
+		}
+
+		private static void Bind(Model m, X x)
 		{
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x1, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "N", new System.Type[]{}, typeof(void))),
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x2, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "M", new System.Type[]{}, typeof(void))));
+			m.Bind(x.RequiredPorts.N = x.ProvidedPorts.M);
 		}
-	}
-
-	partial class Out1
-	{
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __BindingDelegate0__();
 	}
 }

@@ -40,7 +40,7 @@ namespace Tests.Execution.Faults.StepMethods
 
 		private int M()
 		{
-			DoStep();
+			ExecuteUpdate();
 			return _x;
 		}
 

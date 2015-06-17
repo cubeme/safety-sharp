@@ -39,7 +39,7 @@ namespace Tests.Execution.Faults.StepMethods
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fault.IsOccurring = true;
-			DoStep();
+			ExecuteUpdate();
 			_x.ShouldBe(3);
 		}
 
@@ -67,7 +67,7 @@ namespace Tests.Execution.Faults.StepMethods
 		{
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = true;
-			DoStep();
+			ExecuteUpdate();
 			_x.ShouldBe(3);
 		}
 

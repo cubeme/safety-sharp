@@ -181,7 +181,7 @@ namespace SafetySharp.Compiler.Normalization
 					if (field.Type.TypeKind == TypeKind.TypeParameter)
 						return true;
 
-					return field.Type.ImplementsIComponent(Compilation);
+					return field.Type.ImplementsIComponent(Compilation) || field.Type.Equals(Compilation.GetComponentInterfaceSymbol());
 				});
 
 			foreach (var field in fields)

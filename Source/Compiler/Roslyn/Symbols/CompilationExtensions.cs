@@ -79,6 +79,18 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
+		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="Model" /> class within the
+		///     context of the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation the class symbol should be returned for.</param>
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetModelClassSymbol([NotNull] this Compilation compilation)
+		{
+			Requires.NotNull(compilation, () => compilation);
+			return compilation.GetTypeSymbol<Model>();
+		}
+
+		/// <summary>
 		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="Component" /> class within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>

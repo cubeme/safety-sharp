@@ -32,19 +32,19 @@ namespace Tests.Metadata
 		[Theory, MemberData("DiscoverTests", "Faults/Fields")]
 		public void Fields(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Faults/FaultEffects")]
 		public void FaultEffects(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Faults/StepMethods")]
 		public void StepMethods(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 	}
 }

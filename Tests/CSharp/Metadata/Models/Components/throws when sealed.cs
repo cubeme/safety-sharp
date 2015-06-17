@@ -20,41 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Bindings.Models
+namespace Tests.Metadata.Models.Components
 {
 	using System;
 	using SafetySharp.Modeling;
+	using Utilities;
 
-	internal class X1 : Component
+	internal class X : Component
 	{
-		public void M()
-		{
-		}
-
-		public extern void N();
 	}
 
-	partial class In1 : Model
+	internal class T : TestObject
 	{
-		private In1(X1 x1, X1 x2)
+		protected override void Check()
 		{
-			Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
-		}
-	}
+			var m = new Model();
+			m.Seal();
 
-	partial class Out1 : Model
-	{
-		private Out1(X1 x1, X1 x2)
+			Tests.RaisesInvalidOpException(() => AddRootComponent(m, new X()));
+			Tests.RaisesInvalidOpException(() => AddRootComponents(m, new X()));
+		}
+
+		private static void AddRootComponent(Model m, Component c)
 		{
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x1, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "N", new System.Type[]{}, typeof(void))),
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x2, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "M", new System.Type[]{}, typeof(void))));
+			m.AddRootComponent(c);
 		}
-	}
 
-	partial class Out1
-	{
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __BindingDelegate0__();
+		private static void AddRootComponents(Model m, Component c)
+		{
+			m.AddRootComponents(c);
+		}
 	}
 }

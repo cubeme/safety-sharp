@@ -30,7 +30,7 @@ namespace SafetySharp.Runtime.MetadataAnalysis
 	/// <summary>
 	///     Walks the component hierarchy looking for the provided ports that are bound to a required port.
 	/// </summary>
-	internal class BoundProvidedPortsFinder : ComponentHierarchyWalker
+	internal sealed class BoundProvidedPortsFinder : ComponentHierarchyWalker
 	{
 		/// <summary>
 		///     The required port the provided ports are retrieved for.

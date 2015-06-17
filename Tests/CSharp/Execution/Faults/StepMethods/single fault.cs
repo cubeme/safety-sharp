@@ -40,12 +40,12 @@ namespace Tests.Execution.Faults.StepMethods
 		{
 			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = false;
-			DoStep();
+			ExecuteUpdate();
 			_x.ShouldBe(3);
 
 			_x = 0;
 			Metadata.Faults[0].Fault.IsOccurring = true;
-			DoStep();
+			ExecuteUpdate();
 			_x.ShouldBe(7);
 		}
 

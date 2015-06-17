@@ -20,58 +20,61 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Components.Subcomponents
+namespace Tests.Metadata.Models.Components
 {
 	using System;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
-	internal interface I2 : IComponent
+	internal class C2 : Component
 	{
 	}
 
-	internal class C1 : Component, I2
+	internal class C3 : Component
 	{
 	}
 
-	internal class X2 : TestComponent
+	internal class M4 : TestModel
 	{
-		private readonly C1 _c = new C1();
+		private readonly C2 _c1 = new C2();
+		private readonly C3 _c2 = new C3();
+		private readonly C3 _c3 = new C3();
+		private readonly C3 _c4 = new C3();
+
+		public M4()
+		{
+			AddRootComponent(_c1);
+			AddRootComponents(_c2, _c3);
+			AddRootComponents(_c4);
+			AddRootComponents(); // should have no effect
+		}
 
 		protected override void Check()
 		{
-			Metadata.Subcomponents.Length.ShouldBe(1);
-
-			Metadata.Subcomponents[0].Component.ShouldBe(_c);
-			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
+			Metadata.RootComponent.Subcomponents.ShouldBe(new[] { _c1.Metadata, _c2.Metadata, _c3.Metadata, _c4.Metadata });
+			Metadata.Components.ShouldBe(new[] { Metadata.RootComponent, _c1.Metadata, _c2.Metadata, _c3.Metadata, _c4.Metadata });
 		}
 	}
 
-	internal class X8 : TestComponent
+	internal class M5 : TestObject
 	{
-		private readonly IComponent _c = new C1();
-
 		protected override void Check()
 		{
-			Metadata.Subcomponents.Length.ShouldBe(1);
+			var c1 = new C2();
+			var c2 = new C2();
+			var c3 = new C3();
+			var c4 = new C2();
 
-			Metadata.Subcomponents[0].Component.ShouldBe(_c);
-			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
-		}
-	}
+			var m = new Model();
+			m.AddRootComponent(c1);
+			m.AddRootComponents(c2, c3);
+			m.AddRootComponents(c4);
+			m.AddRootComponents(); // should have no effect
+			m.Seal();
 
-	internal class X9 : TestComponent
-	{
-		private readonly I2 _c = new C1();
-
-		protected override void Check()
-		{
-			Metadata.Subcomponents.Length.ShouldBe(1);
-
-			Metadata.Subcomponents[0].Component.ShouldBe((Component)_c);
-			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
+			m.Metadata.RootComponent.Subcomponents.ShouldBe(new[] { c1.Metadata, c2.Metadata, c3.Metadata, c4.Metadata });
+			m.Metadata.Components.ShouldBe(new[] { m.Metadata.RootComponent, c1.Metadata, c2.Metadata, c3.Metadata, c4.Metadata });
 		}
 	}
 }

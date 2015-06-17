@@ -41,7 +41,7 @@ namespace Tests.Execution.Steps
 
 		protected override void Check()
 		{
-			DoStep();
+			ExecuteUpdate();
 			_i.ShouldBe(1);
 		}
 	}

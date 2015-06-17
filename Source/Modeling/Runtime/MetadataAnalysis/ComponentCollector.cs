@@ -20,41 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Bindings.Models
+namespace SafetySharp.Runtime.MetadataAnalysis
 {
 	using System;
-	using SafetySharp.Modeling;
+	using System.Collections.Generic;
 
-	internal class X1 : Component
+	/// <summary>
+	///     Collects the metadata of all components found within the component hierarchy. Throws a
+	///     <see cref="ComponentHierarchyException" /> if a component is encountered in multiple locations of
+	///     the component hierarchy.
+	/// </summary>
+	internal sealed class ComponentCollector : ComponentHierarchyWalker
 	{
-		public void M()
+		private readonly HashSet<ComponentMetadata> _components = new HashSet<ComponentMetadata>();
+
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="root">The root of the component hierarchy.</param>
+		public ComponentCollector(ComponentMetadata root)
+			: base(root)
 		{
 		}
 
-		public extern void N();
-	}
-
-	partial class In1 : Model
-	{
-		private In1(X1 x1, X1 x2)
+		/// <summary>
+		///     Gets the metadata of all components within the component hierarchy.
+		/// </summary>
+		public IEnumerable<ComponentMetadata> Components
 		{
-			Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
+			get { return _components; }
 		}
-	}
 
-	partial class Out1 : Model
-	{
-		private Out1(X1 x1, X1 x2)
+		/// <summary>
+		///     Visits the <paramref name="metadata" />.
+		/// </summary>
+		/// <param name="metadata">The component metadata that should be visited.</param>
+		protected override void Visit(ComponentMetadata metadata)
 		{
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x1, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "N", new System.Type[]{}, typeof(void))),
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x2, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "M", new System.Type[]{}, typeof(void))));
+			if (!_components.Add(metadata))
+				throw new ComponentHierarchyException(metadata);
 		}
-	}
-
-	partial class Out1
-	{
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __BindingDelegate0__();
 	}
 }

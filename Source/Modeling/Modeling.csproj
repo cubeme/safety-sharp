@@ -54,6 +54,8 @@
     <Compile Include="Modeling\PortBinding.cs" />
     <Compile Include="Modeling\PortInfo.cs" />
     <Compile Include="Modeling\PriorityAttribute.cs" />
+    <Compile Include="Runtime\MetadataAnalysis\ComponentCollector.cs" />
+    <Compile Include="Runtime\MetadataAnalysis\ComponentHierarchyException.cs" />
     <Compile Include="Runtime\ModelMetadata.Builder.cs" />
     <Compile Include="Runtime\ModelMetadata.cs" />
     <Compile Include="Runtime\ComponentMetadata.Builder.cs" />

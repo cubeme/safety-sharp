@@ -23,7 +23,8 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections.Generic;
+	using System.Linq;
+	using MetadataAnalysis;
 	using Modeling;
 	using Utilities;
 
@@ -52,27 +53,18 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="rootComponent" /> to the model's synthesized root component.
-			/// </summary>
-			/// <param name="rootComponent">The root component that should be added to the model's synthesized root component.</param>
-			public void WithRootComponent(IComponent rootComponent)
-			{
-				Requires.NotNull(rootComponent, () => rootComponent);
-				Requires.OfType<Component>(rootComponent, () => rootComponent);
-
-				_builder.WithSubcomponent(rootComponent);
-			}
-
-			/// <summary>
 			///     Adds the <paramref name="rootComponents" /> to the model's synthesized root component.
 			/// </summary>
 			/// <param name="rootComponents">The root components that should be added to the model's synthesized root component.</param>
-			public void WithRootComponents(IEnumerable<IComponent> rootComponents)
+			public void WithRootComponents(params IComponent[] rootComponents)
 			{
 				Requires.NotNull(rootComponents, () => rootComponents);
 
-				foreach (var subcomponent in rootComponents)
-					WithRootComponent(subcomponent);
+				foreach (var rootComponent in rootComponents)
+				{
+					Requires.OfType<Component>(rootComponent, () => rootComponents, "Expected only instances of '{0}'.", typeof(Component).FullName);
+					_builder.WithSubcomponent(rootComponent);
+				}
 			}
 
 			/// <summary>
@@ -92,11 +84,16 @@ namespace SafetySharp.Runtime
 			internal void FinalizeMetadata()
 			{
 				_builder.FinalizeMetadata();
+
+				var componentCollector = new ComponentCollector(_rootComponent.Metadata);
+				componentCollector.WalkPreOrder();
+
 				_model.Metadata = new ModelMetadata
 				{
 					Model = _model,
 					RootComponent = _rootComponent.Metadata,
-					Bindings = _rootComponent.Metadata.Bindings
+					Bindings = _rootComponent.Metadata.Bindings,
+					Components = componentCollector.Components.ToArray()
 				};
 			}
 

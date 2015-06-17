@@ -32,49 +32,49 @@ namespace Tests.Metadata
 		[Theory, MemberData("DiscoverTests", "Components/Fields")]
 		public void Fields(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Components/Faults")]
 		public void Faults(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Components/Bindings")]
 		public void Bindings(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Components/StepMethods")]
 		public void StepMethods(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Components/RequiredPorts")]
 		public void RequiredPorts(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Components/ProvidedPorts")]
 		public void ProvidedPorts(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Components/Nested")]
 		public void Nested(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Components/Subcomponents")]
 		public void Subcomponents(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 	}
 }

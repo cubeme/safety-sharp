@@ -32,25 +32,25 @@ namespace Tests.Execution
 		[Theory, MemberData("DiscoverTests", "ProvidedPorts")]
 		public void ProvidedPorts(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "RequiredPorts")]
 		public void RequiredPorts(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Steps")]
 		public void Steps(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 
 		[Theory, MemberData("DiscoverTests", "Faults")]
 		public void Faults(string test, SyntaxTree code)
 		{
-			ExecuteComponentTests(code);
+			ExecuteDynamicTests(code);
 		}
 	}
 }

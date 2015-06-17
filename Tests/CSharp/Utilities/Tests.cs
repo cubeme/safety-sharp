@@ -41,7 +41,6 @@ namespace Tests.Utilities
 	using SafetySharp.Compiler.Normalization;
 	using SafetySharp.Compiler.Roslyn.Symbols;
 	using SafetySharp.Compiler.Roslyn.Syntax;
-	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Utilities;
 	using Shouldly;
@@ -88,35 +87,32 @@ namespace Tests.Utilities
 		}
 
 		/// <summary>
-		///     Executes the <see cref="TestComponent.Check" /> methods of all <see cref="TestComponent" /> instances declared in
-		///     <paramref name="syntaxTree" />.
+		///     Compiles the <paramref name="syntaxTree" />, instantiates all non-abstract classes implementing
+		///     <see cref="ITestableObject" />, and executes the <see cref="ITestableObject.Test" /> method for each instance.
 		/// </summary>
 		/// <param name="syntaxTree">The syntax tree that should be compiled and tested.</param>
-		protected void ExecuteComponentTests(SyntaxTree syntaxTree)
+		protected void ExecuteDynamicTests(SyntaxTree syntaxTree)
 		{
 			var compilation = CreateCompilation(syntaxTree);
 			var semanticModel = compilation.GetSemanticModel(syntaxTree);
 
-			var componentTypes = syntaxTree
+			var testableTypes = syntaxTree
 				.Descendants<ClassDeclarationSyntax>()
 				.Select(declaration => declaration.GetTypeSymbol(semanticModel))
 				.Where(symbol => !symbol.IsGenericType && !symbol.IsAbstract && symbol.ContainingType == null)
-				.Where(symbol => symbol.IsDerivedFrom(semanticModel.GetTypeSymbol<TestComponent>()))
+				.Where(symbol => symbol.IsDerivedFrom(semanticModel.GetTypeSymbol<ITestableObject>()))
 				.Select(symbol => symbol.ToDisplayString())
 				.ToArray();
 
-			if (componentTypes.Length == 0)
+			if (testableTypes.Length == 0)
 				throw new TestException("Unable to find any testable class declarations.");
 
 			var assembly = CompileSafetySharp(compilation);
 
-			foreach (var componentType in componentTypes)
+			foreach (var testableType in testableTypes)
 			{
-				var type = assembly.GetType(componentType);
-				var component = (TestComponent)Activator.CreateInstance(type);
-				MetadataBuilders.GetBuilder(component).FinalizeMetadata();
-
-				component.RunTests();
+				var obj = (ITestableObject)Activator.CreateInstance(assembly.GetType(testableType));
+				obj.Test(_output);
 			}
 		}
 
@@ -277,7 +273,7 @@ namespace Tests.Utilities
 		///     Checks that no exceptions escape unhandled during the execution of <paramref name="action" />.
 		/// </summary>
 		/// <param name="action">The action that should be checked.</param>
-		protected static void NoThrow(Action action)
+		public static void NoThrow(Action action)
 		{
 			Requires.NotNull(action, () => action);
 
@@ -299,7 +295,7 @@ namespace Tests.Utilities
 		/// <typeparam name="T">The type of the exception that is expected to be thrown.</typeparam>
 		/// <param name="action">The action that should be checked.</param>
 		/// <param name="assertion">The assertion that should be checked on the thrown exception.</param>
-		protected static void RaisesWith<T>(Action action, Action<T> assertion)
+		public static void RaisesWith<T>(Action action, Action<T> assertion)
 			where T : Exception
 		{
 			Requires.NotNull(action, () => action);
@@ -336,7 +332,7 @@ namespace Tests.Utilities
 		/// </summary>
 		/// <typeparam name="T">The type of the exception that is expected to be thrown.</typeparam>
 		/// <param name="action">The action that should be checked.</param>
-		protected static void Raises<T>(Action action)
+		public static void Raises<T>(Action action)
 			where T : Exception
 		{
 			RaisesWith<T>(action, null);
@@ -346,7 +342,7 @@ namespace Tests.Utilities
 		///     Checks whether <paramref name="action" /> raises an <see cref="InvalidOperationException" />.
 		/// </summary>
 		/// <param name="action">The action that should be checked.</param>
-		protected static void RaisesInvalidOpException(Action action)
+		public static void RaisesInvalidOpException(Action action)
 		{
 			Raises<InvalidOperationException>(action);
 		}

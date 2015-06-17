@@ -24,25 +24,65 @@ namespace Tests.Utilities
 {
 	using System;
 	using System.Reflection;
+	using JetBrains.Annotations;
 	using SafetySharp.Modeling;
+	using SafetySharp.Utilities;
 	using Shouldly;
+	using Xunit.Abstractions;
 
-	public abstract class TestComponent : Component
+	/// <summary>
+	///     Represents a base class for testable components that are compiled and instantiated dynamically during test execution.
+	/// </summary>
+	public abstract class TestComponent : Component, ITestableObject
 	{
-		protected MethodInfo ComponentUpdatedMethod
+		/// <summary>
+		///     Writes to the test output stream.
+		/// </summary>
+		private ITestOutputHelper _output;
+
+		/// <summary>
+		///     Gets the reflection information for the <see cref="Component.Update" /> method.
+		/// </summary>
+		protected static MethodInfo ComponentUpdatedMethod
 		{
 			get { return typeof(Component).GetMethod("Update"); }
 		}
 
-		public void RunTests()
+		/// <summary>
+		///     Executes the tests of the object.
+		/// </summary>
+		public void Test(ITestOutputHelper output)
 		{
+			_output = output;
+
+			MetadataBuilder.FinalizeMetadata();
 			Metadata.Component.ShouldBe(this);
+
 			Check();
 		}
 
+		/// <summary>
+		///     Checks the test assertions.
+		/// </summary>
 		protected abstract void Check();
 
-		protected void DoStep()
+		/// <summary>
+		///     Writes the formatted <paramref name="message" /> to the test output stream.
+		/// </summary>
+		/// <param name="message">The formatted message that should be written.</param>
+		/// <param name="args">The format arguments of the message.</param>
+		[StringFormatMethod("message")]
+		protected void Log(string message, params object[] args)
+		{
+			Assert.NotNull(_output, "A test output helper is not available.");
+			_output.WriteLine(message, args);
+		}
+
+		/// <summary>
+		///     Executes the component's <see cref="Component.Update" /> method.
+		/// </summary>
+		/// <remarks>This method is required to work around S#'s restrictions that a component cannot call it's own Update method.</remarks>
+		protected void ExecuteUpdate()
 		{
 			Update();
 		}

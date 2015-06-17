@@ -20,41 +20,59 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Bindings.Models
+namespace Tests.Metadata.Models.Bindings
 {
 	using System;
 	using SafetySharp.Modeling;
+	using Shouldly;
+	using Utilities;
 
 	internal class X1 : Component
+	{
+		public extern void M();
+	}
+
+	internal class X2 : Component
 	{
 		public void M()
 		{
 		}
-
-		public extern void N();
 	}
 
-	partial class In1 : Model
+	internal class M2 : TestModel
 	{
-		private In1(X1 x1, X1 x2)
+		private readonly X1 _x1 = new X1();
+		private readonly X2 _x2 = new X2();
+
+		public M2()
 		{
-			Bind(x1.RequiredPorts.N = x2.ProvidedPorts.M);
+			Bind(_x1.RequiredPorts.M = _x2.ProvidedPorts.M);
+			AddRootComponents(_x1, _x2);
+		}
+
+		protected override void Check()
+		{
+			Metadata.Bindings[0].DeclaringComponent.ShouldBe(Metadata.RootComponent);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(_x2.Metadata.ProvidedPorts[0]);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(_x1.Metadata.RequiredPorts[0]);
 		}
 	}
 
-	partial class Out1 : Model
+	internal class M3 : TestObject
 	{
-		private Out1(X1 x1, X1 x2)
+		protected override void Check()
 		{
-			global::SafetySharp.CompilerServices.MetadataBuilders.GetBuilder(this).WithBinding(
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x1, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "N", new System.Type[]{}, typeof(void))),
-				global::System.Delegate.CreateDelegate(typeof(__BindingDelegate0__), x2, SafetySharp.CompilerServices.ReflectionHelpers.GetMethod(typeof(global::Tests.Normalization.Bindings.Models.X1), "M", new System.Type[]{}, typeof(void))));
-		}
-	}
+			var x1 = new X1();
+			var x2 = new X2();
+			var m = new Model();
 
-	partial class Out1
-	{
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate void __BindingDelegate0__();
+			m.AddRootComponents(x1, x2);
+			m.Bind(x1.RequiredPorts.M = x2.ProvidedPorts.M);
+			m.Seal();
+
+			m.Metadata.Bindings[0].DeclaringComponent.ShouldBe(m.Metadata.RootComponent);
+			m.Metadata.Bindings[0].ProvidedPort.ShouldBe(x2.Metadata.ProvidedPorts[0]);
+			m.Metadata.Bindings[0].RequiredPort.ShouldBe(x1.Metadata.RequiredPorts[0]);
+		}
 	}
 }

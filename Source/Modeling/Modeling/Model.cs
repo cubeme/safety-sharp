@@ -110,15 +110,15 @@ namespace SafetySharp.Modeling
 		///     Adds the <see cref="rootComponents" /> to the model.
 		/// </summary>
 		/// <param name="rootComponents">The root components that should be added.</param>
-		public void AddRootComponent(params IComponent[] rootComponents)
+		public void AddRootComponents(params IComponent[] rootComponents)
 		{
 			Requires.CompilationTransformation();
 		}
 
 		/// <summary>
-		///     Explicitely seals the model, preventing any future metadata changes such as adding new root components or bindings. This
-		///     method is called implicitly when the model is analyzed or simulated. If the model has already been sealed, this method
-		///     is a no-op.
+		///     Explicitly seals the model, preventing any future metadata modifications such as adding new root components or bindings.
+		///     This method is called implicitly when the model is analyzed or simulated. If the model has already been sealed, this
+		///     method is a no-op.
 		/// </summary>
 		public void Seal()
 		{
