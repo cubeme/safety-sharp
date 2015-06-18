@@ -42,6 +42,7 @@ namespace SafetySharp.Analysis.VerificationCondition
 module internal VcGuardWithAssignmentModel =
     open SafetySharp.Models
     open SafetySharp.Models.TsamHelpers
+    open SafetySharp.EngineOptions
     
     type VarDecl = Tsam.GlobalVarDecl
     type Var = Tsam.Var
@@ -72,9 +73,8 @@ module internal VcGuardWithAssignmentModel =
 
         let! state = getState ()
 
-        do TsamEngineOptions.addStandards ()
         let! semanticsOfAssignmentToRangedVariables =
-            getEngineOption<_,SafetySharp.Models.TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()
+            getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()
         let applyAssignmentSemanticsAfterAssignment (expr:Expr) (_var:Var) =
             let varToType = state.Pgm.VarToType
             match semanticsOfAssignmentToRangedVariables with
@@ -834,8 +834,7 @@ module internal VcGuardWithAssignmentModel =
             failwith "passive form cannot be used with this algorithm"
             // Assume Single Assignment Form. TODO: Default form may also work. Examine. Passive form does not work.            
         else
-            do TsamEngineOptions.addStandards ()
-            let! semanticsOfAssignmentToRangedVariables = getEngineOption<_,SafetySharp.Models.TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()
+            let! semanticsOfAssignmentToRangedVariables = getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()
             match semanticsOfAssignmentToRangedVariables with
                 | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar
                 | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.IgnoreRanges
@@ -909,7 +908,7 @@ module internal VcGuardWithAssignmentModel =
 
 
     
-    let transformGwaTsamToGwaModel (semanticsOfAssignmentToRangedVariables:SafetySharp.Models.TsamEngineOptions.SemanticsOfAssignmentToRangedVariables)
+    let transformGwaTsamToGwaModel (semanticsOfAssignmentToRangedVariables:TsamEngineOptions.SemanticsOfAssignmentToRangedVariables)
                                    (pgm:Tsam.Pgm)                                   
                 : GuardWithAssignmentModel =
         // The algorithm also ensures variables never written to keep their value
@@ -1064,9 +1063,8 @@ module internal VcGuardWithAssignmentModel =
         do! transformTsamToTsamInGuardToAssignmentForm ()
 
         let! state = getState ()
-        do TsamEngineOptions.addStandards ()
         let! semanticsOfAssignmentToRangedVariables =            
-            getEngineOption<_,SafetySharp.Models.TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()        
+            getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()        
 
         let model = state.Pgm
         let transformed =

@@ -27,6 +27,7 @@ open Xunit.Abstractions
 
 open SafetySharp.Models
 open SafetySharp.Workflow
+open SafetySharp.EngineOptions
 
 type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
     

@@ -56,6 +56,7 @@
     <Compile Include="Utilities\StructuredWriter.fs" />
     <Compile Include="Utilities\Reflection.fs" />
     <Compile Include="Utilities\FreshNameGenerator.fs" />
+    <Compile Include="Utilities\EngineOptions.fs" />
     <Compile Include="Utilities\Workflow.fs" />
     <Compile Include="Utilities\GenericParsers.fs" />
     <Compile Include="Utilities\ITracing.fs" />
@@ -91,7 +92,6 @@
     <Compile Include="Models\Sam\SamRewriter\SamRewriterSimplifyBlocks.fs" />
     <Compile Include="Models\Sam\SamRewriter\SamRewriterChangeIdentifier.fs" />
     <Compile Include="Models\Tsam\Tsam.fs" />
-    <Compile Include="Models\Tsam\TsamEngineOptions.fs" />
     <Compile Include="Models\Tsam\TsamHelpers.fs" />
     <Compile Include="Models\Tsam\TsamTracer.fs" />
     <Compile Include="Models\Tsam\TsamChecks.fs" />

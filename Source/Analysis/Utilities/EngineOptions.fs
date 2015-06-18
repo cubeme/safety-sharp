@@ -20,7 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models
+namespace SafetySharp.EngineOptions
+
+type IEngineOption = interface end
+
+module internal EngineOptionHelpers =
+    let addStandardToList<'engineOption when 'engineOption :> IEngineOption>
+                (toAdd:'engineOption)
+                (currentStandards:(string*IEngineOption) list)
+            : (string*IEngineOption) list =
+        let nameOfEngineOptionAsString =
+            let typeOfEngineOption = typeof<'engineOption>
+            typeOfEngineOption.AssemblyQualifiedName
+        let newElement = (nameOfEngineOptionAsString,toAdd :> IEngineOption)
+        newElement :: currentStandards
+        
 
 module internal TsamEngineOptions =
 
@@ -42,12 +56,23 @@ module internal TsamEngineOptions =
         //  ForceRangeAfterFinalAssignmentToAGlobalVar: x=4, y=5, z=4
         //  IgnoreRanges: x=5, y=10, z=5
         with
-            interface SafetySharp.Workflow.IEngineOption
+            interface IEngineOption
             member this.isForceRangeAfterEveryAssignmentToAGlobalVar =
                 match this with
                     | ForceRangeAfterEveryAssignmentToAGlobalVar -> true
                     | _ -> false
 
-    let addStandards () =
-        let a = lazy (SafetySharp.Workflow.addStandardOption (SemanticsOfAssignmentToRangedVariables.IgnoreRanges))
-        do a.Force ()
+    let standardValues : (string*IEngineOption) list =
+            [] |> EngineOptionHelpers.addStandardToList (SemanticsOfAssignmentToRangedVariables.IgnoreRanges)
+
+module DefaultEngineOptions = 
+
+    let private DefaultEngineOptionsLazy =
+        lazy (
+            let elements = TsamEngineOptions.standardValues
+            elements |> Map.ofList
+        )
+
+    let DefaultEngineOptions = DefaultEngineOptionsLazy.Force ()
+    
+        
