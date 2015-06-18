@@ -28,7 +28,7 @@ module internal TsamEngineOptions =
     type SemanticsOfAssignmentToRangedVariables =
         | ForceRangesAfterStep
         | ForceRangeAfterEveryAssignmentToAGlobalVar
-        | ForceRangeAfterFinalAssignmentToAGlobalVar
+        | ForceRangeAfterFinalAssignmentToAGlobalVar //not used anywhere. Just for theoretical purposes
         | IgnoreRanges //Useful for Simulations
         // Example, where it makes a difference:
         //  Assume x in 2..4,
@@ -41,3 +41,13 @@ module internal TsamEngineOptions =
         //  ForceRangeAfterEveryAssignmentToAGlobalVar: x=4, y=4, z=4
         //  ForceRangeAfterFinalAssignmentToAGlobalVar: x=4, y=5, z=4
         //  IgnoreRanges: x=5, y=10, z=5
+        with
+            interface SafetySharp.Workflow.IEngineOption
+            member this.isForceRangeAfterEveryAssignmentToAGlobalVar =
+                match this with
+                    | ForceRangeAfterEveryAssignmentToAGlobalVar -> true
+                    | _ -> false
+
+    let addStandards () =
+        let a = lazy (SafetySharp.Workflow.addStandardOption (SemanticsOfAssignmentToRangedVariables.IgnoreRanges))
+        do a.Force ()

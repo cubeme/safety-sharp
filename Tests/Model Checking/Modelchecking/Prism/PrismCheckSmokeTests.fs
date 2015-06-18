@@ -77,6 +77,7 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
         
         let smokeTestWithGwamWorkflow = workflow {
                 do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
+                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()

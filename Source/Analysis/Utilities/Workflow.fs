@@ -28,12 +28,24 @@ module internal Workflow =
     //    http://blogs.msdn.com/b/mulambda/archive/2010/05/01/value-restriction-in-f.aspx
     //    The solution we use is to make everything a function. Empty parameter is added, if otherwise no parameter.
 
+    type IEngineOption = interface end
+
+    let mutable EngineOptionStandard = Map.empty<string,IEngineOption>
+    let addStandardOption<'engineOption when 'engineOption :> IEngineOption> (engineOption:'engineOption) : unit =
+        let nameOfEngineOptionAsString =
+            let typeOfEngineOption = typeof<'engineOption>
+            typeOfEngineOption.AssemblyQualifiedName
+        do EngineOptionStandard <- EngineOptionStandard.Add(nameOfEngineOptionAsString,engineOption)
+        ()
+
+
     type WorkflowState<'state> = {
         State : 'state;
         StepNumber : int list;
         StepName : string list;
         Log : string list;
         LogEvent : Event<string>;
+        EngineOptions : Map<string,IEngineOption>;
         CancellationToken : System.Threading.CancellationToken option; //https://msdn.microsoft.com/de-de/library/dd997364(v=vs.110).aspx
         Tainted : bool; // Use tainted to indicate, if a function changed something. Do not compare states, because now it is obvious, what happens, when a mutable changes
     }
@@ -50,6 +62,7 @@ module internal Workflow =
             WorkflowState.StepName = [];
             WorkflowState.Log = [];
             WorkflowState.LogEvent = new Event<string>();
+            WorkflowState.EngineOptions = Map.empty<string,IEngineOption>;
             WorkflowState.CancellationToken = None;
             WorkflowState.Tainted = false;
         }
@@ -60,6 +73,7 @@ module internal Workflow =
             WorkflowState.StepName = [];
             WorkflowState.Log = [];
             WorkflowState.LogEvent = new Event<string>();
+            WorkflowState.EngineOptions = Map.empty<string,IEngineOption>;
             WorkflowState.CancellationToken = None;
             WorkflowState.Tainted = false;
         }
@@ -124,6 +138,7 @@ module internal Workflow =
                     WorkflowState.StepName = wfState.StepName;
                     WorkflowState.Log = wfState.Log;
                     WorkflowState.LogEvent = wfState.LogEvent;
+                    WorkflowState.EngineOptions = wfState.EngineOptions;
                     WorkflowState.CancellationToken = wfState.CancellationToken;
                     WorkflowState.Tainted = true;
                 }
@@ -141,6 +156,32 @@ module internal Workflow =
                     // WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
                 }
             (),newWfState
+        WorkflowFunction(behavior)
+        
+    let setEngineOption<'state,'engineOption when 'engineOption :> IEngineOption> (engineOption:'engineOption) : EndogenousWorkflowFunction<'state> =
+        let behavior (wfState:WorkflowState<'state>) =
+            let nameOfEngineOptionAsString =
+                let typeOfEngineOption = typeof<'engineOption>
+                typeOfEngineOption.AssemblyQualifiedName
+            let newWfState =
+                { wfState with
+                    WorkflowState.EngineOptions = wfState.EngineOptions.Add(nameOfEngineOptionAsString,engineOption);
+                    // WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
+                }
+            (),newWfState
+        WorkflowFunction(behavior)
+        
+    let getEngineOption<'state,'engineOption when 'engineOption :> IEngineOption> () : WorkflowFunction<'state,'state,'engineOption> =
+        let behavior (wfState:WorkflowState<'state>) =
+            let nameOfEngineOptionAsString =
+                let typeOfEngineOption = typeof<'engineOption>
+                typeOfEngineOption.AssemblyQualifiedName
+            let result =
+                if wfState.EngineOptions.ContainsKey nameOfEngineOptionAsString then
+                    (wfState.EngineOptions.Item nameOfEngineOptionAsString) :?> 'engineOption
+                else
+                    (EngineOptionStandard.Item nameOfEngineOptionAsString) :?> 'engineOption
+            (result),wfState
         WorkflowFunction(behavior)
 
     let trackSteps_NextStep<'state> (stepName:string) : EndogenousWorkflowFunction<'state> = 
