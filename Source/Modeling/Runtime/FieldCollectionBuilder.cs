@@ -34,8 +34,8 @@ namespace SafetySharp.Runtime
 	/// </summary>
 	internal sealed class FieldCollectionBuilder
 	{
-		private readonly Dictionary<FieldInfo, Tuple<string, object[]>> _fields = new Dictionary<FieldInfo, Tuple<string, object[]>>();
-		private readonly NameScope _nameScope;
+		private readonly List<FieldInfo> _fields = new List<FieldInfo>();
+		private readonly List<object[]> _initialValues = new List<object[]>();
 		private readonly IMetadataObject _object;
 
 		/// <summary>
@@ -45,9 +45,7 @@ namespace SafetySharp.Runtime
 		public FieldCollectionBuilder(IMetadataObject obj)
 		{
 			Requires.NotNull(obj, () => obj);
-
 			_object = obj;
-			_nameScope = new NameScope();
 		}
 
 		/// <summary>
@@ -57,12 +55,13 @@ namespace SafetySharp.Runtime
 		public void WithField(FieldInfo field)
 		{
 			Requires.NotNull(field, () => field);
-			Requires.That(!_fields.ContainsKey(field), () => field, "The field has already been added.");
+			Requires.That(!_fields.Contains(field), () => field, "The field has already been added.");
 			Requires.That(field.FieldType == typeof(int) || field.FieldType == typeof(bool) ||
 						  field.FieldType == typeof(double) || field.FieldType.IsEnum, () => field,
 				"Invalid field type: Only 'bool', 'int', 'double', and enumeration types are supported.");
 
-			_fields.Add(field, Tuple.Create(_nameScope.MakeUnique(field.Name), (object[])null));
+			_fields.Add(field);
+			_initialValues.Add(null);
 		}
 
 		/// <summary>
@@ -73,7 +72,6 @@ namespace SafetySharp.Runtime
 		public void WithGenericField(FieldInfo field)
 		{
 			Requires.NotNull(field, () => field);
-			Requires.That(!_fields.ContainsKey(field), () => field, "The field has already been added.");
 
 			if (field.FieldType == typeof(int) || field.FieldType == typeof(bool) || field.FieldType == typeof(double) || field.FieldType.IsEnum)
 				WithField(field);
@@ -90,12 +88,14 @@ namespace SafetySharp.Runtime
 			Requires.NotNull(field, () => field);
 			Requires.NotNull(values, () => values);
 			Requires.That(values.Length > 0, () => values, "At least one value must be provided.");
-			Requires.That(_fields.ContainsKey(field), () => field, "The given field is unknown.");
+
+			var fieldIndex = _fields.IndexOf(field);
+			Requires.That(fieldIndex != -1, () => field, "The given field is unknown.");
 
 			var typesMatch = values.All(value => value.GetType() == field.FieldType);
 			Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
 
-			_fields[field] = Tuple.Create(_fields[field].Item1, values.Cast<object>().ToArray());
+			_initialValues[fieldIndex] = values.Cast<object>().ToArray();
 		}
 
 		/// <summary>
@@ -103,7 +103,8 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public MemberCollection<FieldMetadata> ToImmutableCollection()
 		{
-			var fields = _fields.Select(field => new FieldMetadata(_object, field.Key, field.Value.Item2, field.Value.Item1));
+			var nameScope = new NameScope();
+			var fields = _fields.Select((field, index) => new FieldMetadata(_object, field, _initialValues[index], nameScope.MakeUnique(field.Name)));
 			return new MemberCollection<FieldMetadata>(_object, fields);
 		}
 	}

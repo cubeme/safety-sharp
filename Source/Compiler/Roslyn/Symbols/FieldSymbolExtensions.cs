@@ -81,8 +81,8 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <param name="fieldSymbol">The field the code should be generated for.</param>
 		/// <param name="syntaxGenerator">The syntax generator that should be used.</param>
 		[Pure]
-		public static ExpressionSyntax GetRuntimeFieldExpression([NotNull] this IFieldSymbol fieldSymbol,
-																 [NotNull] SyntaxGenerator syntaxGenerator)
+		public static ExpressionSyntax GetFieldInfoExpression([NotNull] this IFieldSymbol fieldSymbol,
+															  [NotNull] SyntaxGenerator syntaxGenerator)
 		{
 			Requires.NotNull(fieldSymbol, () => fieldSymbol);
 			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);

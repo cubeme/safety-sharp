@@ -156,7 +156,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			foreach (var field in fields)
 			{
-				var fieldInfo = field.GetRuntimeFieldExpression(Syntax);
+				var fieldInfo = field.GetFieldInfoExpression(Syntax);
 				var methodName = field.Type.TypeKind == TypeKind.TypeParameter ? "WithGenericField" : "WithField";
 				var withFieldMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), methodName);
 				var invocation = Syntax.InvocationExpression(withFieldMethod, fieldInfo);
@@ -178,18 +178,36 @@ namespace SafetySharp.Compiler.Normalization
 					if (field.IsConst)
 						return false;
 
+					if (field.AssociatedSymbol != null)
+						return false;
+
 					if (field.Type.TypeKind == TypeKind.TypeParameter)
 						return true;
 
 					return field.Type.ImplementsIComponent(Compilation) || field.Type.Equals(Compilation.GetComponentInterfaceSymbol());
-				});
+				})
+				.Select(field => new { Expression = field.GetFieldInfoExpression(Syntax), field.Type.TypeKind });
 
-			foreach (var field in fields)
+			var properties = type
+				.GetMembers()
+				.OfType<IPropertySymbol>()
+				.Where(property =>
+				{
+					if (property.GetMethod == null)
+						return false;
+
+					if (property.Type.TypeKind == TypeKind.TypeParameter)
+						return true;
+
+					return property.Type.ImplementsIComponent(Compilation) || property.Type.Equals(Compilation.GetComponentInterfaceSymbol());
+				})
+				.Select(property => new { Expression = property.GetPropertyInfoExpression(Syntax), property.Type.TypeKind });
+
+			foreach (var member in fields.Concat(properties))
 			{
-				var fieldInfo = field.GetRuntimeFieldExpression(Syntax);
-				var methodName = field.Type.TypeKind == TypeKind.TypeParameter ? "WithGenericSubcomponent" : "WithSubcomponent";
+				var methodName = member.TypeKind == TypeKind.TypeParameter ? "WithGenericSubcomponent" : "WithSubcomponent";
 				var withSubcomponentMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), methodName);
-				var invocation = Syntax.InvocationExpression(withSubcomponentMethod, fieldInfo);
+				var invocation = Syntax.InvocationExpression(withSubcomponentMethod, member.Expression);
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}
@@ -208,7 +226,7 @@ namespace SafetySharp.Compiler.Normalization
 			foreach (var method in methods)
 			{
 				var withRequiredPortMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithRequiredPort");
-				var invocation = Syntax.InvocationExpression(withRequiredPortMethod, method.GetRuntimeMethodExpression(Syntax));
+				var invocation = Syntax.InvocationExpression(withRequiredPortMethod, method.GetMethodInfoExpression(Syntax));
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}
@@ -227,11 +245,11 @@ namespace SafetySharp.Compiler.Normalization
 			foreach (var method in methods)
 			{
 				var withProvidedPort = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithProvidedPort");
-				var port = method.GetRuntimeMethodExpression(Syntax);
+				var port = method.GetMethodInfoExpression(Syntax);
 
 				var invocation = method.OverriddenMethod == null || method.OverriddenMethod.IsAbstract
 					? Syntax.InvocationExpression(withProvidedPort, port)
-					: Syntax.InvocationExpression(withProvidedPort, port, method.OverriddenMethod.GetRuntimeMethodExpression(Syntax));
+					: Syntax.InvocationExpression(withProvidedPort, port, method.OverriddenMethod.GetMethodInfoExpression(Syntax));
 
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
@@ -251,11 +269,11 @@ namespace SafetySharp.Compiler.Normalization
 			foreach (var method in methods)
 			{
 				var withFaultEffect = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithFaultEffect");
-				var faultEffect = method.GetRuntimeMethodExpression(Syntax);
+				var faultEffect = method.GetMethodInfoExpression(Syntax);
 				var affectedMethods = method.GetAffectedMethodCandidates(type.ContainingType);
 				Requires.That(affectedMethods.Length == 1, "Failed to uniquely determine the affected method of fault effect '{0}'.", faultEffect);
 
-				var invocation = Syntax.InvocationExpression(withFaultEffect, faultEffect, affectedMethods[0].GetRuntimeMethodExpression(Syntax));
+				var invocation = Syntax.InvocationExpression(withFaultEffect, faultEffect, affectedMethods[0].GetMethodInfoExpression(Syntax));
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}
 		}
@@ -274,11 +292,11 @@ namespace SafetySharp.Compiler.Normalization
 			foreach (var method in methods)
 			{
 				var withStepMethod = Syntax.MemberAccessExpression(Syntax.IdentifierName(BuilderVariableName), "WithStepMethod");
-				var overridingMethod = method.GetRuntimeMethodExpression(Syntax);
+				var overridingMethod = method.GetMethodInfoExpression(Syntax);
 
 				var invocation = method.OverriddenMethod == null || method.OverriddenMethod.IsAbstract
 					? Syntax.InvocationExpression(withStepMethod, overridingMethod)
-					: Syntax.InvocationExpression(withStepMethod, overridingMethod, method.OverriddenMethod.GetRuntimeMethodExpression(Syntax));
+					: Syntax.InvocationExpression(withStepMethod, overridingMethod, method.OverriddenMethod.GetMethodInfoExpression(Syntax));
 
 				yield return (StatementSyntax)Syntax.ExpressionStatement(invocation).NormalizeWhitespace().WithTrailingNewLines(1);
 			}

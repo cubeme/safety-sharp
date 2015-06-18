@@ -20,24 +20,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Diagnostics.Faults.Valid
+namespace Tests.Metadata.OccurrencePatterns.Fields
 {
 	using System;
-	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
+	using Shouldly;
+	using Utilities;
 
-	internal class X
+	internal class X18 : TestComponent
 	{
-	}
+		protected override void Check()
+		{
+			Metadata.Faults[0].OccurrencePattern.Fields.ShouldBeEmpty();
+			Metadata.Faults[1].OccurrencePattern.Fields.ShouldBeEmpty();
+		}
 
-	internal class Y : X
-	{
-	}
+		private class P1 : OccurrencePattern
+		{
+			private readonly string _x = "";
 
-	internal class C : Component
-	{
-	}
+			public override bool UpdateOccurrenceState()
+			{
+				return true;
+			}
+		}
 
-	internal class D : C
-	{
+		private class P2<T> : OccurrencePattern
+		{
+			public readonly T _x;
+
+			public override bool UpdateOccurrenceState()
+			{
+				return true;
+			}
+		}
+
+		[OccurrencePattern(typeof(P1))]
+		private class F1 : Fault
+		{
+		}
+
+		[OccurrencePattern(typeof(P2<object>))]
+		private class F2 : Fault
+		{
+		}
 	}
 }

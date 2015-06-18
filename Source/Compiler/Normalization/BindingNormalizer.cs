@@ -168,7 +168,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			// Arguments (typeof(delegateType), targetObject, reflectedMethod)
 			var typeofDelegate = SyntaxFactory.TypeOfExpression(SyntaxFactory.ParseTypeName(delegateType));
-			var reflectedMethod = port.Symbol.GetRuntimeMethodExpression(Syntax, portName, declaringType);
+			var reflectedMethod = port.Symbol.GetMethodInfoExpression(Syntax, portName, declaringType);
 			var nestedMemberAccess = portExpression.Expression.RemoveParentheses() as MemberAccessExpressionSyntax;
 
 			SyntaxNode targetObject;

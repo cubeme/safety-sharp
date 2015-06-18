@@ -86,7 +86,7 @@ namespace SafetySharp.Runtime
 				_builder.FinalizeMetadata("R");
 
 				var components = new HashSet<ComponentMetadata>();
-				_rootComponent.Metadata.WalkPreOrder(metadata =>
+				_rootComponent.Metadata.VisitPreOrder(metadata =>
 				{
 					if (!components.Add(metadata))
 						throw new ComponentHierarchyException(metadata);

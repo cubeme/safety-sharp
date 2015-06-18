@@ -20,46 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Components.Subcomponents
+namespace Tests.Diagnostics.Faults.Invalid
 {
 	using System;
+	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime;
-	using Shouldly;
-	using Utilities;
+	using SafetySharp.Modeling.Faults;
 
-	internal interface I1 : IComponent
+	[Diagnostic(DiagnosticIdentifier.GenericFaultDeclaration, 34, 23, 1, "Tests.Diagnostics.Faults.Invalid.X4.F<T>")]
+	internal class X4 : Component
 	{
-	}
-
-	internal class C2 : Component
-	{
-		public C2(string name)
-			: base(name)
+		[Transient]
+		private class F<T> : Fault
 		{
-		}
-	}
-
-	internal class C3 : Component, I1
-	{
-	}
-
-	internal class X3 : TestComponent
-	{
-		private readonly C2 _c = new C2("name");
-		private readonly I1 _i = new C3();
-
-		protected override void Check()
-		{
-			Metadata.Subcomponents.Length.ShouldBe(2);
-
-			Metadata.Subcomponents[0].Component.ShouldBe(_c);
-			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
-			Metadata.Subcomponents[0].Name.ShouldBe("name");
-
-			Metadata.Subcomponents[1].Component.ShouldBe((Component)_i);
-			Metadata.Subcomponents[1].ParentComponent.ShouldBe(this.GetMetadata());
-			Metadata.Subcomponents[1].Name.ShouldBe("_i");
 		}
 	}
 }

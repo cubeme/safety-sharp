@@ -28,38 +28,26 @@ namespace Tests.Metadata.Components.Subcomponents
 	using Shouldly;
 	using Utilities;
 
-	internal interface I1 : IComponent
+	internal class X14 : TestComponent
 	{
-	}
-
-	internal class C2 : Component
-	{
-		public C2(string name)
-			: base(name)
+		public X14()
 		{
+			Prop = new C();
 		}
-	}
 
-	internal class C3 : Component, I1
-	{
-	}
-
-	internal class X3 : TestComponent
-	{
-		private readonly C2 _c = new C2("name");
-		private readonly I1 _i = new C3();
+		private C Prop { get; set; }
 
 		protected override void Check()
 		{
-			Metadata.Subcomponents.Length.ShouldBe(2);
+			Metadata.Subcomponents.Length.ShouldBe(1);
 
-			Metadata.Subcomponents[0].Component.ShouldBe(_c);
+			Metadata.Subcomponents[0].Component.ShouldBe(Prop);
+			Metadata.Subcomponents[0].Name.ShouldBe("Prop");
 			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
-			Metadata.Subcomponents[0].Name.ShouldBe("name");
+		}
 
-			Metadata.Subcomponents[1].Component.ShouldBe((Component)_i);
-			Metadata.Subcomponents[1].ParentComponent.ShouldBe(this.GetMetadata());
-			Metadata.Subcomponents[1].Name.ShouldBe("_i");
+		private class C : Component
+		{
 		}
 	}
 }

@@ -35,12 +35,6 @@ namespace SafetySharp.Modeling
 	[Metadata("InitializeMetadata")]
 	public abstract class Component : MetadataObject<ComponentMetadata, ComponentMetadata.Builder>, IComponent
 	{
-		/// <summary>
-		///     The user-provided name of the component.
-		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private readonly string _name;
-
 		[UsedImplicitly]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private Action _updateMethod = null;
@@ -60,7 +54,8 @@ namespace SafetySharp.Modeling
 		protected Component(string name)
 			: base(obj => new ComponentMetadata.Builder((Component)obj))
 		{
-			_name = name;
+			if (!String.IsNullOrWhiteSpace(name))
+				MetadataBuilder.WithName(name);
 		}
 
 		/// <summary>
@@ -97,8 +92,6 @@ namespace SafetySharp.Modeling
 		[UsedImplicitly]
 		private void InitializeMetadata()
 		{
-			if (!String.IsNullOrWhiteSpace(_name))
-				MetadataBuilder.WithName(_name);
 			MetadataBuilder.WithStepMethod(ReflectionHelpers.GetMethod(typeof(Component), "Update", Type.EmptyTypes, typeof(void)));
 		}
 

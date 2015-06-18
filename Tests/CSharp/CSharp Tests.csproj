@@ -209,7 +209,8 @@
     <Compile Include="Diagnostics\FaultEffects\Valid\provided property ports.cs" />
     <Compile Include="Diagnostics\FaultEffects\Valid\provided method ports.cs" />
     <Compile Include="Diagnostics\Faults\Invalid\fault outside component.cs" />
-    <Compile Include="Diagnostics\Faults\Valid\derived non-fault.cs" />
+    <Compile Include="Diagnostics\Faults\Invalid\generic fault.cs" />
+    <Compile Include="Diagnostics\Faults\Valid\non-fault.cs" />
     <Compile Include="Diagnostics\Faults\Valid\non-derived fault, generic base.cs" />
     <Compile Include="Diagnostics\Faults\Valid\non-derived fault.cs" />
     <Compile Include="Diagnostics\Faults\Invalid\derived fault.cs" />
@@ -286,7 +287,10 @@
     <None Include="Metadata\Faults\FaultEffects\generic base.cs" />
     <Compile Include="Metadata\Components\Fields\initial values as array.cs" />
     <Compile Include="Metadata\Components\Fields\multiple fields with same name.cs" />
+    <Compile Include="Metadata\Components\Fields\unsupported field type.cs" />
+    <Compile Include="Metadata\Components\Subcomponents\single property subcomponent.cs" />
     <Compile Include="Metadata\Components\Subcomponents\subcomponents with same name.cs" />
+    <Compile Include="Metadata\Faults\Fields\unsupported field type.cs" />
     <Compile Include="Metadata\ModelMetadataTests.Helpers.cs">
       <DependentUpon>ModelMetadataTests.cs</DependentUpon>
     </Compile>
@@ -300,6 +304,7 @@
     <Compile Include="Metadata\Models\Bindings\throws when sealed.cs" />
     <Compile Include="Metadata\Models\Components\complex hierarchy.cs" />
     <Compile Include="Metadata\Models\Components\cyclic graph.cs" />
+    <Compile Include="Metadata\Models\Components\generic model.cs" />
     <Compile Include="Metadata\Models\Components\inline construction.cs" />
     <Compile Include="Metadata\Models\Components\multiple roots.cs" />
     <Compile Include="Metadata\Models\Components\shared components.cs" />
@@ -327,10 +332,12 @@
     </Compile>
     <Compile Include="Metadata\OccurrencePatterns\Fields\generic pattern.cs" />
     <Compile Include="Metadata\OccurrencePatterns\Fields\initial values, set by constructor.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\Fields\multiple fields with same name.cs" />
     <Compile Include="Metadata\OccurrencePatterns\Fields\multiple fields.cs" />
     <Compile Include="Metadata\OccurrencePatterns\Fields\multiple initial values.cs" />
     <Compile Include="Metadata\OccurrencePatterns\Fields\no fields.cs" />
     <Compile Include="Metadata\OccurrencePatterns\Fields\single field.cs" />
+    <Compile Include="Metadata\OccurrencePatterns\Fields\unsupported field type.cs" />
     <Compile Include="Metadata\OccurrencePatterns\StepMethods\direct override.cs" />
     <Compile Include="Metadata\OccurrencePatterns\StepMethods\generic pattern.cs" />
     <Compile Include="Metadata\OccurrencePatterns\StepMethods\multiple overrides.cs" />

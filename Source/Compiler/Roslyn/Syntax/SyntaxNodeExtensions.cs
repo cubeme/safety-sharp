@@ -453,7 +453,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 		/// <param name="syntaxNode">The syntax node that is not allowed to change the line count.</param>
 		/// <param name="templateNode">The template node that defines the original line count.</param>
 		[Pure, NotNull]
-		public static T EnsureLineCount<T>([NotNull] this T syntaxNode, T templateNode)
+		public static T EnsureLineCount<T>([NotNull] this T syntaxNode, SyntaxNode templateNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);

@@ -33,27 +33,44 @@ namespace Tests.Metadata.Models.Components
 
 	internal class C3 : Component
 	{
+		public C3(string name = null)
+			: base(name)
+		{
+		}
 	}
 
 	internal class M4 : TestModel
 	{
 		private readonly C2 _c1 = new C2();
 		private readonly C3 _c2 = new C3();
-		private readonly C3 _c3 = new C3();
-		private readonly C3 _c4 = new C3();
+		private readonly C3 _c3 = new C3("name");
 
 		public M4()
 		{
-			AddRootComponent(_c1);
+			Prop1 = new C3();
+
+			AddRootComponent(Prop2);
 			AddRootComponents(_c2, _c3);
-			AddRootComponents(_c4);
+			AddRootComponents(Prop1);
 			AddRootComponents(); // should have no effect
+		}
+
+		private C3 Prop1 { get; set; }
+
+		private C2 Prop2
+		{
+			get { return _c1; }
 		}
 
 		protected override void Check()
 		{
-			Metadata.RootComponent.Subcomponents.ShouldBe(new[] { _c1.Metadata, _c2.Metadata, _c3.Metadata, _c4.Metadata });
-			Metadata.Components.ShouldBe(new[] { Metadata.RootComponent, _c1.Metadata, _c2.Metadata, _c3.Metadata, _c4.Metadata });
+			Metadata.RootComponent.Subcomponents.ShouldBe(new[] { _c1.Metadata, _c2.Metadata, _c3.Metadata, Prop1.Metadata });
+			Metadata.Components.ShouldBe(new[] { Metadata.RootComponent, _c1.Metadata, _c2.Metadata, _c3.Metadata, Prop1.Metadata });
+
+			Metadata.RootComponent.Subcomponents[0].Name.ShouldBe("C2");
+			Metadata.RootComponent.Subcomponents[1].Name.ShouldBe("_c2");
+			Metadata.RootComponent.Subcomponents[2].Name.ShouldBe("name");
+			Metadata.RootComponent.Subcomponents[3].Name.ShouldBe("Prop1");
 		}
 	}
 
@@ -63,7 +80,7 @@ namespace Tests.Metadata.Models.Components
 		{
 			var c1 = new C2();
 			var c2 = new C2();
-			var c3 = new C3();
+			var c3 = new C3("name");
 			var c4 = new C2();
 
 			var m = new Model();
@@ -75,6 +92,11 @@ namespace Tests.Metadata.Models.Components
 
 			m.Metadata.RootComponent.Subcomponents.ShouldBe(new[] { c1.Metadata, c2.Metadata, c3.Metadata, c4.Metadata });
 			m.Metadata.Components.ShouldBe(new[] { m.Metadata.RootComponent, c1.Metadata, c2.Metadata, c3.Metadata, c4.Metadata });
+
+			m.Metadata.RootComponent.Subcomponents[0].Name.ShouldBe("c1");
+			m.Metadata.RootComponent.Subcomponents[1].Name.ShouldBe("c2");
+			m.Metadata.RootComponent.Subcomponents[2].Name.ShouldBe("name");
+			m.Metadata.RootComponent.Subcomponents[3].Name.ShouldBe("c4");
 		}
 	}
 }

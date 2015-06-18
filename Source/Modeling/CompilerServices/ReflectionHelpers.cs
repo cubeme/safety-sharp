@@ -59,6 +59,30 @@ namespace SafetySharp.CompilerServices
 		}
 
 		/// <summary>
+		///     Gets the instance property called <paramref name="propertyName" /> of type <paramref name="propertyType" /> declared by
+		///     the <paramref name="declaringType" />.
+		/// </summary>
+		/// <param name="declaringType">The type that declares the property.</param>
+		/// <param name="propertyType">The type of the property.</param>
+		/// <param name="propertyName">The name of the property.</param>
+		public static PropertyInfo GetProperty(Type declaringType, Type propertyType, string propertyName)
+		{
+			Requires.NotNull(declaringType, () => declaringType);
+			Requires.NotNull(propertyType, () => propertyType);
+			Requires.NotNullOrWhitespace(propertyName, () => propertyName);
+
+			var property = declaringType
+				.GetProperties(Flags)
+				.SingleOrDefault(p => p.Name == propertyName && p.PropertyType == propertyType);
+
+			Requires.That(property != null, () => propertyName,
+				"'{0}' does not declare an instance property called '{1}' of type '{2}'.",
+				declaringType.FullName, propertyName, propertyType);
+
+			return property;
+		}
+
+		/// <summary>
 		///     Gets the instance method called <paramref name="methodName" /> declared by the <paramref name="declaringType" />,
 		///     with the signature of the method defined by the <paramref name="argumentTypes" /> and <paramref name="returnType" />.
 		/// </summary>

@@ -23,8 +23,11 @@
 namespace SafetySharp.Compiler.Normalization
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Linq;
 	using CompilerServices;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
 	using Roslyn;
@@ -57,16 +60,75 @@ namespace SafetySharp.Compiler.Normalization
 				return base.VisitExpressionStatement(statement);
 
 			// MetadataBuilders.GetBuilder(target)
-			var metadataBuilderType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(MetadataBuilders)));
-			var getBuilderMethod = Syntax.MemberAccessExpression(metadataBuilderType, "GetBuilder");
 			var invokedMemberExpression = invocationExpression.Expression as MemberAccessExpressionSyntax;
 			var builderTarget = invokedMemberExpression == null ? Syntax.ThisExpression() : invokedMemberExpression.Expression.RemoveTrivia();
-			var getBuilder = Syntax.InvocationExpression(getBuilderMethod, builderTarget);
+			var getBuilder = GetBuilder(builderTarget);
 
 			// .WithRootComponents(components)
 			var withRootComponents = Syntax.MemberAccessExpression(getBuilder, "WithRootComponents");
-			var arguments = invocationExpression.ArgumentList.Arguments;
-			return Syntax.ExpressionStatement(Syntax.InvocationExpression(withRootComponents, arguments)).EnsureLineCount(statement);
+			var componentArguments = invocationExpression.ArgumentList.Arguments;
+			var withRootsInvocation = Syntax.ExpressionStatement(Syntax.InvocationExpression(withRootComponents, componentArguments));
+
+			// MetadataBuilders.GetBuilder(component).WithName(nameof(arg), compilerGenerated: true)
+			var argumentStatements = GetNameStatements(componentArguments);
+
+			var statements = new[] { (ExpressionStatementSyntax)withRootsInvocation }.Concat(argumentStatements);
+			var block = SyntaxFactory.Block(statements);
+			return block.NormalizeWhitespace().EnsureLineCount(statement);
+		}
+
+		/// <summary>
+		///     Gets the component name assignment statements for the <paramref name="arguments" />.
+		/// </summary>
+		/// <param name="arguments">The arguments that should be analyzed to see if a component name can be generated.</param>
+		private IEnumerable<ExpressionStatementSyntax> GetNameStatements(IEnumerable<ArgumentSyntax> arguments)
+		{
+			foreach (var argument in arguments)
+			{
+				var symbol = SemanticModel.GetSymbolInfo(argument.Expression).Symbol;
+
+				var fieldSymbol = symbol as IFieldSymbol;
+				var propertySymbol = symbol as IPropertySymbol;
+				var localSymbol = symbol as ILocalSymbol;
+				var parameterSymbol = symbol as IParameterSymbol;
+
+				if (fieldSymbol == null && propertySymbol == null && localSymbol == null && parameterSymbol == null)
+					continue;
+
+				if (propertySymbol != null && !propertySymbol.IsAutoProperty())
+					continue;
+
+				var getBuilder = GetBuilder(argument.Expression);
+				var name = "<>";
+				
+				if (fieldSymbol != null)
+					name = fieldSymbol.Name;
+
+				if (propertySymbol != null)
+					name = propertySymbol.Name;
+
+				if (localSymbol != null)
+					name = localSymbol.Name;
+
+				if (parameterSymbol != null)
+					name = parameterSymbol.Name;
+
+				// WithName(name, true)
+				var withName = Syntax.MemberAccessExpression(getBuilder, "WithName");
+				var invocation = Syntax.InvocationExpression(withName, Syntax.LiteralExpression(name), Syntax.TrueLiteralExpression());
+				yield return (ExpressionStatementSyntax)Syntax.ExpressionStatement(invocation);
+			}
+		}
+
+		/// <summary>
+		///     Gets the expression that retrieves the builder for the object represented by <paramref name="targetExpression" />.
+		/// </summary>
+		/// <param name="targetExpression">The expression the builder should be retrieved for.</param>
+		private SyntaxNode GetBuilder(SyntaxNode targetExpression)
+		{
+			var metadataBuilderType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(MetadataBuilders)));
+			var getBuilderMethod = Syntax.MemberAccessExpression(metadataBuilderType, "GetBuilder");
+			return Syntax.InvocationExpression(getBuilderMethod, targetExpression);
 		}
 	}
 }

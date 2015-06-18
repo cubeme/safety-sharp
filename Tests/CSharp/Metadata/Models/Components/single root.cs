@@ -43,6 +43,8 @@ namespace Tests.Metadata.Models.Components
 		protected override void Check()
 		{
 			Metadata.RootComponent.Subcomponents.ShouldBe(new[] { _c.Metadata });
+			Metadata.RootComponent.Name.ShouldBe("R");
+			Metadata.RootComponent.Subcomponents[0].Name.ShouldBe("_c");
 			Metadata.Components.ShouldBe(new[] { Metadata.RootComponent, _c.Metadata });
 		}
 	}
@@ -58,6 +60,7 @@ namespace Tests.Metadata.Models.Components
 
 			m.Metadata.RootComponent.Subcomponents.ShouldBe(new[] { c.Metadata });
 			m.Metadata.Components.ShouldBe(new[] { m.Metadata.RootComponent, c.Metadata });
+			m.Metadata.RootComponent.Subcomponents[0].Name.ShouldBe("c");
 
 			m.Seal(); // Second call should have no effect
 

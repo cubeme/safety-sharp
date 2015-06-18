@@ -25,6 +25,7 @@ namespace SafetySharp.CompilerServices
 	using System;
 	using Modeling;
 	using Runtime;
+	using Utilities;
 
 	/// <summary>
 	///     Provides access to the metadata builders of <see cref="MetadataObject{TMetadata,TMetadataBuilder}" /> instances.
@@ -41,6 +42,30 @@ namespace SafetySharp.CompilerServices
 			where TMetadataBuilder : class
 		{
 			return obj.MetadataBuilder;
+		}
+
+		/// <summary>
+		///     Gets the <paramref name="component" />'s <see cref="ComponentMetadata.Builder" /> if its metadata has not yet
+		///     been initialized.
+		/// </summary>
+		/// <param name="component">The component the builder should be returned for.</param>
+		public static ComponentMetadata.Builder GetBuilder(IComponent component)
+		{
+			Requires.NotNull(component, () => component);
+			Requires.OfType<Component>(component, () => component);
+
+			return ((Component)component).MetadataBuilder;
+		}
+
+		/// <summary>
+		///     Gets the <paramref name="component" />'s <see cref="ComponentMetadata.Builder" /> if its metadata has not yet
+		///     been initialized.
+		/// </summary>
+		/// <param name="component">The component the builder should be returned for.</param>
+		public static ComponentMetadata.Builder GetBuilder(Component component)
+		{
+			Requires.NotNull(component, () => component);
+			return component.MetadataBuilder;
 		}
 	}
 }

@@ -35,6 +35,11 @@ namespace SafetySharp.Runtime
 	public sealed class ProvidedPortMetadata : MethodMetadata
 	{
 		/// <summary>
+		///     The metadata of the required ports that have been bound to the provided port.
+		/// </summary>
+		private readonly Lazy<IEnumerable<RequiredPortMetadata>> _boundRequiredPorts;
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="component">The component the method belongs to.</param>
@@ -46,19 +51,12 @@ namespace SafetySharp.Runtime
 		{
 			Requires.That(HasImplementation, () => port, "Provided ports must have an implementation.");
 			Requires.That(CanBeAffectedByFaultEffects, () => port, "Provided ports must be sensitive to fault effects.");
-		}
 
-		/// <summary>
-		///     Gets the metadata of the required ports that have been bound to the provided port.
-		/// </summary>
-		public IEnumerable<RequiredPortMetadata> BoundRequiredPorts
-		{
-			get
+			_boundRequiredPorts = new Lazy<IEnumerable<RequiredPortMetadata>>(() =>
 			{
 				var requiredPorts = new List<RequiredPortMetadata>();
-				var rootComponent = ((ComponentMetadata)DeclaringObject).RootComponent;
 
-				rootComponent.WalkPreOrder(metadata =>
+				DeclaringObject.RootComponent.VisitPreOrder(metadata =>
 				{
 					requiredPorts.AddRange(from binding in metadata.Bindings
 										   where binding.ProvidedPort == this
@@ -66,7 +64,23 @@ namespace SafetySharp.Runtime
 				});
 
 				return requiredPorts;
-			}
+			});
+		}
+
+		/// <summary>
+		///     Gets the metadata of the declaring component.
+		/// </summary>
+		public new ComponentMetadata DeclaringObject
+		{
+			get { return ((ComponentMetadata)base.DeclaringObject); }
+		}
+
+		/// <summary>
+		///     Gets the metadata of the required ports that have been bound to the provided port.
+		/// </summary>
+		public IEnumerable<RequiredPortMetadata> BoundRequiredPorts
+		{
+			get { return _boundRequiredPorts.Value; }
 		}
 	}
 }

@@ -40,7 +40,7 @@ namespace SafetySharp.Simulation
 		internal static void ExecuteStep(this Model model)
 		{
 			Requires.NotNull(model, () => model);
-			model.GetMetadata().RootComponent.WalkPreOrder(metadata => metadata.Component.Update());
+			model.GetMetadata().RootComponent.VisitPreOrder(metadata => metadata.Component.Update());
 		}
 
 		/// <summary>
@@ -50,7 +50,7 @@ namespace SafetySharp.Simulation
 		internal static void Reset(this Model model)
 		{
 			Requires.NotNull(model, () => model);
-			model.GetMetadata().RootComponent.WalkPreOrder(metadata => metadata.Component.Reset());
+			model.GetMetadata().RootComponent.VisitPreOrder(metadata => metadata.Component.Reset());
 		}
 	}
 }

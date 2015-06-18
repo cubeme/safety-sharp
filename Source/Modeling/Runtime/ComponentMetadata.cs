@@ -97,17 +97,17 @@ namespace SafetySharp.Runtime
 		public string Name { get; private set; }
 
 		/// <summary>
-		///     Walks the component hierarchy in pre-order. For each component found within the hierarchy, invokes the
-		///     <paramref name="action" /> on the components' metadata.
+		///     Visits each component within the component hierarchy in pre-order, invoking <paramref name="visitor" />.
 		/// </summary>
-		public void WalkPreOrder(Action<ComponentMetadata> action)
+		/// <param name="visitor">The visitor that should be invoked on each component within the hierarchy.</param>
+		public void VisitPreOrder(Action<ComponentMetadata> visitor)
 		{
-			Requires.NotNull(action, () => action);
+			Requires.NotNull(visitor, () => visitor);
 
 			Action<ComponentMetadata> preOrder = null;
 			preOrder = component =>
 			{
-				action(component);
+				visitor(component);
 
 				foreach (var subcomponent in component.Subcomponents)
 					preOrder(subcomponent);

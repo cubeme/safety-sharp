@@ -23,8 +23,13 @@
 namespace SafetySharp.Compiler.Roslyn.Symbols
 {
 	using System;
+	using System.Linq;
+	using CompilerServices;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Microsoft.CodeAnalysis.Editing;
 	using Utilities;
 
 	/// <summary>
@@ -53,6 +58,47 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				return true;
 
 			return propertySymbol.OverriddenProperty.Overrides(overriddenProperty);
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether <paramref name="propertySymbol" /> is defined as an auto-implemented property.
+		/// </summary>
+		/// <param name="propertySymbol">The symbol of the property that should be checked.</param>
+		[Pure]
+		public static bool IsAutoProperty([NotNull] this IPropertySymbol propertySymbol)
+		{
+			Requires.NotNull(propertySymbol, () => propertySymbol);
+
+			if (propertySymbol.DeclaringSyntaxReferences.Length != 1)
+				return false;
+
+			var declaration = (PropertyDeclarationSyntax)propertySymbol.DeclaringSyntaxReferences[0].GetSyntax();
+			var getter = declaration.AccessorList.Accessors.SingleOrDefault(accessor => accessor.Kind() == SyntaxKind.GetAccessorDeclaration);
+
+			if (getter == null)
+				return false;
+
+			return getter.Body == null;
+		}
+
+		/// <summary>
+		///     Gets the expression that selects the <paramref name="propertySymbol" /> at runtime using reflection.
+		/// </summary>
+		/// <param name="propertySymbol">The property the code should be generated for.</param>
+		/// <param name="syntaxGenerator">The syntax generator that should be used.</param>
+		[Pure]
+		public static ExpressionSyntax GetPropertyInfoExpression([NotNull] this IPropertySymbol propertySymbol,
+																 [NotNull] SyntaxGenerator syntaxGenerator)
+		{
+			Requires.NotNull(propertySymbol, () => propertySymbol);
+			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);
+
+			var declaringTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)syntaxGenerator.TypeExpression(propertySymbol.ContainingType));
+			var propertyTypeArg = SyntaxFactory.TypeOfExpression((TypeSyntax)syntaxGenerator.TypeExpression(propertySymbol.Type));
+			var nameArg = syntaxGenerator.LiteralExpression(propertySymbol.Name);
+			var reflectionHelpersType = SyntaxFactory.ParseTypeName(typeof(ReflectionHelpers).FullName);
+			var getFieldMethod = syntaxGenerator.MemberAccessExpression(reflectionHelpersType, "GetProperty");
+			return (ExpressionSyntax)syntaxGenerator.InvocationExpression(getFieldMethod, declaringTypeArg, propertyTypeArg, nameArg);
 		}
 	}
 }

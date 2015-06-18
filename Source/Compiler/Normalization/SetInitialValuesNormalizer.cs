@@ -65,7 +65,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			// ReflectionHelpers.GetField(typeof(...), typeof(...), "...")
 			var fieldSymbol = invocationExpression.ArgumentList.Arguments[0].Expression.GetReferencedSymbol<IFieldSymbol>(SemanticModel);
-			var fieldInfo = fieldSymbol.GetRuntimeFieldExpression(Syntax);
+			var fieldInfo = fieldSymbol.GetFieldInfoExpression(Syntax);
 
 			// .WithInitialValues()
 			var withInitialValues = Syntax.MemberAccessExpression(builder, Syntax.GenericName("WithInitialValues", fieldSymbol.Type));

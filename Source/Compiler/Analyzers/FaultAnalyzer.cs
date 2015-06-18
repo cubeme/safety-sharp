@@ -54,10 +54,18 @@ namespace SafetySharp.Compiler.Analyzers
 			String.Format("Fault '{{0}}' must be declared as a nested type of a '{0}'-derived type.", typeof(Component).FullName));
 
 		/// <summary>
+		///     The error diagnostic emitted by the analyzer when a fault declaration is generic.
+		/// </summary>
+		private static readonly DiagnosticInfo _genericFault = DiagnosticInfo.Error(
+			DiagnosticIdentifier.GenericFaultDeclaration,
+			"Faults cannot be generic.",
+			"Fault '{0}' cannot be generic.");
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public FaultAnalyzer()
-			: base(_unsupportedInheritance, _outsideComponent)
+			: base(_unsupportedInheritance, _outsideComponent, _genericFault)
 		{
 		}
 
@@ -77,7 +85,7 @@ namespace SafetySharp.Compiler.Analyzers
 		private static void Analyze(SymbolAnalysisContext context)
 		{
 			var compilation = context.Compilation;
-			var symbol = context.Symbol as ITypeSymbol;
+			var symbol = context.Symbol as INamedTypeSymbol;
 
 			if (symbol == null)
 				return;
@@ -93,6 +101,9 @@ namespace SafetySharp.Compiler.Analyzers
 
 			if (symbol.ContainingType == null || !symbol.ContainingType.IsDerivedFromComponent(compilation))
 				_outsideComponent.Emit(context, symbol, symbol.ToDisplayString());
+
+			if (symbol.Arity != 0)
+				_genericFault.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

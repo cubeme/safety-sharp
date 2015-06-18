@@ -20,46 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Components.Subcomponents
+namespace Tests.Metadata.Models.Components
 {
 	using System;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
-	internal interface I1 : IComponent
+	internal class C10 : Component
 	{
 	}
 
-	internal class C2 : Component
+	internal abstract class M<TComponent> : TestModel
+		where TComponent : IComponent
 	{
-		public C2(string name)
-			: base(name)
+		protected readonly TComponent _root;
+
+		protected M(TComponent root)
 		{
+			_root = root;
+			AddRootComponent(root);
 		}
 	}
 
-	internal class C3 : Component, I1
+	internal class M12 : M<C10>
 	{
-	}
-
-	internal class X3 : TestComponent
-	{
-		private readonly C2 _c = new C2("name");
-		private readonly I1 _i = new C3();
+		public M12()
+			: base(new C10())
+		{
+		}
 
 		protected override void Check()
 		{
-			Metadata.Subcomponents.Length.ShouldBe(2);
-
-			Metadata.Subcomponents[0].Component.ShouldBe(_c);
-			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
-			Metadata.Subcomponents[0].Name.ShouldBe("name");
-
-			Metadata.Subcomponents[1].Component.ShouldBe((Component)_i);
-			Metadata.Subcomponents[1].ParentComponent.ShouldBe(this.GetMetadata());
-			Metadata.Subcomponents[1].Name.ShouldBe("_i");
+			Metadata.RootComponent.Subcomponents[0].Name.ShouldBe("root");
+			Metadata.RootComponent.Subcomponents[0].ShouldBe(_root.Metadata);
 		}
 	}
 }

@@ -446,10 +446,10 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		///     The declaring type that should be used; if <c>null</c>, <see cref="methodSymbol" />'s declaring
 		///     type is used instead.
 		/// </param>
-		public static ExpressionSyntax GetRuntimeMethodExpression([NotNull] this IMethodSymbol methodSymbol,
-																  [NotNull] SyntaxGenerator syntaxGenerator,
-																  string methodName = null,
-																  string declaringType = null)
+		public static ExpressionSyntax GetMethodInfoExpression([NotNull] this IMethodSymbol methodSymbol,
+															   [NotNull] SyntaxGenerator syntaxGenerator,
+															   string methodName = null,
+															   string declaringType = null)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);

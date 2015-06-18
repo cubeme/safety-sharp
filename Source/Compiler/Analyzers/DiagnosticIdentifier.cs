@@ -50,6 +50,7 @@ namespace SafetySharp.Compiler.Analyzers
 		UnsupportedFaultInheritance,
 		FaultWithoutEffects,
 		FaultOutsideComponent,
+		GenericFaultDeclaration,
 
 		// Port diagnostics
 		AmbiguousPortKind = 3000,
