@@ -101,7 +101,7 @@ module Extensions =
         member internal this.GetMetadataProvider () =
             let metadataTypes = seq {
                 yield! this.Components |> Seq.map (fun c -> c.GetType ())
-                yield! this.Components |> Seq.collect (fun (c : Component) -> c.Metadata.Faults |> Seq.map (fun f -> f.GetType ()))
+                yield! this.Components |> Seq.collect (fun (c : Component) -> c.Metadata.Faults |> Seq.map (fun f -> f.Fault.GetType ()))
             }
             
             MetadataProvider (metadataTypes |> Seq.toList)

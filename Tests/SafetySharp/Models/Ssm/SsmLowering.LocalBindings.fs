@@ -43,7 +43,7 @@ module ``Local bindings`` =
     let private tmp = CilToSsm.freshLocal
     let private synName name inheritanceLevel overloadIndex synIndex = SsmLowering.makeSynPortName (methodName name inheritanceLevel overloadIndex) synIndex
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``does not change required port invocation`` () =
         transform "class X : Component { extern void M(); void N() { M(); } }" =?
             {

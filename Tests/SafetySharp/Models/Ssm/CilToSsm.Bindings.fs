@@ -41,7 +41,7 @@ module Bindings =
 
     [<Test>]
     let ``component without bindings`` () =
-        transform "class X : Component { extern void N(); void M() {} }" "new X()" =? []
+        transform "class X : Component { }" "new X()" =? []
 
     [<Test>]
     let ``component with single delayed binding`` () =

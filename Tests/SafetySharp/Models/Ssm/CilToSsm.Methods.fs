@@ -63,7 +63,7 @@ module Methods =
     let private field name t = Field (fieldName name 2, t)
     let private tmp = CilToSsm.freshLocal
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``extern method without return value and parameters should have kind required port`` () =
         transformMethod "extern void M();" =?
             {
@@ -108,7 +108,7 @@ module Methods =
                 Kind = ProvPort
             }
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``extern method with return value and parameters should have kind required port`` () =
         transformMethod "extern int M(int x);" =?
             {
@@ -1481,7 +1481,7 @@ module Methods =
                 }
             ]
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``step method: non-override as required port`` () =
         let c = "class C : Component { public extern new void Update(); }"
         transform c "new C()" =? 

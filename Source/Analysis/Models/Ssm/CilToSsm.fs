@@ -525,10 +525,17 @@ module internal CilToSsm =
                 if methodInfo.GetBaseDefinition () = componentUpdateMethod then Step
                 else if m.RVA <> 0 || m.IsAbstract then ProvPort else ReqPort }
 
+    let filter (m : MethodDefinition) =
+        m.DeclaringType.FullName <> "SafetySharp.Modeling.IComponent" &&
+        m.DeclaringType.FullName <> "SafetySharp.Modeling.IMetadataObject" &&
+        m.DeclaringType.FullName <> "SafetySharp.Modeling.Component" && 
+        not (m.DeclaringType.FullName.Contains("SafetySharp.Modeling.MetadataObject"))
+
     /// Transforms all methods of the given type to an SSM method with structured control flow.
     let private transformMethods (metadata : MetadataProvider) (o : obj) (t : TypeDefinition) (resolver : GenericResolver) =
         t.GetMethods()
-        |> Seq.filter (fun m -> not m.HasOverrides || m.Overrides |> Seq.forall (fun m -> m.DeclaringType.FullName <> "SafetySharp.Modeling.IComponent" && m.DeclaringType.FullName <> "SafetySharp.Modeling.IMetadataObject" && m.DeclaringType.FullName <> "SafetySharp.Modeling.Component" && not( m.DeclaringType.FullName.StartsWith("SafetySharp.Modeling.MetadataObject"))))
+        |> Seq.filter (fun m -> not m.HasOverrides || m.Overrides |> Seq.forall (fun m -> m.DeclaringType.FullName <> "SafetySharp.Modeling.IComponent" && m.DeclaringType.FullName <> "SafetySharp.Modeling.IMetadataObject" && m.DeclaringType.FullName <> "SafetySharp.Modeling.Component" && not (m.DeclaringType.FullName.Contains("SafetySharp.Modeling.MetadataObject"))))
+        |> Seq.filter (filter)
         |> Seq.map (transformMethod metadata o resolver)
         |> List.ofSeq
 
@@ -548,9 +555,9 @@ module internal CilToSsm =
 
     /// Transforms the given fault.
     let transformFault (metadata : MetadataProvider) (resolver : GenericResolver) (f : FaultMetadata) =
-        let faultType = metadata.GetTypeReference(f).Resolve ()
-        { Fault.Name = f.GetType().Name
-          Fault.Methods = transformMethods metadata f faultType resolver }
+        let faultType = metadata.GetTypeReference(f.Fault).Resolve ()
+        { Fault.Name = f.Fault.GetType().Name
+          Fault.Methods = transformMethods metadata f.Fault faultType resolver }
 
     /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
     let rec private transformType (metadata : MetadataProvider) (c : Component) =

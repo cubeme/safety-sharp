@@ -82,7 +82,7 @@ module ``Port signatures`` =
                 Kind = ProvPort                   
             }
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``does not change void-returning required port method`` () =
         transformMethod "extern void M();" =?
             {
@@ -94,7 +94,7 @@ module ``Port signatures`` =
                 Kind = ReqPort                   
             }
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``lowers value-returning required port method without parameters`` () =
         transformMethod "extern int M();" =?
             {
@@ -106,7 +106,7 @@ module ``Port signatures`` =
                 Kind = ReqPort                   
             }
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``lowers value-returning required port method with parameters`` () =
         transformMethod "extern bool M(int x, ref bool b);" =?
             {
@@ -123,7 +123,7 @@ module ``Port signatures`` =
                 Kind = ReqPort                   
             }
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``lowers value-returning required port method with conflicting parameter`` () =
         transformMethod "extern int M(int retVal);" =?
             {
@@ -219,7 +219,7 @@ module ``Port signatures`` =
                 Bindings = []       
             }
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``lowers subcomponents`` () =
         transform "int M() { return q.Q(); } Sub q = new Sub(); class Sub : Component { public extern int Q(); } " =?
             {
