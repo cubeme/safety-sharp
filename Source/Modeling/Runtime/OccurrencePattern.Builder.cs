@@ -75,9 +75,10 @@ namespace SafetySharp.Runtime
 			/// <summary>
 			///     Sets the initial <paramref name="values" /> of the occurrence pattern's <paramref name="field" />.
 			/// </summary>
+			/// <typeparam name="T">The type of the field.</typeparam>
 			/// <param name="field">The field whose initial values should be set.</param>
 			/// <param name="values">The initial values of the field.</param>
-			public void WithInitialValues(FieldInfo field, params object[] values)
+			public void WithInitialValues<T>(FieldInfo field, params T[] values)
 			{
 				_fields.WithInitialValues(field, values);
 			}

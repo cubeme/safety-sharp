@@ -25,47 +25,51 @@ namespace SafetySharp.Runtime
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Reflection;
-	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Represents the the immutable metadata of a required port of a S# <see cref="Component" />.
+	///     Represents a name scope within which all elements must be uniquely named.
 	/// </summary>
-	public sealed class RequiredPortMetadata : MethodMetadata
+	internal class NameScope
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     The list of names that are in use already.
 		/// </summary>
-		/// <param name="component">The component the method belongs to.</param>
-		/// <param name="port">The CLR method representing the component's port.</param>
-		/// <param name="name">The name of the method; if <c>null</c>, the method's CLR name is used.</param>
-		internal RequiredPortMetadata(Component component, MethodInfo port, string name = null)
-			: base(component, port, name)
+		private readonly List<string> _knownNames = new List<string>();
+
+		/// <summary>
+		///     Makes <paramref name="name" /> unique within the name scope.
+		/// </summary>
+		/// <param name="name">The name that should be made unique.</param>
+		public string MakeUnique(string name)
 		{
-			Requires.That(!HasImplementation, () => port, "Requires ports must not have an implementation.");
-			Requires.That(CanBeAffectedByFaultEffects, () => port, "Required ports must be sensitive to fault effects.");
+			// Check if the name is unique already; in that case, don't change it
+			if (!IsUnique(name))
+			{
+				// Otherwise, append an increasing number to the name until it is unique
+				for (var i = 1;; ++i)
+				{
+					var uniqueName = name + i;
+					if (!IsUnique(uniqueName))
+						continue;
+
+					name = uniqueName;
+					break;
+				}
+			}
+
+			_knownNames.Add(name);
+			return name;
 		}
 
 		/// <summary>
-		///     Gets the metadata of the provided ports that have been bound to the required port.
+		///     Gets a value indicating whether <paramref name="name" /> is unique within the name scope.
 		/// </summary>
-		public IEnumerable<ProvidedPortMetadata> BoundProvidedPorts
+		/// <param name="name">The name that should be checked.</param>
+		public bool IsUnique(string name)
 		{
-			get
-			{
-				var providedPorts = new List<ProvidedPortMetadata>();
-				var rootComponent = ((ComponentMetadata)DeclaringObject).RootComponent;
-
-				rootComponent.WalkPreOrder(metadata =>
-				{
-					providedPorts.AddRange(from binding in metadata.Bindings
-										   where binding.RequiredPort == this
-										   select binding.ProvidedPort);
-				});
-
-				return providedPorts;
-			}
+			Requires.NotNullOrWhitespace(name, () => name);
+			return _knownNames.Count(knownName => knownName == name) == 0;
 		}
 	}
 }

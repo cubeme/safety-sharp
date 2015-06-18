@@ -285,6 +285,8 @@
     <None Include="Metadata\Faults\FaultEffects\single fault, multiple effects, different members.cs" />
     <None Include="Metadata\Faults\FaultEffects\generic base.cs" />
     <Compile Include="Metadata\Components\Fields\initial values as array.cs" />
+    <Compile Include="Metadata\Components\Fields\multiple fields with same name.cs" />
+    <Compile Include="Metadata\Components\Subcomponents\subcomponents with same name.cs" />
     <Compile Include="Metadata\ModelMetadataTests.Helpers.cs">
       <DependentUpon>ModelMetadataTests.cs</DependentUpon>
     </Compile>

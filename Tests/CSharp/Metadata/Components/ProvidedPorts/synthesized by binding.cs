@@ -62,7 +62,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[1].BaseMethod.MethodInfo.ShouldBe(typeof(X10).GetMethod("M"));
 			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(true);
-			Metadata.ProvidedPorts[1].Name.ShouldBe("M");
+			Metadata.ProvidedPorts[1].Name.ShouldBe("M1");
 
 			Metadata.ProvidedPorts[2].MethodInfo.ShouldBe(typeof(X11).GetMethod("Check", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());

@@ -45,15 +45,19 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		/// <param name="obj">The S# object the method belongs to.</param>
 		/// <param name="method">The CLR method the metadata should be provided for.</param>
+		/// <param name="name">The name of the method; if <c>null</c>, the method's CLR name is used.</param>
 		/// <param name="baseMethod">The overridden base method, if any.</param>
-		internal MethodMetadata(IMetadataObject obj, MethodInfo method, MethodMetadata baseMethod = null)
+		internal MethodMetadata(IMetadataObject obj, MethodInfo method, string name = null, MethodMetadata baseMethod = null)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(method, () => method);
+			Requires.That(name == null || !String.IsNullOrWhiteSpace(name), () => name, "The name must be null or non-whitespace only.");
 			Requires.That(baseMethod == null || method != baseMethod.MethodInfo, "A method cannot override itself.");
 			Requires.That(baseMethod == null || obj == baseMethod._object, "The base method must belong to the same object.");
 
 			_object = obj;
+
+			Name = name ?? method.Name;
 			MethodInfo = method;
 			BaseMethod = baseMethod;
 
@@ -164,10 +168,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the name of the method.
 		/// </summary>
-		public string Name
-		{
-			get { return MethodInfo.Name; }
-		}
+		public string Name { get; private set; }
 
 		/// <summary>
 		///     Gets the metadata of the declaring object.

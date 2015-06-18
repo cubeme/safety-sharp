@@ -83,7 +83,7 @@ namespace SafetySharp.Runtime
 			/// </summary>
 			internal void FinalizeMetadata()
 			{
-				_builder.FinalizeMetadata();
+				_builder.FinalizeMetadata("R");
 
 				var components = new HashSet<ComponentMetadata>();
 				_rootComponent.Metadata.WalkPreOrder(metadata =>
@@ -106,6 +106,13 @@ namespace SafetySharp.Runtime
 			/// </summary>
 			private sealed class RootComponent : Component
 			{
+				/// <summary>
+				///     Initializes a new instance.
+				/// </summary>
+				public RootComponent()
+					: base("R")
+				{
+				}
 			}
 		}
 	}

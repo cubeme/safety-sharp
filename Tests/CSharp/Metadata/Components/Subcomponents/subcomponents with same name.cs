@@ -23,58 +23,60 @@
 namespace Tests.Metadata.Components.Subcomponents
 {
 	using System;
+	using System.Reflection;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
-	internal interface I2 : IComponent
+	internal class X10 : Component
 	{
 	}
 
-	internal class C1 : Component, I2
+	internal abstract class X11 : TestComponent
 	{
+		private readonly X10 _c = new X10();
+		public readonly X10 D = new X10();
 	}
 
-	internal class X2 : TestComponent
+	internal abstract class X12 : X11
 	{
-		private readonly C1 _c = new C1();
+		public new readonly X10 D = new X10();
+	}
+
+	internal class X13 : X12
+	{
+		private readonly X10 _c = new X10();
+		public readonly X10 D2 = new X10();
+		public new readonly X10 D = new X10();
 
 		protected override void Check()
 		{
-			Metadata.Subcomponents.Length.ShouldBe(1);
-
-			Metadata.Subcomponents[0].Component.ShouldBe(_c);
+			Metadata.Subcomponents.Length.ShouldBe(6);
+			
+			Metadata.Subcomponents[0].Component.ShouldBe(typeof(X11).GetField("_c", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this));
 			Metadata.Subcomponents[0].Name.ShouldBe("_c");
 			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
-		}
-	}
 
-	internal class X8 : TestComponent
-	{
-		private readonly IComponent _c = new C1();
+			Metadata.Subcomponents[1].Component.ShouldBe(typeof(X11).GetField("D").GetValue(this));
+			Metadata.Subcomponents[1].Name.ShouldBe("D");
+			Metadata.Subcomponents[1].ParentComponent.ShouldBe(this.GetMetadata());
 
-		protected override void Check()
-		{
-			Metadata.Subcomponents.Length.ShouldBe(1);
+			Metadata.Subcomponents[2].Component.ShouldBe(base.D);
+			Metadata.Subcomponents[2].Name.ShouldBe("D1");
+			Metadata.Subcomponents[2].ParentComponent.ShouldBe(this.GetMetadata());
 
-			Metadata.Subcomponents[0].Component.ShouldBe(_c);
-			Metadata.Subcomponents[0].Name.ShouldBe("_c");
-			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
-		}
-	}
+			Metadata.Subcomponents[3].Component.ShouldBe(_c);
+			Metadata.Subcomponents[3].Name.ShouldBe("_c1");
+			Metadata.Subcomponents[3].ParentComponent.ShouldBe(this.GetMetadata());
 
-	internal class X9 : TestComponent
-	{
-		private readonly I2 _c = new C1();
+			Metadata.Subcomponents[4].Component.ShouldBe(D2);
+			Metadata.Subcomponents[4].Name.ShouldBe("D2");
+			Metadata.Subcomponents[4].ParentComponent.ShouldBe(this.GetMetadata());
 
-		protected override void Check()
-		{
-			Metadata.Subcomponents.Length.ShouldBe(1);
-
-			Metadata.Subcomponents[0].Component.ShouldBe((Component)_c);
-			Metadata.Subcomponents[0].Name.ShouldBe("_c");
-			Metadata.Subcomponents[0].ParentComponent.ShouldBe(this.GetMetadata());
+			Metadata.Subcomponents[5].Component.ShouldBe(D);
+			Metadata.Subcomponents[5].Name.ShouldBe("D3");
+			Metadata.Subcomponents[5].ParentComponent.ShouldBe(this.GetMetadata());
 		}
 	}
 }

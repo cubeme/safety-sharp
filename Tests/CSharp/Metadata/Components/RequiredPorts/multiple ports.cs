@@ -50,13 +50,13 @@ namespace Tests.Metadata.Components.RequiredPorts
 			Metadata.RequiredPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.RequiredPorts[1].BaseMethod.ShouldBe(null);
 			Metadata.RequiredPorts[1].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[1].Name.ShouldBe("M");
+			Metadata.RequiredPorts[1].Name.ShouldBe("M1");
 
 			Metadata.RequiredPorts[2].MethodInfo.ReturnType.ShouldBe(typeof(bool));
 			Metadata.RequiredPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.RequiredPorts[2].BaseMethod.ShouldBe(null);
 			Metadata.RequiredPorts[2].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[2].Name.ShouldBe("M");
+			Metadata.RequiredPorts[2].Name.ShouldBe("M2");
 		}
 	}
 }

@@ -46,13 +46,16 @@ namespace SafetySharp.Runtime
 		/// <param name="initialValues">
 		///     The set of initial values. A value of <c>null</c> indicates that the current field value should be used.
 		/// </param>
-		internal FieldMetadata(IMetadataObject obj, FieldInfo field, object[] initialValues)
+		/// <param name="name">The name of the field; if <c>null</c>, the field's CLR name is used.</param>
+		internal FieldMetadata(IMetadataObject obj, FieldInfo field, object[] initialValues, string name = null)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(field, () => field);
+			Requires.That(name == null || !String.IsNullOrWhiteSpace(name), () => name, "The name must be null or non-whitespace only.");
 
 			_object = obj;
 
+			Name = name ?? field.Name;
 			FieldInfo = field;
 			InitialValues = initialValues ?? new[] { field.GetValue(obj) };
 		}
@@ -65,10 +68,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the name of the field.
 		/// </summary>
-		public string Name
-		{
-			get { return FieldInfo.Name; }
-		}
+		public string Name { get; private set; }
 
 		/// <summary>
 		///     Gets the metadata of the declaring object.

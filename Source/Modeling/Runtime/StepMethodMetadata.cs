@@ -39,7 +39,7 @@ namespace SafetySharp.Runtime
 		/// <param name="stepMethod">The CLR method the metadata should be provided for.</param>
 		/// <param name="baseStepMethod">The overridden base step method, if any.</param>
 		internal StepMethodMetadata(IMetadataObject obj, MethodInfo stepMethod, MethodMetadata baseStepMethod = null)
-			: base(obj, stepMethod, baseStepMethod)
+			: base(obj, stepMethod, baseMethod: baseStepMethod)
 		{
 			Requires.That(HasImplementation, () => stepMethod, "Step methods must have an implementation.");
 		}

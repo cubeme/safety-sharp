@@ -42,10 +42,13 @@ namespace SafetySharp.Runtime
 			private readonly List<FaultMetadata> _faults = new List<FaultMetadata>();
 			private readonly FieldCollectionBuilder _fields;
 			private readonly List<ProvidedPortMetadata> _providedPorts = new List<ProvidedPortMetadata>();
+			private readonly NameScope _providedPortsNameScope;
 			private readonly List<RequiredPortMetadata> _requiredPorts = new List<RequiredPortMetadata>();
+			private readonly NameScope _requiredPortsNameScope;
 			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
-			private readonly List<FieldInfo> _subcomponentFields = new List<FieldInfo>();
-			private readonly List<IComponent> _subcomponents = new List<IComponent>();
+			private readonly List<Tuple<string, FieldInfo>> _subcomponentFields = new List<Tuple<string, FieldInfo>>();
+			private readonly NameScope _subcomponentNameScope;
+			private readonly List<Tuple<string, IComponent>> _subcomponents = new List<Tuple<string, IComponent>>();
 			private string _name;
 
 			/// <summary>
@@ -58,6 +61,9 @@ namespace SafetySharp.Runtime
 
 				_component = component;
 				_fields = new FieldCollectionBuilder(component);
+				_subcomponentNameScope = new NameScope();
+				_providedPortsNameScope = new NameScope();
+				_requiredPortsNameScope = new NameScope();
 			}
 
 			/// <summary>
@@ -82,9 +88,10 @@ namespace SafetySharp.Runtime
 			/// <summary>
 			///     Sets the initial <paramref name="values" /> of the component's <paramref name="field" />.
 			/// </summary>
+			/// <typeparam name="T">The type of the field.</typeparam>
 			/// <param name="field">The field whose initial values should be set.</param>
 			/// <param name="values">The initial values of the field.</param>
-			public void WithInitialValues(FieldInfo field, params object[] values)
+			public void WithInitialValues<T>(FieldInfo field, params T[] values)
 			{
 				_fields.WithInitialValues(field, values);
 			}
@@ -92,14 +99,15 @@ namespace SafetySharp.Runtime
 			/// <summary>
 			///     Adds the <paramref name="subcomponent" /> to the component's metadata.
 			/// </summary>
-			/// <param name="subcomponent">The subcomponent that should be added..</param>
+			/// <param name="subcomponent">The subcomponent that should be added.</param>
 			public void WithSubcomponent(IComponent subcomponent)
 			{
 				Requires.NotNull(subcomponent, () => subcomponent);
-				Requires.That(!_subcomponents.Contains(subcomponent), () => subcomponent, "The subcomponent has already been added.");
+				Requires.That(_subcomponents.All(c => c.Item2 != subcomponent), () => subcomponent,
+					"The subcomponent has already been added.");
 				Requires.OfType<Component>(subcomponent, () => subcomponent);
 
-				_subcomponents.Add(subcomponent);
+				_subcomponents.Add(Tuple.Create(_subcomponentNameScope.MakeUnique(subcomponent.GetType().Name), subcomponent));
 			}
 
 			/// <summary>
@@ -109,11 +117,11 @@ namespace SafetySharp.Runtime
 			public void WithSubcomponent(FieldInfo field)
 			{
 				Requires.NotNull(field, () => field);
-				Requires.That(!_subcomponentFields.Contains(field), () => field, "The subcomponent has already been added.");
+				Requires.That(_subcomponentFields.All(c => c.Item2 != field), () => field, "The subcomponent has already been added.");
 				Requires.That(typeof(IComponent).IsAssignableFrom(field.FieldType), () => field, "The subcomponent must implement '{0}'.",
 					typeof(IComponent).FullName);
 
-				_subcomponentFields.Add(field);
+				_subcomponentFields.Add(Tuple.Create(_subcomponentNameScope.MakeUnique(field.Name), field));
 			}
 
 			/// <summary>
@@ -124,10 +132,9 @@ namespace SafetySharp.Runtime
 			public void WithGenericSubcomponent(FieldInfo field)
 			{
 				Requires.NotNull(field, () => field);
-				Requires.That(!_subcomponentFields.Contains(field), () => field, "The subcomponent has already been added.");
 
 				if (typeof(IComponent).IsAssignableFrom(field.FieldType))
-					_subcomponentFields.Add(field);
+					WithSubcomponent(field);
 			}
 
 			/// <summary>
@@ -156,14 +163,17 @@ namespace SafetySharp.Runtime
 			public void WithProvidedPort(MethodInfo providedPort, MethodInfo basePort = null)
 			{
 				Requires.NotNull(providedPort, () => providedPort);
-				Requires.That(_providedPorts.All(port => port.MethodInfo != providedPort), () => providedPort, "The port has already been added.");
+				Requires.That(_providedPorts.All(port => port.MethodInfo != providedPort), () => providedPort,
+					"The port has already been added.");
 				Requires.That(providedPort.HasAttribute<ProvidedAttribute>(), () => providedPort,
 					"The method must be marked with'{0}'.", typeof(ProvidedAttribute).FullName);
 				Requires.That(basePort == null || _providedPorts.Any(port => port.MethodInfo == basePort), () => _providedPorts,
 					"The base port is unknown.");
 
 				var baseMetadata = basePort != null ? _providedPorts.Single(method => method.MethodInfo == basePort) : null;
-				_providedPorts.Add(new ProvidedPortMetadata(_component, providedPort, baseMetadata));
+				var name = _providedPortsNameScope.MakeUnique(providedPort.Name);
+
+				_providedPorts.Add(new ProvidedPortMetadata(_component, providedPort, name, baseMetadata));
 			}
 
 			/// <summary>
@@ -172,11 +182,13 @@ namespace SafetySharp.Runtime
 			public void WithRequiredPort(MethodInfo requiredPort)
 			{
 				Requires.NotNull(requiredPort, () => requiredPort);
-				Requires.That(_requiredPorts.All(port => port.MethodInfo != requiredPort), () => requiredPort, "The port has already been added.");
+				Requires.That(_requiredPorts.All(port => port.MethodInfo != requiredPort), () => requiredPort,
+					"The port has already been added.");
 				Requires.That(requiredPort.HasAttribute<RequiredAttribute>(), () => requiredPort,
 					"The method must be marked with'{0}'.", typeof(RequiredAttribute).FullName);
 
-				_requiredPorts.Add(new RequiredPortMetadata(_component, requiredPort));
+				var name = _requiredPortsNameScope.MakeUnique(requiredPort.Name);
+				_requiredPorts.Add(new RequiredPortMetadata(_component, requiredPort, name));
 			}
 
 			/// <summary>
@@ -190,7 +202,8 @@ namespace SafetySharp.Runtime
 			public void WithStepMethod(MethodInfo stepMethod, MethodInfo baseStepMethod = null)
 			{
 				Requires.NotNull(stepMethod, () => stepMethod);
-				Requires.That(baseStepMethod == null || _stepMethods.Any(method => method.MethodInfo == baseStepMethod), () => baseStepMethod,
+				Requires.That(baseStepMethod == null || _stepMethods.Any(method => method.MethodInfo == baseStepMethod),
+					() => baseStepMethod,
 					"The base step method is unknown.");
 
 				var baseMetadata = baseStepMethod != null ? _stepMethods.Single(method => method.MethodInfo == baseStepMethod) : null;
@@ -236,15 +249,16 @@ namespace SafetySharp.Runtime
 			/// <summary>
 			///     Creates an immutable <see cref="ComponentMetadata" /> instance from the current state of the builder.
 			/// </summary>
+			/// <param name="name">The automatically generated name of the component.</param>
 			/// <param name="parent">The metadata of the parent component. Can be <c>null</c> for the root of the component hierarchy.</param>
-			internal void FinalizeMetadata(ComponentMetadata parent = null)
+			internal void FinalizeMetadata(string name = null, ComponentMetadata parent = null)
 			{
 				// We have to register the metadata now, even though we'll still have to change it later on; this way,
 				// we prevent stack overflows when the component hierarchy is cyclic
 				_component.Metadata = new ComponentMetadata
 				{
 					Component = _component,
-					Name = _name,
+					Name = String.IsNullOrWhiteSpace(_name) ? name : _name,
 					ParentComponent = parent,
 					Fields = _fields.ToImmutableCollection(),
 					Faults = new MemberCollection<FaultMetadata>(_component, _faults),
@@ -254,34 +268,48 @@ namespace SafetySharp.Runtime
 					Bindings = new MemberCollection<BindingMetadata>(_component, _bindings)
 				};
 
-				// Initialize the fault injections
+				InitializeFaults();
+				InitializeSubcomponents();
+			}
+
+			/// <summary>
+			///     Initializes the component's fault injections.
+			/// </summary>
+			private void InitializeFaults()
+			{
 				_component.Metadata.StepMethods.ForEach(stepMethod => stepMethod.FaultInjector.InjectFaults());
 				_component.Metadata.RequiredPorts.ForEach(port => port.FaultInjector.InjectFaults());
 				_component.Metadata.ProvidedPorts.ForEach(port => port.FaultInjector.InjectFaults());
+			}
 
+			/// <summary>
+			///     Initializes the component's subcomponents.
+			/// </summary>
+			private void InitializeSubcomponents()
+			{
 				// Get all subcomponent instances
 				var subcomponents = _subcomponentFields
-					.Select(field =>
+					.Select(subcomponent =>
 					{
-						var component = field.GetValue(_component) as Component;
+						var component = subcomponent.Item2.GetValue(_component) as Component;
 						Requires.That(component != null, "Subcomponent field '{0}.{1}' does not contain a valid component instance.",
-							field.DeclaringType.FullName, field.Name);
+							subcomponent.Item2.DeclaringType.FullName, subcomponent.Item2.Name);
 
-						return component;
+						return new { Component = component, Name = subcomponent.Item1 };
 					})
-					.Concat(_subcomponents)
-					.Cast<Component>()
+					.Concat(_subcomponents.Select(subcomponent =>
+						new { Component = (Component)subcomponent.Item2, Name = subcomponent.Item1 }))
 					.ToArray();
 
 				// Initialize their metadata, if that hasn't happened already (i.e., when the component graph is cyclic)
 				foreach (var subcomponent in subcomponents)
 				{
-					if (!subcomponent.IsMetadataFinalized)
-						subcomponent.MetadataBuilder.FinalizeMetadata(_component.Metadata);
+					if (!subcomponent.Component.IsMetadataFinalized)
+						subcomponent.Component.MetadataBuilder.FinalizeMetadata(subcomponent.Name, _component.Metadata);
 				}
 
 				// Add the subcomponents to the metadata
-				var subcomponentMetadata = subcomponents.Select(subcomponent => subcomponent.Metadata);
+				var subcomponentMetadata = subcomponents.Select(subcomponent => subcomponent.Component.Metadata);
 				_component.Metadata.Subcomponents = new MemberCollection<ComponentMetadata>(_component, subcomponentMetadata);
 			}
 		}

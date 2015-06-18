@@ -23,7 +23,6 @@
 namespace SafetySharp.Runtime
 {
 	using System;
-	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
@@ -35,7 +34,8 @@ namespace SafetySharp.Runtime
 	/// </summary>
 	internal sealed class FieldCollectionBuilder
 	{
-		private readonly Dictionary<FieldInfo, object[]> _fields = new Dictionary<FieldInfo, object[]>();
+		private readonly Dictionary<FieldInfo, Tuple<string, object[]>> _fields = new Dictionary<FieldInfo, Tuple<string, object[]>>();
+		private readonly NameScope _nameScope;
 		private readonly IMetadataObject _object;
 
 		/// <summary>
@@ -45,7 +45,9 @@ namespace SafetySharp.Runtime
 		public FieldCollectionBuilder(IMetadataObject obj)
 		{
 			Requires.NotNull(obj, () => obj);
+
 			_object = obj;
+			_nameScope = new NameScope();
 		}
 
 		/// <summary>
@@ -60,7 +62,7 @@ namespace SafetySharp.Runtime
 						  field.FieldType == typeof(double) || field.FieldType.IsEnum, () => field,
 				"Invalid field type: Only 'bool', 'int', 'double', and enumeration types are supported.");
 
-			_fields.Add(field, null);
+			_fields.Add(field, Tuple.Create(_nameScope.MakeUnique(field.Name), (object[])null));
 		}
 
 		/// <summary>
@@ -80,23 +82,20 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Sets the initial <paramref name="values" /> of the component's <paramref name="field" />.
 		/// </summary>
+		/// <typeparam name="T">The type of the field.</typeparam>
 		/// <param name="field">The field whose initial values should be set.</param>
 		/// <param name="values">The initial values of the field.</param>
-		public void WithInitialValues(FieldInfo field, object[] values)
+		public void WithInitialValues<T>(FieldInfo field, T[] values)
 		{
 			Requires.NotNull(field, () => field);
 			Requires.NotNull(values, () => values);
 			Requires.That(values.Length > 0, () => values, "At least one value must be provided.");
 			Requires.That(_fields.ContainsKey(field), () => field, "The given field is unknown.");
 
-			// Check if the values were provided as an array...
-			if (values.Length == 1 && values[0].GetType().IsArray)
-				values = ((IEnumerable)values[0]).Cast<object>().ToArray();
-
 			var typesMatch = values.All(value => value.GetType() == field.FieldType);
 			Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
 
-			_fields[field] = values;
+			_fields[field] = Tuple.Create(_fields[field].Item1, values.Cast<object>().ToArray());
 		}
 
 		/// <summary>
@@ -104,7 +103,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public MemberCollection<FieldMetadata> ToImmutableCollection()
 		{
-			var fields = _fields.Select(field => new FieldMetadata(_object, field.Key, field.Value));
+			var fields = _fields.Select(field => new FieldMetadata(_object, field.Key, field.Value.Item2, field.Value.Item1));
 			return new MemberCollection<FieldMetadata>(_object, fields);
 		}
 	}

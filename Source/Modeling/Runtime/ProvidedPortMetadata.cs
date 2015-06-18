@@ -39,9 +39,10 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		/// <param name="component">The component the method belongs to.</param>
 		/// <param name="port">The CLR method representing the component's port.</param>
+		/// <param name="name">The name of the port; if <c>null</c>, the port's CLR name is used.</param>
 		/// <param name="basePort">The overridden base port, if any.</param>
-		public ProvidedPortMetadata(Component component, MethodInfo port, MethodMetadata basePort = null)
-			: base(component, port, basePort)
+		public ProvidedPortMetadata(Component component, MethodInfo port, string name = null, MethodMetadata basePort = null)
+			: base(component, port, name, basePort)
 		{
 			Requires.That(HasImplementation, () => port, "Provided ports must have an implementation.");
 			Requires.That(CanBeAffectedByFaultEffects, () => port, "Provided ports must be sensitive to fault effects.");

@@ -69,7 +69,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[2].Name.ShouldBe("M");
+			Metadata.ProvidedPorts[2].Name.ShouldBe("M1");
 		}
 	}
 }

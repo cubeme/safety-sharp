@@ -68,7 +68,7 @@ namespace SafetySharp.Compiler.Normalization
 			var fieldInfo = fieldSymbol.GetRuntimeFieldExpression(Syntax);
 
 			// .WithInitialValues()
-			var withInitialValues = Syntax.MemberAccessExpression(builder, "WithInitialValues");
+			var withInitialValues = Syntax.MemberAccessExpression(builder, Syntax.GenericName("WithInitialValues", fieldSymbol.Type));
 			var arguments = new List<ArgumentSyntax>(invocationExpression.ArgumentList.Arguments.Skip(1));
 			arguments.Insert(0, (ArgumentSyntax)Syntax.Argument(fieldInfo));
 			return Syntax.ExpressionStatement(Syntax.InvocationExpression(withInitialValues, arguments)).EnsureLineCount(statement);

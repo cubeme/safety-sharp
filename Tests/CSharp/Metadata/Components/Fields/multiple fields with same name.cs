@@ -20,54 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Components.ProvidedPorts
+namespace Tests.Metadata.Components.Fields
 {
 	using System;
-	using SafetySharp.CompilerServices;
-	using SafetySharp.Modeling;
+	using System.Reflection;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
-	internal class X3 : TestComponent
+	internal abstract class X16 : TestComponent
 	{
-		[Provided]
-		internal void M()
-		{
-		}
+		public int X;
+	}
 
-		protected int M(int i)
-		{
-			return i;
-		}
+	internal class X17 : X16
+	{
+		public int X1;
+		public new int X;
 
-		public bool M(ref int i)
-		{
-			return i == 1;
-		}
-
-		[SuppressTransformation]
 		protected override void Check()
 		{
-			Metadata.ProvidedPorts.Length.ShouldBe(3);
+			Metadata.Fields.Length.ShouldBe(3);
 
-			Metadata.ProvidedPorts[0].MethodInfo.ReturnType.ShouldBe(typeof(void));
-			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
+			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(X16).GetField("X"));
+			Metadata.Fields[0].Name.ShouldBe("X");
+			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { 0 });
 
-			Metadata.ProvidedPorts[1].MethodInfo.ReturnType.ShouldBe(typeof(int));
-			Metadata.ProvidedPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[1].Name.ShouldBe("M1");
+			Metadata.Fields[1].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.Fields[1].FieldInfo.ShouldBe(typeof(X17).GetField("X1"));
+			Metadata.Fields[1].Name.ShouldBe("X1");
+			Metadata.Fields[1].InitialValues.ShouldBe(new object[] { 0 });
 
-			Metadata.ProvidedPorts[2].MethodInfo.ReturnType.ShouldBe(typeof(bool));
-			Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[2].Name.ShouldBe("M2");
+			Metadata.Fields[2].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.Fields[2].FieldInfo.ShouldBe(typeof(X17).GetField("X"));
+			Metadata.Fields[2].Name.ShouldBe("X2");
+			Metadata.Fields[2].InitialValues.ShouldBe(new object[] { 0 });
 		}
 	}
 }

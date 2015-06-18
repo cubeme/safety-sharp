@@ -84,6 +84,7 @@
     <Compile Include="Modeling\OverflowBehavior.cs" />
     <Compile Include="Modeling\ProvidedAttribute.cs" />
     <Compile Include="Modeling\RequiredAttribute.cs" />
+    <Compile Include="Runtime\NameScope.cs" />
     <Compile Include="Runtime\NondeterministicFaultBehavior.cs" />
     <Compile Include="Runtime\ObjectMetadata.cs" />
     <Compile Include="Runtime\OccurrencePattern.Builder.cs" />
