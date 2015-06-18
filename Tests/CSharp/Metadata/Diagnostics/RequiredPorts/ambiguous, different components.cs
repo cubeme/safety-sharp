@@ -20,71 +20,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Models.Bindings
+namespace Tests.Metadata.Diagnostics.RequiredPorts
 {
 	using System;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.MetadataAnalyzers;
 	using Shouldly;
 	using Utilities;
 
-	internal class X1 : Component
+	internal class C5 : Component
 	{
 		public extern void M();
 	}
 
-	internal class X2 : Component
+	internal class C6 : Component
 	{
-		public void M()
+		public void N()
 		{
 		}
 	}
 
-	internal class X3 : Component
-	{
-		private X1 _x1;
-		private X2 _x2;
-
-		public X3(X1 x1, X2 x2)
-		{
-			_x1 = x1;
-			_x2 = x2;
-		}
-	}
-
-	internal class M2 : TestModel
-	{
-		private readonly X1 _x1 = new X1();
-		private readonly X2 _x2 = new X2();
-
-		public M2()
-		{
-			Bind(_x1.RequiredPorts.M = _x2.ProvidedPorts.M);
-			AddRootComponents(new X3(_x1, _x2));
-		}
-
-		protected override void Check()
-		{
-			Metadata.Bindings[0].DeclaringComponent.ShouldBe(Metadata.RootComponent);
-			Metadata.Bindings[0].ProvidedPort.ShouldBe(_x2.Metadata.ProvidedPorts[0]);
-			Metadata.Bindings[0].RequiredPort.ShouldBe(_x1.Metadata.RequiredPorts[0]);
-		}
-	}
-
-	internal class M3 : TestObject
+	internal class T4 : TestObject
 	{
 		protected override void Check()
 		{
-			var x1 = new X1();
-			var x2 = new X2();
+			var c1 = new C5();
+			var c2 = new C6();
+			var c3 = new C6();
 			var m = new Model();
 
-			m.AddRootComponents(new X3(x1, x2));
-			m.Bind(x1.RequiredPorts.M = x2.ProvidedPorts.M);
-			m.Seal();
+			m.AddRootComponents(c2, c1, c3);
+			m.Bind(c1.RequiredPorts.M = c2.ProvidedPorts.N);
+			m.Bind(c1.RequiredPorts.M = c3.ProvidedPorts.N);
 
-			m.Metadata.Bindings[0].DeclaringComponent.ShouldBe(m.Metadata.RootComponent);
-			m.Metadata.Bindings[0].ProvidedPort.ShouldBe(x2.Metadata.ProvidedPorts[0]);
-			m.Metadata.Bindings[0].RequiredPort.ShouldBe(x1.Metadata.RequiredPorts[0]);
+			Tests.RaisesWith<AmbiguousBindingsException>(() => m.Seal(),
+				e => e.RequiredPort.ShouldBe(m.Metadata.RootComponent.Subcomponents[1].RequiredPorts[0]));
 		}
 	}
 }

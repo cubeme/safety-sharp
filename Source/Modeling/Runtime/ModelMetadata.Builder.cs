@@ -24,7 +24,7 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
+	using MetadataAnalyzers;
 	using Modeling;
 	using Utilities;
 
@@ -85,20 +85,32 @@ namespace SafetySharp.Runtime
 			{
 				_builder.FinalizeMetadata("R");
 
-				var components = new HashSet<ComponentMetadata>();
-				_rootComponent.Metadata.VisitPreOrder(metadata =>
-				{
-					if (!components.Add(metadata))
-						throw new ComponentHierarchyException(metadata);
-				});
-
 				_model.Metadata = new ModelMetadata
 				{
 					Model = _model,
 					RootComponent = _rootComponent.Metadata,
 					Bindings = _rootComponent.Metadata.Bindings,
-					Components = components.ToArray()
+					_components = new Lazy<IEnumerable<ComponentMetadata>>(() =>
+					{
+						var components = new List<ComponentMetadata>();
+						_rootComponent.Metadata.VisitPreOrder(metadata => components.Add(metadata));
+						return components.ToArray();
+					})
 				};
+
+				Analyze<HierarchyStructureAnalyzer>();
+				Analyze<RequiredPortBindingsAnalyzer>();
+				Analyze<BindingsAnalyzer>();
+			}
+
+			/// <summary>
+			///     Executes an analyzer of type <typeparamref name="T" /> for the model's metadata.
+			/// </summary>
+			/// <typeparam name="T">The type of the analyzer that should be executed for the model.</typeparam>
+			private void Analyze<T>()
+				where T : ModelAnalyzer, new()
+			{
+				new T().Analyze(_model.Metadata);
 			}
 
 			/// <summary>

@@ -290,6 +290,16 @@
     <Compile Include="Metadata\Components\Fields\unsupported field type.cs" />
     <Compile Include="Metadata\Components\Subcomponents\single property subcomponent.cs" />
     <Compile Include="Metadata\Components\Subcomponents\subcomponents with same name.cs" />
+    <Compile Include="Metadata\Diagnostics\Bindings\Valid\different roots and levels.cs" />
+    <Compile Include="Metadata\Diagnostics\Bindings\Valid\different roots.cs" />
+    <Compile Include="Metadata\Diagnostics\Bindings\Invalid\non-subcomponent.cs" />
+    <Compile Include="Metadata\Diagnostics\Bindings\Valid\second level.cs" />
+    <Compile Include="Metadata\Diagnostics\Bindings\Valid\same level.cs" />
+    <Compile Include="Metadata\Diagnostics\Bindings\Valid\span one level.cs" />
+    <Compile Include="Metadata\Diagnostics\Bindings\Valid\span two levels.cs" />
+    <Compile Include="Metadata\Diagnostics\RequiredPorts\ambiguous, different components.cs" />
+    <Compile Include="Metadata\Diagnostics\RequiredPorts\ambiguous, same component.cs" />
+    <Compile Include="Metadata\Diagnostics\RequiredPorts\unbound ports.cs" />
     <Compile Include="Metadata\Faults\FaultEffects\unique names.cs" />
     <Compile Include="Metadata\Faults\Fields\unsupported field type.cs" />
     <Compile Include="Metadata\ModelMetadataTests.Helpers.cs">
@@ -304,14 +314,18 @@
     <Compile Include="Metadata\Models\Bindings\no bindings.cs" />
     <Compile Include="Metadata\Models\Bindings\throws when sealed.cs" />
     <Compile Include="Metadata\Models\Components\complex hierarchy.cs" />
-    <Compile Include="Metadata\Models\Components\cyclic graph.cs" />
+    <Compile Include="Metadata\Diagnostics\HierarchyStructure\cyclic graph.cs" />
     <Compile Include="Metadata\Models\Components\generic model.cs" />
     <Compile Include="Metadata\Models\Components\inline construction.cs" />
     <Compile Include="Metadata\Models\Components\multiple roots.cs" />
-    <Compile Include="Metadata\Models\Components\shared components.cs" />
+    <Compile Include="Metadata\Diagnostics\HierarchyStructure\shared components.cs" />
     <Compile Include="Metadata\Models\Components\single root.cs" />
     <Compile Include="Metadata\Models\Components\no roots.cs" />
     <Compile Include="Metadata\Models\Components\throws when sealed.cs" />
+    <Compile Include="Metadata\DiagnosticsTests.cs" />
+    <Compile Include="Metadata\DiagnosticsTests.Helpers.cs">
+      <DependentUpon>DiagnosticsTests.cs</DependentUpon>
+    </Compile>
     <Compile Include="Metadata\OccurrencePatternsMetadataTests.cs" />
     <Compile Include="Metadata\Faults\Fields\generic component.cs" />
     <Compile Include="Metadata\Faults\Fields\initial values, set by constructor.cs" />

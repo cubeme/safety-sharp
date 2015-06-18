@@ -73,8 +73,6 @@ namespace SafetySharp.Runtime
 				"Expected to find an instance of '{0}' on the required port.", typeof(BackingFieldAttribute).FullName);
 
 			var field = backingField.GetFieldInfo(requiredPort.Method.DeclaringType);
-			Requires.That(field.GetValue(requiredPort.Target) == null, () => requiredPort, "The required port has already been bound.");
-
 			var adaptedDelegate = Delegate.CreateDelegate(field.FieldType, providedPort.Target, providedPort.Method);
 			field.SetValue(requiredPort.Target, adaptedDelegate);
 		}

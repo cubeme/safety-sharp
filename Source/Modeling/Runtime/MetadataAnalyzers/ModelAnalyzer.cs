@@ -20,31 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace SafetySharp.Runtime.MetadataAnalyzers
 {
 	using System;
-	using Utilities;
 
 	/// <summary>
-	///     Raised when a component is found in multiple locations of a component hierarchy.
+	///     Represents a base class for all S# model analyzers.
 	/// </summary>
-	public class ComponentHierarchyException : Exception
+	internal abstract class ModelAnalyzer
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     Analyzes the model's <paramref name="metadata" />.
 		/// </summary>
-		/// <param name="component">The metadata of the component that was found in multiple locations of a component hierarchy.</param>
-		internal ComponentHierarchyException(ComponentMetadata component)
-			: base("A component has been found in multiple locations of the component hierarchy; " +
-				   "the 'Component' property contains the metadata of the component that violated the hierarchy constraint.")
-		{
-			Requires.NotNull(component, () => component);
-			Component = component;
-		}
-
-		/// <summary>
-		///     Gets the metadata of the component that was found in multiple locations of a component hierarchy.
-		/// </summary>
-		public ComponentMetadata Component { get; private set; }
+		/// <param name="metadata">The metadata of the model that should be analyzed.</param>
+		public abstract void Analyze(ModelMetadata metadata);
 	}
 }

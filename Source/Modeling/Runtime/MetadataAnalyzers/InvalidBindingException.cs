@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,45 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace SafetySharp.Runtime.MetadataAnalyzers
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using Modeling;
+	using Utilities;
 
 	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Model" /> instance.
+	///     Raised when an invalid port binding is found. A binding is invalid when it references a port of a component that is not
+	///     a direct or indirect subcomponent of the component initializing the binding.
 	/// </summary>
-	public sealed partial class ModelMetadata : ObjectMetadata
+	public class InvalidBindingException : Exception
 	{
 		/// <summary>
-		///     The metadata of all components the model consists of.
+		///     Initializes a new instance.
 		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private Lazy<IEnumerable<ComponentMetadata>> _components;
-
-		/// <summary>
-		///     Gets the metadata of the synthesized root component of the model.
-		/// </summary>
-		public ComponentMetadata RootComponent { get; private set; }
-
-		/// <summary>
-		///     Gets the <see cref="Model" /> instance the metadata is provided for.
-		/// </summary>
-		public Model Model { get; private set; }
-
-		/// <summary>
-		///     Gets the metadata of all components the model consists of.
-		/// </summary>
-		public IEnumerable<ComponentMetadata> Components
+		/// <param name="invalidBinding">The metadata of the invalid binding.</param>
+		internal InvalidBindingException(BindingMetadata invalidBinding)
+			: base("Detected a port binding that references a port of a component that is not " +
+				   "a direct or indirect subcomponent of the component initializing the binding; " +
+				   "the 'Binding' property contains the metadata of the invalid binding for further analysis.")
 		{
-			get { return _components.Value; }
+			Requires.NotNull(invalidBinding, () => invalidBinding);
+			Binding = invalidBinding;
 		}
 
 		/// <summary>
-		///     Gets the port bindings declared by the model.
+		///     Gets the metadata of the invalid binding.
 		/// </summary>
-		public MemberCollection<BindingMetadata> Bindings { get; private set; }
+		public BindingMetadata Binding { get; private set; }
 	}
 }

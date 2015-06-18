@@ -20,43 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Models.Components
+namespace SafetySharp.Runtime.MetadataAnalyzers
 {
 	using System;
-	using SafetySharp.Modeling;
-	using SafetySharp.Runtime;
-	using Shouldly;
 	using Utilities;
 
-	internal class C8 : Component
+	/// <summary>
+	///     Raised when a component is found in multiple locations of a component hierarchy.
+	/// </summary>
+	public class InvalidHierarchyStructureException : Exception
 	{
-		private C9 _x;
-
-		public C8(C9 x)
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="component">The metadata of the component that was found in multiple locations of a component hierarchy.</param>
+		internal InvalidHierarchyStructureException(ComponentMetadata component)
+			: base("A component has been found in multiple locations of the component hierarchy; " +
+				   "the 'Component' property contains the metadata of the component that violated the hierarchy constraint.")
 		{
-			_x = x;
+			Requires.NotNull(component, () => component);
+			Component = component;
 		}
-	}
 
-	internal class C9 : Component
-	{
-		public C8 X;
-
-		public C9()
-		{
-			X = new C8(this);
-		}
-	}
-
-	internal class M10 : TestObject
-	{
-		protected override void Check()
-		{
-			var c = new C9();
-			var m = new Model();
-			m.AddRootComponents(c);
-
-			Tests.RaisesWith<ComponentHierarchyException>(() => m.Seal(), e => e.Component.ShouldBe(c.Metadata));
-		}
+		/// <summary>
+		///     Gets the metadata of the component that was found in multiple locations of a component hierarchy.
+		/// </summary>
+		public ComponentMetadata Component { get; private set; }
 	}
 }

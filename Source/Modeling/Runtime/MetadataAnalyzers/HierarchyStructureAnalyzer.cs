@@ -20,40 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Models.Components
+namespace SafetySharp.Runtime.MetadataAnalyzers
 {
 	using System;
-	using SafetySharp.Modeling;
-	using SafetySharp.Runtime;
-	using Shouldly;
-	using Utilities;
+	using System.Collections.Generic;
 
-	internal class C7 : Component
+	/// <summary>
+	///     Checks whether the component hierarchy is invalid, for instance when a component is found in multiple locations
+	///     of the hierarchy.
+	/// </summary>
+	internal class HierarchyStructureAnalyzer : ModelAnalyzer
 	{
-		private X8 _a;
-		private X8 _b;
-
-		public C7(X8 a, X8 b)
+		/// <summary>
+		///     Analyzes the model's <paramref name="metadata" />.
+		/// </summary>
+		/// <param name="metadata">The metadata of the model that should be analyzed.</param>
+		public override void Analyze(ModelMetadata metadata)
 		{
-			_a = a;
-			_b = b;
-		}
-	}
-
-	internal class X8 : Component
-	{
-	}
-
-	internal class M8 : TestObject
-	{
-		protected override void Check()
-		{
-			var b = new X8();
-			var c = new C7(b, b);
-			var m = new Model();
-			m.AddRootComponents(c);
-
-			Tests.RaisesWith<ComponentHierarchyException>(() => m.Seal(), e => e.Component.ShouldBe(b.Metadata));
+			var components = new HashSet<ComponentMetadata>();
+			metadata.RootComponent.VisitPreOrder(component =>
+			{
+				if (!components.Add(component))
+					throw new InvalidHierarchyStructureException(component);
+			});
 		}
 	}
 }

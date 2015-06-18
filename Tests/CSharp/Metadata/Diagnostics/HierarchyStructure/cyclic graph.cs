@@ -20,71 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Models.Bindings
+namespace Tests.Metadata.Diagnostics.HierarchyStructure
 {
 	using System;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.MetadataAnalyzers;
 	using Shouldly;
 	using Utilities;
 
-	internal class X1 : Component
+	internal class C8 : Component
 	{
-		public extern void M();
-	}
+		private C9 _x;
 
-	internal class X2 : Component
-	{
-		public void M()
+		public C8(C9 x)
 		{
+			_x = x;
 		}
 	}
 
-	internal class X3 : Component
+	internal class C9 : Component
 	{
-		private X1 _x1;
-		private X2 _x2;
+		public C8 X;
 
-		public X3(X1 x1, X2 x2)
+		public C9()
 		{
-			_x1 = x1;
-			_x2 = x2;
+			X = new C8(this);
 		}
 	}
 
-	internal class M2 : TestModel
-	{
-		private readonly X1 _x1 = new X1();
-		private readonly X2 _x2 = new X2();
-
-		public M2()
-		{
-			Bind(_x1.RequiredPorts.M = _x2.ProvidedPorts.M);
-			AddRootComponents(new X3(_x1, _x2));
-		}
-
-		protected override void Check()
-		{
-			Metadata.Bindings[0].DeclaringComponent.ShouldBe(Metadata.RootComponent);
-			Metadata.Bindings[0].ProvidedPort.ShouldBe(_x2.Metadata.ProvidedPorts[0]);
-			Metadata.Bindings[0].RequiredPort.ShouldBe(_x1.Metadata.RequiredPorts[0]);
-		}
-	}
-
-	internal class M3 : TestObject
+	internal class M10 : TestObject
 	{
 		protected override void Check()
 		{
-			var x1 = new X1();
-			var x2 = new X2();
+			var c = new C9();
 			var m = new Model();
+			m.AddRootComponents(c);
 
-			m.AddRootComponents(new X3(x1, x2));
-			m.Bind(x1.RequiredPorts.M = x2.ProvidedPorts.M);
-			m.Seal();
-
-			m.Metadata.Bindings[0].DeclaringComponent.ShouldBe(m.Metadata.RootComponent);
-			m.Metadata.Bindings[0].ProvidedPort.ShouldBe(x2.Metadata.ProvidedPorts[0]);
-			m.Metadata.Bindings[0].RequiredPort.ShouldBe(x1.Metadata.RequiredPorts[0]);
+			Tests.RaisesWith<InvalidHierarchyStructureException>(() => m.Seal(), e => e.Component.ShouldBe(c.Metadata));
 		}
 	}
 }

@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,45 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace SafetySharp.Runtime.MetadataAnalyzers
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using Modeling;
+	using System.Linq;
 
 	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Model" /> instance.
+	///     Checks whether there is exactly one binding for all required ports.
 	/// </summary>
-	public sealed partial class ModelMetadata : ObjectMetadata
+	internal class RequiredPortBindingsAnalyzer : ModelAnalyzer
 	{
 		/// <summary>
-		///     The metadata of all components the model consists of.
+		///     Analyzes the model's <paramref name="metadata" />.
 		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private Lazy<IEnumerable<ComponentMetadata>> _components;
-
-		/// <summary>
-		///     Gets the metadata of the synthesized root component of the model.
-		/// </summary>
-		public ComponentMetadata RootComponent { get; private set; }
-
-		/// <summary>
-		///     Gets the <see cref="Model" /> instance the metadata is provided for.
-		/// </summary>
-		public Model Model { get; private set; }
-
-		/// <summary>
-		///     Gets the metadata of all components the model consists of.
-		/// </summary>
-		public IEnumerable<ComponentMetadata> Components
+		/// <param name="metadata">The metadata of the model that should be analyzed.</param>
+		public override void Analyze(ModelMetadata metadata)
 		{
-			get { return _components.Value; }
-		}
+			metadata.RootComponent.VisitPreOrder(component =>
+			{
+				foreach (var requiredPort in component.RequiredPorts)
+				{
+					var count = requiredPort.BoundProvidedPorts.Count();
 
-		/// <summary>
-		///     Gets the port bindings declared by the model.
-		/// </summary>
-		public MemberCollection<BindingMetadata> Bindings { get; private set; }
+					if (count == 0)
+						throw new UnboundRequiredPortException(requiredPort);
+
+					if (count > 1)
+						throw new AmbiguousBindingsException(requiredPort);
+				}
+			});
+		}
 	}
 }

@@ -20,45 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace Tests.Metadata
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Diagnostics;
-	using Modeling;
+	using System.IO;
+	using JetBrains.Annotations;
+	using Xunit.Abstractions;
 
-	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Model" /> instance.
-	/// </summary>
-	public sealed partial class ModelMetadata : ObjectMetadata
+	partial class DiagnosticsTests
 	{
-		/// <summary>
-		///     The metadata of all components the model consists of.
-		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private Lazy<IEnumerable<ComponentMetadata>> _components;
-
-		/// <summary>
-		///     Gets the metadata of the synthesized root component of the model.
-		/// </summary>
-		public ComponentMetadata RootComponent { get; private set; }
-
-		/// <summary>
-		///     Gets the <see cref="Model" /> instance the metadata is provided for.
-		/// </summary>
-		public Model Model { get; private set; }
-
-		/// <summary>
-		///     Gets the metadata of all components the model consists of.
-		/// </summary>
-		public IEnumerable<ComponentMetadata> Components
+		public DiagnosticsTests(ITestOutputHelper output)
+			: base(output)
 		{
-			get { return _components.Value; }
 		}
 
-		/// <summary>
-		///     Gets the port bindings declared by the model.
-		/// </summary>
-		public MemberCollection<BindingMetadata> Bindings { get; private set; }
+		[UsedImplicitly]
+		public static IEnumerable<object[]> DiscoverTests(string directory)
+		{
+			return EnumerateTestCases(Path.Combine(Path.GetDirectoryName(GetFileName()), directory));
+		}
 	}
 }

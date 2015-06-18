@@ -24,6 +24,7 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.Linq;
 	using System.Reflection;
 	using Modeling;
@@ -35,8 +36,15 @@ namespace SafetySharp.Runtime
 	public sealed class ProvidedPortMetadata : MethodMetadata
 	{
 		/// <summary>
+		///     The metadata of the bindings affecting the port.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private readonly Lazy<IEnumerable<BindingMetadata>> _bindings;
+
+		/// <summary>
 		///     The metadata of the required ports that have been bound to the provided port.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly Lazy<IEnumerable<RequiredPortMetadata>> _boundRequiredPorts;
 
 		/// <summary>
@@ -52,18 +60,15 @@ namespace SafetySharp.Runtime
 			Requires.That(HasImplementation, () => port, "Provided ports must have an implementation.");
 			Requires.That(CanBeAffectedByFaultEffects, () => port, "Provided ports must be sensitive to fault effects.");
 
-			_boundRequiredPorts = new Lazy<IEnumerable<RequiredPortMetadata>>(() =>
+			_boundRequiredPorts = new Lazy<IEnumerable<RequiredPortMetadata>>(() => Bindings.Select(binding => binding.RequiredPort));
+			_bindings = new Lazy<IEnumerable<BindingMetadata>>(() =>
 			{
-				var requiredPorts = new List<RequiredPortMetadata>();
+				var bindings = new List<BindingMetadata>();
 
-				DeclaringObject.RootComponent.VisitPreOrder(metadata =>
-				{
-					requiredPorts.AddRange(from binding in metadata.Bindings
-										   where binding.ProvidedPort == this
-										   select binding.RequiredPort);
-				});
+				DeclaringObject.RootComponent.VisitPreOrder(
+					metadata => bindings.AddRange(metadata.Bindings.Where(binding => binding.ProvidedPort == this)));
 
-				return requiredPorts;
+				return bindings;
 			});
 		}
 
@@ -81,6 +86,14 @@ namespace SafetySharp.Runtime
 		public IEnumerable<RequiredPortMetadata> BoundRequiredPorts
 		{
 			get { return _boundRequiredPorts.Value; }
+		}
+
+		/// <summary>
+		///     Gets the metadata of the bindings affecting the port.
+		/// </summary>
+		public IEnumerable<BindingMetadata> Bindings
+		{
+			get { return _bindings.Value; }
 		}
 	}
 }

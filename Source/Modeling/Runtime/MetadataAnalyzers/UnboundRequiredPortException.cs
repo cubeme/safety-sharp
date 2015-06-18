@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,45 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime
+namespace SafetySharp.Runtime.MetadataAnalyzers
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using Modeling;
+	using Utilities;
 
 	/// <summary>
-	///     Represents the immutable metadata of a S# <see cref="Model" /> instance.
+	///     Raised when a model contains an unbound required port.
 	/// </summary>
-	public sealed partial class ModelMetadata : ObjectMetadata
+	public class UnboundRequiredPortException : Exception
 	{
 		/// <summary>
-		///     The metadata of all components the model consists of.
+		///     Initializes a new instance.
 		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private Lazy<IEnumerable<ComponentMetadata>> _components;
-
-		/// <summary>
-		///     Gets the metadata of the synthesized root component of the model.
-		/// </summary>
-		public ComponentMetadata RootComponent { get; private set; }
-
-		/// <summary>
-		///     Gets the <see cref="Model" /> instance the metadata is provided for.
-		/// </summary>
-		public Model Model { get; private set; }
-
-		/// <summary>
-		///     Gets the metadata of all components the model consists of.
-		/// </summary>
-		public IEnumerable<ComponentMetadata> Components
+		/// <param name="requiredPort">The metadata of the unbound required port.</param>
+		internal UnboundRequiredPortException(RequiredPortMetadata requiredPort)
+			: base("Detected an unbound required port; the 'RequiredPort' property contains the metadata of the port for further analysis.")
 		{
-			get { return _components.Value; }
+			Requires.NotNull(requiredPort, () => requiredPort);
+			RequiredPort = requiredPort;
 		}
 
 		/// <summary>
-		///     Gets the port bindings declared by the model.
+		///     Gets the metadata of the unbound required port.
 		/// </summary>
-		public MemberCollection<BindingMetadata> Bindings { get; private set; }
+		public RequiredPortMetadata RequiredPort { get; private set; }
 	}
 }

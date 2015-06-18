@@ -53,7 +53,14 @@
     <Compile Include="Modeling\IMetadataObject.cs" />
     <Compile Include="Modeling\MetadataObject.cs" />
     <Compile Include="Modeling\PriorityAttribute.cs" />
-    <Compile Include="Runtime\ComponentHierarchyException.cs" />
+    <Compile Include="Runtime\MetadataAnalyzers\AmbiguousBindingsException.cs" />
+    <Compile Include="Runtime\MetadataAnalyzers\BindingsAnalyzer.cs" />
+    <Compile Include="Runtime\MetadataAnalyzers\HierarchyStructureAnalyzer.cs" />
+    <Compile Include="Runtime\MetadataAnalyzers\InvalidBindingException.cs" />
+    <Compile Include="Runtime\MetadataAnalyzers\InvalidHierarchyStructureException.cs" />
+    <Compile Include="Runtime\MetadataAnalyzers\ModelAnalyzer.cs" />
+    <Compile Include="Runtime\MetadataAnalyzers\RequiredPortBindingsAnalyzer.cs" />
+    <Compile Include="Runtime\MetadataAnalyzers\UnboundRequiredPortException.cs" />
     <Compile Include="Runtime\ModelMetadata.Builder.cs" />
     <Compile Include="Runtime\ModelMetadata.cs" />
     <Compile Include="Runtime\ComponentMetadata.Builder.cs" />
@@ -99,9 +106,7 @@
     <Compile Include="Utilities\ReflectionExtensions.cs" />
     <Compile Include="Utilities\Requires.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Runtime\MetadataAnalysis\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

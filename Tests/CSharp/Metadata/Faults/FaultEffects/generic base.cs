@@ -23,7 +23,6 @@
 namespace Tests.Metadata.Faults.FaultEffects
 {
 	using System;
-	using Diagnostics.Bindings.Components.Invalid;
 	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime;
 	using Shouldly;
