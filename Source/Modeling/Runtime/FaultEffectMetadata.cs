@@ -45,8 +45,9 @@ namespace SafetySharp.Runtime
 		/// <param name="fault">The fault the fault effect belongs to.</param>
 		/// <param name="faultEffect">The CLR method the metadata is provided for.</param>
 		/// <param name="affectedMethod">The CLR method representing the method affected by the fault effect.</param>
-		internal FaultEffectMetadata(Fault fault, MethodInfo faultEffect, MethodInfo affectedMethod)
-			: base(fault, faultEffect)
+		/// <param name="name">The name of the fault effect; if <c>null</c>, the method's CLR name is used.</param>
+		internal FaultEffectMetadata(Fault fault, MethodInfo faultEffect, MethodInfo affectedMethod, string name = null)
+			: base(fault, faultEffect, name)
 		{
 			Requires.NotNull(fault, () => fault);
 			Requires.NotNull(faultEffect, () => faultEffect);

@@ -39,6 +39,7 @@ namespace SafetySharp.Runtime
 		{
 			private readonly Fault _fault;
 			private readonly List<FaultEffectMetadata> _faultEffects = new List<FaultEffectMetadata>();
+			private readonly NameScope _effectNameScope = new NameScope();
 			private readonly FieldCollectionBuilder _fields;
 			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
 			private OccurrencePatternMetadata _occurrencePattern;
@@ -95,7 +96,8 @@ namespace SafetySharp.Runtime
 				Requires.NotNull(faultEffect, () => faultEffect);
 				Requires.NotNull(affectedMethod, () => affectedMethod);
 
-				_faultEffects.Add(new FaultEffectMetadata(_fault, faultEffect, affectedMethod));
+				var name = _effectNameScope.MakeUnique(faultEffect.Name);
+				_faultEffects.Add(new FaultEffectMetadata(_fault, faultEffect, affectedMethod, name));
 			}
 
 			/// <summary>
@@ -142,7 +144,7 @@ namespace SafetySharp.Runtime
 				{
 					_component = component,
 					Fault = _fault,
-					FaultEffects = new MemberCollection<FaultEffectMetadata>(_fault, _faultEffects),
+					Effects = new MemberCollection<FaultEffectMetadata>(_fault, _faultEffects),
 					Fields = _fields.ToImmutableCollection(),
 					StepMethods = new MemberCollection<StepMethodMetadata>(_fault, _stepMethods),
 					OccurrencePattern = _occurrencePattern

@@ -42,9 +42,9 @@ namespace SafetySharp.Runtime
 			private readonly List<FaultMetadata> _faults = new List<FaultMetadata>();
 			private readonly FieldCollectionBuilder _fields;
 			private readonly List<ProvidedPortMetadata> _providedPorts = new List<ProvidedPortMetadata>();
-			private readonly NameScope _providedPortsNameScope;
+			private readonly NameScope _providedPortsNameScope = new NameScope();
 			private readonly List<RequiredPortMetadata> _requiredPorts = new List<RequiredPortMetadata>();
-			private readonly NameScope _requiredPortsNameScope;
+			private readonly NameScope _requiredPortsNameScope = new NameScope();
 			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
 			private readonly List<FieldInfo> _subcomponentFields = new List<FieldInfo>();
 			private readonly List<PropertyInfo> _subcomponentProperties = new List<PropertyInfo>();
@@ -61,8 +61,6 @@ namespace SafetySharp.Runtime
 
 				_component = component;
 				_fields = new FieldCollectionBuilder(component);
-				_providedPortsNameScope = new NameScope();
-				_requiredPortsNameScope = new NameScope();
 			}
 
 			/// <summary>
@@ -201,7 +199,7 @@ namespace SafetySharp.Runtime
 				if (basePort != null)
 				{
 					baseMetadata = _providedPorts.SingleOrDefault(port => port.MethodInfo == basePort);
-					Requires.That(baseMetadata != null , () => basePort,"The base port is unknown.");
+					Requires.That(baseMetadata != null, () => basePort, "The base port is unknown.");
 
 					name = baseMetadata.Name;
 				}

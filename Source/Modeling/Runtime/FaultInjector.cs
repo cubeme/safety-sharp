@@ -94,7 +94,7 @@ namespace SafetySharp.Runtime
 			// Determine all fault effects that affect the method
 			AffectingFaultEffects = component
 				.Faults
-				.SelectMany(fault => fault.FaultEffects)
+				.SelectMany(fault => fault.Effects)
 				.Where(effect => effect.AffectedMethod.MethodInfo == AffectedMethod.MethodInfo)
 				.ToArray();
 

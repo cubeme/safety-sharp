@@ -290,6 +290,7 @@
     <Compile Include="Metadata\Components\Fields\unsupported field type.cs" />
     <Compile Include="Metadata\Components\Subcomponents\single property subcomponent.cs" />
     <Compile Include="Metadata\Components\Subcomponents\subcomponents with same name.cs" />
+    <Compile Include="Metadata\Faults\FaultEffects\unique names.cs" />
     <Compile Include="Metadata\Faults\Fields\unsupported field type.cs" />
     <Compile Include="Metadata\ModelMetadataTests.Helpers.cs">
       <DependentUpon>ModelMetadataTests.cs</DependentUpon>

@@ -52,7 +52,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the fault effects declared by the fault.
 		/// </summary>
-		public MemberCollection<FaultEffectMetadata> FaultEffects { get; private set; }
+		public MemberCollection<FaultEffectMetadata> Effects { get; private set; }
 
 		/// <summary>
 		///     Gets the step methods declared by the fault.
