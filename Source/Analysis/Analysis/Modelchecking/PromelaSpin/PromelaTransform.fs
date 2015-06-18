@@ -43,6 +43,9 @@ open SafetySharp.Models.SamSimplifyBlocks
 
 
 module internal SamToPromela =
+    open SafetySharp.EngineOptions
+    open TsamHelpers
+
     let generateGlobalVarDeclarations (varDecls:Sam.GlobalVarDecl list) : PrOneDecl list =
         let generateDecl (varDecl:Sam.GlobalVarDecl) : PrOneDecl =
             let _type = match varDecl.Type with
@@ -98,6 +101,7 @@ module internal SamToPromela =
                          |> PrOptions.Options
                          |> PrStatement.IfStmnt
         varDecls |> List.map generateInit
+        
 
     let generateResetLocalVarsStatements (varDecls:Sam.LocalVarDecl list) : PrStatement list =
         let generateResetStatement (varDecl:Sam.LocalVarDecl) : PrStatement =
@@ -143,15 +147,40 @@ module internal SamToPromela =
                 PrExpression.IfThenElse(guardExpr,thenExpr,elseExpr)
             | Sam.Expr.ReadOld (variable) ->
                 failwith "NotImplementedYet"
+                
+    let generateRangeGlobalVarsStatements (semanticsOfAssignmentToRangedVariables:TsamEngineOptions.SemanticsOfAssignmentToRangedVariables)
+                                          (varToType:Map<Sam.Var,Sam.Type>)
+                                          (varDecls:Sam.GlobalVarDecl list)
+                                : PrStatement list =        
+        match semanticsOfAssignmentToRangedVariables with
+            | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep ->
+                let forceVariableToBeInRange (varDecl:Sam.GlobalVarDecl) : PrStatement =
+                    let assignVarref = transformSamVarToVarref varDecl.Var  
+                    let expr = Sam.Expr.Read(varDecl.Var)
+                    let newExpr = expr.forceExprToBeInRangeOfVar varToType varDecl.Var
+                    let assignExpr = transformSamExpr newExpr
+                    PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))
+                varDecls |> List.map forceVariableToBeInRange
+            | _ ->
+                []
 
-        
-    let rec transformSamStm (statement:Sam.Stm) : PrStatement =
+    let rec transformSamStm (semanticsOfAssignmentToRangedVariables:TsamEngineOptions.SemanticsOfAssignmentToRangedVariables)
+                            (varToType:Map<Sam.Var,Sam.Type>)
+                            (statement:Sam.Stm)
+                    : PrStatement =                          
+        let applyAssignmentSemanticsAfterAssignment (expr:Sam.Expr) (_var:Sam.Var) =
+            match semanticsOfAssignmentToRangedVariables with
+                | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar ->
+                    expr.forceExprToBeInRangeOfVar varToType _var
+                | _ ->
+                    expr
+
         match statement with
             | Sam.Stm.Block (statements:Sam.Stm list) ->
                 if statements.IsEmpty then
                     PrStatement.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.Skip)))
                 else
-                    statements |> List.map transformSamStm
+                    statements |> List.map (transformSamStm semanticsOfAssignmentToRangedVariables varToType)
                                |> List.map (fun stm -> Step.StmntStep(stm,None))
                                |> PrSequence.Sequence
                                |> PrStatement.SequenceStmnt
@@ -159,7 +188,7 @@ module internal SamToPromela =
                 let transformOption (clause : Sam.Clause) =
                     let transformedGuard = transformSamExpr clause.Guard
                     let transformedGuardStmnt = anyExprToStmnt transformedGuard
-                    let transformedStm = transformSamStm clause.Statement
+                    let transformedStm = transformSamStm semanticsOfAssignmentToRangedVariables varToType clause.Statement
                     let promelaSequence = statementsToSequence [transformedGuardStmnt;transformedStm]
                     promelaSequence
                 clauses |> List.map transformOption
@@ -167,8 +196,9 @@ module internal SamToPromela =
                         |> PrStatement.IfStmnt
 
             | Sam.Stm.Write (variable:Sam.Var, expression:Sam.Expr) ->
+                let expressionInRange = applyAssignmentSemanticsAfterAssignment expression variable
                 let transformedTarget = transformSamVarToVarref variable
-                let transformedExpression = transformSamExpr expression
+                let transformedExpression = transformSamExpr expressionInRange
                 createAssignmentStatement transformedTarget transformedExpression
             | Sam.Stm.Stochastic _ ->
                 // Very faint idea:
@@ -180,11 +210,18 @@ module internal SamToPromela =
                 failwith "Promela does not support stochastic statements"
                 
                 
-    let transformConfiguration (pgm:Sam.Pgm) : (PrSpec*Map<Sam.Traceable,string>) = // returns new program * forward tracing map
+    let transformConfiguration (semanticsOfAssignmentToRangedVariables:TsamEngineOptions.SemanticsOfAssignmentToRangedVariables)
+                               (pgm:Sam.Pgm)
+                        : (PrSpec*Map<Sam.Traceable,string>) = // returns new program * forward tracing map
         // remove unwanted chars and assure, that no unwanted characters are in the string
         let changeIdsState = ChangeIdentifierState.initial Set.empty<string> SafetySharp.FreshNameGenerator.namegenerator_c_like
         let (pgm,forwardTrace) = changeNamesPgm changeIdsState pgm
         
+        let varToType =
+            let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Sam.Var,Sam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Sam.Var,Sam.Type>)
+            let varToTypeWithGlobalsAndLocals = pgm.Globals |> List.fold (fun (acc:Map<Sam.Var,Sam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
+            varToTypeWithGlobalsAndLocals
+
         let forwardTrace = forwardTrace |> Map.toList |> List.map (fun (samVar,promelaVar) -> (Sam.Traceable(samVar),promelaVar.getName) ) |> Map.ofList
 
         // declare both locals and globals
@@ -197,8 +234,9 @@ module internal SamToPromela =
             else
                 [(globalVarModule@localVarModule) |> PrDeclLst.DeclLst |> PrModule.GlobalVarsAndChans]
                 
-        let resetLocalVars =
-            generateResetLocalVarsStatements pgm.Locals
+        let rangeGlobalVars = generateRangeGlobalVarsStatements semanticsOfAssignmentToRangedVariables varToType pgm.Globals
+        
+        let resetLocalVars = generateResetLocalVarsStatements pgm.Locals
 
         // initialize globals
         let globalVarInitialisations =
@@ -215,8 +253,8 @@ module internal SamToPromela =
 
         let codeOfMetamodelInAtomicLoop =
             let stmWithoutNestedBlocks = pgm.Body.simplifyBlocks
-            let codeOfMetamodel = transformSamStm stmWithoutNestedBlocks
-            [coverStmInEndlessloop (coverInAtomicBlockStatement ([codeOfMetamodel]@resetLocalVars))]
+            let codeOfMetamodel = transformSamStm semanticsOfAssignmentToRangedVariables varToType stmWithoutNestedBlocks
+            [coverStmInEndlessloop (coverInAtomicBlockStatement ([codeOfMetamodel]@resetLocalVars@rangeGlobalVars))]
         
         let systemModule =
             let systemCode = globalVarInitialisations @  codeOfMetamodelInAtomicLoop
@@ -249,9 +287,22 @@ module internal SamToPromela =
                 member this.getTraceables = []
     
     let transformConfigurationWf<'traceableOfOrigin> () : ExogenousWorkflowFunction<SamMutable.MutablePgm<'traceableOfOrigin>,PromelaTracer<'traceableOfOrigin>> = workflow {
-        let! state = getState ()
+        let! state = getState ()        
+        let! semanticsOfAssignmentToRangedVariables =            
+            getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()   
+            
+        let isSemanticsOptionDoable =
+            match semanticsOfAssignmentToRangedVariables with
+                | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar
+                | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.IgnoreRanges
+                | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep ->
+                    true
+                | _ ->
+                    false
+        assert (isSemanticsOptionDoable)
+
         let samModel = state.Pgm
-        let (newPromelaSpec,forwardTraceInClosure) = transformConfiguration samModel
+        let (newPromelaSpec,forwardTraceInClosure) = transformConfiguration semanticsOfAssignmentToRangedVariables samModel
         let tracer (oldValue:'traceableOfOrigin) =
             let beforeTransform = state.ForwardTracer oldValue
             forwardTraceInClosure.Item beforeTransform

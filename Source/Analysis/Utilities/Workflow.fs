@@ -173,6 +173,21 @@ module internal Workflow =
                     (EngineOptions.DefaultEngineOptions.DefaultEngineOptions.Item nameOfEngineOptionAsString) :?> 'engineOption
             (result),wfState
         WorkflowFunction(behavior)
+        
+    let isEngineOption<'state,'engineOption when 'engineOption :> SafetySharp.EngineOptions.IEngineOption> (engineOption:'engineOption) : WorkflowFunction<'state,'state,bool> =
+        let behavior (wfState:WorkflowState<'state>) =
+            let nameOfEngineOptionAsString =
+                let typeOfEngineOption = typeof<'engineOption>
+                typeOfEngineOption.AssemblyQualifiedName
+            let engineOption = engineOption :> SafetySharp.EngineOptions.IEngineOption
+            let currentEngineOption =
+                if wfState.EngineOptions.ContainsKey nameOfEngineOptionAsString then
+                    (wfState.EngineOptions.Item nameOfEngineOptionAsString)
+                else
+                    (EngineOptions.DefaultEngineOptions.DefaultEngineOptions.Item nameOfEngineOptionAsString)
+            let result = (engineOption=currentEngineOption)
+            (result),wfState
+        WorkflowFunction(behavior)
 
     let trackSteps_NextStep<'state> (stepName:string) : EndogenousWorkflowFunction<'state> = 
         let behavior (wfState:WorkflowState<'state>) =

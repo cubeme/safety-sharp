@@ -22,7 +22,10 @@
 
 namespace SafetySharp.EngineOptions
 
-type IEngineOption = interface end
+type IEngineOption =
+    interface
+        inherit System.IComparable
+    end
 
 module internal EngineOptionHelpers =
     let addStandardToList<'engineOption when 'engineOption :> IEngineOption>

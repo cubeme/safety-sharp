@@ -835,21 +835,23 @@ module internal VcGuardWithAssignmentModel =
             // Assume Single Assignment Form. TODO: Default form may also work. Examine. Passive form does not work.            
         else
             let! semanticsOfAssignmentToRangedVariables = getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()
-            match semanticsOfAssignmentToRangedVariables with
-                | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar
-                | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.IgnoreRanges
-                | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep ->
+            let isSemanticsOptionDoable =
+                match semanticsOfAssignmentToRangedVariables with
+                    | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar
+                    | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.IgnoreRanges
+                    | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep ->
+                        true
+                    | _ ->
+                        false
+            assert (isSemanticsOptionDoable)
 
-                    do! phase1TreeifyAndNormalize ()
-                    do! phase2PushAssignmentsNotAtTheEnd ()
-                    do! phase3PullChoicesTowardsBeginning ()
-                    do! phase4PullAssertionsAndAssumptionsTowardsBeginning ()
-                    do! phase5MergeChoicesAtTheBeginning ()
-                    do! phase6MergeStochasticsAtTheEnd ()
-                    return ()
-
-                | _ ->
-                    failwith "Selected unsupported option of TsamEngineOptions.SemanticsOfAssignmentToRangedVariables"
+            do! phase1TreeifyAndNormalize ()
+            do! phase2PushAssignmentsNotAtTheEnd ()
+            do! phase3PullChoicesTowardsBeginning ()
+            do! phase4PullAssertionsAndAssumptionsTowardsBeginning ()
+            do! phase5MergeChoicesAtTheBeginning ()
+            do! phase6MergeStochasticsAtTheEnd ()
+            return ()
     }
 
         
