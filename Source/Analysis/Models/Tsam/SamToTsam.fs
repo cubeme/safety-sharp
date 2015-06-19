@@ -72,7 +72,7 @@ module internal SamToTsam =
                         |> Map.ofList
         let varToType =
             let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Tsam.Var,Tsam.Type>)
-            let varToTypeWithGlobalsAndLocals = pgm.Globals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
+            let varToTypeWithGlobalsAndLocals = pgm.Locals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
             varToTypeWithGlobalsAndLocals
         let uniqueStatementIdGenerator =
             let stmIdCounter : int ref = ref 0 // this stays in the closure

@@ -219,7 +219,7 @@ module internal SamToPromela =
         
         let varToType =
             let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Sam.Var,Sam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Sam.Var,Sam.Type>)
-            let varToTypeWithGlobalsAndLocals = pgm.Globals |> List.fold (fun (acc:Map<Sam.Var,Sam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
+            let varToTypeWithGlobalsAndLocals = pgm.Locals |> List.fold (fun (acc:Map<Sam.Var,Sam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
             varToTypeWithGlobalsAndLocals
 
         let forwardTrace = forwardTrace |> Map.toList |> List.map (fun (samVar,promelaVar) -> (Sam.Traceable(samVar),promelaVar.getName) ) |> Map.ofList

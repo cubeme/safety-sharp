@@ -396,7 +396,8 @@ module internal Workflow =
     let saveToFile (outputFile:FileSystem.FileName) : ExogenousWorkflowFunction<string,FileSystem.FileName> = workflow {
         let! input = getState ()
         let (FileSystem.FileName(outputFileName)) = outputFile
-        //do FileSystem.WriteToAsciiFile outputFileName input
+        let pathToCreate = System.IO.Path.GetDirectoryName(outputFileName)
+        do System.IO.Directory.CreateDirectory pathToCreate |> ignore
         do System.IO.File.WriteAllText (outputFileName, input, System.Text.Encoding.ASCII)
         do! updateState outputFile
     }
