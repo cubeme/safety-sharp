@@ -54,7 +54,7 @@ module PromelaExecuteTestsBasic =
 
     [<Test>]
     let ``Spin verifies the samSmokeTest1.pm file`` () =
-        let inputFile = """../../Examples/Promela/samSmokeTest1.pml"""
+        let inputFile = SafetySharp.FileSystem.FileName("""../../Examples/Promela/samSmokeTest1.pml""")
         let executePromelaSpin = ExecuteSpin(inputFile)
         let results = executePromelaSpin.GetAllResults ()
         executePromelaSpin.WasSuccessful =? true

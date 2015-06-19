@@ -111,9 +111,7 @@ module internal AtDccaLtl =
                         }
                     do! updateState promelaModelWithFormula
                     do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
-                    let filename = "verification.pml" |> SafetySharp.FileSystem.FileName
-                    do! saveToFile filename
-                    do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan ()
+                    do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnModel ()
                     do! printToStdout ()
                     do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.interpretWorkflow ()
                     let! panIntepretation = getState ()

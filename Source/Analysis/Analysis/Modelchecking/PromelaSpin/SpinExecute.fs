@@ -40,14 +40,25 @@ type internal ExecuteSpin =
     val mutable private spinStdoutOutput : string
     val mutable private compilerStdoutOutput : string
     val panResults : System.Collections.Concurrent.BlockingCollection<string*bool> //(string contains the result. bool tells, if it was the last element
-
+    val private workingDirectory : string
 
     val mutable private completeVerificationTask : System.Threading.Tasks.Task<bool>
     // for partial results
 
-    new (filename : string) as this =
+    new (modelContent : string) as this =
+        let _workingDirectory = 
+            let currentDir = System.Environment.CurrentDirectory
+            let uuid = System.Guid.NewGuid ()
+            let newDirectory = sprintf "%s/%s.generated" (currentDir) (uuid.ToString())
+            do System.IO.Directory.CreateDirectory (newDirectory) |> ignore
+            newDirectory
         {
-            filename = filename;
+            workingDirectory = _workingDirectory
+            filename =
+                let fileName = "model.pml"
+                let fullFileName = _workingDirectory + "/" + fileName
+                do SafetySharp.FileSystem.WriteToAsciiFile fullFileName modelContent
+                fileName
             spinStdoutOutput = "";
             compilerStdoutOutput = "";
             panResults = new System.Collections.Concurrent.BlockingCollection<string*bool>(); //by default blockingcollection uses a fifo-queue.
@@ -56,6 +67,30 @@ type internal ExecuteSpin =
         then
             do ExecuteSpin.AddCompilerToPath
             do this.completeVerificationTask <- this.ExecuteCompleteVerificationAsync
+            
+    new (fileName:SafetySharp.FileSystem.FileName) as this =
+        let _workingDirectory = 
+            let currentDir = System.Environment.CurrentDirectory
+            let uuid = System.Guid.NewGuid ()
+            let newDirectory = sprintf "%s/%s.generated" (currentDir) (uuid.ToString())
+            do System.IO.Directory.CreateDirectory (newDirectory) |> ignore
+            newDirectory
+        {
+            workingDirectory = _workingDirectory
+            filename =
+                let fileName = match fileName with | SafetySharp.FileSystem.FileName(fileName) -> fileName
+                let filenameWinAbsolute = System.IO.Path.GetFullPath (fileName);
+                filenameWinAbsolute.Replace('\\','/')
+            spinStdoutOutput = "";
+            compilerStdoutOutput = "";
+            panResults = new System.Collections.Concurrent.BlockingCollection<string*bool>(); //by default blockingcollection uses a fifo-queue.
+            completeVerificationTask = null;
+        }
+        then
+            do ExecuteSpin.AddCompilerToPath
+            do this.completeVerificationTask <- this.ExecuteCompleteVerificationAsync
+
+            
 
 
     ///////////////////////////////////////
@@ -179,7 +214,8 @@ type internal ExecuteSpin =
         proc.StartInfo.UseShellExecute <-  false
         proc.StartInfo.RedirectStandardOutput <-  true
         proc.StartInfo.RedirectStandardError <-  false
-        proc.StartInfo.RedirectStandardInput <-  true  
+        proc.StartInfo.RedirectStandardInput <-  true
+        proc.StartInfo.WorkingDirectory <- this.workingDirectory
         proc.EnableRaisingEvents <-  true
         let afterFinished () =        
             let exitCode = proc.ExitCode
@@ -197,7 +233,7 @@ type internal ExecuteSpin =
     member private this.ExecuteCompilerAsync : System.Threading.Tasks.Task<bool> =    
         let tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();        
         let argumentForCompiler : string =
-            "-o pan.exe pan.c"        
+            "-o pan.exe pan.c"
         let compiler = ExecuteSpin.FindCompiler    
         let proc = new System.Diagnostics.Process()        
         proc.StartInfo.Arguments <- argumentForCompiler
@@ -207,7 +243,8 @@ type internal ExecuteSpin =
         proc.StartInfo.UseShellExecute <-  false
         proc.StartInfo.RedirectStandardOutput <-  true
         proc.StartInfo.RedirectStandardError <-  false
-        proc.StartInfo.RedirectStandardInput <-  true        
+        proc.StartInfo.RedirectStandardInput <-  true    
+        proc.StartInfo.WorkingDirectory <- this.workingDirectory    
         proc.EnableRaisingEvents <-  true
         let afterFinished () =        
             let exitCode = proc.ExitCode
@@ -229,13 +266,14 @@ type internal ExecuteSpin =
         let panExe = "pan.exe"     
         let proc = new System.Diagnostics.Process()
         proc.StartInfo.Arguments <- argumentForPan
-        proc.StartInfo.FileName <- panExe
+        proc.StartInfo.FileName <- this.workingDirectory + "/" + panExe
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
         proc.StartInfo.UseShellExecute <-  false
         proc.StartInfo.RedirectStandardOutput <-  true
         proc.StartInfo.RedirectStandardError <-  false
-        proc.StartInfo.RedirectStandardInput <-  true      
+        proc.StartInfo.RedirectStandardInput <-  true    
+        proc.StartInfo.WorkingDirectory <- this.workingDirectory  
         proc.EnableRaisingEvents <-  true  
         let startReadingOutput = new System.Threading.ManualResetEventSlim(false);
         let outputReaderTask : System.Threading.Tasks.Task =            
@@ -340,11 +378,18 @@ type internal ExecuteSpin with
         return ()
     }*)
 
-    static member runPan () 
+    static member runPanOnFile () 
             : ExogenousWorkflowFunction<SafetySharp.FileSystem.FileName,string> = workflow {
         let! file = getState ()
-        let (SafetySharp.FileSystem.FileName(filename)) = file
-        let executeSpin = new ExecuteSpin(filename)
+        let executeSpin = new ExecuteSpin(file)
+        let result = executeSpin.GetAllResults() |> String.concat "\n"
+        do! updateState result
+    }
+
+    static member runPanOnModel () 
+            : ExogenousWorkflowFunction<string,string> = workflow {
+        let! model = getState ()
+        let executeSpin = new ExecuteSpin(model)
         let result = executeSpin.GetAllResults() |> String.concat "\n"
         do! updateState result
     }

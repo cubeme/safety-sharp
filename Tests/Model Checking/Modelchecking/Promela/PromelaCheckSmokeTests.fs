@@ -35,9 +35,7 @@ module PromelaCheckSmokeTests =
             do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
             do! SafetySharp.ITracing.removeTracing ()
             do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
-            let filename = sprintf "%s.pml" (System.IO.Path.GetFileName(inputFile) ) |> SafetySharp.FileSystem.FileName
-            do! saveToFile filename
-            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan ()
+            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnModel ()
     }
 
     let runSmokeTest (inputFile) =
