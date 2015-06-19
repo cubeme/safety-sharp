@@ -28,9 +28,9 @@ namespace SafetySharp.Runtime
 	using Utilities;
 
 	/// <summary>
-	///     Injects fault effects into the behavior of undependable S# methods.
+	///     Represents a collection of method behaviors, including the intended behavior of a method and its fault injections.
 	/// </summary>
-	public sealed class FaultInjector
+	public sealed class MethodBehaviorCollection
 	{
 		/// <summary>
 		///     The S# object the affected method belongs to.
@@ -42,21 +42,20 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		/// <param name="obj">The S# object the affected method belongs to.</param>
 		/// <param name="affectedMethod">The metadata of the S# method that should be affected by the fault injector.</param>
-		internal FaultInjector(object obj, MethodMetadata affectedMethod)
+		internal MethodBehaviorCollection(object obj, MethodMetadata affectedMethod)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(affectedMethod, () => affectedMethod);
 
 			_object = obj;
 			AffectedMethod = affectedMethod;
-			AffectingFaultEffects = Enumerable.Empty<FaultEffectMetadata>();
+			FaultEffects = Enumerable.Empty<FaultEffectMetadata>();
+			FaultInjections = Enumerable.Empty<FaultInjection>().ToArray();
 
 			// Create and inject the intended behavior now; we do that as early as possible so that all
 			// methods can be called reliably in the model initialization phase
-			var intendedBehavior = new IntendedBehavior(_object, affectedMethod);
-			intendedBehavior.Bind(fallbackBehavior: null, delegateType: affectedMethod.MethodType);
-
-			InjectedBehaviors = new[] { intendedBehavior };
+			IntendedBehavior = new IntendedBehavior(_object, affectedMethod);
+			IntendedBehavior.Bind();
 		}
 
 		/// <summary>
@@ -65,23 +64,28 @@ namespace SafetySharp.Runtime
 		public MethodMetadata AffectedMethod { get; private set; }
 
 		/// <summary>
-		///     Gets the behaviors injected into the method. The last element of the list is guaranteed to be a
-		///     <see cref="IntendedBehavior" /> instance representing the method's <see cref="MethodMetadata.IntendedBehavior" />.
+		///     Gets the intended behavior of the method. For undependable methods that can be affected by fault effects, the intended
+		///     behavior is the method's behavior in the absence of any faults.
 		/// </summary>
-		public IReadOnlyList<MethodBehavior> InjectedBehaviors { get; private set; }
+		public IntendedBehavior IntendedBehavior { get; private set; }
+
+		/// <summary>
+		///     Gets the fault injections of the method.
+		/// </summary>
+		public IReadOnlyList<FaultInjection> FaultInjections { get; private set; }
 
 		/// <summary>
 		///     Gets a value indicating whether the method is affected by fault effects.
 		/// </summary>
 		public bool IsAffectedByFaultEffects
 		{
-			get { return AffectingFaultEffects.Any(); }
+			get { return FaultEffects.Any(); }
 		}
 
 		/// <summary>
 		///     Gets the metadata of the fault effects that affect the method.
 		/// </summary>
-		public IEnumerable<FaultEffectMetadata> AffectingFaultEffects { get; private set; }
+		public IEnumerable<FaultEffectMetadata> FaultEffects { get; private set; }
 
 		/// <summary>
 		///     Injects the affecting faults into the method.
@@ -91,38 +95,33 @@ namespace SafetySharp.Runtime
 			var component = AffectedMethod.DeclaringObject as ComponentMetadata;
 			Requires.That(component != null, "Fault injections are only supported for component methods.");
 
+			// Bind the externally provided intended behavior, if necessary
+			IntendedBehavior.BindExternal();
+
 			// Determine all fault effects that affect the method
-			AffectingFaultEffects = component
+			FaultEffects = component
 				.Faults
 				.SelectMany(fault => fault.Effects)
 				.Where(effect => effect.AffectedMethod.MethodInfo == AffectedMethod.MethodInfo)
 				.ToArray();
 
-			// Group the fault effects by priority, creating deterministic or nondeterministic method behaviors appropriately;
-			// the behaviors are sorted from highest to lowest priority
-			var behaviors = AffectingFaultEffects
+			// Group the fault effects by priority, creating deterministic or nondeterministic fault injections appropriately;
+			// the fault injections are sorted from highest to lowest priority
+			FaultInjections = FaultEffects
 				.GroupBy(behavior => behavior.Priority)
 				.OrderByDescending(behaviorGroup => behaviorGroup.Key)
 				.Select(behaviorGroup => behaviorGroup.Count() > 1
-					? (MethodBehavior)new NondeterministicFaultBehavior(_object, AffectedMethod, behaviorGroup)
-					: (MethodBehavior)new DeterministicFaultBehavior(_object, AffectedMethod, behaviorGroup.Single()))
-				.ToList();
-
-			// Complete the list of injected behaviors by appending the intended behavior at the end
-			Assert.That(InjectedBehaviors.Count == 1, "Expected to find the intended behavior.");
-
-			var intendedBehavior = InjectedBehaviors[0] as IntendedBehavior;
-			Assert.NotNull(intendedBehavior, "Expected to find the intended behavior.");
-
-			intendedBehavior.BindExternal();
-			behaviors.Add(intendedBehavior);
-
-			InjectedBehaviors = behaviors.AsReadOnly();
+					? (FaultInjection)new NondeterministicFaultInjection(_object, AffectedMethod, behaviorGroup)
+					: (FaultInjection)new DeterministicFaultInjection(_object, AffectedMethod, behaviorGroup.Single()))
+				.ToArray();
 
 			// Bind the behaviors, passing along the fallback behavior
 			// This injects the fault behaviors and ensures that they're invoked in the right order
-			for (var i = InjectedBehaviors.Count; i > 0; --i)
-				InjectedBehaviors[i - 1].Bind(i < InjectedBehaviors.Count ? InjectedBehaviors[i] : null, AffectedMethod.MethodType);
+			for (var i = FaultInjections.Count; i > 0; --i)
+			{
+				var fallbackBehavior = i < FaultInjections.Count ? FaultInjections[i].Delegate : IntendedBehavior.Delegate;
+				FaultInjections[i - 1].Bind(fallbackBehavior, AffectedMethod.MethodType);
+			}
 		}
 	}
 }

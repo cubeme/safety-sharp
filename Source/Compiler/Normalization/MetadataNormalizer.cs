@@ -25,6 +25,7 @@ namespace SafetySharp.Compiler.Normalization
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Runtime.CompilerServices;
 	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -123,6 +124,7 @@ namespace SafetySharp.Compiler.Normalization
 				accessibility: Accessibility.Private,
 				statements: new[] { builderDeclaration }.Concat(statements));
 
+			methodDeclaration = Syntax.AddAttributes(methodDeclaration, Syntax.Attribute(typeof(CompilerGeneratedAttribute).FullName));
 			AddMembers(type, (MethodDeclarationSyntax)methodDeclaration);
 
 			var attribute = Syntax.Attribute(typeof(MetadataAttribute).FullName, Syntax.LiteralExpression(_metadataMethod));

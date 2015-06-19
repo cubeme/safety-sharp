@@ -30,15 +30,10 @@ namespace SafetySharp.Runtime
 	using Utilities;
 
 	/// <summary>
-	///     Represents a nondeterministic set of fault effects that selects and executes one effect nondeterministically instead of
-	///     the fallback behavior when one or more of its corresponding faults are active.
+	///     Represents a nondeterministic set of fault effects that selects and executes one effect nondeterministically.
 	/// </summary>
-	public sealed class NondeterministicFaultBehavior : MethodBehavior
-	{/// <summary>
-		///     Gets or sets a value indicating whether the behavior is currently running.
-		/// </summary>
-		[UsedImplicitly]
-		private bool IsRunning { get; set; }
+	public sealed class NondeterministicFaultInjection : FaultInjection
+	{
 		/// <summary>
 		///     The random number generator that is used to nondeterministically select one of the enabled fault effects.
 		/// </summary>
@@ -58,9 +53,9 @@ namespace SafetySharp.Runtime
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The S# object the method belongs to.</param>
-		/// <param name="method">The metadata of the method the behavior belongs to.</param>
+		/// <param name="method">The metadata of the method the fault injection belongs to.</param>
 		/// <param name="faultEffects">The fault effects that should be injected nondeterministically.</param>
-		public NondeterministicFaultBehavior(object obj, MethodMetadata method, IEnumerable<FaultEffectMetadata> faultEffects)
+		public NondeterministicFaultInjection(object obj, MethodMetadata method, IEnumerable<FaultEffectMetadata> faultEffects)
 			: base(obj, method)
 		{
 			Requires.NotNull(faultEffects, () => faultEffects);
@@ -80,11 +75,6 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets the method behavior that is invoked when the current one is inactive.
-		/// </summary>
-		public MethodBehavior FallbackBehavior { get; private set; }
-
-		/// <summary>
 		///     Gets the priority overrides that can be used to (partially or fully) override the nondeterministic selection
 		///     of fault effects.
 		/// </summary>
@@ -100,13 +90,13 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets a value indicating whether the fallback behavior should be used. This is the case when the fault the injected fault
-		///     effect belongs to is currently not occurring.
+		///     Gets a value indicating whether the fallback behavior should be used. This is the case when all faults the injected
+		///     fault effects belong to are currently not occurring.
 		/// </summary>
 		[UsedImplicitly]
 		private int ChooseCase()
 		{
-			// If the behavior is already running, we have to forward to the fallback behavior to avoid stack overflows
+			// If the method is already being executed, we have to forward to the fallback behavior to avoid stack overflows
 			if (IsRunning)
 				return _faultEffects.Length;
 
@@ -144,16 +134,13 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Binds the method behavior, using the <paramref name="fallbackBehavior" /> when the current behavior is inactive.
+		///     Binds the fault injection, using the <paramref name="fallbackBehavior" /> when the fault injection is inactive.
 		/// </summary>
-		/// <param name="fallbackBehavior">The fallback behavior that should be invoked when the current behavior is inactive.</param>
+		/// <param name="fallbackBehavior">The fallback behavior that should be invoked when the fault injection is inactive.</param>
 		/// <param name="delegateType">The delegate type representing the signature of the method.</param>
-		internal override void Bind(MethodBehavior fallbackBehavior, Type delegateType)
+		internal override void Bind(Delegate fallbackBehavior, Type delegateType)
 		{
-			Requires.NotNull(fallbackBehavior, () => fallbackBehavior);
 			Requires.NotNull(delegateType, () => delegateType);
-
-			FallbackBehavior = fallbackBehavior;
 
 			// We now dynamically generate and compile the following method:
 			// -------------------------------------------------------------
@@ -182,7 +169,7 @@ namespace SafetySharp.Runtime
 			// Inputs to the generated method
 			var parameters = Method.MethodInfo.GetParameters().Select(p => Expression.Parameter(p.ParameterType, p.Name)).ToArray();
 			var methodBehavior = Expression.Constant(this);
-			var fallbackDelegate = Expression.Constant(fallbackBehavior.Delegate, Method.MethodType);
+			var fallbackDelegate = Expression.Constant(fallbackBehavior, Method.MethodType);
 			var faultEffectDelegates = FaultEffects.Select(faultEffect => Expression.Constant(faultEffect.CreateDelegate(delegateType)));
 			var localVariable = Expression.Parameter(typeof(int));
 

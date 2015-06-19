@@ -28,32 +28,53 @@ namespace SafetySharp.Runtime
 	/// <summary>
 	///     Represents the intended behavior of a method, disregarding any faults.
 	/// </summary>
-	public sealed class IntendedBehavior : MethodBehavior
+	public sealed class IntendedBehavior
 	{
+		/// <summary>
+		///     The object the method belongs to.
+		/// </summary>
+		private readonly object _object;
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The S# object the method belongs to.</param>
 		/// <param name="method">The metadata of the method the behavior belongs to.</param>
 		public IntendedBehavior(object obj, MethodMetadata method)
-			: base(obj, method)
 		{
+			Requires.NotNull(obj, () => obj);
+			Requires.NotNull(method, () => method);
+
+			Method = method;
+			_object = obj;
 		}
 
 		/// <summary>
-		///     Binds the intended method behavior. The <paramref name="fallbackBehavior" /> must be <c>null</c> as the intended
-		///     behavior can always be executed and never falls back to another behavior.
+		///     Gets the metadata of the method the behavior belongs to.
 		/// </summary>
-		/// <param name="fallbackBehavior">The fallback behavior that should be invoked when the current behavior is inactive.</param>
-		/// <param name="delegateType">The delegate type representing the signature of the method.</param>
-		internal override void Bind(MethodBehavior fallbackBehavior, Type delegateType)
-		{
-			Requires.That(fallbackBehavior == null, () => fallbackBehavior, "The fallback behavior is never invoked.");
+		public MethodMetadata Method { get; private set; }
 
+		/// <summary>
+		///     Gets the delegate that has been bound as the intended behavior.
+		/// </summary>
+		internal Delegate Delegate { get; private set; }
+
+		/// <summary>
+		///     Binds the intended method behavior.
+		/// </summary>
+		internal void Bind()
+		{
 			// Set the intended behavior - if the method doesn't have an implementation, the intended behavior
 			// is expected to be set by someone else
-			if (Method.HasImplementation)
-				BindDelegate(Delegate.CreateDelegate(Method.BackingField.FieldType, Object, Method.IntendedBehavior));
+			if (!Method.HasImplementation)
+				return;
+
+			// If the method cannot be affected by faults, the intended behavior is the method itself
+			if (!Method.CanBeAffectedByFaultEffects)
+				return;
+
+			Delegate = Delegate.CreateDelegate(Method.BackingField.FieldType, _object, Method.IntendedBehavior);
+			Method.BackingField.SetValue(_object, Delegate);
 		}
 
 		/// <summary>
@@ -66,9 +87,9 @@ namespace SafetySharp.Runtime
 
 			// We allow the external behavior to be null to simplify testing (otherwise all required ports
 			// would have to be bound in all tests). We'll detect unbound required ports later
-			var externalBehavior = Method.BackingField.GetValue(Object) as Delegate;
+			var externalBehavior = Method.BackingField.GetValue(_object) as Delegate;
 			if (externalBehavior != null)
-				BindDelegate(externalBehavior);
+				Delegate = externalBehavior;
 		}
 	}
 }

@@ -44,15 +44,15 @@ namespace Tests.Metadata.Components.Faults
 
 			Metadata.ProvidedPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
 			Metadata.ProvidedPorts[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.ProvidedPorts[0].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.ProvidedPorts[0].FaultEffects.ShouldBeEmpty();
 
 			Metadata.RequiredPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
 			Metadata.RequiredPorts[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.RequiredPorts[0].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.RequiredPorts[0].FaultEffects.ShouldBeEmpty();
 
 			Metadata.StepMethods[1].CanBeAffectedByFaultEffects.ShouldBe(true);
 			Metadata.StepMethods[1].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.StepMethods[1].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.StepMethods[1].FaultEffects.ShouldBeEmpty();
 		}
 	}
 }

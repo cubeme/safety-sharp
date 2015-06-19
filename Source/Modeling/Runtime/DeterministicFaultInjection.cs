@@ -29,18 +29,17 @@ namespace SafetySharp.Runtime
 	using Utilities;
 
 	/// <summary>
-	///     Represents a deterministic fault effect that is executed deterministically instead of the fallback behavior when
-	///     the corresponding fault is active.
+	///     Represents a deterministic fault effect that is injected and executed deterministically.
 	/// </summary>
-	public sealed class DeterministicFaultBehavior : MethodBehavior
+	public sealed class DeterministicFaultInjection : FaultInjection
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The S# object the method belongs to.</param>
-		/// <param name="method">The metadata of the method the behavior belongs to.</param>
+		/// <param name="method">The metadata of the method the fault injection belongs to.</param>
 		/// <param name="faultEffect">The fault effect that should be injected deterministically.</param>
-		public DeterministicFaultBehavior(object obj, MethodMetadata method, FaultEffectMetadata faultEffect)
+		public DeterministicFaultInjection(object obj, MethodMetadata method, FaultEffectMetadata faultEffect)
 			: base(obj, method)
 		{
 			Requires.NotNull(faultEffect, () => faultEffect);
@@ -53,38 +52,24 @@ namespace SafetySharp.Runtime
 		public FaultEffectMetadata FaultEffect { get; private set; }
 
 		/// <summary>
-		///     Gets the method behavior that is invoked when the current one is inactive.
-		/// </summary>
-		public MethodBehavior FallbackBehavior { get; private set; }
-
-		/// <summary>
 		///     Gets a value indicating whether the fallback behavior should be used. This is the case when the fault the injected fault
 		///     effect belongs to is currently not occurring.
 		/// </summary>
 		[UsedImplicitly]
 		private bool UseFallbackBehavior
 		{
-			// If the behavior is already running, we have to forward to the fallback behavior to avoid stack overflows
+			// If the method is already being executed, we have to forward to the fallback behavior to avoid stack overflows
 			get { return IsRunning || !FaultEffect.DeclaringFault.Fault.IsOccurring; }
 		}
 
 		/// <summary>
-		///     Gets or sets a value indicating whether the behavior is currently running.
+		///     Binds the fault injection, using the <paramref name="fallbackBehavior" /> when the fault injection is inactive.
 		/// </summary>
-		[UsedImplicitly]
-		private bool IsRunning { get; set; }
-
-		/// <summary>
-		///     Binds the method behavior, using the <paramref name="fallbackBehavior" /> when the current behavior is inactive.
-		/// </summary>
-		/// <param name="fallbackBehavior">The fallback behavior that should be invoked when the current behavior is inactive.</param>
+		/// <param name="fallbackBehavior">The fallback behavior that should be invoked when the fault injection is inactive.</param>
 		/// <param name="delegateType">The delegate type representing the signature of the method.</param>
-		internal override void Bind(MethodBehavior fallbackBehavior, Type delegateType)
+		internal override void Bind(Delegate fallbackBehavior, Type delegateType)
 		{
-			Requires.NotNull(fallbackBehavior, () => fallbackBehavior);
 			Requires.NotNull(delegateType, () => delegateType);
-
-			FallbackBehavior = fallbackBehavior;
 
 			// We now dynamically generate and compile the following method:
 			// -------------------------------------------------------------
@@ -109,7 +94,7 @@ namespace SafetySharp.Runtime
 			// Inputs to the generated method
 			var parameters = Method.MethodInfo.GetParameters().Select(p => Expression.Parameter(p.ParameterType, p.Name)).ToArray();
 			var methodBehavior = Expression.Constant(this);
-			var fallbackDelegate = Expression.Constant(fallbackBehavior.Delegate, Method.MethodType);
+			var fallbackDelegate = Expression.Constant(fallbackBehavior, Method.MethodType);
 			var faultEffectDelegate = Expression.Constant(FaultEffect.CreateDelegate(delegateType));
 			var localVariable = Expression.Parameter(typeof(bool));
 

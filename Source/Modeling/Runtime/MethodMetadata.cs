@@ -72,35 +72,33 @@ namespace SafetySharp.Runtime
 			if (backingFieldAttribute == null && behaviorAttribute == null)
 				IntendedBehavior = MethodInfo;
 
-			if (BackingField != null)
-				FaultInjector = new FaultInjector(obj, this);
+			Behaviors = new MethodBehaviorCollection(obj, this);
 		}
 
 		/// <summary>
-		///     Gets the fault injector that injects fault effects into the undependable method. Returns <c>null</c> if
-		///     <see cref="CanBeAffectedByFaultEffects" /> is <c>false</c>.
+		///     Gets the behaviors of the method.
 		/// </summary>
-		public FaultInjector FaultInjector { get; private set; }
+		public MethodBehaviorCollection Behaviors { get; private set; }
 
 		/// <summary>
 		///     Gets a value indicating whether the method is affected by fault effects.
 		/// </summary>
 		public bool IsAffectedByFaultEffects
 		{
-			get { return FaultInjector != null && FaultInjector.IsAffectedByFaultEffects; }
+			get { return Behaviors != null && Behaviors.IsAffectedByFaultEffects; }
 		}
 
 		/// <summary>
 		///     Gets the metadata of the fault effects that affect the method.
 		/// </summary>
-		public IEnumerable<FaultEffectMetadata> AffectingFaultEffects
+		public IEnumerable<FaultEffectMetadata> FaultEffects
 		{
 			get
 			{
-				if (FaultInjector == null)
+				if (Behaviors == null)
 					return Enumerable.Empty<FaultEffectMetadata>();
 
-				return FaultInjector.AffectingFaultEffects;
+				return Behaviors.FaultEffects;
 			}
 		}
 
@@ -109,7 +107,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public bool CanBeAffectedByFaultEffects
 		{
-			get { return FaultInjector != null; }
+			get { return BackingField != null; }
 		}
 
 		/// <summary>

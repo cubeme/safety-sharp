@@ -315,9 +315,9 @@ namespace SafetySharp.Runtime
 			/// </summary>
 			private void InitializeFaults()
 			{
-				_component.Metadata.StepMethods.ForEach(stepMethod => stepMethod.FaultInjector.InjectFaults());
-				_component.Metadata.RequiredPorts.ForEach(port => port.FaultInjector.InjectFaults());
-				_component.Metadata.ProvidedPorts.ForEach(port => port.FaultInjector.InjectFaults());
+				_component.Metadata.StepMethods.ForEach(stepMethod => stepMethod.Behaviors.InjectFaults());
+				_component.Metadata.RequiredPorts.ForEach(port => port.Behaviors.InjectFaults());
+				_component.Metadata.ProvidedPorts.ForEach(port => port.Behaviors.InjectFaults());
 			}
 
 			/// <summary>

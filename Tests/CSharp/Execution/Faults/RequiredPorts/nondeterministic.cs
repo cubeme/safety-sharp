@@ -45,7 +45,7 @@ namespace Tests.Execution.Faults.RequiredPorts
 
 		protected override void Check()
 		{
-			var nondeterministicBehavior = (NondeterministicFaultBehavior)Metadata.RequiredPorts[0].FaultInjector.InjectedBehaviors[0];
+			var nondeterministicBehavior = (NondeterministicFaultInjection)Metadata.RequiredPorts[0].Behaviors.FaultInjections[0];
 
 			// N faults
 			Metadata.Faults[0].Fault.IsOccurring = false;

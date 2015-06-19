@@ -38,7 +38,7 @@ namespace Tests.Execution.Faults.ProvidedPorts
 
 		protected override void Check()
 		{
-			var nondeterministicBehavior = (NondeterministicFaultBehavior)Metadata.ProvidedPorts[0].FaultInjector.InjectedBehaviors[0];
+			var nondeterministicBehavior = (NondeterministicFaultInjection)Metadata.ProvidedPorts[0].Behaviors.FaultInjections[0];
 
 			// N faults
 			Metadata.Faults[0].Fault.IsOccurring = false;
@@ -112,7 +112,7 @@ namespace Tests.Execution.Faults.ProvidedPorts
 			nondeterministicBehavior.ResetPriorityOverrides();
 			nondeterministicBehavior.PriorityOverrides[0] = 17;
 			nondeterministicBehavior.PriorityOverrides[2] = 17;
-			Debugger.Break();
+	
 			result = M();
 			(result == 1 || result == 3).ShouldBe(true);
 

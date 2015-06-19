@@ -64,15 +64,15 @@
     <Compile Include="Runtime\ModelMetadata.Builder.cs" />
     <Compile Include="Runtime\ModelMetadata.cs" />
     <Compile Include="Runtime\ComponentMetadata.Builder.cs" />
-    <Compile Include="Runtime\DeterministicFaultBehavior.cs" />
+    <Compile Include="Runtime\DeterministicFaultInjection.cs" />
     <Compile Include="Runtime\FaultEffectMetadata.cs" />
-    <Compile Include="Runtime\FaultInjector.cs" />
+    <Compile Include="Runtime\MethodBehaviorCollection.cs" />
     <Compile Include="Runtime\FaultMetadata.Builder.cs" />
     <Compile Include="Runtime\FieldCollectionBuilder.cs" />
     <Compile Include="Runtime\IntendedBehavior.cs" />
     <Compile Include="Runtime\MemberCollection.cs" />
     <Compile Include="Runtime\FieldMetadata.cs" />
-    <Compile Include="Runtime\MethodBehavior.cs" />
+    <Compile Include="Runtime\FaultInjection.cs" />
     <Compile Include="Runtime\MethodMetadata.cs" />
     <Compile Include="CompilerServices\LiftExpressionAttribute.cs" />
     <Compile Include="Runtime\MetadataExtensions.cs" />
@@ -92,7 +92,7 @@
     <Compile Include="Modeling\ProvidedAttribute.cs" />
     <Compile Include="Modeling\RequiredAttribute.cs" />
     <Compile Include="Runtime\NameScope.cs" />
-    <Compile Include="Runtime\NondeterministicFaultBehavior.cs" />
+    <Compile Include="Runtime\NondeterministicFaultInjection.cs" />
     <Compile Include="Runtime\ObjectMetadata.cs" />
     <Compile Include="Runtime\OccurrencePattern.Builder.cs" />
     <Compile Include="Runtime\ProvidedPortMetadata.cs" />

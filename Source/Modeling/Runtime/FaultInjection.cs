@@ -23,19 +23,20 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using JetBrains.Annotations;
 	using Utilities;
 
 	/// <summary>
-	///     Represents a behavior of a S# method, either an intended one or an undesired one.
+	///     Represents a base class for fault injections of a method.
 	/// </summary>
-	public abstract class MethodBehavior
+	public abstract class FaultInjection
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The S# object the method belongs to.</param>
 		/// <param name="method">The metadata of the method the behavior belongs to.</param>
-		internal MethodBehavior(object obj, MethodMetadata method)
+		internal FaultInjection(object obj, MethodMetadata method)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(method, () => method);
@@ -50,21 +51,36 @@ namespace SafetySharp.Runtime
 		public object Object { get; private set; }
 
 		/// <summary>
-		///     Gets the metadata of the method the behavior belongs to.
+		///     Gets or sets a value indicating whether the method is currently being executed.
+		/// </summary>
+		[UsedImplicitly]
+		protected bool IsRunning { get; set; }
+
+		/// <summary>
+		///     Gets a value indicating whether the fault injection is deterministic or whether a fault effect is choosen
+		///     nondeterministically from a set of enabled ones.
+		/// </summary>
+		public bool IsDeterministic
+		{
+			get { return this is DeterministicFaultInjection; }
+		}
+
+		/// <summary>
+		///     Gets the metadata of the method the fault injection belongs to.
 		/// </summary>
 		public MethodMetadata Method { get; private set; }
 
 		/// <summary>
-		///     Gets the delegate that has been bound by the behavior.
+		///     Gets the delegate that has been bound by the fault injection.
 		/// </summary>
-		public Delegate Delegate { get; private set; }
+		internal Delegate Delegate { get; private set; }
 
 		/// <summary>
-		///     Binds the method behavior, using the <paramref name="fallbackBehavior" /> when the current behavior is inactive.
+		///     Binds the fault injection, using the <paramref name="fallbackBehavior" /> when the fault injection is inactive.
 		/// </summary>
-		/// <param name="fallbackBehavior">The fallback behavior that should be invoked when the current behavior is inactive.</param>
+		/// <param name="fallbackBehavior">The fallback behavior that should be invoked when the fault injection is inactive.</param>
 		/// <param name="delegateType">The delegate type representing the signature of the method.</param>
-		internal abstract void Bind(MethodBehavior fallbackBehavior, Type delegateType);
+		internal abstract void Bind(Delegate fallbackBehavior, Type delegateType);
 
 		/// <summary>
 		///     Binds the <paramref name="behaviorDelegate" /> to the method's backing field.

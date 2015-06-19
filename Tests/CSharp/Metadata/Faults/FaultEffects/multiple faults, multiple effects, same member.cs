@@ -47,7 +47,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].Effects[0].IntendedBehavior.ShouldBe(typeof(F1).GetMethod("M"));
 			Metadata.Faults[0].Effects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].Effects[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[0].Effects[0].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.Faults[0].Effects[0].FaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].Effects[0].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
 			Metadata.Faults[0].Effects[0].Priority.ShouldBe(3);
 
@@ -56,11 +56,11 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[1].Effects[0].IntendedBehavior.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].Effects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].Effects[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[1].Effects[0].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.Faults[1].Effects[0].FaultEffects.ShouldBeEmpty();
 			Metadata.Faults[1].Effects[0].AffectedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
 			Metadata.Faults[1].Effects[0].Priority.ShouldBe(7);
 
-			Metadata.ProvidedPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].Effects[0], Metadata.Faults[1].Effects[0] });
+			Metadata.ProvidedPorts[0].FaultEffects.ShouldBe(new[] { Metadata.Faults[0].Effects[0], Metadata.Faults[1].Effects[0] });
 		}
 
 		[Transient]
@@ -99,7 +99,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].Effects[0].IntendedBehavior.ShouldBe(typeof(F1).GetMethod("M"));
 			Metadata.Faults[0].Effects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].Effects[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[0].Effects[0].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.Faults[0].Effects[0].FaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].Effects[0].AffectedMethod.ShouldBe(Metadata.RequiredPorts[0]);
 			Metadata.Faults[0].Effects[0].Priority.ShouldBe(3);
 
@@ -108,11 +108,11 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[1].Effects[0].IntendedBehavior.ShouldBe(typeof(F2).GetMethod("M"));
 			Metadata.Faults[1].Effects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].Effects[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[1].Effects[0].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.Faults[1].Effects[0].FaultEffects.ShouldBeEmpty();
 			Metadata.Faults[1].Effects[0].AffectedMethod.ShouldBe(Metadata.RequiredPorts[0]);
 			Metadata.Faults[1].Effects[0].Priority.ShouldBe(7);
 
-			Metadata.RequiredPorts[0].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].Effects[0], Metadata.Faults[1].Effects[0] });
+			Metadata.RequiredPorts[0].FaultEffects.ShouldBe(new[] { Metadata.Faults[0].Effects[0], Metadata.Faults[1].Effects[0] });
 		}
 
 		[Transient]
@@ -153,7 +153,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].Effects[0].IntendedBehavior.ShouldBe(typeof(F1).GetMethod("Update"));
 			Metadata.Faults[0].Effects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].Effects[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[0].Effects[0].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.Faults[0].Effects[0].FaultEffects.ShouldBeEmpty();
 			Metadata.Faults[0].Effects[0].AffectedMethod.ShouldBe(Metadata.StepMethods[1]);
 			Metadata.Faults[0].Effects[0].Priority.ShouldBe(31);
 
@@ -162,11 +162,11 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[1].Effects[0].IntendedBehavior.ShouldBe(typeof(F2).GetMethod("Update"));
 			Metadata.Faults[1].Effects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[1].Effects[0].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[1].Effects[0].AffectingFaultEffects.ShouldBeEmpty();
+			Metadata.Faults[1].Effects[0].FaultEffects.ShouldBeEmpty();
 			Metadata.Faults[1].Effects[0].AffectedMethod.ShouldBe(Metadata.StepMethods[1]);
 			Metadata.Faults[1].Effects[0].Priority.ShouldBe(-1);
 
-			Metadata.StepMethods[1].AffectingFaultEffects.ShouldBe(new[] { Metadata.Faults[0].Effects[0], Metadata.Faults[1].Effects[0] });
+			Metadata.StepMethods[1].FaultEffects.ShouldBe(new[] { Metadata.Faults[0].Effects[0], Metadata.Faults[1].Effects[0] });
 		}
 
 		[Transient]
