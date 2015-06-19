@@ -100,6 +100,7 @@
     <Compile Include="Models\Tsam\TsamChangeIdentifier.fs" />
     <Compile Include="Models\Tsam\TsamPassiveFormFS01.fs" />
     <Compile Include="Models\Tsam\TsamPassiveFormGCFK09.fs" />
+    <Compile Include="Models\Tsam\TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.fs" />
     <Compile Include="Models\Spg\Spg.fs" />
     <Compile Include="Models\Spg\SpgToDot.fs" />
     <Compile Include="Models\Spg\SpgTracer.fs" />

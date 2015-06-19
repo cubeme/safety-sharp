@@ -73,6 +73,7 @@ module internal Tsam =
         | Choice of SID:StatementId * Choices:(Expr option * Stm) list //Expr must be of type BoolVal
         | Stochastic of SID:StatementId * StochasticChoices:(Expr * Stm) list //Expr must be of type ProbVal
         | Write of SID:StatementId * Variable:Var * Expression:Expr
+        //| ParallelWrite  // TODO (maybe): Parallel assignment could simplify some algorithms
         with
             member this.GetStatementId : StatementId =
                 match this with
@@ -103,6 +104,7 @@ module internal Tsam =
         IsSingleAssignment : Ternary;
         HasAssumptions : Ternary;
         HasAssertions : Ternary;
+        SemanticsOfAssignmentToRangedVariablesAppliedExplicitly : Ternary;
     }
         with
             static member fullyUnknown =
@@ -116,6 +118,7 @@ module internal Tsam =
                     Attributes.IsSingleAssignment = Ternary.Unknown;
                     Attributes.HasAssumptions = Ternary.Unknown;
                     Attributes.HasAssertions = Ternary.Unknown;
+                    Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = Ternary.Unknown;
                 }
 
     type Pgm = {

@@ -42,7 +42,7 @@ module internal Spg =
     type StochasticOption = {
         Number:int;
         Probability:Expr;
-        Action:Action option;
+        Action:Action option; // TODO (maybe): Parallel assignment could simplify some algorithms
         ToState:State;
     }
 
@@ -57,7 +57,7 @@ module internal Spg =
         Label:string;
         FromState:State;
         Guard:Expr option;
-        Action:Action option;
+        Action:Action option; // TODO (maybe): Parallel assignment could simplify some algorithms
         ToState:State;
     }
 
