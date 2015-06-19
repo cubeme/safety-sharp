@@ -69,7 +69,7 @@ namespace SafetySharp.Runtime
 		public bool IsUnique(string name)
 		{
 			Requires.NotNullOrWhitespace(name, () => name);
-			return _knownNames.Count(knownName => knownName == name) == 0;
+			return !_knownNames.Any(knownName => knownName == name);
 		}
 	}
 }

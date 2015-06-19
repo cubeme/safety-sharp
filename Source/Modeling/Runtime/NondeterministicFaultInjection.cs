@@ -140,6 +140,8 @@ namespace SafetySharp.Runtime
 		/// <param name="delegateType">The delegate type representing the signature of the method.</param>
 		internal override void Bind(Delegate fallbackBehavior, Type delegateType)
 		{
+			// Ideally, we would also check that fallbackBehavior != null; however, that would require all tests to 
+			// bind all required ports, which would be too cumbersome to endure; hence, we go without the null check here
 			Requires.NotNull(delegateType, () => delegateType);
 
 			// We now dynamically generate and compile the following method:
