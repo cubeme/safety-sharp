@@ -193,19 +193,14 @@ namespace SafetySharp.Runtime
 				Requires.That(providedPort.HasAttribute<ProvidedAttribute>(), () => providedPort,
 					"The method must be marked with'{0}'.", typeof(ProvidedAttribute).FullName);
 
-				string name;
 				ProvidedPortMetadata baseMetadata = null;
-
 				if (basePort != null)
 				{
 					baseMetadata = _providedPorts.SingleOrDefault(port => port.MethodInfo == basePort);
 					Requires.That(baseMetadata != null, () => basePort, "The base port is unknown.");
-
-					name = baseMetadata.Name;
 				}
-				else
-					name = _providedPortsNameScope.MakeUnique(providedPort.Name);
 
+				var name = _providedPortsNameScope.MakeUnique(providedPort.Name);
 				_providedPorts.Add(new ProvidedPortMetadata(_component, providedPort, name, baseMetadata));
 			}
 
@@ -300,7 +295,8 @@ namespace SafetySharp.Runtime
 					ParentComponent = parent,
 					Fields = _fields.ToImmutableCollection(),
 					Faults = new MemberCollection<FaultMetadata>(_component, _faults),
-					StepMethods = new MemberCollection<StepMethodMetadata>(_component, _stepMethods),
+					UpdateMethods = new MemberCollection<StepMethodMetadata>(_component, _stepMethods),
+					StepMethod = (StepMethodMetadata)_stepMethods[0].VirtuallyInvokedMethod,
 					RequiredPorts = new MemberCollection<RequiredPortMetadata>(_component, _requiredPorts),
 					ProvidedPorts = new MemberCollection<ProvidedPortMetadata>(_component, _providedPorts),
 					Bindings = new MemberCollection<BindingMetadata>(_component, _bindings)
@@ -315,7 +311,7 @@ namespace SafetySharp.Runtime
 			/// </summary>
 			private void InitializeFaults()
 			{
-				_component.Metadata.StepMethods.ForEach(stepMethod => stepMethod.Behaviors.InjectFaults());
+				_component.Metadata.UpdateMethods.ForEach(stepMethod => stepMethod.Behaviors.InjectFaults());
 				_component.Metadata.RequiredPorts.ForEach(port => port.Behaviors.InjectFaults());
 				_component.Metadata.ProvidedPorts.ForEach(port => port.Behaviors.InjectFaults());
 			}

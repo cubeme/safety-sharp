@@ -23,10 +23,13 @@
 namespace SafetySharp.Modeling.Faults
 {
 	using System;
+	using CompilerServices;
+	using JetBrains.Annotations;
 
 	/// <summary>
 	///     Represents the transient occurrence pattern where a fault can come and go at any time.
 	/// </summary>
+	[Metadata("InitializeMetadata")]
 	public class Transient : OccurrencePattern
 	{
 		/// <summary>
@@ -36,6 +39,15 @@ namespace SafetySharp.Modeling.Faults
 		public override bool UpdateOccurrenceState()
 		{
 			return true;
+		}
+
+		/// <summary>
+		///     Initializes the metadata of the class.
+		/// </summary>
+		[UsedImplicitly]
+		private void InitializeMetadata()
+		{
+			MetadataBuilder.WithStepMethod(ReflectionHelpers.GetMethod(typeof(Transient), "UpdateOccurrenceState", Type.EmptyTypes, typeof(bool)));
 		}
 	}
 }

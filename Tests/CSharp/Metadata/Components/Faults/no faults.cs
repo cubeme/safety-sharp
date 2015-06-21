@@ -50,9 +50,9 @@ namespace Tests.Metadata.Components.Faults
 			Metadata.RequiredPorts[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.RequiredPorts[0].FaultEffects.ShouldBeEmpty();
 
-			Metadata.StepMethods[1].CanBeAffectedByFaultEffects.ShouldBe(true);
-			Metadata.StepMethods[1].IsAffectedByFaultEffects.ShouldBe(false);
-			Metadata.StepMethods[1].FaultEffects.ShouldBeEmpty();
+			Metadata.StepMethod.CanBeAffectedByFaultEffects.ShouldBe(true);
+			Metadata.StepMethod.IsAffectedByFaultEffects.ShouldBe(false);
+			Metadata.StepMethod.FaultEffects.ShouldBeEmpty();
 		}
 	}
 }

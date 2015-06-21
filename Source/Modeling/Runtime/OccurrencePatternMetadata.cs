@@ -41,9 +41,14 @@ namespace SafetySharp.Runtime
 		public MemberCollection<FieldMetadata> Fields { get; private set; }
 
 		/// <summary>
-		///     Gets the step methods declared by the occurrence pattern.
+		///     Gets the step update methods declared by the occurrence pattern that together make up the <see cref="StepMethod" />.
 		/// </summary>
-		public MemberCollection<StepMethodMetadata> StepMethods { get; private set; }
+		internal MemberCollection<StepMethodMetadata> UpdateMethods { get; private set; }
+
+		/// <summary>
+		///     Gets the step method declared by the component.
+		/// </summary>
+		public StepMethodMetadata StepMethod { get; private set; }
 
 		/// <summary>
 		///     Gets the metadata of the declaring fault that is affected by the occurrence pattern.

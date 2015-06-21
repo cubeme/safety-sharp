@@ -105,10 +105,10 @@ namespace Tests.Metadata.Faults.FaultEffects
 			Metadata.Faults[0].Effects[0].CanBeAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].Effects[0].IsAffectedByFaultEffects.ShouldBe(false);
 			Metadata.Faults[0].Effects[0].FaultEffects.ShouldBe(new FaultEffectMetadata[] { });
-			Metadata.Faults[0].Effects[0].AffectedMethod.ShouldBe(Metadata.StepMethods[1]);
+			Metadata.Faults[0].Effects[0].AffectedMethod.ShouldBe(Metadata.UpdateMethods[1]);
 			Metadata.Faults[0].Effects[0].Priority.ShouldBe(0);
 
-			Metadata.StepMethods[1].FaultEffects.ShouldBe(new[] { Metadata.Faults[0].Effects[0] });
+			Metadata.UpdateMethods[1].FaultEffects.ShouldBe(new[] { Metadata.Faults[0].Effects[0] });
 		}
 
 		[Transient]

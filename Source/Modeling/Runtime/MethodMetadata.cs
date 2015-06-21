@@ -117,7 +117,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets a value indicating whether the method has an implementation.
 		/// </summary>
-		public bool HasImplementation
+		internal bool HasImplementation
 		{
 			get { return IntendedBehavior != null; }
 		}
@@ -126,24 +126,24 @@ namespace SafetySharp.Runtime
 		///     Gets the CLR method that represents the method's intended behavior disregarding any active fault effects.
 		///     Returns <c>null</c> when <see cref="HasImplementation" /> is <c>false</c>.
 		/// </summary>
-		public MethodInfo IntendedBehavior { get; private set; }
+		internal MethodInfo IntendedBehavior { get; private set; }
 
 		/// <summary>
 		///     For methods that can be affected by fault effects, gets the backing field that stores the runtime implementation of the
 		///     method. Returns <c>null</c> when <see cref="CanBeAffectedByFaultEffects" /> is <c>false</c>.
 		/// </summary>
-		public FieldInfo BackingField { get; private set; }
+		internal FieldInfo BackingField { get; private set; }
 
 		/// <summary>
 		///     Gets the underlying CLR method.
 		/// </summary>
-		public MethodInfo MethodInfo { get; private set; }
+		internal MethodInfo MethodInfo { get; private set; }
 
 		/// <summary>
 		///     Gets the type of a delegate that can refer to the method. Returns <c>null</c> when
 		///     <see cref="CanBeAffectedByFaultEffects" /> is <c>false</c>.
 		/// </summary>
-		public Type MethodType
+		internal Type MethodType
 		{
 			get
 			{
@@ -157,12 +157,12 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the metadata of the overridden base method. Returns <c>null</c> when <see cref="IsOverride" /> is <c>false</c>.
 		/// </summary>
-		public MethodMetadata BaseMethod { get; private set; }
+		internal MethodMetadata BaseMethod { get; private set; }
 
 		/// <summary>
 		///     Gets a value indicating whether the method overrides a method of a base class.
 		/// </summary>
-		public bool IsOverride
+		internal bool IsOverride
 		{
 			get { return BaseMethod != null; }
 		}
@@ -170,12 +170,12 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the metadata of the overriding method. Returns <c>null</c> when <see cref="IsOverridden" /> is <c>false</c>.
 		/// </summary>
-		public MethodMetadata OverridingMethod { get; private set; }
+		internal MethodMetadata OverridingMethod { get; private set; }
 
 		/// <summary>
 		///     Gets a value indicating whether the method is overridden by another method.
 		/// </summary>
-		public bool IsOverridden
+		internal bool IsOverridden
 		{
 			get { return OverridingMethod != null; }
 		}
@@ -196,7 +196,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the metadata of the method that is invoked by a virtual method invocation.
 		/// </summary>
-		public MethodMetadata VirtuallyInvokedMethod
+		internal MethodMetadata VirtuallyInvokedMethod
 		{
 			get
 			{
@@ -210,7 +210,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets a delegate to the method that can be used to invoke it on the declaring object.
 		/// </summary>
-		public Delegate CreateDelegate(Type delegateType)
+		internal Delegate CreateDelegate(Type delegateType)
 		{
 			Requires.NotNull(delegateType, () => delegateType);
 			return Delegate.CreateDelegate(delegateType, _object, MethodInfo);

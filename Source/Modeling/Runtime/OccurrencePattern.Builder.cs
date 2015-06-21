@@ -119,7 +119,8 @@ namespace SafetySharp.Runtime
 					_fault = fault,
 					OccurrencePattern = _occurrencePattern,
 					Fields = _fields.ToImmutableCollection(),
-					StepMethods = new MemberCollection<StepMethodMetadata>(_occurrencePattern, _stepMethods)
+					UpdateMethods = new MemberCollection<StepMethodMetadata>(_occurrencePattern, _stepMethods),
+					StepMethod = (StepMethodMetadata)_stepMethods[0].VirtuallyInvokedMethod
 				};
 			}
 		}

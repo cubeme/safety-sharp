@@ -32,14 +32,15 @@ namespace Tests.Metadata.Components.StepMethods
 	{
 		protected override void Check()
 		{
-			Metadata.StepMethods.Length.ShouldBe(1);
-			Metadata.StepMethods[0].MethodInfo.ShouldBe(typeof(Component).GetMethod("Update"));
-			Metadata.StepMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.StepMethods[0].BaseMethod.ShouldBe(null);
-			Metadata.StepMethods[0].IsOverride.ShouldBe(false);
-			Metadata.StepMethods[0].IsOverridden.ShouldBe(false);
-			Metadata.StepMethods[0].VirtuallyInvokedMethod.ShouldBe(Metadata.StepMethods[0]);
-			Metadata.StepMethods[0].Name.ShouldBe("Update");
+			Metadata.UpdateMethods.Length.ShouldBe(1);
+			Metadata.UpdateMethods[0].MethodInfo.ShouldBe(typeof(Component).GetMethod("Update"));
+			Metadata.UpdateMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.UpdateMethods[0].BaseMethod.ShouldBe(null);
+			Metadata.UpdateMethods[0].IsOverride.ShouldBe(false);
+			Metadata.UpdateMethods[0].IsOverridden.ShouldBe(false);
+			Metadata.UpdateMethods[0].VirtuallyInvokedMethod.ShouldBe(Metadata.UpdateMethods[0]);
+			Metadata.UpdateMethods[0].Name.ShouldBe("Update");
+			Metadata.StepMethod.ShouldBe(Metadata.UpdateMethods[0]);
 		}
 	}
 }

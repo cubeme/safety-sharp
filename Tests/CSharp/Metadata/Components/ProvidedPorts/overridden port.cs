@@ -101,7 +101,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[2].IsOverridden.ShouldBe(true);
 			Metadata.ProvidedPorts[2].OverridingMethod.ShouldBe(Metadata.ProvidedPorts[5]);
 			Metadata.ProvidedPorts[2].VirtuallyInvokedMethod.ShouldBe(Metadata.ProvidedPorts[5]);
-			Metadata.ProvidedPorts[2].Name.ShouldBe("M1");
+			Metadata.ProvidedPorts[2].Name.ShouldBe("M2");
 
 			Metadata.ProvidedPorts[3].MethodInfo.ShouldBe(typeof(X9).GetMethod("N"));
 			Metadata.ProvidedPorts[3].DeclaringObject.ShouldBe(this.GetMetadata());
@@ -119,7 +119,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[4].IsOverridden.ShouldBe(false);
 			Metadata.ProvidedPorts[4].OverridingMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[4].VirtuallyInvokedMethod.ShouldBe(Metadata.ProvidedPorts[4]);
-			Metadata.ProvidedPorts[4].Name.ShouldBe("M2");
+			Metadata.ProvidedPorts[4].Name.ShouldBe("M3");
 
 			Metadata.ProvidedPorts[5].MethodInfo.ReturnType.ShouldBe(typeof(bool));
 			Metadata.ProvidedPorts[5].MethodInfo.DeclaringType.ShouldBe(typeof(X9b));
@@ -128,7 +128,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[5].IsOverridden.ShouldBe(false);
 			Metadata.ProvidedPorts[5].OverridingMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[5].VirtuallyInvokedMethod.ShouldBe(Metadata.ProvidedPorts[5]);
-			Metadata.ProvidedPorts[5].Name.ShouldBe("M1");
+			Metadata.ProvidedPorts[5].Name.ShouldBe("M4");
 		}
 	}
 }

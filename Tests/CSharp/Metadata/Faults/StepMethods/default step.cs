@@ -20,41 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.OccurrencePatterns.StepMethods
+namespace Tests.Metadata.Faults.StepMethods
 {
 	using System;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
 
-	internal class X8 : TestComponent
+	internal class X4 : TestComponent
 	{
 		protected override void Check()
 		{
-			Metadata.Faults[0].OccurrencePattern.UpdateMethods.Length.ShouldBe(1);
+			Metadata.Faults[0].UpdateMethods.Length.ShouldBe(1);
 
-			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].MethodInfo.ShouldBe(typeof(P<int>).GetMethod("UpdateOccurrenceState"));
-			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].DeclaringObject.ShouldBe((object)Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].BaseMethod.ShouldBe(null);
-			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].IsOverride.ShouldBe(false);
-			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].Name.ShouldBe("UpdateOccurrenceState");
-			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].CanBeAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].IntendedBehavior.ShouldBe(typeof(P<int>).GetMethod("UpdateOccurrenceState"));
+			Metadata.Faults[0].UpdateMethods[0].MethodInfo.ShouldBe(typeof(Fault).GetMethod("UpdateFaultState"));
+			Metadata.Faults[0].UpdateMethods[0].DeclaringObject.ShouldBe((object)Metadata.Faults[0]);
+			Metadata.Faults[0].UpdateMethods[0].BaseMethod.ShouldBe(null);
+			Metadata.Faults[0].UpdateMethods[0].IsOverride.ShouldBe(false);
+			Metadata.Faults[0].UpdateMethods[0].Name.ShouldBe("UpdateFaultState");
+			Metadata.Faults[0].UpdateMethods[0].CanBeAffectedByFaultEffects.ShouldBe(false);
+			Metadata.Faults[0].UpdateMethods[0].HasImplementation.ShouldBe(true);
+			Metadata.Faults[0].UpdateMethods[0].IntendedBehavior.ShouldBe(typeof(Fault).GetMethod("UpdateFaultState"));
 
-			Metadata.Faults[0].OccurrencePattern.StepMethod.ShouldBe(Metadata.Faults[0].OccurrencePattern.UpdateMethods[0]);
+			Metadata.Faults[0].StepMethod.ShouldBe(Metadata.Faults[0].UpdateMethods[0]);
 		}
 
-		private class P<T> : OccurrencePattern
-		{
-			public override bool UpdateOccurrenceState()
-			{
-				return true;
-			}
-		}
-
-		[OccurrencePattern(typeof(P<int>))]
-		private class F : Fault
+		[Transient]
+		private class F : Fault<X2>
 		{
 		}
 	}

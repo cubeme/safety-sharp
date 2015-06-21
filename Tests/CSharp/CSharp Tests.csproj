@@ -302,6 +302,7 @@
     <Compile Include="Metadata\Diagnostics\RequiredPorts\unbound ports.cs" />
     <Compile Include="Metadata\Faults\FaultEffects\unique names.cs" />
     <Compile Include="Metadata\Faults\Fields\unsupported field type.cs" />
+    <Compile Include="Metadata\Faults\StepMethods\default step.cs" />
     <Compile Include="Metadata\ModelMetadataTests.Helpers.cs">
       <DependentUpon>ModelMetadataTests.cs</DependentUpon>
     </Compile>

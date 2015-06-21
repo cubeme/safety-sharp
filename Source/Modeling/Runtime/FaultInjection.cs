@@ -33,6 +33,11 @@ namespace SafetySharp.Runtime
 	public abstract class FaultInjection
 	{
 		/// <summary>
+		///     The object the <see cref="Method" /> belongs to.
+		/// </summary>
+		private readonly IMetadataObject _object;
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The S# object the method belongs to.</param>
@@ -42,14 +47,9 @@ namespace SafetySharp.Runtime
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(method, () => method);
 
+			_object = obj;
 			Method = method;
-			Object = obj;
 		}
-
-		/// <summary>
-		///     Gets the object the <see cref="Method" /> belongs to.
-		/// </summary>
-		public IMetadataObject Object { get; private set; }
 
 		/// <summary>
 		///     Gets or sets a value indicating whether the method is currently being executed.
@@ -58,7 +58,7 @@ namespace SafetySharp.Runtime
 		protected bool IsRunning { get; set; }
 
 		/// <summary>
-		///     Gets a value indicating whether the fault injection is deterministic or whether a fault effect is choosen
+		///     Gets a value indicating whether the fault injection is deterministic or whether a fault effect is chosen
 		///     nondeterministically from a set of enabled ones.
 		/// </summary>
 		public bool IsDeterministic
@@ -91,7 +91,7 @@ namespace SafetySharp.Runtime
 			Requires.NotNull(behaviorDelegate, () => behaviorDelegate);
 
 			Delegate = behaviorDelegate;
-			Method.BackingField.SetValue(Object, behaviorDelegate);
+			Method.BackingField.SetValue(_object, behaviorDelegate);
 		}
 	}
 }

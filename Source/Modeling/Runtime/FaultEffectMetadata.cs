@@ -92,7 +92,7 @@ namespace SafetySharp.Runtime
 				if (metadata != null)
 					return metadata;
 
-				metadata = component.StepMethods.SingleOrDefault(step => step.MethodInfo == _affectedMethod);
+				metadata = component.UpdateMethods.SingleOrDefault(step => step.MethodInfo == _affectedMethod);
 				if (metadata != null)
 					return metadata;
 

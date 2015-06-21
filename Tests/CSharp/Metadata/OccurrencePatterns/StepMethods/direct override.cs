@@ -31,16 +31,18 @@ namespace Tests.Metadata.OccurrencePatterns.StepMethods
 	{
 		protected override void Check()
 		{
-			Metadata.Faults[0].OccurrencePattern.StepMethods.Length.ShouldBe(1);
+			Metadata.Faults[0].OccurrencePattern.UpdateMethods.Length.ShouldBe(1);
 
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].MethodInfo.ShouldBe(typeof(P).GetMethod("UpdateOccurrenceState"));
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].DeclaringObject.ShouldBe((object)Metadata.Faults[0].OccurrencePattern);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].BaseMethod.ShouldBe(null);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].IsOverride.ShouldBe(false);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].Name.ShouldBe("UpdateOccurrenceState");
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].CanBeAffectedByFaultEffects.ShouldBe(false);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].HasImplementation.ShouldBe(true);
-			Metadata.Faults[0].OccurrencePattern.StepMethods[0].IntendedBehavior.ShouldBe(typeof(P).GetMethod("UpdateOccurrenceState"));
+			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].MethodInfo.ShouldBe(typeof(P).GetMethod("UpdateOccurrenceState"));
+			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].DeclaringObject.ShouldBe((object)Metadata.Faults[0].OccurrencePattern);
+			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].BaseMethod.ShouldBe(null);
+			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].IsOverride.ShouldBe(false);
+			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].Name.ShouldBe("UpdateOccurrenceState");
+			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].CanBeAffectedByFaultEffects.ShouldBe(false);
+			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].HasImplementation.ShouldBe(true);
+			Metadata.Faults[0].OccurrencePattern.UpdateMethods[0].IntendedBehavior.ShouldBe(typeof(P).GetMethod("UpdateOccurrenceState"));
+
+			Metadata.Faults[0].OccurrencePattern.StepMethod.ShouldBe(Metadata.Faults[0].OccurrencePattern.UpdateMethods[0]);
 		}
 
 		private class P : OccurrencePattern

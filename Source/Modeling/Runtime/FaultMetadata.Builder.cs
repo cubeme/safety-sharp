@@ -37,9 +37,9 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public class Builder
 		{
+			private readonly NameScope _effectNameScope = new NameScope();
 			private readonly Fault _fault;
 			private readonly List<FaultEffectMetadata> _faultEffects = new List<FaultEffectMetadata>();
-			private readonly NameScope _effectNameScope = new NameScope();
 			private readonly FieldCollectionBuilder _fields;
 			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
 			private OccurrencePatternMetadata _occurrencePattern;
@@ -146,7 +146,8 @@ namespace SafetySharp.Runtime
 					Fault = _fault,
 					Effects = new MemberCollection<FaultEffectMetadata>(_fault, _faultEffects),
 					Fields = _fields.ToImmutableCollection(),
-					StepMethods = new MemberCollection<StepMethodMetadata>(_fault, _stepMethods),
+					UpdateMethods = new MemberCollection<StepMethodMetadata>(_fault, _stepMethods),
+					StepMethod = (StepMethodMetadata)_stepMethods[0].VirtuallyInvokedMethod,
 					OccurrencePattern = _occurrencePattern
 				};
 			}

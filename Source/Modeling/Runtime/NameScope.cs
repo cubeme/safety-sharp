@@ -69,6 +69,8 @@ namespace SafetySharp.Runtime
 		public bool IsUnique(string name)
 		{
 			Requires.NotNullOrWhitespace(name, () => name);
+
+			// ReSharper disable once SimplifyLinqExpression
 			return !_knownNames.Any(knownName => knownName == name);
 		}
 	}

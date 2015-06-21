@@ -39,19 +39,21 @@ namespace Tests.Metadata.Components.StepMethods
 	{
 		protected override void Check()
 		{
-			Metadata.StepMethods.Length.ShouldBe(2);
+			Metadata.UpdateMethods.Length.ShouldBe(2);
 
-			Metadata.StepMethods[0].MethodInfo.ShouldBe(typeof(Component).GetMethod("Update"));
-			Metadata.StepMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.StepMethods[0].BaseMethod.ShouldBe(null);
-			Metadata.StepMethods[0].IsOverride.ShouldBe(false);
-			Metadata.StepMethods[0].Name.ShouldBe("Update");
+			Metadata.UpdateMethods[0].MethodInfo.ShouldBe(typeof(Component).GetMethod("Update"));
+			Metadata.UpdateMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.UpdateMethods[0].BaseMethod.ShouldBe(null);
+			Metadata.UpdateMethods[0].IsOverride.ShouldBe(false);
+			Metadata.UpdateMethods[0].Name.ShouldBe("Update");
 
-			Metadata.StepMethods[1].MethodInfo.ShouldBe(typeof(X7<int>).GetMethod("Update"));
-			Metadata.StepMethods[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.StepMethods[1].BaseMethod.MethodInfo.ShouldBe(ComponentUpdatedMethod);
-			Metadata.StepMethods[1].IsOverride.ShouldBe(true);
-			Metadata.StepMethods[1].Name.ShouldBe("Update");
+			Metadata.UpdateMethods[1].MethodInfo.ShouldBe(typeof(X7<int>).GetMethod("Update"));
+			Metadata.UpdateMethods[1].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.UpdateMethods[1].BaseMethod.MethodInfo.ShouldBe(ComponentUpdatedMethod);
+			Metadata.UpdateMethods[1].IsOverride.ShouldBe(true);
+			Metadata.UpdateMethods[1].Name.ShouldBe("Update");
+
+			Metadata.StepMethod.ShouldBe(Metadata.UpdateMethods[1]);
 		}
 	}
 }

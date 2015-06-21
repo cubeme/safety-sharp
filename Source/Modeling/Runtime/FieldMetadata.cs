@@ -63,7 +63,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the underlying CLR field.
 		/// </summary>
-		public FieldInfo FieldInfo { get; private set; }
+		internal FieldInfo FieldInfo { get; private set; }
 
 		/// <summary>
 		///     Gets the name of the field.

@@ -48,7 +48,7 @@ namespace SafetySharp.Runtime
 				Requires.NotNull(model, () => model);
 
 				_rootComponent = new RootComponent();
-				_builder = new ComponentMetadata.Builder(_rootComponent);
+				_builder = _rootComponent.MetadataBuilder;
 				_model = model;
 			}
 

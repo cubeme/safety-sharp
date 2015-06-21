@@ -46,7 +46,7 @@ namespace Tests.Execution.Faults.StepMethods
 
 		protected override void Check()
 		{
-			var nondeterministicBehavior = (NondeterministicFaultInjection)Metadata.StepMethods[1].Behaviors.FaultInjections[0];
+			var nondeterministicBehavior = (NondeterministicFaultInjection)Metadata.UpdateMethods[1].Behaviors.FaultInjections[0];
 
 			// N faults
 			Metadata.Faults[0].Fault.IsOccurring = false;

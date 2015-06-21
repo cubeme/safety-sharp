@@ -55,9 +55,14 @@ namespace SafetySharp.Runtime
 		public MemberCollection<FaultEffectMetadata> Effects { get; private set; }
 
 		/// <summary>
-		///     Gets the step methods declared by the fault.
+		///     Gets the step update methods declared by the fault that together make up the <see cref="StepMethod" />.
 		/// </summary>
-		public MemberCollection<StepMethodMetadata> StepMethods { get; private set; }
+		internal MemberCollection<StepMethodMetadata> UpdateMethods { get; private set; }
+
+		/// <summary>
+		///     Gets the step method declared by the fault.
+		/// </summary>
+		public StepMethodMetadata StepMethod { get; private set; }
 
 		/// <summary>
 		///     Gets the fields declared by the fault.
