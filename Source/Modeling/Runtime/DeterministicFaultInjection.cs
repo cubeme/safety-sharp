@@ -26,6 +26,7 @@ namespace SafetySharp.Runtime
 	using System.Linq;
 	using System.Linq.Expressions;
 	using JetBrains.Annotations;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -39,7 +40,7 @@ namespace SafetySharp.Runtime
 		/// <param name="obj">The S# object the method belongs to.</param>
 		/// <param name="method">The metadata of the method the fault injection belongs to.</param>
 		/// <param name="faultEffect">The fault effect that should be injected deterministically.</param>
-		public DeterministicFaultInjection(object obj, MethodMetadata method, FaultEffectMetadata faultEffect)
+		public DeterministicFaultInjection(IMetadataObject obj, MethodMetadata method, FaultEffectMetadata faultEffect)
 			: base(obj, method)
 		{
 			Requires.NotNull(faultEffect, () => faultEffect);

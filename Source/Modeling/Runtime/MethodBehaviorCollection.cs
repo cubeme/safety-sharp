@@ -25,6 +25,7 @@ namespace SafetySharp.Runtime
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -35,14 +36,14 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     The S# object the affected method belongs to.
 		/// </summary>
-		private readonly object _object;
+		private readonly IMetadataObject _object;
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The S# object the affected method belongs to.</param>
 		/// <param name="affectedMethod">The metadata of the S# method that should be affected by the fault injector.</param>
-		internal MethodBehaviorCollection(object obj, MethodMetadata affectedMethod)
+		internal MethodBehaviorCollection(IMetadataObject obj, MethodMetadata affectedMethod)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(affectedMethod, () => affectedMethod);

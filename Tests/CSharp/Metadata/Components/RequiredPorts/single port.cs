@@ -40,9 +40,11 @@ namespace Tests.Metadata.Components.RequiredPorts
 			Metadata.RequiredPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
 			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
+			Metadata.RequiredPorts[0].IsOverridden.ShouldBe(false);
 			Metadata.RequiredPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
 			Metadata.RequiredPorts[0].HasImplementation.ShouldBe(false);
 			Metadata.RequiredPorts[0].IntendedBehavior.ShouldBe(null);
+			Metadata.RequiredPorts[0].VirtuallyInvokedMethod.ShouldBe(Metadata.RequiredPorts[0]);
 			Metadata.RequiredPorts[0].Name.ShouldBe("M");
 		}
 	}

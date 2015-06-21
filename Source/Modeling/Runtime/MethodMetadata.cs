@@ -54,12 +54,16 @@ namespace SafetySharp.Runtime
 			Requires.That(name == null || !String.IsNullOrWhiteSpace(name), () => name, "The name must be null or non-whitespace only.");
 			Requires.That(baseMethod == null || method != baseMethod.MethodInfo, "A method cannot override itself.");
 			Requires.That(baseMethod == null || obj == baseMethod._object, "The base method must belong to the same object.");
+			Requires.That(baseMethod == null || baseMethod.OverridingMethod == null, "The base method has already been overridden.");
 
 			_object = obj;
 
 			Name = name ?? method.Name;
 			MethodInfo = method;
 			BaseMethod = baseMethod;
+
+			if (baseMethod != null)
+				baseMethod.OverridingMethod = this;
 
 			var backingFieldAttribute = MethodInfo.GetCustomAttribute<BackingFieldAttribute>();
 			if (backingFieldAttribute != null)
@@ -151,7 +155,7 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets the overridden base method. Returns <c>null</c> when <see cref="MethodInfo" /> does not override any other method.
+		///     Gets the metadata of the overridden base method. Returns <c>null</c> when <see cref="IsOverride" /> is <c>false</c>.
 		/// </summary>
 		public MethodMetadata BaseMethod { get; private set; }
 
@@ -161,6 +165,19 @@ namespace SafetySharp.Runtime
 		public bool IsOverride
 		{
 			get { return BaseMethod != null; }
+		}
+
+		/// <summary>
+		///     Gets the metadata of the overriding method. Returns <c>null</c> when <see cref="IsOverridden" /> is <c>false</c>.
+		/// </summary>
+		public MethodMetadata OverridingMethod { get; private set; }
+
+		/// <summary>
+		///     Gets a value indicating whether the method is overridden by another method.
+		/// </summary>
+		public bool IsOverridden
+		{
+			get { return OverridingMethod != null; }
 		}
 
 		/// <summary>
@@ -174,6 +191,20 @@ namespace SafetySharp.Runtime
 		public ObjectMetadata DeclaringObject
 		{
 			get { return _object.Metadata; }
+		}
+
+		/// <summary>
+		///     Gets the metadata of the method that is invoked by a virtual method invocation.
+		/// </summary>
+		public MethodMetadata VirtuallyInvokedMethod
+		{
+			get
+			{
+				if (!IsOverridden)
+					return this;
+
+				return OverridingMethod.VirtuallyInvokedMethod;
+			}
 		}
 
 		/// <summary>

@@ -24,6 +24,7 @@ namespace SafetySharp.Runtime
 {
 	using System;
 	using JetBrains.Annotations;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -36,7 +37,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		/// <param name="obj">The S# object the method belongs to.</param>
 		/// <param name="method">The metadata of the method the behavior belongs to.</param>
-		internal FaultInjection(object obj, MethodMetadata method)
+		internal FaultInjection(IMetadataObject obj, MethodMetadata method)
 		{
 			Requires.NotNull(obj, () => obj);
 			Requires.NotNull(method, () => method);
@@ -48,7 +49,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the object the <see cref="Method" /> belongs to.
 		/// </summary>
-		public object Object { get; private set; }
+		public IMetadataObject Object { get; private set; }
 
 		/// <summary>
 		///     Gets or sets a value indicating whether the method is currently being executed.

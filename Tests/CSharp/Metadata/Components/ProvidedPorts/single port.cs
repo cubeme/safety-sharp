@@ -37,9 +37,11 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(X2).GetMethod("Check", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[0].IsOverridden.ShouldBe(false);
 			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
 			Metadata.ProvidedPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
 			Metadata.ProvidedPorts[0].HasImplementation.ShouldBe(true);
+			Metadata.ProvidedPorts[0].VirtuallyInvokedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
 			Metadata.ProvidedPorts[0].IntendedBehavior.ShouldBe(typeof(X2).GetMethod("__Behavior0__",
 				BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.ProvidedPorts[0].Name.ShouldBe("Check");

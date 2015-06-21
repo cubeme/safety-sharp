@@ -37,6 +37,8 @@ namespace Tests.Metadata.Components.StepMethods
 			Metadata.StepMethods[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.StepMethods[0].BaseMethod.ShouldBe(null);
 			Metadata.StepMethods[0].IsOverride.ShouldBe(false);
+			Metadata.StepMethods[0].IsOverridden.ShouldBe(false);
+			Metadata.StepMethods[0].VirtuallyInvokedMethod.ShouldBe(Metadata.StepMethods[0]);
 			Metadata.StepMethods[0].Name.ShouldBe("Update");
 		}
 	}
