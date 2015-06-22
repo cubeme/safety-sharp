@@ -28,7 +28,8 @@ module internal TransitionSystemAsRelationExpr =
     open SafetySharp.Models
     open SafetySharp.Models.TsamHelpers
     open SafetySharp.Models.SamHelpers
-    open VcGuardWithAssignmentModel
+    open VcGuardWithAssignmentModel    
+    open SafetySharp.EngineOptions
     
     type VarDecl = Tsam.LocalVarDecl
     type Var = Tsam.Var
@@ -146,7 +147,11 @@ module internal TransitionSystemAsRelationExpr =
         // The strongest postcondition (forward) makes an indeterministic choice to "Or" and "Assumes \phi;S" to "\phi And S".
         // There is a strong duality between these two. But they are different. See [Nafz12 page 218].
         // Because we make forward reasoning, we use the sp way.
-                
+        
+        // Note:
+        //   Gwam already takes care of the semantics of the assignment (actually the transformation there already needs to know
+        //   how to interpret the assignment).
+
         let virtualVarEntries = createVirtualVarEntriesForGwam gwam
         let virtualVarToVar = virtualVarEntries |> List.map ( fun (var,virtVar) -> (virtVar,var)) |> Map.ofList
         let varToVirtualVar = virtualVarEntries |> Map.ofList
@@ -469,6 +474,9 @@ module internal TransitionSystemAsRelationExpr =
     let transformTsamToTsareWithSpWorkflow<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
+
+        assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
+
         let model = state.Pgm
         let transformed =
             {
@@ -482,6 +490,9 @@ module internal TransitionSystemAsRelationExpr =
     let transformTsamToTsareWithSpUnoptimizedWorkflow<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
+        
+        assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
+
         let model = state.Pgm
         let transformed =
             {
@@ -495,6 +506,9 @@ module internal TransitionSystemAsRelationExpr =
     let transformTsamToTsareWithWpWorkflow<'traceableOfOrigin> (``yes, I know what I do. I am sure the input program is deterministic``: bool)
             : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
+        
+        assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
+
         let model = state.Pgm
         let transformed =
             {
@@ -508,6 +522,9 @@ module internal TransitionSystemAsRelationExpr =
     let transformTsamToTsareWithPropagationWorkflow<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
+        
+        assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
+
         let model = state.Pgm
         let transformed =
             {

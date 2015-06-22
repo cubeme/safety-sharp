@@ -29,24 +29,54 @@ open SafetySharp.Models.Sam
 open SafetySharp.Models.Tsam
 open SafetySharp.Workflow
 open SafetySharp.Models
+open SafetySharp.EngineOptions
 
 type VcGuardWithAssignmentModelFastTests(xunitOutput:ITestOutputHelper) =
     
 
     static member testdataDeterministic = TestCases.SamSmokeTests.smoketestsDeterministic  
-
+    
     
     [<Theory>]
     [<MemberData("testdataDeterministic")>]
-    member this.``convert smokeTest to Gwa Model`` (testname:string) =    
+    member this.``convert smokeTest to Gwa Model (ranges after step)`` (testname:string) =    
 
         let inputFile = """../../Examples/SAM/""" + testname
         
         let smokeTestWithGwamWorkflow = workflow {
                 do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
+                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow()
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.modelToStringWorkflow ()
+
+                //do! SafetySharp.Workflow.printObjectToStdout ()
+                //do! SafetySharp.Workflow.printNewParagraphToStdout ()
+                //do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.guardWithAssignmentModelToString ()
+            }
+        let runSmokeTest (inputFile) =
+            SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
+        let output = runSmokeTest inputFile
+        do xunitOutput.WriteLine (sprintf "%s" output)
+        ()
+    
+    [<Theory>]
+    [<MemberData("testdataDeterministic")>]
+    member this.``convert smokeTest to Gwa Model (ranges after every assignment)`` (testname:string) =    
+
+        let inputFile = """../../Examples/SAM/""" + testname
+        
+        let smokeTestWithGwamWorkflow = workflow {
+                do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
+                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar)
+                do! readFile inputFile
+                do! SafetySharp.Models.SamParser.parseStringWorkflow
+                do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.modelToStringWorkflow ()

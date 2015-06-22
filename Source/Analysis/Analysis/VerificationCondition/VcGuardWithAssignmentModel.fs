@@ -69,19 +69,11 @@ module internal VcGuardWithAssignmentModel =
         // We assume treeified form.
         // Note:
         //    Every time we push an assignment and change something, we have to ensure, that
-        //    the range is preserved.
+        //    the range is preserved. Thus we require the attribute
+        //    state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly to be true
+        //    to be true to make this operation.
 
         let! state = getState ()
-
-        let! semanticsOfAssignmentToRangedVariables =
-            getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()
-        let applyAssignmentSemanticsAfterAssignment (expr:Expr) (_var:Var) =
-            let varToType = state.Pgm.VarToType
-            match semanticsOfAssignmentToRangedVariables with
-                | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar ->
-                    expr.forceExprToBeInRangeOfVar varToType _var
-                | _ ->
-                    expr
 
         let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
 
@@ -110,8 +102,7 @@ module internal VcGuardWithAssignmentModel =
                                 let pushCandidate=peepholeLeft.Value
                                 let newAssertStm =
                                     let newAssertExpr =
-                                        let leftExprInRange = applyAssignmentSemanticsAfterAssignment leftExpr _var
-                                        rightExpr.rewriteExpr_varToExpr (_var,leftExprInRange)
+                                        rightExpr.rewriteExpr_varToExpr (_var,leftExpr)
                                     Stm.Assert(rightSid,newAssertExpr)
                                 let newBlock =
                                     (revAlreadyLookedAt |> List.rev)
@@ -122,8 +113,7 @@ module internal VcGuardWithAssignmentModel =
                                 // push over Assumption. Adapt rightExpr
                                 let pushCandidate=peepholeLeft.Value
                                 let newAssumeStm =
-                                    let leftExprInRange = applyAssignmentSemanticsAfterAssignment leftExpr _var
-                                    let newAssumeStmExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExprInRange)
+                                    let newAssumeStmExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
                                     Stm.Assume(rightSid,newAssumeStmExpr)
                                 let newBlock =
                                     (revAlreadyLookedAt |> List.rev)
@@ -137,8 +127,7 @@ module internal VcGuardWithAssignmentModel =
                                     let newChoiceExpr =
                                         match choiceExpr with
                                             | Some(choiceExpr) ->
-                                                let leftExprInRange = applyAssignmentSemanticsAfterAssignment leftExpr _var
-                                                Some (choiceExpr.rewriteExpr_varToExpr (_var,leftExprInRange))
+                                                Some (choiceExpr.rewriteExpr_varToExpr (_var,leftExpr))
                                             | None -> None
                                     let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
                                     (newChoiceExpr,newChoiceStm)
@@ -150,8 +139,7 @@ module internal VcGuardWithAssignmentModel =
                                 // push into Stochastic (prepend to each of the rightStochasticChoices at the beginning). Adapt choiceExprs.
                                 let pushCandidate=peepholeLeft.Value
                                 let createNewChoice (choiceGuard:Expr,choiceStm:Stm) =
-                                    let leftExprInRange = applyAssignmentSemanticsAfterAssignment leftExpr _var
-                                    let newChoiceGuard = choiceGuard.rewriteExpr_varToExpr (_var,leftExprInRange)
+                                    let newChoiceGuard = choiceGuard.rewriteExpr_varToExpr (_var,leftExpr)
                                     let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
                                     (newChoiceGuard,newChoiceStm)
                                 let newChoiceStm = Stm.Stochastic(rightSid,rightStochasticChoices |> List.map createNewChoice)
@@ -834,17 +822,6 @@ module internal VcGuardWithAssignmentModel =
             failwith "passive form cannot be used with this algorithm"
             // Assume Single Assignment Form. TODO: Default form may also work. Examine. Passive form does not work.            
         else
-            let! semanticsOfAssignmentToRangedVariables = getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()
-            let isSemanticsOptionDoable =
-                match semanticsOfAssignmentToRangedVariables with
-                    | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar
-                    | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.IgnoreRanges
-                    | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep ->
-                        true
-                    | _ ->
-                        false
-            assert (isSemanticsOptionDoable)
-
             do! phase1TreeifyAndNormalize ()
             do! phase2PushAssignmentsNotAtTheEnd ()
             do! phase3PullChoicesTowardsBeginning ()
@@ -910,9 +887,7 @@ module internal VcGuardWithAssignmentModel =
 
 
     
-    let transformGwaTsamToGwaModel (semanticsOfAssignmentToRangedVariables:TsamEngineOptions.SemanticsOfAssignmentToRangedVariables)
-                                   (pgm:Tsam.Pgm)                                   
-                : GuardWithAssignmentModel =
+    let transformGwaTsamToGwaModel (pgm:Tsam.Pgm) : GuardWithAssignmentModel =
         // The algorithm also ensures variables never written to keep their value
         let skipStm = Stm.Block(pgm.UniqueStatementIdGenerator (),[])
                         
@@ -932,26 +907,10 @@ module internal VcGuardWithAssignmentModel =
                 |> Map.toList
                 |> List.map (fun (oldkey,value) -> (nextGlobalToCurrent.Item oldkey,value)) // use the nextGlobal redirection here
                 |> Map.ofList
-                                
-        let applyAssignmentSemanticsAfterAssignment (expr:Expr) (_var:Var) =
-            let varToType = pgm.VarToType
-            match semanticsOfAssignmentToRangedVariables with
-                | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar ->
-                    expr.forceExprToBeInRangeOfVar varToType _var
-                | _ ->
-                    expr
-
-        let applyAssignmentSemanticsAfterStep (variableValuation:Map<Var,Expr>) : Map<Var,Expr> =
-            let applyAssignmentSemanticsAfterStep (expr:Expr) (_var:Var) =
-                let varToType = pgm.VarToType
-                match semanticsOfAssignmentToRangedVariables with
-                    | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep ->
-                        expr.forceExprToBeInRangeOfVar varToType _var
-                    | _ ->
-                        expr
-            variableValuation |> Map.map (fun _var valuationExpr -> applyAssignmentSemanticsAfterStep valuationExpr _var)
 
         let processWrites (stm:Stm) : FinalVariableAssignments =
+            // Note: we require the attribute  state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly
+            //       to be true to make this operation.
             let forceRangeAfterStep = true
 
             match stm with
@@ -965,21 +924,19 @@ module internal VcGuardWithAssignmentModel =
                             match peepholeStm with
                                 | Stm.Write (_,var,expr) ->
                                     let newExpr = expr.rewriteExpr_varsToExpr currentValuation
-                                    let newExprInRange = applyAssignmentSemanticsAfterAssignment newExpr var
-                                    let newValuation = currentValuation.Add(var,newExprInRange)
+                                    let newValuation = currentValuation.Add(var,newExpr)
                                     traverseBlock (newValuation) (toTraverse.Tail)
                                 | _ ->
                                     failwith "BUG: Structure of Tsam.Pgm.Body was not in GwaTsam Form"
                     let assignments = traverseBlock (initialValuation) statements
                     {
-                        FinalVariableAssignments.Assignments = (assignments |> redirectFinalVars |> applyAssignmentSemanticsAfterStep)
+                        FinalVariableAssignments.Assignments = (assignments |> redirectFinalVars)
                     }
                 | Stm.Write(_,var,expr) ->
                     let newExpr = expr.rewriteExpr_varsToExpr initialValuation
-                    let newExprInRange = applyAssignmentSemanticsAfterAssignment newExpr var
-                    let newValuation = initialValuation.Add(var,newExprInRange)
+                    let newValuation = initialValuation.Add(var,newExpr)
                     {
-                        FinalVariableAssignments.Assignments = (newValuation |> redirectFinalVars |> applyAssignmentSemanticsAfterStep)
+                        FinalVariableAssignments.Assignments = (newValuation |> redirectFinalVars )
                     }
                 | _ -> failwith "BUG: Structure of Tsam.Pgm.Body was not in GwaTsam Form"
         
@@ -1065,13 +1022,12 @@ module internal VcGuardWithAssignmentModel =
         do! transformTsamToTsamInGuardToAssignmentForm ()
 
         let! state = getState ()
-        let! semanticsOfAssignmentToRangedVariables =            
-            getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()        
+        assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
 
         let model = state.Pgm
         let transformed =
             {
-                GuardWithAssignmentModelTracer.GuardWithAssignmentModel = transformGwaTsamToGwaModel semanticsOfAssignmentToRangedVariables model;
+                GuardWithAssignmentModelTracer.GuardWithAssignmentModel = transformGwaTsamToGwaModel model;
                 GuardWithAssignmentModelTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
                 GuardWithAssignmentModelTracer.ForwardTracer = state.ForwardTracer;
             }

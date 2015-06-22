@@ -31,40 +31,64 @@ module internal TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables =
         
     let rec forceExprToBeInRangeOfVar (varToType:Map<Var,Type>) (_var:Var) (expr:Expr)=
         let rangeOfVar = varToType.Item _var            
-        let newExpr_clampOverflow (minValue:Expr) (maxValue:Expr) : Expr =
+        let newExpr_clampOverflow (minValue:Val) (maxValue:Val) : Expr =
+            let minValue = Expr.Literal(minValue)
+            let maxValue = Expr.Literal(maxValue)
             let greaterEqualMaxThenMaxElse (elseExpr:Expr) =
                 Expr.IfThenElseExpr(Expr.BExpr(expr,BOp.GreaterEqual,maxValue),maxValue,elseExpr )
             let lessEqualMinThenMinElse (elseExpr:Expr) =
                 Expr.IfThenElseExpr(Expr.BExpr(expr,BOp.LessEqual,minValue),minValue,elseExpr )
             (lessEqualMinThenMinElse (greaterEqualMaxThenMaxElse expr) )
             //((greaterEqualMaxThenMaxElse expr) )
+        let newExpr_wrapAround_int_modSemantics (minValue:int) (maxValue:int) : Expr =
+            // Note and TODO: If a language supports a bit-Vector, the transformation could be easier more efficient.
+            // Examples, if we use a mod-Semantics (length of minValue..maxValue is never negative) :
+            //    1. Range from (0..10). Value = 12 => Value = 1
+            //    2. Range from (-10..10). Value = -12 => Value = 9
+            //    3. Range from (-10..10). Value = 12 => Value = -9
+            //    4. Range from (-10..-5). Value = 12 => Value = -9
+            //    5. Range from (5..10). Value = 12 => Value = 7
+            let rangeWidth = 1 + maxValue - minValue
+            // TODO: Formula: something like: (distance(minValue,value) % rangeLength) + minValue
+            failwith "To determine"
+
+        let newExpr_wrapAround_reset (minValue:Val) (maxValue:Val) : Expr =
+            let minValue = Expr.Literal(minValue)
+            let maxValue = Expr.Literal(maxValue)
+            let greaterMaxThenMinElse (elseExpr:Expr) =
+                Expr.IfThenElseExpr(Expr.BExpr(expr,BOp.Greater,maxValue),minValue,elseExpr )
+            let lessMinThenMaxElse (elseExpr:Expr) =
+                Expr.IfThenElseExpr(Expr.BExpr(expr,BOp.Less,minValue),maxValue,elseExpr )
+            (lessMinThenMaxElse (greaterMaxThenMinElse expr) )
+
         match rangeOfVar with
             | Type.BoolType
             | Type.IntType 
             | Type.RealType  ->
                 expr
             | Type.RangedIntType (_from,_to,overflowBehavior) ->
-                let minValue = Expr.Literal(Val.NumbVal(bigint _from))
-                let maxValue = Expr.Literal(Val.NumbVal(bigint _to))
+                let minValue = Val.NumbVal(bigint _from)
+                let maxValue = Val.NumbVal(bigint _to)
                 match overflowBehavior with
                     | OverflowBehavior.Clamp ->
                         newExpr_clampOverflow minValue maxValue
                     | OverflowBehavior.Error ->
                         expr
                     | OverflowBehavior.WrapAround ->
-                        failwith "make either modulo or start with min. To determine"
+                        newExpr_wrapAround_reset minValue maxValue
                     | _ ->
                         failwith "not determined what it means, yet"
             | Type.RangedRealType (_from,_to,overflowBehavior) ->
-                let minValue = Expr.Literal(Val.RealVal(_from))
-                let maxValue = Expr.Literal(Val.RealVal(_to))
+                let minValue = Val.RealVal(_from)
+                let maxValue = Val.RealVal(_to)
                 match overflowBehavior with
                     | OverflowBehavior.Clamp ->
                         newExpr_clampOverflow minValue maxValue
                     | OverflowBehavior.Error ->
                         expr
                     | OverflowBehavior.WrapAround ->
-                        failwith "make either modulo or start with min. Modulo makes no sense for real types. To determine"
+                        //failwith "make either modulo or start with min. Modulo makes no sense for real types. To determine"
+                        newExpr_wrapAround_reset minValue maxValue
                     | _ ->
                         failwith "not determined what it means, yet"
                         
@@ -146,7 +170,9 @@ module internal TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables =
 
         let! state = getState ()
         let pgm = state.Pgm
-
-        let newState = {state with Pgm = (applySemanticsToPgm semanticsOfAssignmentToRangedVariables pgm) }
-        do! updateState newState
+        if (pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly <> Ternary.True) then
+            let newState = {state with Pgm = (applySemanticsToPgm semanticsOfAssignmentToRangedVariables pgm) }
+            do! updateState newState
+        else
+            ()
     }

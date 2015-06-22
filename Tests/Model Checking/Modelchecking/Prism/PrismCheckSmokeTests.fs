@@ -47,9 +47,11 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
         
         let smokeTestWithGwamWorkflow = workflow {
                 do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
+                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow ()
                 do! SafetySharp.Analysis.Modelchecking.Prism.GwamToPrism.transformWorkflow ()
@@ -82,6 +84,7 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow ()
                 do! SafetySharp.Analysis.Modelchecking.Prism.GwamToPrism.transformWorkflow ()
@@ -110,9 +113,11 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
         
         let smokeTestWithGwamWorkflow = workflow {
                 do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
+                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar)
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamToSpg.transformToStochasticProgramGraphWorkflow ()
                 do! SafetySharp.Analysis.Modelchecking.Prism.StochasticProgramGraphToPrism.transformWorkflow ()
                 do! SafetySharp.ITracing.logForwardTracesOfOrigins ()

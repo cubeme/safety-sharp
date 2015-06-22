@@ -268,6 +268,7 @@ module internal TsamToSpg =
     let transformToStochasticProgramGraphWorkflow<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,StochasticProgramGraphTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
+        assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
         let transformed =
             {
                 StochasticProgramGraphTracer.ProgramGraph = transformToStochasticProgramGraph (state.Pgm);

@@ -46,6 +46,8 @@ module internal SamToPromela =
     open SafetySharp.EngineOptions
     open TsamHelpers
 
+    let forceExprToBeInRangeOfVar = SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.forceExprToBeInRangeOfVar
+
     let generateGlobalVarDeclarations (varDecls:Sam.GlobalVarDecl list) : PrOneDecl list =
         let generateDecl (varDecl:Sam.GlobalVarDecl) : PrOneDecl =
             let _type = match varDecl.Type with
@@ -157,7 +159,7 @@ module internal SamToPromela =
                 let forceVariableToBeInRange (varDecl:Sam.GlobalVarDecl) : PrStatement =
                     let assignVarref = transformSamVarToVarref varDecl.Var  
                     let expr = Sam.Expr.Read(varDecl.Var)
-                    let newExpr = expr.forceExprToBeInRangeOfVar varToType varDecl.Var
+                    let newExpr = forceExprToBeInRangeOfVar varToType varDecl.Var expr
                     let assignExpr = transformSamExpr newExpr
                     PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))
                 varDecls |> List.map forceVariableToBeInRange
@@ -171,7 +173,7 @@ module internal SamToPromela =
         let applyAssignmentSemanticsAfterAssignment (expr:Sam.Expr) (_var:Sam.Var) =
             match semanticsOfAssignmentToRangedVariables with
                 | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar ->
-                    expr.forceExprToBeInRangeOfVar varToType _var
+                    forceExprToBeInRangeOfVar varToType _var expr
                 | _ ->
                     expr
 
@@ -291,6 +293,9 @@ module internal SamToPromela =
         let! semanticsOfAssignmentToRangedVariables =            
             getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()   
             
+        // We cannot execute the tsam-transformation for explicit assignments here directly. TODO: After unifying SAM and TSAM do it and replace code
+        // assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
+
         let isSemanticsOptionDoable =
             match semanticsOfAssignmentToRangedVariables with
                 | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar

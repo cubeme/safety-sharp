@@ -469,11 +469,13 @@ module internal ScmToNuXmv =
                         : ExogenousWorkflowFunction<'state,GenericToNuXmv.NuXmvTracer<'traceableOfOrigin>> = workflow {
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+
         let reservedNames = Set.empty<string>
         do! SafetySharp.Models.TsamChangeIdentifier.changeIdentifiers reservedNames
         let! tsamModel = getState ()
         let tsamModel = tsamModel.Pgm
         do printfn "%s" (SafetySharp.Models.TsamToString.exportModel tsamModel)
+        do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
 
         // Way 1: Use SP-Formula. Disadvantage: Generates a lot of IVARs (I think this could be avoided, by developing an SP-Algorithm, which depends on the treeified-Form (and during traversal, every local variable is replaced by the valuation). SSA is not enough, because local variables are used to save the last values of each branch. Thus, they are needed, when branches merge again).
         //do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()

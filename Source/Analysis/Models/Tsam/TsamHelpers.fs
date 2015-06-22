@@ -93,44 +93,6 @@ module internal TsamHelpers =
                          thenExpr.rewriteExpr_varToExpr (varToUpdate,assignVarTo),
                          elseExpr.rewriteExpr_varToExpr (varToUpdate,assignVarTo))
                                         
-        member expr.forceExprToBeInRangeOfVar (varToType:Map<Var,Type>) (_var:Var)=
-            let rangeOfVar = varToType.Item _var            
-            let newExpr_clampOverflow (minValue:Expr) (maxValue:Expr) : Expr =
-                let greaterEqualMaxThenMaxElse (elseExpr:Expr) =
-                    Expr.IfThenElseExpr(Expr.BExpr(expr,BOp.GreaterEqual,maxValue),maxValue,elseExpr )
-                let lessEqualMinThenMinElse (elseExpr:Expr) =
-                    Expr.IfThenElseExpr(Expr.BExpr(expr,BOp.LessEqual,minValue),minValue,elseExpr )
-                (lessEqualMinThenMinElse (greaterEqualMaxThenMaxElse expr) )
-                //((greaterEqualMaxThenMaxElse expr) )
-            match rangeOfVar with
-                | Type.BoolType
-                | Type.IntType 
-                | Type.RealType  ->
-                    expr
-                | Type.RangedIntType (_from,_to,overflowBehavior) ->
-                    let minValue = Expr.Literal(Val.NumbVal(bigint _from))
-                    let maxValue = Expr.Literal(Val.NumbVal(bigint _to))
-                    match overflowBehavior with
-                        | OverflowBehavior.Clamp ->
-                            newExpr_clampOverflow minValue maxValue
-                        | OverflowBehavior.Error ->
-                            expr
-                        | OverflowBehavior.WrapAround ->
-                            failwith "make either modulo or start with min. To determine"
-                        | _ ->
-                            failwith "not determined what it means, yet"
-                | Type.RangedRealType (_from,_to,overflowBehavior) ->
-                    let minValue = Expr.Literal(Val.RealVal(_from))
-                    let maxValue = Expr.Literal(Val.RealVal(_to))
-                    match overflowBehavior with
-                        | OverflowBehavior.Clamp ->
-                            newExpr_clampOverflow minValue maxValue
-                        | OverflowBehavior.Error ->
-                            expr
-                        | OverflowBehavior.WrapAround ->
-                            failwith "make either modulo or start with min. Modulo makes no sense for real types. To determine"
-                        | _ ->
-                            failwith "not determined what it means, yet"
 
         
     // Extension methods

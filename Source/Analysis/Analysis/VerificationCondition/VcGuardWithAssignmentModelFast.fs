@@ -27,6 +27,7 @@ module internal VcGuardWithAssignmentModelFast =
     open SafetySharp.Models
     open SafetySharp.Models.SamHelpers
     open SafetySharp.Models.TsamHelpers
+    open SafetySharp.EngineOptions
     
     // Predicate Transformers
     // Assume VcSam is in SSA-Form
@@ -180,6 +181,9 @@ module internal VcGuardWithAssignmentModelFast =
     let transformWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let model = state.Pgm
+
+        assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
+
         let transformed =
             {
                 GuardWithAssignmentModelTracer.GuardWithAssignmentModel = transformPgmToGuardWithFinalAssignmentModel model;
