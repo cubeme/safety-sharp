@@ -9,7 +9,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis", "Source\Analysis
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp Tests", "Tests\SafetySharp\SafetySharp Tests.fsproj", "{ACDBA456-3B21-480D-B739-DCC7EAE6D233}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis Utilities Tests", "Tests\Analysis Utilities\Analysis Utilities Tests.fsproj", "{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis External Tools Tests", "Tests\Analysis External Tools\Analysis External Tools Tests.fsproj", "{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{17ADA692-CD6C-4F50-84FD-008F09179BC8}"
 EndProject
