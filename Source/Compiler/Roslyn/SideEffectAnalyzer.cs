@@ -94,10 +94,15 @@ namespace SafetySharp.Compiler.Roslyn
 				var symbol = _semanticModel.GetSymbolInfo(node).Symbol;
 				Assert.NotNull(symbol, "Expected a valid symbol.");
 
-				if (symbol is ILocalSymbol || symbol is IFieldSymbol)
-					return true;
-
-				return false;
+				switch (symbol.Kind)
+				{
+					case SymbolKind.Field:
+					case SymbolKind.Local:
+					case SymbolKind.Parameter:
+						return true;
+					default:
+						return false;
+				}
 			}
 
 			public override bool VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node)
