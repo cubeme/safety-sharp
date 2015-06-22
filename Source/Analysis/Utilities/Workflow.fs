@@ -394,10 +394,15 @@ module internal Workflow =
     *)
     
     let saveToFile (outputFile:FileSystem.FileName) : ExogenousWorkflowFunction<string,FileSystem.FileName> = workflow {
+        let createPathOfFilename (filename:string)=
+            let pathToCreate = System.IO.Path.GetDirectoryName(filename)            
+            if pathToCreate <> "" then
+                do System.IO.Directory.CreateDirectory pathToCreate |> ignore
+            else
+                ()
         let! input = getState ()
         let (FileSystem.FileName(outputFileName)) = outputFile
-        let pathToCreate = System.IO.Path.GetDirectoryName(outputFileName)
-        do System.IO.Directory.CreateDirectory pathToCreate |> ignore
+        do createPathOfFilename outputFileName
         do System.IO.File.WriteAllText (outputFileName, input, System.Text.Encoding.ASCII)
         do! updateState outputFile
     }

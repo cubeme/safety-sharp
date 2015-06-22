@@ -22,6 +22,8 @@
 
 namespace SafetySharp.Analysis.Techniques
 
+open SafetySharp.EngineOptions
+
 module internal AtDccaLtl =
     open SafetySharp.Workflow
     open SafetySharp.Models
@@ -146,6 +148,8 @@ module internal AtDccaLtl =
             let nuxmvExecutor = new SafetySharp.Analysis.Modelchecking.NuXmv.ExecuteNuXmv()
             
             let transformModelToNuXmv = workflow {
+                    do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
+
                     do! SafetySharp.Models.ScmMutable.setInitialPlainModelState untransformedModel
                     do! SafetySharp.Analysis.Modelchecking.NuXmv.ScmToNuXmv.transformConfiguration ()
                     do! logForwardTracesOfOrigins ()

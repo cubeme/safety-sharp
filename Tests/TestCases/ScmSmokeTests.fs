@@ -24,48 +24,15 @@ namespace TestCases
 
 module internal ScmSmokeTests =
     let smoketestsStochastic = 
-        [
-         "nestedBlocks2.sam";
-        ] |> Seq.map (fun (a) -> [|a|])
+        []
 
         
     let smoketestsDeterministic = 
         [
-         "smokeTest1.sam";
-         "smokeTest2.sam";
-         "smokeTest3.sam";
-         "smokeTest4.sam";
-         "smokeTest5.sam";
-         "smokeTest6.sam";
-         "smokeTest7.sam";
-         "smokeTest8.sam";
-         "smokeTest9.sam";
-         "smokeTest10.sam";
-         "smokeTest11.sam";
-         "smokeTest12.sam";
-         "smokeTest13.sam";
-         "smokeTest14.sam";
-         "smokeTest15.sam";
-         "smokeTest16.sam";
-         "smokeTest17.sam";
-         "smokeTest18.sam";
-         "smokeTest19.sam";
-         "smokeTest20.sam";
-         "smokeTest21.sam";
-         "smokeTest22.sam";
-         "smokeTest23.sam";
-         "smokeTest24.sam";
-         "smokeTest25.sam";
-         "nestedBlocks1.sam";
-         "reservedNames.sam";
-         "overflowIntError1.sam";
-         "overflowIntError2.sam";
-         "overflowIntWrapAround1.sam";
-         "overflowIntWrapAround2.sam";
-         "overflowIntWrapAround3.sam";
-         "overflowIntWrapAround4.sam";
-         "overflowIntClamp1.sam";
-         "overflowIntClamp2.sam";
+            "nestedComponent3.scm";
+            "callInstHierarchy1.scm";
+            "callInstFromBeh2.scm";
+            "simpleComponentWithFaults3.scm";
         ] |> Seq.map (fun (a) -> [|a|])
 
     let smoketestsAll =

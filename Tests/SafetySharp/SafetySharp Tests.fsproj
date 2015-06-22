@@ -64,6 +64,9 @@
     <Compile Include="..\TestCases\SamSmokeTests.fs">
       <Link>SamSmokeTests.fs</Link>
     </Compile>
+    <Compile Include="..\TestCases\ScmSmokeTests.fs">
+      <Link>ScmSmokeTests.fs</Link>
+    </Compile>
     <Compile Include="Models\Ssm\CilToSsm.Assemblies.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Bindings.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Components.fs" />

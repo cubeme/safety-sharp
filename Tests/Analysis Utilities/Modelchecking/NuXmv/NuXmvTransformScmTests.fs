@@ -21,64 +21,56 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Modelchecking
+    
+open Xunit
+open Xunit.Abstractions
 
-
-open System
-open NUnit.Framework
-open FParsec
-
-open TestHelpers
-open AstTestHelpers
-
+open SafetySharp.Models
 open SafetySharp.Workflow
 open SafetySharp.Analysis.Modelchecking.NuXmv
+open SafetySharp.EngineOptions
 
-[<TestFixture>]
-module ScmToNuXmvTests =
-    
-    
-    let internal inputFileToNuXmvAstWorkflow (inputFile:string) = workflow {
-            do! readFile inputFile
-            do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
-            do! SafetySharp.Models.ScmToSam.transformIscmToSam
-            do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
-            do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow ()
-            do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
-            do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
-            do! SafetySharp.ITracing.removeTracing ()
-            do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
-        }
-           
-    [<Test>]
-    let ``nestedComponent3.scm gets converted to NuXmv`` () =
+type ScmToNuXmvTests (xunitOutput:ITestOutputHelper) =
 
-        let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
-        let output = runWorkflow_getState (inputFileToNuXmvAstWorkflow inputFile)
-        printf "%s" output
+
+    static member testdataAll = TestCases.ScmSmokeTests.smoketestsAll
+    static member testdataDeterministic = TestCases.ScmSmokeTests.smoketestsDeterministic        
+        
+    [<Theory>]
+    [<MemberData("testdataDeterministic")>]
+    member this.``check smoke tests with NuXmvGwamCheckSamSmokeTests`` (testname:string) =    
+
+        let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
+            let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
+            let newDirectory = "../../Examples/NuXmv/TransformedScmGwam"
+            SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
+
+        let inputFile = """../../Examples/SCM/""" + testname
+        
+        let smokeTestWorkflow = workflow {
+                do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
+                do! readFile inputFile
+                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
+                do! SafetySharp.Models.ScmParser.parseStringWorkflow ()                
+                do! SafetySharp.Models.ScmToSam.transformIscmToSam
+                do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow ()
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+                do! SafetySharp.ITracing.removeTracing ()
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
+                let outputFile = inputFileNameToOutputFileName inputFile
+                do! printToFile outputFile
+            }
+
+        let runSmokeTest (inputFile) =
+            SafetySharp.Workflow.runWorkflow_getState smokeTestWorkflow
+        let output = runSmokeTest inputFile
+        do xunitOutput.WriteLine (sprintf "%s" output)
         ()
-        
-    [<Test>]
-    let ``callInstHierarchy1.scm gets converted to NuXmv`` () =
 
-        let inputFile = """../../Examples/SCM/callInstHierarchy1.scm"""
-        let output = runWorkflow_getState (inputFileToNuXmvAstWorkflow inputFile)
-        printf "%s" output
-        ()
-        
-    [<Test>]
-    let ``callInstFromBeh2.scm gets converted to NuXmv`` () =
-
-        let inputFile = """../../Examples/SCM/callInstFromBeh2.scm"""
-        let output = runWorkflow_getState (inputFileToNuXmvAstWorkflow inputFile)
-        printf "%s" output
-           
-        
-    [<Test>]
-    let ``simpleComponentWithFaults3.scm gets converted to NuXmv`` () =
-
-        let inputFile = """../../Examples/SCM/simpleComponentWithFaults3.scm"""
-        let output = runWorkflow_getState (inputFileToNuXmvAstWorkflow inputFile)
-        printf "%s" output
            
 

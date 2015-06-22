@@ -20,67 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modelchecking.Promela.PromelaTransformScmTests
+namespace SafetySharp.Modelchecking
+    
+open Xunit
+open Xunit.Abstractions
 
-open System
-open NUnit.Framework
-open FParsec
-
-open TestHelpers
-open AstTestHelpers
-
+open SafetySharp.Models
 open SafetySharp.Workflow
-open SafetySharp.Analysis.Modelchecking.PromelaSpin
+open SafetySharp.Analysis.Modelchecking.NuXmv
+open SafetySharp.EngineOptions
 
-[<TestFixture>]
-module ScmToPromelaTests =
-    
-    let internal promelaWriter = PromelaToString()
-    
-    let internal inputFileToPromelaAstWorkflow (inputFile:string) = workflow {
-            do! readFile inputFile
-            do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
-            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
-            do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
-            do! SafetySharp.ITracing.removeTracing ()
-        }
-           
-    [<Test>]
-    let ``nestedComponent3.scm gets converted to promela`` () =
+type ScmToPromelaTests (xunitOutput:ITestOutputHelper) =
 
-        let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
-        let promela = runWorkflow_getState (inputFileToPromelaAstWorkflow inputFile)
 
-        let promelaCodeString = promelaWriter.Export promela
-        printf "%s" promelaCodeString
+    static member testdataAll = TestCases.ScmSmokeTests.smoketestsAll
+    static member testdataDeterministic = TestCases.ScmSmokeTests.smoketestsDeterministic        
+        
+    [<Theory>]
+    [<MemberData("testdataDeterministic")>]
+    member this.``check smoke tests with NuXmvGwamCheckSamSmokeTests`` (testname:string) =    
+
+        let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
+            let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
+            let newDirectory = "../../Examples/Promela/TransformedScm"
+            SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
+
+        let inputFile = """../../Examples/SCM/""" + testname
+        
+        let smokeTestWorkflow = workflow {
+                do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
+                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
+                do! readFile inputFile
+                do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
+                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+                do! SafetySharp.ITracing.removeTracing ()
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
+                //let outputFile = inputFileNameToOutputFileName inputFile
+                //do! saveToFile outputFile
+            }
+
+        let output = SafetySharp.Workflow.runWorkflow_getState smokeTestWorkflow
+        do xunitOutput.WriteLine (sprintf "%s" output)
         ()
-        
-    [<Test>]
-    let ``callInstHierarchy1.scm gets converted to promela`` () =
-
-        let inputFile = """../../Examples/SCM/callInstHierarchy1.scm"""
-        let promela = runWorkflow_getState (inputFileToPromelaAstWorkflow inputFile)
-
-        let promelaCodeString = promelaWriter.Export promela
-        printf "%s" promelaCodeString
-        ()
-        
-    [<Test>]
-    let ``callInstFromBeh2.scm gets converted to promela`` () =
-
-        let inputFile = """../../Examples/SCM/callInstFromBeh2.scm"""
-        let promela = runWorkflow_getState (inputFileToPromelaAstWorkflow inputFile)
-
-        let promelaCodeString = promelaWriter.Export promela
-        printf "%s" promelaCodeString
-           
-        
-    [<Test>]
-    let ``simpleComponentWithFaults3.scm gets converted to promela`` () =
-
-        let inputFile = """../../Examples/SCM/simpleComponentWithFaults3.scm"""
-        let promela = runWorkflow_getState (inputFileToPromelaAstWorkflow inputFile)
-
-        let promelaCodeString = promelaWriter.Export promela
-        printf "%s" promelaCodeString
-           
