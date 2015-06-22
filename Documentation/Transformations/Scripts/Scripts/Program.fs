@@ -46,7 +46,9 @@
 //        * propagation here is done directly with algorithm of II 5
 //        * This transformation is only to compare this result with II 6 and II 5.
 //          If a TS is needed without local variables II 5 seems superior.
-//  III) Different model checker languages
+//  III) Clamping
+//     TODO: 
+//  IV) Different model checker languages
 //    1. Promela/Spin (direct) from I A
 //          (Problem of getting stuck, if assertion invalid, how is it handled)
 //    2. NuXmv/NuSMV from I A
@@ -70,10 +72,11 @@
 namespace SafetySharp.Documentation.Scripts
 
 module TsamToReport =
-
+    
     open SafetySharp.Models.Tsam
     open SafetySharp.Models.TsamMutable
     open SafetySharp.Workflow
+    open SafetySharp.EngineOptions
 
     type OutputStyleDecorator = {
         Content : string->string;
@@ -85,6 +88,7 @@ module TsamToReport =
     let generateFile (outputstyle:OutputStyleDecorator) (useOnlyTransformationsWithStochasticSupport:bool) (path:string) (filename:string) : string =
         let tsamSourceModel =
             let readInputFileAndGenerateDotFile = workflow {
+                    do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.IgnoreRanges)
                     do! readFile filename
                     do! SafetySharp.Models.SamParser.parseStringWorkflow
                     do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
@@ -105,35 +109,41 @@ module TsamToReport =
                        
             let output_I_A_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 let! result = printModelAsTextAndGraphWorkflow ("Original Model")
                 return result
             }
             let output_I_B_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
                 let! result = printModelAsTextAndGraphWorkflow ("Single Static Assignment (GCFK09-Algorithm)")
                 return result
             }
             let output_I_C_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
                 let! result = printModelAsTextAndGraphWorkflow ("Passive Form (GCFK09-Algorithm)")
                 return result
             }
             let output_I_D_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamMutable.unnestBlocks ()
                 let! result = printModelAsTextAndGraphWorkflow ("remove nested blocks")
                 return result
             }
             let output_I_E_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamMutable.treeifyStm ()
                 let! result = printModelAsTextAndGraphWorkflow ("Treeified")
                 return result
             }
             let output_I_F_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToTsamInGuardToAssignmentForm ()
                 let! result = printModelAsTextAndGraphWorkflow ("Gwa Form (My Form)")
                 return result
@@ -154,6 +164,7 @@ module TsamToReport =
 
             let output_II_1_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithWpWorkflow true
                 let! model = getState ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
@@ -176,6 +187,7 @@ module TsamToReport =
                        
             let output_II_2_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithWpWorkflow true
                 let! model = getState ()
@@ -199,6 +211,7 @@ module TsamToReport =
                        
             let output_II_3_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpUnoptimizedWorkflow ()
                 let! model = getState ()
@@ -223,6 +236,7 @@ module TsamToReport =
 
             let output_II_4_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
                 let! model = getState ()
@@ -240,6 +254,7 @@ module TsamToReport =
 
             let output_II_5_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
                 do! SafetySharp.Models.TsamMutable.treeifyStm ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithPropagationWorkflow ()
@@ -252,6 +267,7 @@ module TsamToReport =
                        
             let output_II_6_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow ()
                 let! gwamModel = getState ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.modelToStringWorkflow ()
@@ -267,6 +283,7 @@ module TsamToReport =
                        
             let output_II_7_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToTsamInGuardToAssignmentForm()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithPropagationWorkflow ()
@@ -289,10 +306,12 @@ module TsamToReport =
             }
             runWorkflow_getResult outputWorkflow
 
+        let output_III_complete : string = ""
             
-        let output_III_complete : string =
+        let output_IV_complete : string =
         
-            let output_III_1_wf () = workflow {
+            let output_IV_1_wf () = workflow {
+                //
                 do! readFile filename
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigurationWf ()
@@ -304,8 +323,10 @@ module TsamToReport =
                 return resultDecorated
             }
         
-            let output_III_2_wf () = workflow {
+            let output_IV_2_wf () = workflow {
+                //
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamToSpg.transformToStochasticProgramGraphWorkflow ()
                 do! SafetySharp.Analysis.Modelchecking.NuXmv.StochasticProgramGraphToNuXmv.transformProgramGraphToNuXmvWorkflow ()
                 do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
@@ -316,9 +337,10 @@ module TsamToReport =
                 return resultDecorated
             }
             
-            let output_III_3_wf () = workflow {
-                //II 4. Transition system <--Strongest Postcondition (optimized)-- IC (Passive Form) <---- IA
+            let output_IV_3_wf () = workflow {
+                //II 4. Transition system <--Strongest Postcondition (optimized)-- IC (Passive Form) <---- Explicitly Apply Assign <---- IA
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
                 do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
@@ -329,9 +351,10 @@ module TsamToReport =
                 let resultDecorated = (outputstyle.Section "NuXmv/NuSMV from II 4") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
-            let output_III_4_wf () = workflow {
-                //II 5. Transition system <--Propagation--  IE (Tree Form) <--treeify-- SSA Form (IB) <---- IA
+            let output_IV_4_wf () = workflow {
+                //II 5. Transition system <--Propagation--  IE (Tree Form) <--treeify-- SSA Form (IB) <---- Explicitly Apply Assign <---- IA
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
                 do! SafetySharp.Models.TsamMutable.treeifyStm ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithPropagationWorkflow ()
@@ -343,9 +366,10 @@ module TsamToReport =
                 let resultDecorated = (outputstyle.Section "NuXmv/NuSMV from II 5") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
-            let output_III_5_wf () = workflow {
-                //II 6. Transition system <--...-- Gwa-Model  <--Gwa-Propagation-- IF(Gwa-Form) <---- IA
+            let output_IV_5_wf () = workflow {
+                //II 6. Transition system <--...-- Gwa-Model  <--Gwa-Propagation-- IF(Gwa-Form) <---- Explicitly Apply Assign <---- IA
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
                 do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
@@ -356,8 +380,9 @@ module TsamToReport =
                 let resultDecorated = (outputstyle.Section "NuXmv/NuSMV from II 6") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
-            let output_III_6_wf () = workflow {
+            let output_IV_6_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamToSpg.transformToStochasticProgramGraphWorkflow ()
                 do! SafetySharp.Analysis.Modelchecking.Prism.StochasticProgramGraphToPrism.transformWorkflow ()
                 do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
@@ -367,8 +392,9 @@ module TsamToReport =
                 let resultDecorated = (outputstyle.Section "Prism from  I A") + (outputstyle.TsamSource result)
                 return resultDecorated
             }
-            let output_III_7_wf () = workflow {
+            let output_IV_7_wf () = workflow {
                 do! updateState tsamSourceModel
+                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow ()
                 do! SafetySharp.Analysis.Modelchecking.Prism.GwamToPrism.transformWorkflow ()
                 do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
@@ -380,13 +406,13 @@ module TsamToReport =
             }
 
             let outputWorkflow = workflow {
-                let! output_III_1 = output_III_1_wf ()
-                let! output_III_2 = output_III_2_wf ()
-                let! output_III_3 = output_III_3_wf ()
-                let! output_III_4 = output_III_4_wf ()
-                let! output_III_5 = output_III_5_wf ()
-                let! output_III_6 = output_III_6_wf ()
-                let! output_III_7 = output_III_7_wf ()
+                let! output_III_1 = output_IV_1_wf ()
+                let! output_III_2 = output_IV_2_wf ()
+                let! output_III_3 = output_IV_3_wf ()
+                let! output_III_4 = output_IV_4_wf ()
+                let! output_III_5 = output_IV_5_wf ()
+                let! output_III_6 = output_IV_6_wf ()
+                let! output_III_7 = output_IV_7_wf ()
                 return output_III_1 + output_III_2 + output_III_3 + output_III_4 + output_III_5 + output_III_6 + output_III_7
             }
             runWorkflow_getResult outputWorkflow
@@ -395,7 +421,7 @@ module TsamToReport =
 
                     
         let completeOutput : string =
-            let content = sprintf "%s%s%s" output_I_complete output_II_complete output_III_complete
+            let content = sprintf "%s%s%s%s" output_I_complete output_II_complete output_III_complete output_IV_complete
             outputstyle.Content content
         do SafetySharp.FileSystem.WriteToAsciiFile path completeOutput
         completeOutput
