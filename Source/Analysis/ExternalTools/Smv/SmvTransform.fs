@@ -24,22 +24,7 @@
 
 // TODO: Overflow behavior
 
-namespace SafetySharp.Analysis.Modelchecking.NuXmv
-
-open SafetySharp.Analysis.Modelchecking
-
-type internal NuXmvIdentifier = SafetySharp.Analysis.Modelchecking.NuXmv.Identifier
-type internal NuXmvBasicExpression = SafetySharp.Analysis.Modelchecking.NuXmv.BasicExpression
-type internal NuXmvConstExpression = SafetySharp.Analysis.Modelchecking.NuXmv.ConstExpression
-type internal NuXmvSignSpecifier = SafetySharp.Analysis.Modelchecking.NuXmv.SignSpecifier
-type internal NuXmvRadix = SafetySharp.Analysis.Modelchecking.NuXmv.Radix
-
-type internal NuXmvCtlExpression = SafetySharp.Analysis.Modelchecking.NuXmv.CtlExpression
-type internal NuXmvLtlExpression = SafetySharp.Analysis.Modelchecking.NuXmv.LtlExpression
-type internal NuXmvSpecification = SafetySharp.Analysis.Modelchecking.NuXmv.Specification
-type internal NuXmvModuleTypeSpecifier = SafetySharp.Analysis.Modelchecking.NuXmv.ModuleTypeSpecifier
-type internal NuXmvModuleDeclaration = SafetySharp.Analysis.Modelchecking.NuXmv.ModuleDeclaration
-type internal NuXmvTraceable = SafetySharp.Analysis.Modelchecking.NuXmv.Traceable
+namespace SafetySharp.ExternalTools
 
 open SafetySharp.Analysis.Modelchecking
 open SafetySharp.Models
@@ -48,96 +33,94 @@ open SafetySharp.Models.SamChangeIdentifier
 open SafetySharp.Models.SamSimplifyBlocks
 open SafetySharp.Analysis.VerificationCondition
 
-
-
-module internal GenericToNuXmv =
+module internal GenericToSmv =
 
     type internal NuXmvVariables = {
-        VarToNuXmvIdentifier: Map<Tsam.Var,NuXmvIdentifier>;
-        VarToNuXmvComplexIdentifier: Map<Tsam.Var,NuXmv.ComplexIdentifier>;
+        VarToSmvIdentifier: Map<Tsam.Var,Smv.Identifier>;
+        VarToNuXmvComplexIdentifier: Map<Tsam.Var,Smv.ComplexIdentifier>;
     }
         with    
-            member this.generateNuXmvIdentifier (var:Tsam.Var) : (NuXmvVariables) =
-                let nuXmvIdentifier = {NuXmvIdentifier.Name=var.getName}
-                let nuXmvComplexIdentifier = NuXmv.ComplexIdentifier.NameComplexIdentifier(nuXmvIdentifier)
+            member this.generateSmvIdentifier (var:Tsam.Var) : (NuXmvVariables) =
+                let nuXmvIdentifier = {Smv.Name=var.getName}
+                let nuXmvComplexIdentifier = Smv.ComplexIdentifier.NameComplexIdentifier(nuXmvIdentifier)
                 let newState=
                     { this with
-                        NuXmvVariables.VarToNuXmvIdentifier = this.VarToNuXmvIdentifier.Add (var,nuXmvIdentifier)
+                        NuXmvVariables.VarToSmvIdentifier = this.VarToSmvIdentifier.Add (var,nuXmvIdentifier)
                         NuXmvVariables.VarToNuXmvComplexIdentifier = this.VarToNuXmvComplexIdentifier.Add (var,nuXmvComplexIdentifier)
                     }
                 newState
                 
-    let rec translateExpression (virtualNextVarToVar:Map<Tsam.Var,Tsam.Var>,nuXmvVariables:NuXmvVariables) (expr:Tsam.Expr) : NuXmvBasicExpression =
+    let rec translateExpression (virtualNextVarToVar:Map<Tsam.Var,Tsam.Var>,nuXmvVariables:NuXmvVariables) (expr:Tsam.Expr) : Smv.BasicExpression =
         match expr with
             | Tsam.Expr.Literal (_val) ->
                 match _val with
-                    | Tsam.Val.BoolVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.BooleanConstant(_val))
-                    | Tsam.Val.NumbVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.IntegerConstant(_val))
+                    | Tsam.Val.BoolVal(_val) -> Smv.BasicExpression.ConstExpression(Smv.BooleanConstant(_val))
+                    | Tsam.Val.NumbVal(_val) -> Smv.BasicExpression.ConstExpression(Smv.IntegerConstant(_val))
                     | Tsam.Val.RealVal _ -> failwith "No support in SMV for real values, yet."
                     | Tsam.Val.ProbVal _ -> failwith "No support in SMV for probabilities, yet."
             | Tsam.Expr.Read (_var) ->
                 match virtualNextVarToVar.TryFind _var with
                     | None ->
-                        NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
+                        Smv.BasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
                     | Some(originalValue) ->
                         // here we have a virtual value. We want a next(originalValue) instead
-                        NuXmvBasicExpression.BasicNextExpression(NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item originalValue))
+                        Smv.BasicExpression.BasicNextExpression(Smv.BasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item originalValue))
             | Tsam.Expr.ReadOld (_var) ->            
                 match virtualNextVarToVar.TryFind _var with
                     | None ->
-                        NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
+                        Smv.BasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
                     | Some(originalValue) ->
                         failwith "This should never occur. The source program never includes virtual var. The only parts, which use a virtual var, should use it in combination with Read()!"
             | Tsam.Expr.UExpr (expr,uop) ->
                 let operator =
                     match uop with
-                        | Tsam.UOp.Not -> NuXmv.UnaryOperator.LogicalNot
-                NuXmvBasicExpression.UnaryExpression(operator,translateExpression (virtualNextVarToVar,nuXmvVariables) expr)
+                        | Tsam.UOp.Not -> Smv.UnaryOperator.LogicalNot
+                Smv.BasicExpression.UnaryExpression(operator,translateExpression (virtualNextVarToVar,nuXmvVariables) expr)
             | Tsam.Expr.BExpr (left, bop, right) ->
                 let operator =
                     match bop with
-                        | Tsam.BOp.Add -> NuXmv.BinaryOperator.IntegerAddition
-                        | Tsam.BOp.Subtract -> NuXmv.BinaryOperator.IntegerSubtraction
-                        | Tsam.BOp.Multiply -> NuXmv.BinaryOperator.IntegerMultiplication
-                        | Tsam.BOp.Divide -> NuXmv.BinaryOperator.IntegerDivision
-                        | Tsam.BOp.Modulo -> NuXmv.BinaryOperator.IntegerRemainder
-                        | Tsam.BOp.And -> NuXmv.BinaryOperator.LogicalAnd
-                        | Tsam.BOp.Or -> NuXmv.BinaryOperator.LogicalOr
-                        | Tsam.BOp.Implies -> NuXmv.BinaryOperator.LogicalImplies
-                        | Tsam.BOp.Equals -> NuXmv.BinaryOperator.Equality //TODO: For Binary Left and Right NuXmv.BinaryOperator.LogicalEquivalence should be better
-                        | Tsam.BOp.NotEquals -> NuXmv.BinaryOperator.Inequality //TODO: For Binary Left and Right NuXmv.BinaryOperator.Xor should be better
-                        | Tsam.BOp.Less -> NuXmv.BinaryOperator.LessThan
-                        | Tsam.BOp.LessEqual -> NuXmv.BinaryOperator.LessEqual
-                        | Tsam.BOp.Greater -> NuXmv.BinaryOperator.GreaterThan
-                        | Tsam.BOp.GreaterEqual -> NuXmv.BinaryOperator.GreaterEqual
-                NuXmvBasicExpression.BinaryExpression(translateExpression (virtualNextVarToVar,nuXmvVariables) left,operator,translateExpression (virtualNextVarToVar,nuXmvVariables) right)
+                        | Tsam.BOp.Add -> Smv.BinaryOperator.IntegerAddition
+                        | Tsam.BOp.Subtract -> Smv.BinaryOperator.IntegerSubtraction
+                        | Tsam.BOp.Multiply -> Smv.BinaryOperator.IntegerMultiplication
+                        | Tsam.BOp.Divide -> Smv.BinaryOperator.IntegerDivision
+                        | Tsam.BOp.Modulo -> Smv.BinaryOperator.IntegerRemainder
+                        | Tsam.BOp.And -> Smv.BinaryOperator.LogicalAnd
+                        | Tsam.BOp.Or -> Smv.BinaryOperator.LogicalOr
+                        | Tsam.BOp.Implies -> Smv.BinaryOperator.LogicalImplies
+                        | Tsam.BOp.Equals -> Smv.BinaryOperator.Equality //TODO: For Binary Left and Right Smv.BinaryOperator.LogicalEquivalence should be better
+                        | Tsam.BOp.NotEquals -> Smv.BinaryOperator.Inequality //TODO: For Binary Left and Right Smv.BinaryOperator.Xor should be better
+                        | Tsam.BOp.Less -> Smv.BinaryOperator.LessThan
+                        | Tsam.BOp.LessEqual -> Smv.BinaryOperator.LessEqual
+                        | Tsam.BOp.Greater -> Smv.BinaryOperator.GreaterThan
+                        | Tsam.BOp.GreaterEqual -> Smv.BinaryOperator.GreaterEqual
+                Smv.BasicExpression.BinaryExpression(translateExpression (virtualNextVarToVar,nuXmvVariables) left,operator,translateExpression (virtualNextVarToVar,nuXmvVariables) right)
             | Tsam.Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
                 let guardExpr = translateExpression (virtualNextVarToVar,nuXmvVariables) guardExpr
                 let thenExpr = translateExpression (virtualNextVarToVar,nuXmvVariables) thenExpr
                 let elseExpr = translateExpression (virtualNextVarToVar,nuXmvVariables) elseExpr
-                NuXmvBasicExpression.TenaryIfThenElseExpression(guardExpr,thenExpr,elseExpr)
+                Smv.BasicExpression.TenaryIfThenElseExpression(guardExpr,thenExpr,elseExpr)
                 
     let noVirtualNextVarToVar = Map.empty<Tsam.Var,Tsam.Var>
 
     open SafetySharp.ITracing
     
-    type NuXmvTracer<'traceableOfOrigin> = {
-        NuXmvProgram : NuXmvProgram;
+    type SmvTracer<'traceableOfOrigin> = {
+        SmvProgram : Smv.SmvProgram;
         TraceablesOfOrigin : 'traceableOfOrigin list;
-        ForwardTracer : 'traceableOfOrigin -> NuXmv.Traceable;
+        ForwardTracer : 'traceableOfOrigin -> Smv.Traceable;
     }
         with
-            interface ITracing<NuXmvProgram,'traceableOfOrigin,NuXmv.Traceable,NuXmvTracer<'traceableOfOrigin>> with
-                member this.getModel = this.NuXmvProgram
+            interface ITracing<Smv.SmvProgram,'traceableOfOrigin,Smv.Traceable,SmvTracer<'traceableOfOrigin>> with
+                member this.getModel = this.SmvProgram
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
-                member this.getForwardTracer : ('traceableOfOrigin -> NuXmv.Traceable) = this.ForwardTracer
-                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> NuXmv.Traceable)) = {this with ForwardTracer=forwardTracer}
-                member this.getTraceables : NuXmv.Traceable list = []
+                member this.getForwardTracer : ('traceableOfOrigin -> Smv.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Smv.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : Smv.Traceable list = []
 
 
 module internal VcTransitionRelationToNuXmv =
-    open GenericToNuXmv
+    open GenericToSmv
     
     open TransitionSystemAsRelationExpr
 
@@ -153,69 +136,69 @@ module internal VcTransitionRelationToNuXmv =
             let takenVariableNames = variablesToAdd |> List.map (fun varDecl -> varDecl.getName) |> Set.ofList
             let initialState =
                 {
-                    NuXmvVariables.VarToNuXmvIdentifier = Map.empty<Tsam.Var,NuXmvIdentifier>;
-                    NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<Tsam.Var,NuXmv.ComplexIdentifier>;
+                    NuXmvVariables.VarToSmvIdentifier = Map.empty<Tsam.Var,Smv.Identifier>;
+                    NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<Tsam.Var,Smv.ComplexIdentifier>;
                 }
                     
             let generateAndAddToList (state:NuXmvVariables) (variableToAdd:Tsam.Var): (NuXmvVariables) =
-                let (newState) = state.generateNuXmvIdentifier variableToAdd
+                let (newState) = state.generateSmvIdentifier variableToAdd
                 newState
             Seq.fold generateAndAddToList (initialState) variablesToAdd
             
-    let generateGlobalVarDeclarations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : ModuleElement =
+    let generateGlobalVarDeclarations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : Smv.ModuleElement =
         let varDecls = transitionSystem.Globals
-        let generateDecl (varDecl:TransitionSystemAsRelationExpr.VarDecl) : TypedIdentifier =
+        let generateDecl (varDecl:TransitionSystemAsRelationExpr.VarDecl) : Smv.TypedIdentifier =
             let _type = match varDecl.Type with
-                            | Sam.Type.BoolType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.BooleanTypeSpecifier)
-                            | Sam.Type.IntType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerTypeSpecifier)
+                            | Sam.Type.BoolType -> Smv.TypeSpecifier.SimpleTypeSpecifier(Smv.BooleanTypeSpecifier)
+                            | Sam.Type.IntType -> Smv.TypeSpecifier.SimpleTypeSpecifier(Smv.IntegerTypeSpecifier)
                             //| SamType.Decimal -> failwith "NotImplementedYet"
                             | Sam.Type.RangedIntType (_from,_to,_) ->
-                                let _from = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _from))
-                                let _to = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _to))
-                                TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerRangeTypeSpecifier(_from,_to))
-                            | Sam.Type.RealType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.RealTypeSpecifier)
+                                let _from = Smv.BasicExpression.ConstExpression(Smv.IntegerConstant(bigint _from))
+                                let _to = Smv.BasicExpression.ConstExpression(Smv.IntegerConstant(bigint _to))
+                                Smv.TypeSpecifier.SimpleTypeSpecifier(Smv.IntegerRangeTypeSpecifier(_from,_to))
+                            | Sam.Type.RealType -> Smv.TypeSpecifier.SimpleTypeSpecifier(Smv.RealTypeSpecifier)
                             | Sam.Type.RangedRealType _ -> failwith "No support in NuXmv for ranged real values, yet."
-            let _variable = nuXmvVariables.VarToNuXmvIdentifier.Item varDecl.Var
+            let _variable = nuXmvVariables.VarToSmvIdentifier.Item varDecl.Var
             {
-                TypedIdentifier.Identifier = _variable ;
-                TypedIdentifier.TypeSpecifier = _type ;
+                Smv.TypedIdentifier.Identifier = _variable ;
+                Smv.TypedIdentifier.TypeSpecifier = _type ;
             }
         varDecls |> List.map generateDecl
-                 |> ModuleElement.VarDeclaration
+                 |> Smv.ModuleElement.VarDeclaration
     
-    let generateIvarDeclarations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : ModuleElement =
+    let generateIvarDeclarations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : Smv.ModuleElement =
         let ivarDecls = transitionSystem.Ivars
-        let generateDecl (varDecl:Tsam.LocalVarDecl) : SimpleTypedIdentifier =
+        let generateDecl (varDecl:Tsam.LocalVarDecl) : Smv.SimpleTypedIdentifier =
             let _type = match varDecl.Type with
-                            | Sam.Type.BoolType -> SimpleTypeSpecifier.BooleanTypeSpecifier
-                            | Sam.Type.IntType -> SimpleTypeSpecifier.IntegerTypeSpecifier
+                            | Sam.Type.BoolType -> Smv.BooleanTypeSpecifier
+                            | Sam.Type.IntType -> Smv.IntegerTypeSpecifier
                             //| SamType.Decimal -> failwith "NotImplementedYet"
                             | Sam.Type.RangedIntType (_from,_to,_) ->
-                                let _from = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _from))
-                                let _to = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _to))
-                                SimpleTypeSpecifier.IntegerRangeTypeSpecifier(_from,_to)
-                            | Sam.Type.RealType -> SimpleTypeSpecifier.RealTypeSpecifier
+                                let _from = Smv.BasicExpression.ConstExpression(Smv.IntegerConstant(bigint _from))
+                                let _to = Smv.BasicExpression.ConstExpression(Smv.IntegerConstant(bigint _to))
+                                Smv.IntegerRangeTypeSpecifier(_from,_to)
+                            | Sam.Type.RealType -> Smv.RealTypeSpecifier
                             | Sam.Type.RangedRealType _ -> failwith "No support in NuXmv for ranged real values, yet."
-            let _variable = nuXmvVariables.VarToNuXmvIdentifier.Item varDecl.Var
+            let _variable = nuXmvVariables.VarToSmvIdentifier.Item varDecl.Var
             {
-                SimpleTypedIdentifier.Identifier = _variable ;
-                SimpleTypedIdentifier.TypeSpecifier = _type ;
+                Smv.SimpleTypedIdentifier.Identifier = _variable ;
+                Smv.SimpleTypedIdentifier.TypeSpecifier = _type ;
             }
         ivarDecls |> List.map generateDecl
-                  |> ModuleElement.IVarDeclaration
+                  |> Smv.ModuleElement.IVarDeclaration
     
 
 
-    let generateGlobalVarInitialisations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : ModuleElement =
+    let generateGlobalVarInitialisations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : Smv.ModuleElement =
         transitionSystem.Init
             |> translateExpression (transitionSystem.VirtualNextVarToVar,nuXmvVariables)
-            |> ModuleElement.InitConstraint
+            |> Smv.ModuleElement.InitConstraint
 
-    let generateTransRelation (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : ModuleElement =
-        ModuleElement.TransConstraint(translateExpression (transitionSystem.VirtualNextVarToVar,nuXmvVariables) transitionSystem.Trans)
+    let generateTransRelation (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : Smv.ModuleElement =
+        Smv.ModuleElement.TransConstraint(translateExpression (transitionSystem.VirtualNextVarToVar,nuXmvVariables) transitionSystem.Trans)
 
     
-    let transformConfiguration (transitionSystem:TransitionSystem) : NuXmvProgram * Map<Tsam.Traceable,NuXmvTraceable> =
+    let transformConfiguration (transitionSystem:TransitionSystem) : Smv.SmvProgram * Map<Tsam.Traceable,Smv.Traceable> =
         // create the nuXmvVariables: Keeps the association between the post value variable and the current value variable
         // (the post variable value is purely "virtual". It will be replaced by "next(currentValue)" )
         let nuXmvVariables = NuXmvVariables.initial transitionSystem SafetySharp.FreshNameGenerator.namegenerator_c_like
@@ -234,19 +217,19 @@ module internal VcTransitionRelationToNuXmv =
         
         let systemModule =
             {
-                NuXmvModuleDeclaration.Identifier = {NuXmvIdentifier.Name = "main" };
-                NuXmvModuleDeclaration.ModuleParameters = [];
-                NuXmvModuleDeclaration.ModuleElements = [globalVarModuleElement;ivarModuleElement;globalVarInitialisations;transRelation];
+                Smv.ModuleDeclaration.Identifier = {Smv.Name = "main" };
+                Smv.ModuleDeclaration.ModuleParameters = [];
+                Smv.ModuleDeclaration.ModuleElements = [globalVarModuleElement;ivarModuleElement;globalVarInitialisations;transRelation];
             }
         let transformedConfiguration =
             {
-                NuXmvProgram.Modules = [systemModule];
-                NuXmvProgram.Specifications = [];
+                Smv.SmvProgram.Modules = [systemModule];
+                Smv.SmvProgram.Specifications = [];
             }
         let tracing =
-            nuXmvVariables.VarToNuXmvIdentifier
+            nuXmvVariables.VarToSmvIdentifier
                 |> Map.toList
-                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),ComplexIdentifier.NameComplexIdentifier({Identifier.Name= _nuxmv.Name}) ))
+                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) ))
                 |> Map.ofList
         (transformedConfiguration,tracing)
 
@@ -254,7 +237,7 @@ module internal VcTransitionRelationToNuXmv =
     open SafetySharp.Workflow
     
     let transformTsareToNuXmvWorkflow<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<TransitionSystemTracer<'traceableOfOrigin>,NuXmvTracer<'traceableOfOrigin>> = workflow {
+            : ExogenousWorkflowFunction<TransitionSystemTracer<'traceableOfOrigin>,SmvTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let transitionSystem = state.TransitionSystem
         let (transformedTs,forwardTraceInClosure) = transformConfiguration transitionSystem
@@ -263,16 +246,16 @@ module internal VcTransitionRelationToNuXmv =
             forwardTraceInClosure.Item beforeTransform
         let transformed =
             {
-                NuXmvTracer.NuXmvProgram = transformedTs;
-                NuXmvTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                NuXmvTracer.ForwardTracer = tracer;
+                SmvTracer.SmvProgram= transformedTs;
+                SmvTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                SmvTracer.ForwardTracer = tracer;
             }
         do! updateState transformed
     }   
     
 
 module internal StochasticProgramGraphToNuXmv =
-    open GenericToNuXmv
+    open GenericToSmv
     open SafetySharp.Models.Spg
 
     
@@ -285,38 +268,38 @@ module internal StochasticProgramGraphToNuXmv =
             let takenVariableNames = variablesToAdd |> List.map (fun varDecl -> varDecl.getName) |> Set.ofList
             let initialState =
                 {
-                    NuXmvVariables.VarToNuXmvIdentifier = Map.empty<Tsam.Var,NuXmvIdentifier>;
-                    NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<Tsam.Var,NuXmv.ComplexIdentifier>;
+                    NuXmvVariables.VarToSmvIdentifier = Map.empty<Tsam.Var,Smv.Identifier>;
+                    NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<Tsam.Var,Smv.ComplexIdentifier>;
                 }
                     
             let generateAndAddToList (state:NuXmvVariables) (variableToAdd:Tsam.Var): (NuXmvVariables) =
-                let (newState) = state.generateNuXmvIdentifier variableToAdd
+                let (newState) = state.generateSmvIdentifier variableToAdd
                 newState
             Seq.fold generateAndAddToList (initialState) variablesToAdd
             
-    let generateGlobalVarDeclarations (spg:StochasticProgramGraph) (nuXmvVariables:NuXmvVariables) : ModuleElement =
+    let generateGlobalVarDeclarations (spg:StochasticProgramGraph) (nuXmvVariables:NuXmvVariables) : Smv.ModuleElement =
         let varDecls = spg.Variables
-        let generateDecl (varDecl:Spg.VarDecl) : TypedIdentifier =
+        let generateDecl (varDecl:Spg.VarDecl) : Smv.TypedIdentifier =
             let _type = match varDecl.Type with
-                            | Sam.Type.BoolType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.BooleanTypeSpecifier)
-                            | Sam.Type.IntType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerTypeSpecifier)
+                            | Sam.Type.BoolType -> Smv.SimpleTypeSpecifier(Smv.BooleanTypeSpecifier)
+                            | Sam.Type.IntType -> Smv.SimpleTypeSpecifier(Smv.IntegerTypeSpecifier)
                             //| SamType.Decimal -> failwith "NotImplementedYet"
                             | Sam.Type.RangedIntType (_from,_to,_) ->
-                                let _from = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _from))
-                                let _to = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _to))
-                                TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerRangeTypeSpecifier(_from,_to))
-                            | Sam.Type.RealType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.RealTypeSpecifier)
+                                let _from = Smv.ConstExpression(Smv.IntegerConstant(bigint _from))
+                                let _to = Smv.ConstExpression(Smv.IntegerConstant(bigint _to))
+                                Smv.SimpleTypeSpecifier(Smv.IntegerRangeTypeSpecifier(_from,_to))
+                            | Sam.Type.RealType -> Smv.SimpleTypeSpecifier(Smv.RealTypeSpecifier)
                             | Sam.Type.RangedRealType _ -> failwith "No support in NuXmv for ranged real values, yet."
-            let _variable = nuXmvVariables.VarToNuXmvIdentifier.Item varDecl.Var
+            let _variable = nuXmvVariables.VarToSmvIdentifier.Item varDecl.Var
             {
-                TypedIdentifier.Identifier = _variable ;
-                TypedIdentifier.TypeSpecifier = _type ;
+                Smv.TypedIdentifier.Identifier = _variable ;
+                Smv.TypedIdentifier.TypeSpecifier = _type ;
             }
         varDecls |> List.map generateDecl
-                 |> ModuleElement.VarDeclaration
+                 |> Smv.ModuleElement.VarDeclaration
       
 
-    let generateGlobalVarInitialisations (spg:StochasticProgramGraph) (nuXmvVariables:NuXmvVariables) : ModuleElement =
+    let generateGlobalVarInitialisations (spg:StochasticProgramGraph) (nuXmvVariables:NuXmvVariables) : Smv.ModuleElement =
         let generateInitExpr (varDecl:Spg.VarDecl) : Spg.Expr =
             let generatePossibleValues (initialValue : Tsam.Val) : Spg.Expr =
                 let assignVar = varDecl.Var
@@ -329,73 +312,73 @@ module internal StochasticProgramGraphToNuXmv =
             |> List.map generateInitExpr
             |> TsamHelpers.createAndedExpr
             |> translateExpression (noVirtualNextVarToVar,nuXmvVariables)
-            |> ModuleElement.InitConstraint
+            |> Smv.ModuleElement.InitConstraint
 
-    let generateStateVariable (spg:StochasticProgramGraph) : (NuXmvBasicExpression*Map<Spg.State,NuXmvBasicExpression>*ModuleElement*ModuleElement) = //StateVariable * StateToExpression-Map * Decl-ModuleElement * Init-ModuleElement
+    let generateStateVariable (spg:StochasticProgramGraph) : (Smv.BasicExpression*Map<Spg.State,Smv.BasicExpression>*Smv.ModuleElement*Smv.ModuleElement) = //StateVariable * StateToExpression-Map * Decl-ModuleElement * Init-ModuleElement
         let statecounter = ref 0
-        let stateToStateExpression : Map<Spg.State,NuXmvBasicExpression> =
+        let stateToStateExpression : Map<Spg.State,Smv.BasicExpression> =
             let createVariableForState (state:Spg.State) =
                 statecounter := statecounter.Value + 1
-                NuXmvBasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint statecounter.Value))
+                Smv.BasicExpression.ConstExpression(Smv.IntegerConstant(bigint statecounter.Value))
             spg.States |> Set.toList |> List.map (fun state -> (state,createVariableForState state) ) |> Map.ofList
         let stateVariableIdentifier =
-            {NuXmvIdentifier.Name = "spgState"}
-        let stateVariableExpression = NuXmvBasicExpression.ComplexIdentifierExpression(ComplexIdentifier.NameComplexIdentifier(stateVariableIdentifier))
+            {Smv.Name = "spgState"}
+        let stateVariableExpression = Smv.BasicExpression.ComplexIdentifierExpression(Smv.NameComplexIdentifier(stateVariableIdentifier))
         let stateVarDeclElement =
             let typeSpecifier = 
-                let _from = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint 1))
-                let _to = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint statecounter.Value))
-                TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerRangeTypeSpecifier(_from,_to))
+                let _from = Smv.ConstExpression(Smv.IntegerConstant(bigint 1))
+                let _to = Smv.ConstExpression(Smv.IntegerConstant(bigint statecounter.Value))
+                Smv.TypeSpecifier.SimpleTypeSpecifier(Smv.IntegerRangeTypeSpecifier(_from,_to))
             let stateVarDecl =   
                 {
-                    TypedIdentifier.Identifier = stateVariableIdentifier ;
-                    TypedIdentifier.TypeSpecifier = typeSpecifier ;
+                    Smv.TypedIdentifier.Identifier = stateVariableIdentifier ;
+                    Smv.TypedIdentifier.TypeSpecifier = typeSpecifier ;
                 }
-            ModuleElement.VarDeclaration([stateVarDecl])
+            Smv.ModuleElement.VarDeclaration([stateVarDecl])
         let stateVarInitElement = 
             let stateEqualsInitStateExpr =
-                NuXmvBasicExpression.BinaryExpression(stateVariableExpression,NuXmv.BinaryOperator.Equality,stateToStateExpression.Item spg.InitialState)                
-            ModuleElement.InitConstraint(stateEqualsInitStateExpr)
+                Smv.BasicExpression.BinaryExpression(stateVariableExpression,Smv.BinaryOperator.Equality,stateToStateExpression.Item spg.InitialState)                
+            Smv.ModuleElement.InitConstraint(stateEqualsInitStateExpr)
         (stateVariableExpression,stateToStateExpression,stateVarDeclElement,stateVarInitElement)
 
 
     let generateTransRelation (nuXmvVariables:NuXmvVariables)
-                              (stateVariableExpr:NuXmvBasicExpression, stateToExpressionMap:Map<Spg.State,NuXmvBasicExpression>)
+                              (stateVariableExpr:Smv.BasicExpression, stateToExpressionMap:Map<Spg.State,Smv.BasicExpression>)
                               (transition:Spg.DeterministicTransition)
-                        : NuXmvBasicExpression =
-        let transformAction (_var,_expr) : NuXmvBasicExpression =
-            let _nextVar = NuXmvBasicExpression.BasicNextExpression(NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var))
+                        : Smv.BasicExpression =
+        let transformAction (_var,_expr) : Smv.BasicExpression =
+            let _nextVar = Smv.BasicExpression.BasicNextExpression(Smv.BasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var))
             let transformedExpr = translateExpression (noVirtualNextVarToVar,nuXmvVariables) _expr
-            NuXmvBasicExpression.BinaryExpression(_nextVar,NuXmv.BinaryOperator.Equality,transformedExpr)
+            Smv.BasicExpression.BinaryExpression(_nextVar,Smv.BinaryOperator.Equality,transformedExpr)
         let transformedGuard =
             let stateGuard =
                 let fromState = stateToExpressionMap.Item transition.FromState
-                NuXmvBasicExpression.BinaryExpression(stateVariableExpr,NuXmv.BinaryOperator.Equality,fromState)
+                Smv.BasicExpression.BinaryExpression(stateVariableExpr,Smv.BinaryOperator.Equality,fromState)
             match transition.Guard with
                 | None ->
                     stateGuard
                 | Some (guard) ->
                     let guardExpr = translateExpression (noVirtualNextVarToVar,nuXmvVariables) guard
-                    NuXmvBasicExpression.BinaryExpression(stateGuard,BinaryOperator.LogicalAnd,guardExpr)
+                    Smv.BasicExpression.BinaryExpression(stateGuard,Smv.BinaryOperator.LogicalAnd,guardExpr)
         let updateOfVariables =
             let stateAssignment =
-                let nextState = NuXmvBasicExpression.BasicNextExpression(stateVariableExpr)
+                let nextState = Smv.BasicExpression.BasicNextExpression(stateVariableExpr)
                 let toState = stateToExpressionMap.Item transition.ToState
-                NuXmvBasicExpression.BinaryExpression(nextState,NuXmv.BinaryOperator.Equality,toState)
-            let transformedAction : NuXmvBasicExpression =
+                Smv.BasicExpression.BinaryExpression(nextState,Smv.BinaryOperator.Equality,toState)
+            let transformedAction : Smv.BasicExpression =
                 match transition.Action with
                     | Some (action) ->                            
                         let assignment = action |> transformAction
-                        NuXmvBasicExpression.BinaryExpression(stateAssignment,BinaryOperator.LogicalAnd,assignment)  // Currently Action has also only one Element + State Assignment
+                        Smv.BasicExpression.BinaryExpression(stateAssignment,Smv.BinaryOperator.LogicalAnd,assignment)  // Currently Action has also only one Element + State Assignment
                     | None ->
                         stateAssignment
             transformedAction
         let transExpression =
-            NuXmvBasicExpression.BinaryExpression(transformedGuard,BinaryOperator.LogicalAnd,updateOfVariables)
+            Smv.BasicExpression.BinaryExpression(transformedGuard,Smv.BinaryOperator.LogicalAnd,updateOfVariables)
         transExpression        
 
     
-    let transformConfiguration (spg:StochasticProgramGraph) : NuXmvProgram * Map<Tsam.Traceable,NuXmvTraceable> =
+    let transformConfiguration (spg:StochasticProgramGraph) : Smv.SmvProgram * Map<Tsam.Traceable,Smv.Traceable> =
         // create the nuXmvVariables: Keeps the association between the post value variable and the current value variable
         // (the post variable value is purely "virtual". It will be replaced by "next(currentValue)" )
         let nuXmvVariables = NuXmvVariables.initial spg SafetySharp.FreshNameGenerator.namegenerator_c_like
@@ -417,24 +400,24 @@ module internal StochasticProgramGraphToNuXmv =
         let transRelation  =
             spg.DeterministicTransitions |> Set.toList
                                          |> List.map (generateTransRelation nuXmvVariables (stateVariableExpression,stateToStateExpression))
-                                         |> NuXmvAstHelpers.concatenateWithOr
-                                         |> ModuleElement.TransConstraint
+                                         |> SmvAstHelpers.concatenateWithOr
+                                         |> Smv.ModuleElement.TransConstraint
         
         let systemModule =
             {
-                NuXmvModuleDeclaration.Identifier = {NuXmvIdentifier.Name = "main" };
-                NuXmvModuleDeclaration.ModuleParameters = [];
-                NuXmvModuleDeclaration.ModuleElements = [globalVarModuleElement;globalVarInitialisations;stateVarDeclElement;stateVarInitElement;transRelation];
+                Smv.ModuleDeclaration.Identifier = {Smv.Name = "main" };
+                Smv.ModuleDeclaration.ModuleParameters = [];
+                Smv.ModuleDeclaration.ModuleElements = [globalVarModuleElement;globalVarInitialisations;stateVarDeclElement;stateVarInitElement;transRelation];
             }
         let transformedConfiguration =
             {
-                NuXmvProgram.Modules = [systemModule];
-                NuXmvProgram.Specifications = [];
+                Smv.SmvProgram.Modules = [systemModule];
+                Smv.SmvProgram.Specifications = [];
             }
         let tracing =
-            nuXmvVariables.VarToNuXmvIdentifier
+            nuXmvVariables.VarToSmvIdentifier
                 |> Map.toList
-                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),ComplexIdentifier.NameComplexIdentifier({Identifier.Name= _nuxmv.Name}) ))
+                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) ))
                 |> Map.ofList
         (transformedConfiguration,tracing)
 
@@ -443,7 +426,7 @@ module internal StochasticProgramGraphToNuXmv =
     open SafetySharp.Models.SpgTracer
 
     let transformProgramGraphToNuXmvWorkflow<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<StochasticProgramGraphTracer<'traceableOfOrigin>,NuXmvTracer<'traceableOfOrigin>> = workflow {
+            : ExogenousWorkflowFunction<StochasticProgramGraphTracer<'traceableOfOrigin>,SmvTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let (transformedTs,forwardTraceInClosure) = transformConfiguration (state.ProgramGraph)
         let tracer (oldValue:'traceableOfOrigin) =
@@ -451,9 +434,9 @@ module internal StochasticProgramGraphToNuXmv =
             forwardTraceInClosure.Item beforeTransform
         let transformed =
             {
-                NuXmvTracer.NuXmvProgram = transformedTs;
-                NuXmvTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                NuXmvTracer.ForwardTracer = tracer;
+                SmvTracer.SmvProgram = transformedTs;
+                SmvTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                SmvTracer.ForwardTracer = tracer;
             }
         do! updateState transformed
     }   
@@ -466,7 +449,7 @@ module internal ScmToNuXmv =
     open SafetySharp.Analysis.VerificationCondition
                 
     let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state>> ()
-                        : ExogenousWorkflowFunction<'state,GenericToNuXmv.NuXmvTracer<'traceableOfOrigin>> = workflow {
+                        : ExogenousWorkflowFunction<'state,GenericToSmv.SmvTracer<'traceableOfOrigin>> = workflow {
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
 
@@ -494,192 +477,192 @@ module internal ScmVeToNuXmv =
     
     open ScmVerificationElements
         
-    let transformScmVal (literal:Scm.Val) : NuXmvBasicExpression =
+    let transformScmVal (literal:Scm.Val) : Smv.BasicExpression =
         match literal with
-            | Scm.Val.BoolVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.BooleanConstant(_val))
-            | Scm.Val.IntVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.IntegerConstant(bigint _val))
+            | Scm.Val.BoolVal(_val) -> Smv.BasicExpression.ConstExpression(Smv.BooleanConstant(_val))
+            | Scm.Val.IntVal(_val) -> Smv.BasicExpression.ConstExpression(Smv.IntegerConstant(bigint _val))
             | Scm.Val.RealVal _ -> failwith "No support in SMV for real values, yet."
             | Scm.Val.ProbVal _ -> failwith "No support in SMV for probabilities, yet."
                                             
     let transformBinaryOperator (operator:Scm.BOp) =
         match operator with
-            | Scm.BOp.Add -> NuXmv.BinaryOperator.IntegerAddition
-            | Scm.BOp.Subtract -> NuXmv.BinaryOperator.IntegerSubtraction
-            | Scm.BOp.Multiply -> NuXmv.BinaryOperator.IntegerMultiplication
-            | Scm.BOp.Divide -> NuXmv.BinaryOperator.IntegerDivision
-            | Scm.BOp.Modulo -> NuXmv.BinaryOperator.IntegerRemainder
-            | Scm.BOp.And -> NuXmv.BinaryOperator.LogicalAnd
-            | Scm.BOp.Or -> NuXmv.BinaryOperator.LogicalOr
-            | Scm.BOp.Equals -> NuXmv.BinaryOperator.Equality //TODO: For Binary Left and Right NuXmv.BinaryOperator.LogicalEquivalence should be better
-            | Scm.BOp.NotEquals -> NuXmv.BinaryOperator.Inequality //TODO: For Binary Left and Right NuXmv.BinaryOperator.Xor should be better
-            | Scm.BOp.Less -> NuXmv.BinaryOperator.LessThan
-            | Scm.BOp.LessEqual -> NuXmv.BinaryOperator.LessEqual
-            | Scm.BOp.Greater -> NuXmv.BinaryOperator.GreaterThan
-            | Scm.BOp.GreaterEqual -> NuXmv.BinaryOperator.GreaterEqual
+            | Scm.BOp.Add -> Smv.BinaryOperator.IntegerAddition
+            | Scm.BOp.Subtract -> Smv.BinaryOperator.IntegerSubtraction
+            | Scm.BOp.Multiply -> Smv.BinaryOperator.IntegerMultiplication
+            | Scm.BOp.Divide -> Smv.BinaryOperator.IntegerDivision
+            | Scm.BOp.Modulo -> Smv.BinaryOperator.IntegerRemainder
+            | Scm.BOp.And -> Smv.BinaryOperator.LogicalAnd
+            | Scm.BOp.Or -> Smv.BinaryOperator.LogicalOr
+            | Scm.BOp.Equals -> Smv.BinaryOperator.Equality //TODO: For Binary Left and Right Smv.BinaryOperator.LogicalEquivalence should be better
+            | Scm.BOp.NotEquals -> Smv.BinaryOperator.Inequality //TODO: For Binary Left and Right Smv.BinaryOperator.Xor should be better
+            | Scm.BOp.Less -> Smv.BinaryOperator.LessThan
+            | Scm.BOp.LessEqual -> Smv.BinaryOperator.LessEqual
+            | Scm.BOp.Greater -> Smv.BinaryOperator.GreaterThan
+            | Scm.BOp.GreaterEqual -> Smv.BinaryOperator.GreaterEqual
 
     let transformUnaryOperator (operator:Scm.UOp) =
         match operator with        
-            | Scm.UOp.Not      -> LtlUnaryOperator.LogicalNot
+            | Scm.UOp.Not      -> Smv.LtlUnaryOperator.LogicalNot
             | Scm.UOp.Minus -> failwith "NotImplementedYet"               
             
 
-    let transformScmFieldToVarref (tracer:Scm.Traceable->Traceable) (compPath:Scm.CompPath,field:Scm.Field) : ComplexIdentifier =
+    let transformScmFieldToVarref (tracer:Scm.Traceable->Smv.Traceable) (compPath:Scm.CompPath,field:Scm.Field) : Smv.ComplexIdentifier =
         let identifier = tracer (Scm.TraceableField(compPath,field))
         identifier
 
-    let transformScmFaultToVarref (tracer:Scm.Traceable->Traceable) (compPath:Scm.CompPath,fault:Scm.Fault) : ComplexIdentifier =
+    let transformScmFaultToVarref (tracer:Scm.Traceable->Smv.Traceable) (compPath:Scm.CompPath,fault:Scm.Fault) : Smv.ComplexIdentifier =
         let identifier = tracer (Scm.TraceableFault(compPath,fault))
         identifier
         
 
     let transformBinaryLtlOperator (operator:LbOp) =
         match operator with
-            | LbOp.Until -> LtlBinaryOperator.FutureUntil
+            | LbOp.Until -> Smv.LtlBinaryOperator.FutureUntil
 
     let transformUnaryLtlOperator (operator:LuOp) =
         match operator with
-            | LuOp.Next       -> LtlUnaryOperator.FutureNext
-            | LuOp.Eventually -> LtlUnaryOperator.FutureFinally
-            | LuOp.Globally   -> LtlUnaryOperator.FutureGlobally
+            | LuOp.Next       -> Smv.LtlUnaryOperator.FutureNext
+            | LuOp.Eventually -> Smv.LtlUnaryOperator.FutureFinally
+            | LuOp.Globally   -> Smv.LtlUnaryOperator.FutureGlobally
 
         
-    let rec transformBasicExpression_fromLtlSubExpression (tracer:Scm.Traceable->Traceable) (expression:LtlExpr) : BasicExpression =
+    let rec transformBasicExpression_fromLtlSubExpression (tracer:Scm.Traceable->Smv.Traceable) (expression:LtlExpr) : Smv.BasicExpression =
         // assume no temporal operators are in the expression
         match expression with
             | LtlExpr.Literal  (value) ->
                 transformScmVal value
             | LtlExpr.ReadField (compPath,field) ->
-                NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field))
+                Smv.NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field))
             | LtlExpr.ReadFault (compPath,fault) ->
-                NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault))
+                Smv.NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault))
             | LtlExpr.UExpr (expr,op) ->
                 let transformedOperand = (transformBasicExpression_fromLtlSubExpression tracer) expr
                 match op with
-                    | Scm.UOp.Not -> BasicExpression.UnaryExpression(UnaryOperator.LogicalNot,transformedOperand)
+                    | Scm.UOp.Not -> Smv.BasicExpression.UnaryExpression(Smv.UnaryOperator.LogicalNot,transformedOperand)
                     | _ -> failwith  "NotImplementedYet"
             | LtlExpr.BExpr  (left,op,right) ->
                 let transformedLeft = (transformBasicExpression_fromLtlSubExpression tracer) left
                 let transformedRight = (transformBasicExpression_fromLtlSubExpression tracer) right
                 let transformedOperator = transformBinaryOperator op
-                BasicExpression.BinaryExpression(transformedLeft,transformedOperator,transformedRight)
+                Smv.BasicExpression.BinaryExpression(transformedLeft,transformedOperator,transformedRight)
             | LtlExpr.LuExpr (_)
             | LtlExpr.LbExpr (_) ->
                 failwith "no ltl operator should be in this sub expression"
 
-    let rec transformLtlExpression (tracer:Scm.Traceable->Traceable) (expression:LtlExpr) : LtlExpression =
+    let rec transformLtlExpression (tracer:Scm.Traceable->Smv.Traceable) (expression:LtlExpr) : Smv.LtlExpression =
         match expression with
             | LtlExpr.Literal  (value) ->
-                LtlExpression.LtlSimpleExpression(transformScmVal value)
+                Smv.LtlExpression.LtlSimpleExpression(transformScmVal value)
             | LtlExpr.ReadField (compPath,field) ->
-                LtlExpression.LtlSimpleExpression(NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field)))
+                Smv.LtlExpression.LtlSimpleExpression(Smv.NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field)))
             | LtlExpr.ReadFault (compPath,fault) ->
-                LtlExpression.LtlSimpleExpression(NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault)))
+                Smv.LtlExpression.LtlSimpleExpression(Smv.NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault)))
             | LtlExpr.UExpr (expr,op) ->
                 let transformedOperand = (transformLtlExpression tracer) expr
                 match op with
-                    | Scm.UOp.Not -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.LogicalNot,transformedOperand)
+                    | Scm.UOp.Not -> Smv.LtlExpression.LtlUnaryExpression(Smv.LtlUnaryOperator.LogicalNot,transformedOperand)
                     | _ -> failwith  "NotImplementedYet"
             | LtlExpr.BExpr  (left,op,right) ->
                 match op with
                 | Scm.BOp.And ->
                     let transformedLeft = (transformLtlExpression tracer) left
                     let transformedRight = (transformLtlExpression tracer) right
-                    LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalAnd,transformedRight)
+                    Smv.LtlExpression.LtlBinaryExpression(transformedLeft,Smv.LtlBinaryOperator.LogicalAnd,transformedRight)
                 | Scm.BOp.Or ->
                     let transformedLeft = (transformLtlExpression tracer) left
                     let transformedRight = (transformLtlExpression tracer) right
-                    LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalOr,transformedRight)
+                    Smv.LtlExpression.LtlBinaryExpression(transformedLeft,Smv.LtlBinaryOperator.LogicalOr,transformedRight)
                 | Scm.BOp.Equals ->
                     let transformedLeft = (transformLtlExpression tracer) left
                     let transformedRight = (transformLtlExpression tracer) right
-                    LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalEquivalence,transformedRight)
+                    Smv.LtlExpression.LtlBinaryExpression(transformedLeft,Smv.LtlBinaryOperator.LogicalEquivalence,transformedRight)
                 | _ ->
                     let transformedBasicExpression = transformBasicExpression_fromLtlSubExpression tracer expression
-                    LtlExpression.LtlSimpleExpression(transformedBasicExpression)
+                    Smv.LtlExpression.LtlSimpleExpression(transformedBasicExpression)
             | LtlExpr.LuExpr (expr,op) ->
                 let transformedOperator = transformUnaryLtlOperator op
                 let transformedOperand = (transformLtlExpression tracer) expr
-                LtlExpression.LtlUnaryExpression(transformedOperator,transformedOperand)
+                Smv.LtlExpression.LtlUnaryExpression(transformedOperator,transformedOperand)
             | LtlExpr.LbExpr (left,op,right) ->
                 let transformedLeft = (transformLtlExpression tracer) left
                 let transformedRight = (transformLtlExpression tracer) right
                 let transformedOperator = transformBinaryLtlOperator op
-                LtlExpression.LtlBinaryExpression(transformedLeft,transformedOperator,transformedRight)
+                Smv.LtlExpression.LtlBinaryExpression(transformedLeft,transformedOperator,transformedRight)
                 
 
     let transformBinaryCtlOperator (operator:CbOp) =
         match operator with
-            | CbOp.ExistsUntil -> CtlBinaryOperator.ExistsUntil
-            | CbOp.AlwaysUntil -> CtlBinaryOperator.ForallUntil
+            | CbOp.ExistsUntil -> Smv.CtlBinaryOperator.ExistsUntil
+            | CbOp.AlwaysUntil -> Smv.CtlBinaryOperator.ForallUntil
 
     let transformUnaryCtlOperator (operator:CuOp) =
         match operator with
-            | CuOp.ExistsNext       -> CtlUnaryOperator.ExistsNextState
-            | CuOp.ExistsGlobally   -> CtlUnaryOperator.ExistsGlobally
-            | CuOp.ExistsEventually -> CtlUnaryOperator.ExistsFinally
-            | CuOp.AlwaysNext       -> CtlUnaryOperator.ForallNext
-            | CuOp.AlwaysGlobally   -> CtlUnaryOperator.ForallGlobally
-            | CuOp.AlwaysEventually -> CtlUnaryOperator.ForallFinally
+            | CuOp.ExistsNext       -> Smv.CtlUnaryOperator.ExistsNextState
+            | CuOp.ExistsGlobally   -> Smv.CtlUnaryOperator.ExistsGlobally
+            | CuOp.ExistsEventually -> Smv.CtlUnaryOperator.ExistsFinally
+            | CuOp.AlwaysNext       -> Smv.CtlUnaryOperator.ForallNext
+            | CuOp.AlwaysGlobally   -> Smv.CtlUnaryOperator.ForallGlobally
+            | CuOp.AlwaysEventually -> Smv.CtlUnaryOperator.ForallFinally
                 
-    let rec transformBasicExpression_fromCtlSubExpression (tracer:Scm.Traceable->Traceable) (expression:CtlExpr) : BasicExpression =
+    let rec transformBasicExpression_fromCtlSubExpression (tracer:Scm.Traceable->Smv.Traceable) (expression:CtlExpr) : Smv.BasicExpression =
         // assume no temporal operators are in the expression
         match expression with
             | CtlExpr.Literal  (value) ->
                 transformScmVal value
             | CtlExpr.ReadField (compPath,field) ->
-                NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field))
+                Smv.NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field))
             | CtlExpr.ReadFault (compPath,fault) ->
-                NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault))
+                Smv.NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault))
             | CtlExpr.UExpr (expr,op) ->
                 let transformedOperand = (transformBasicExpression_fromCtlSubExpression tracer) expr
                 match op with
-                    | Scm.UOp.Not -> BasicExpression.UnaryExpression(UnaryOperator.LogicalNot,transformedOperand)
+                    | Scm.UOp.Not -> Smv.BasicExpression.UnaryExpression(Smv.UnaryOperator.LogicalNot,transformedOperand)
                     | _ -> failwith  "NotImplementedYet"
             | CtlExpr.BExpr  (left,op,right) ->
                 let transformedLeft = (transformBasicExpression_fromCtlSubExpression tracer) left
                 let transformedRight = (transformBasicExpression_fromCtlSubExpression tracer) right
                 let transformedOperator = transformBinaryOperator op
-                BasicExpression.BinaryExpression(transformedLeft,transformedOperator,transformedRight)
+                Smv.BasicExpression.BinaryExpression(transformedLeft,transformedOperator,transformedRight)
             | CtlExpr.CuExpr (_)
             | CtlExpr.CbExpr (_) ->
                 failwith "no ctl operator should be in this sub expression"
                 
-    let rec transformCtlExpression (tracer:Scm.Traceable->Traceable) (expression:CtlExpr) : CtlExpression =
+    let rec transformCtlExpression (tracer:Scm.Traceable->Smv.Traceable) (expression:CtlExpr) : Smv.CtlExpression =
         match expression with
             | CtlExpr.Literal  (value) ->
-                CtlExpression.CtlSimpleExpression(transformScmVal value)
+                Smv.CtlExpression.CtlSimpleExpression(transformScmVal value)
             | CtlExpr.ReadField (compPath,field) ->
-                CtlExpression.CtlSimpleExpression(NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field)))
+                Smv.CtlExpression.CtlSimpleExpression(Smv.NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field)))
             | CtlExpr.ReadFault (compPath,fault) ->
-                CtlExpression.CtlSimpleExpression(NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault)))
+                Smv.CtlExpression.CtlSimpleExpression(Smv.NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault)))
             | CtlExpr.UExpr (expr,op) ->
                 let transformedOperand = (transformCtlExpression tracer) expr
                 match op with
-                    | Scm.UOp.Not -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.LogicalNot,transformedOperand)
+                    | Scm.UOp.Not -> Smv.CtlExpression.CtlUnaryExpression(Smv.CtlUnaryOperator.LogicalNot,transformedOperand)
                     | _ -> failwith  "NotImplementedYet"
             | CtlExpr.BExpr  (left,op,right) ->
                 match op with
                 | Scm.BOp.And ->
                     let transformedLeft = (transformCtlExpression tracer) left
                     let transformedRight = (transformCtlExpression tracer) right
-                    CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalAnd,transformedRight)
+                    Smv.CtlExpression.CtlBinaryExpression(transformedLeft,Smv.CtlBinaryOperator.LogicalAnd,transformedRight)
                 | Scm.BOp.Or ->
                     let transformedLeft = (transformCtlExpression tracer) left
                     let transformedRight = (transformCtlExpression tracer) right
-                    CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalOr,transformedRight)
+                    Smv.CtlExpression.CtlBinaryExpression(transformedLeft,Smv.CtlBinaryOperator.LogicalOr,transformedRight)
                 | Scm.BOp.Equals ->
                     let transformedLeft = (transformCtlExpression tracer) left
                     let transformedRight = (transformCtlExpression tracer) right
-                    CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalEquivalence,transformedRight)
+                    Smv.CtlExpression.CtlBinaryExpression(transformedLeft,Smv.CtlBinaryOperator.LogicalEquivalence,transformedRight)
                 | _ ->
                     let transformedBasicExpression = transformBasicExpression_fromCtlSubExpression tracer expression
-                    CtlExpression.CtlSimpleExpression(transformedBasicExpression)
+                    Smv.CtlExpression.CtlSimpleExpression(transformedBasicExpression)
             | CtlExpr.CuExpr (expr,op) ->
                 let transformedOperator = transformUnaryCtlOperator op
                 let transformedOperand = (transformCtlExpression tracer) expr
-                CtlExpression.CtlUnaryExpression(transformedOperator,transformedOperand)
+                Smv.CtlExpression.CtlUnaryExpression(transformedOperator,transformedOperand)
             | CtlExpr.CbExpr (left,op,right) ->
                 let transformedLeft = (transformCtlExpression tracer) left
                 let transformedRight = (transformCtlExpression tracer) right
                 let transformedOperator = transformBinaryCtlOperator op
-                CtlExpression.CtlBinaryExpression(transformedLeft,transformedOperator,transformedRight)
+                Smv.CtlExpression.CtlBinaryExpression(transformedLeft,transformedOperator,transformedRight)

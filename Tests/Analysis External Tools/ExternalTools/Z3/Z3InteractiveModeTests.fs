@@ -22,16 +22,24 @@
 
 namespace SafetySharp.ExternalTools
 
-module internal SmvAstHelpers =
-    open SafetySharp.ExternalTools.Smv
+open System
+open NUnit.Framework
+open AstTestHelpers
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
+open SafetySharp.Analysis.SmtSolving.SmtLib2.SmtShortTypes
+open SafetySharp.Analysis.SmtSolving.Z3.Execute
 
-    let concatenateWithOr (exprs:BasicExpression list) =
-        if exprs.IsEmpty then
-            BasicExpression.ConstExpression(ConstExpression.BooleanConstant(false)) //see Conjunctive Normal Form. An empty clause is unsatisfiable.
-        else
-            exprs.Tail |> List.fold (fun acc elem -> BasicExpression.BinaryExpression(acc,BinaryOperator.LogicalOr,elem)) exprs.Head
-    let concatenateWithAnd (exprs:BasicExpression list) =
-        if exprs.IsEmpty then
-            BasicExpression.ConstExpression(ConstExpression.BooleanConstant(true)) //see Conjunctive Normal Form. If there is no clause, the formula is true.
-        else
-            exprs.Tail |> List.fold (fun acc elem -> BasicExpression.BinaryExpression(acc,BinaryOperator.LogicalAnd,elem)) exprs.Head
+type Z3InteractiveModeTests() = 
+    
+    let isOfTypeSExpr obj =
+        match box obj with
+                            | :? Smt2SExpr as correctType -> true
+                            | _                           -> false
+
+    [<Test>]
+    member this.``interactive mode works (start,help,quit)``() =
+        let z3 = new ExecuteZ3Interactive()
+        z3.Start ()
+        let output = z3.ExecuteCustomCommand "(help)"
+        z3.Shutdown ()
+        isOfTypeSExpr output  =? true

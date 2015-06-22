@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Modelchecking.NuXmv
+namespace SafetySharp.ExternalTools.Smv
 
 type internal UnaryOperator = 
     | LogicalNot

@@ -22,16 +22,36 @@
 
 namespace SafetySharp.ExternalTools
 
-module internal SmvAstHelpers =
-    open SafetySharp.ExternalTools.Smv
+open System
+open NUnit.Framework
+open FParsec
 
-    let concatenateWithOr (exprs:BasicExpression list) =
-        if exprs.IsEmpty then
-            BasicExpression.ConstExpression(ConstExpression.BooleanConstant(false)) //see Conjunctive Normal Form. An empty clause is unsatisfiable.
-        else
-            exprs.Tail |> List.fold (fun acc elem -> BasicExpression.BinaryExpression(acc,BinaryOperator.LogicalOr,elem)) exprs.Head
-    let concatenateWithAnd (exprs:BasicExpression list) =
-        if exprs.IsEmpty then
-            BasicExpression.ConstExpression(ConstExpression.BooleanConstant(true)) //see Conjunctive Normal Form. If there is no clause, the formula is true.
-        else
-            exprs.Tail |> List.fold (fun acc elem -> BasicExpression.BinaryExpression(acc,BinaryOperator.LogicalAnd,elem)) exprs.Head
+open TestHelpers
+open AstTestHelpers
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
+
+type SmtLib2ParserInputExampleTests() =
+    //let parser = new ObjectCodeEntryParser()
+    
+    let inAstFloat = inAst<float>
+
+    let parseWithParser parser str =
+        match run parser str with
+        | Success(result, _, _)   -> (Ast result)
+        | Failure(errorMsg, _, _) -> (Error errorMsg)
+
+    let parseFloat str = parseWithParser pfloat str
+       
+    
+    [<Test>]
+    member this.``Datastructure ParsingResult works with convenience function returnAstFloat``() =
+        (ParsingResult<float>.Ast 1.25) =? inAstFloat 1.25
+
+    [<Test>]
+    member this.``a simple float should parse correctly``() =
+        parseFloat "1.25" =? inAstFloat 1.25
+
+    [<Test>]
+    member this.``a term should be parsed correctly``() =
+        parseFloat "1.25" = inAstFloat 1.25

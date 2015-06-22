@@ -22,16 +22,40 @@
 
 namespace SafetySharp.ExternalTools
 
-module internal SmvAstHelpers =
-    open SafetySharp.ExternalTools.Smv
 
-    let concatenateWithOr (exprs:BasicExpression list) =
-        if exprs.IsEmpty then
-            BasicExpression.ConstExpression(ConstExpression.BooleanConstant(false)) //see Conjunctive Normal Form. An empty clause is unsatisfiable.
-        else
-            exprs.Tail |> List.fold (fun acc elem -> BasicExpression.BinaryExpression(acc,BinaryOperator.LogicalOr,elem)) exprs.Head
-    let concatenateWithAnd (exprs:BasicExpression list) =
-        if exprs.IsEmpty then
-            BasicExpression.ConstExpression(ConstExpression.BooleanConstant(true)) //see Conjunctive Normal Form. If there is no clause, the formula is true.
-        else
-            exprs.Tail |> List.fold (fun acc elem -> BasicExpression.BinaryExpression(acc,BinaryOperator.LogicalAnd,elem)) exprs.Head
+open NUnit.Framework
+open SafetySharp.Modelchecking
+open SafetySharp
+open SafetySharp.Analysis.Modelchecking
+open SafetySharp.Analysis.Modelchecking.PromelaSpin
+
+
+
+[<TestFixture>]
+module PromelaExecuteTestsBasic =
+
+    [<Test>]
+    let ``Spin is in PATH or in dependency folder`` () =
+        let path = ExecuteSpin.FindSpin
+        (path.Length > 0) =? true
+        
+    [<Test>]
+    let ``Spin is runable and shows help`` () =
+        ExecuteSpin.IsSpinRunnable =? true
+
+    [<Test>]
+    let ``Compiler is in PATH or in dependency folder`` () =
+        let path = ExecuteSpin.FindCompiler
+        (path.Length > 0) =? true
+        
+    [<Test>]
+    let ``Compiler is runable and shows help`` () =
+        ExecuteSpin.IsCompilerRunnable =? true
+
+    [<Test>]
+    let ``Spin verifies the samSmokeTest1.pm file`` () =
+        let inputFile = SafetySharp.FileSystem.FileName("""../../Examples/Promela/samSmokeTest1.pml""")
+        let executePromelaSpin = ExecuteSpin(inputFile)
+        let results = executePromelaSpin.GetAllResults ()
+        executePromelaSpin.WasSuccessful =? true
+        ()

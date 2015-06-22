@@ -20,11 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Modelchecking.NuXmv
+namespace SafetySharp.ExternalTools
 
 
-module internal NuXmvCommandsToString =
-    open NuXmvToString
+module internal SmvCommandsToString =
+    open SafetySharp.ExternalTools.Smv
+    open SafetySharp.ExternalTools.SmvToString
 
     let exportNameOfEnvironmentVariable (variable:IEnvironmentVariable) : string =
         match variable with

@@ -21,11 +21,12 @@
 // THE SOFTWARE.
 
 //TODO: Solve the indentions more gracefully
-namespace SafetySharp.Analysis.Modelchecking.NuXmv
+namespace SafetySharp.ExternalTools
 
 open System
 
-module internal NuXmvToString =
+module internal SmvToString =
+    open SafetySharp.ExternalTools.Smv
 
     let indent (number:int) : string =
         let s=System.Text.StringBuilder ()
@@ -432,7 +433,7 @@ module internal NuXmvToString =
             | LtlSpecification (ltlExpression:LtlExpression) -> "LTLSPEC " + exportLtlExpression ltlExpression
         
 
-    let exportNuXmvProgram (nuXmvProgram:NuXmvProgram) = 
+    let exportNuXmvProgram (nuXmvProgram:SmvProgram) = 
         // Chapter 2.3.13 A Program and the main Module p 33
         let modules =
             nuXmvProgram.Modules |> List.map exportModuleDeclaration
@@ -445,7 +446,7 @@ module internal NuXmvToString =
     open SafetySharp.Workflow
 
     let workflow<'traceableOfOrigin> () 
-            : ExogenousWorkflowFunction<NuXmvProgram,string> = workflow {
+            : ExogenousWorkflowFunction<SmvProgram,string> = workflow {
         let! model = getState ()
         do! updateState (exportNuXmvProgram model)
     }

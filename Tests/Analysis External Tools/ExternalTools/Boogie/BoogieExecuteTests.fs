@@ -22,16 +22,5 @@
 
 namespace SafetySharp.ExternalTools
 
-module internal SmvAstHelpers =
-    open SafetySharp.ExternalTools.Smv
-
-    let concatenateWithOr (exprs:BasicExpression list) =
-        if exprs.IsEmpty then
-            BasicExpression.ConstExpression(ConstExpression.BooleanConstant(false)) //see Conjunctive Normal Form. An empty clause is unsatisfiable.
-        else
-            exprs.Tail |> List.fold (fun acc elem -> BasicExpression.BinaryExpression(acc,BinaryOperator.LogicalOr,elem)) exprs.Head
-    let concatenateWithAnd (exprs:BasicExpression list) =
-        if exprs.IsEmpty then
-            BasicExpression.ConstExpression(ConstExpression.BooleanConstant(true)) //see Conjunctive Normal Form. If there is no clause, the formula is true.
-        else
-            exprs.Tail |> List.fold (fun acc elem -> BasicExpression.BinaryExpression(acc,BinaryOperator.LogicalAnd,elem)) exprs.Head
+module BoogieExecuteTests =
+    open SafetySharp.Models
