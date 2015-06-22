@@ -24,6 +24,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -48,6 +49,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Bind(RequiredPorts.N = base.ProvidedPorts.M);
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.ProvidedPorts.Length.ShouldBe(4);

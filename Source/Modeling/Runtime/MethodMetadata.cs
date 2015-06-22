@@ -28,6 +28,7 @@ namespace SafetySharp.Runtime
 	using System.Reflection;
 	using CompilerServices;
 	using Modeling;
+	using Statements;
 	using Utilities;
 
 	/// <summary>
@@ -35,6 +36,11 @@ namespace SafetySharp.Runtime
 	/// </summary>
 	public abstract class MethodMetadata
 	{
+		/// <summary>
+		///     The block statement representing the method's body.
+		/// </summary>
+		private readonly Lazy<MethodBodyMetadata> _methodBody;
+
 		/// <summary>
 		///     The S# object the method belongs to.
 		/// </summary>
@@ -77,6 +83,12 @@ namespace SafetySharp.Runtime
 				IntendedBehavior = MethodInfo;
 
 			Behaviors = new MethodBehaviorCollection(obj, this);
+
+			_methodBody = new Lazy<MethodBodyMetadata>(() =>
+			{
+				var methodBodyAttribute = MethodInfo.GetCustomAttribute<MethodBodyMetadataAttribute>();
+				return methodBodyAttribute == null ? null : methodBodyAttribute.GetMethodBody(obj, MethodInfo);
+			});
 		}
 
 		/// <summary>
@@ -138,6 +150,15 @@ namespace SafetySharp.Runtime
 		///     Gets the underlying CLR method.
 		/// </summary>
 		internal MethodInfo MethodInfo { get; private set; }
+
+		/// <summary>
+		///     Gets the metadata of the method's body. Returns <c>null</c> when <see cref="HasImplementation" /> is <c>false</c> or the
+		///     method is not analyzable.
+		/// </summary>
+		public MethodBodyMetadata MethodBody
+		{
+			get { return _methodBody.Value; }
+		}
 
 		/// <summary>
 		///     Gets the type of a delegate that can refer to the method. Returns <c>null</c> when

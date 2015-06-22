@@ -52,5 +52,11 @@ namespace Tests.Execution
 		{
 			ExecuteDynamicTests(code);
 		}
+
+		[Theory, MemberData("DiscoverTests", "SemanticEquality")]
+		public void SemanticEquality(string test, SyntaxTree code)
+		{
+			ExecuteDynamicTests(code);
+		}
 	}
 }

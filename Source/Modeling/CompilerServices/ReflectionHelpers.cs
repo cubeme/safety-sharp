@@ -25,6 +25,9 @@ namespace SafetySharp.CompilerServices
 	using System;
 	using System.Linq;
 	using System.Reflection;
+	using Modeling;
+	using Modeling.Faults;
+	using Runtime;
 	using Utilities;
 
 	/// <summary>
@@ -108,6 +111,68 @@ namespace SafetySharp.CompilerServices
 				declaringType.FullName, methodName);
 
 			return method;
+		}
+
+		/// <summary>
+		///     Gets the <paramref name="component" />'s <see cref="FieldMetadata" /> for the <paramref name="field" />.
+		/// </summary>
+		/// <param name="component">The component instance the metadata should be returned for.</param>
+		/// <param name="field">The field the metadata should be returned for.</param>
+		public static FieldMetadata GetFieldMetadata(IComponent component, FieldInfo field)
+		{
+			Requires.NotNull(component, () => component);
+			Requires.NotNull(field, () => field);
+			Requires.OfType<Component>(component, () => component);
+
+			return GetFieldMetadata((Component)component, field);
+		}
+
+		/// <summary>
+		///     Gets the <paramref name="component" />'s <see cref="FieldMetadata" /> for the <paramref name="field" />.
+		/// </summary>
+		/// <param name="component">The component instance the metadata should be returned for.</param>
+		/// <param name="field">The field the metadata should be returned for.</param>
+		public static FieldMetadata GetFieldMetadata(Component component, FieldInfo field)
+		{
+			Requires.NotNull(component, () => component);
+			Requires.NotNull(field, () => field);
+
+			var fieldMetadata = component.Metadata.Fields.SingleOrDefault(f => f.FieldInfo == field);
+			Requires.That(fieldMetadata != null, () => field, "The component does not declare the given field.");
+
+			return fieldMetadata;
+		}
+
+		/// <summary>
+		///     Gets the <paramref name="fault" />'s <see cref="FieldMetadata" /> for the <paramref name="field" />.
+		/// </summary>
+		/// <param name="fault">The fault instance the metadata should be returned for.</param>
+		/// <param name="field">The field the metadata should be returned for.</param>
+		public static FieldMetadata GetFieldMetadata(Fault fault, FieldInfo field)
+		{
+			Requires.NotNull(fault, () => fault);
+			Requires.NotNull(field, () => field);
+
+			var fieldMetadata = fault.Metadata.Fields.SingleOrDefault(f => f.FieldInfo == field);
+			Requires.That(fieldMetadata != null, () => field, "The fault does not declare the given field.");
+
+			return fieldMetadata;
+		}
+
+		/// <summary>
+		///     Gets the <paramref name="occurrencePattern" />'s <see cref="FieldMetadata" /> for the <paramref name="field" />.
+		/// </summary>
+		/// <param name="occurrencePattern">The occurrence pattern instance the metadata should be returned for.</param>
+		/// <param name="field">The field the metadata should be returned for.</param>
+		public static FieldMetadata GetFieldMetadata(OccurrencePattern occurrencePattern, FieldInfo field)
+		{
+			Requires.NotNull(occurrencePattern, () => occurrencePattern);
+			Requires.NotNull(field, () => field);
+
+			var fieldMetadata = occurrencePattern.Metadata.Fields.SingleOrDefault(f => f.FieldInfo == field);
+			Requires.That(fieldMetadata != null, () => field, "The occurrence pattern does not declare the given field.");
+
+			return fieldMetadata;
 		}
 	}
 }

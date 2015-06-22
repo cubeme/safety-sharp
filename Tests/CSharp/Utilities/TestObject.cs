@@ -40,6 +40,7 @@ namespace Tests.Utilities
 		/// <summary>
 		///     Executes the tests of the object.
 		/// </summary>
+		/// <param name="output">The output that should be used to write test output.</param>
 		public void Test(ITestOutputHelper output)
 		{
 			_output = output;

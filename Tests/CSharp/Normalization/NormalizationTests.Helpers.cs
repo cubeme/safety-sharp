@@ -90,7 +90,7 @@ namespace Tests.Normalization
 
 			// Create a compilation for the inputs and check for any C# and S# errors
 			compilation = CreateCompilation(SyntaxFactory.SyntaxTree(inputCode));
-			CheckForSSharpDiagnostics(compilation);
+			CheckForSafetySharpDiagnostics(compilation);
 
 			// Create the expected outputs; if the normalization does nothing, the inputs also act as the expected outputs
 			var renamer = new Renamer();

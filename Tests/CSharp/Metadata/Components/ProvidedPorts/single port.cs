@@ -24,17 +24,23 @@ namespace Tests.Metadata.Components.ProvidedPorts
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
 	internal class X2 : TestComponent
 	{
+		private void M()
+		{
+		}
+
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.ProvidedPorts.Length.ShouldBe(1);
 
-			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(X2).GetMethod("Check", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(X2).GetMethod("M", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[0].IsOverridden.ShouldBe(false);
@@ -44,7 +50,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[0].VirtuallyInvokedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
 			Metadata.ProvidedPorts[0].IntendedBehavior.ShouldBe(typeof(X2).GetMethod("__Behavior0__",
 				BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.ProvidedPorts[0].Name.ShouldBe("Check");
+			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
 		}
 	}
 }

@@ -36,9 +36,9 @@ namespace Tests.Utilities
 	public abstract class TestComponent : Component, ITestableObject
 	{
 		/// <summary>
-		///     Writes to the test output stream.
+		///     Gets the output that writes to the test output stream.
 		/// </summary>
-		private ITestOutputHelper _output;
+		public ITestOutputHelper TestOutput { get; private set; }
 
 		/// <summary>
 		///     Gets the reflection information for the <see cref="Component.Update" /> method.
@@ -51,9 +51,10 @@ namespace Tests.Utilities
 		/// <summary>
 		///     Executes the tests of the object.
 		/// </summary>
+		/// <param name="output">The output that should be used to write test output.</param>
 		public void Test(ITestOutputHelper output)
 		{
-			_output = output;
+			TestOutput = output;
 
 			MetadataBuilder.FinalizeMetadata();
 			Metadata.Component.ShouldBe(this);
@@ -74,8 +75,8 @@ namespace Tests.Utilities
 		[StringFormatMethod("message")]
 		protected void Log(string message, params object[] args)
 		{
-			Assert.NotNull(_output, "A test output helper is not available.");
-			_output.WriteLine(message, args);
+			Assert.NotNull(TestOutput, "A test output helper is not available.");
+			TestOutput.WriteLine(message, args);
 		}
 
 		/// <summary>

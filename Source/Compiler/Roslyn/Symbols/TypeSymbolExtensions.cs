@@ -156,7 +156,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
-		public static bool IsBuiltType([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
+		public static bool IsBuiltInType([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);

@@ -40,7 +40,7 @@ namespace SafetySharp.Compiler.Normalization
 	///     <see cref="Model.AddRootComponents" /> methods with an invocation of
 	///     <see cref="ModelMetadata.Builder.WithRootComponents" />
 	/// </summary>
-	public sealed class AddRootComponentsNormalizer : SyntaxNormalizer
+	public sealed class RootComponentsNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
 		///     Normalizes the <paramref name="statement" /> if it is an invocation of

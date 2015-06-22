@@ -27,6 +27,7 @@ namespace SafetySharp.Modeling
 	using CompilerServices;
 	using JetBrains.Annotations;
 	using Runtime;
+	using Runtime.Statements;
 	using Utilities;
 
 	/// <summary>
@@ -81,6 +82,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		[BackingField("_updateMethod")]
 		[IntendedBehavior("UpdateBehavior")]
+		[MethodBodyMetadata("UpdateMethodBody")]
 		public virtual void Update()
 		{
 			_updateMethod();
@@ -101,6 +103,15 @@ namespace SafetySharp.Modeling
 		[UsedImplicitly]
 		private void UpdateBehavior()
 		{
+		}
+
+		/// <summary>
+		///     Creates the empty method body for the <see cref="Update" /> method.
+		/// </summary>
+		[UsedImplicitly]
+		private MethodBodyMetadata UpdateMethodBody()
+		{
+			return new MethodBodyMetadata(new VariableMetadata[0], new VariableMetadata[0], new BlockStatement());
 		}
 
 		/// <summary>
