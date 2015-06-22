@@ -156,10 +156,10 @@
     <Compile Include="ExternalTools\Boogie\BoogieToString.fs" />
     <Compile Include="ExternalTools\Boogie\BoogieExecute.fs" />
     <Compile Include="ExternalTools\Boogie\BoogieTransform.fs" />
-    <Compile Include="StochasticAnalysis\Stochastic\UnitsOfMeasurement.fs" />
-    <Compile Include="StochasticAnalysis\Stochastic\DiscreteDistributions.fs" />
-    <Compile Include="StochasticAnalysis\Stochastic\ContinuousDistributions.fs" />
-    <Compile Include="StochasticAnalysis\Stochastic\FailureRate.fs" />
+    <Compile Include="StochasticAnalysis\UnitsOfMeasurement.fs" />
+    <Compile Include="StochasticAnalysis\DiscreteDistributions.fs" />
+    <Compile Include="StochasticAnalysis\ContinuousDistributions.fs" />
+    <Compile Include="StochasticAnalysis\FailureRate.fs" />
     <Compile Include="Techniques\AtStepInvariant.fs" />
     <Compile Include="Techniques\AtReachable.fs" />
     <Compile Include="Techniques\AtLtlFormula.fs" />
