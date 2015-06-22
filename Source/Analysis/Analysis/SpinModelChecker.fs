@@ -67,6 +67,13 @@ type SpinModelChecker (model : Model) =
 
     let ltlDcca = SafetySharp.Analysis.Techniques.AtDccaLtl.PerformDccaWithLtlFormulas(scm,hazard)
     let minimalCutSets = ltlDcca.checkWithPromela ()
+    //let minimalCutSets  =
+    //    let result : Set<ScmHelpers.FaultPath> list ref = ref ([])
+    //    let threadWithBiggerStack = new System.Threading.Thread( (fun () -> result := ltlDcca.checkWithNuXmv () ), 1024*1024*8) //HACK: for a bigger stack
+    //    do threadWithBiggerStack.Start ()
+    //    do threadWithBiggerStack.Join ()
+    //    result.Value
+
     do printfn "%+A" minimalCutSets
 
 //    member this.Check (formula : LtlFormula) =
