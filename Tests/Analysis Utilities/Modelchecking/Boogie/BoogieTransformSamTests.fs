@@ -31,7 +31,7 @@ open SafetySharp.Workflow
 open SafetySharp.EngineOptions
 open SafetySharp.ITracing
 
-type BoogieSmokeTests (xunitOutput:ITestOutputHelper) =
+type BoogieTransformSamTests (xunitOutput:ITestOutputHelper) =
     
 
     static member testdataAll = TestCases.SamSmokeTests.smoketestsAll
@@ -51,6 +51,7 @@ type BoogieSmokeTests (xunitOutput:ITestOutputHelper) =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+            do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
             do! SafetySharp.Analysis.Modelchecking.Boogie.TsamToBoogie.transformVcSamToBoogieWf ()
             do! logForwardTracesOfOrigins ()
             do! SafetySharp.ITracing.removeTracing ()

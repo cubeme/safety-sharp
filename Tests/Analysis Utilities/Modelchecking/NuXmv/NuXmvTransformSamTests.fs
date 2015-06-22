@@ -22,7 +22,6 @@
 
 namespace SafetySharp.Modelchecking
 
-
 open Xunit
 open Xunit.Abstractions
 
@@ -31,15 +30,14 @@ open SafetySharp.Workflow
 open SafetySharp.Analysis.Modelchecking.NuXmv
 open SafetySharp.EngineOptions
 
-type NuXmvGwamCheckSamSmokeTests (xunitOutput:ITestOutputHelper) =
-
+type SamToNuXmvTests (xunitOutput:ITestOutputHelper) =
 
     static member testdataAll = TestCases.SamSmokeTests.smoketestsAll
     static member testdataDeterministic = TestCases.SamSmokeTests.smoketestsDeterministic        
         
     [<Theory>]
     [<MemberData("testdataDeterministic")>]
-    member this.``check smoke tests with NuXmvGwamCheckSamSmokeTests`` (testname:string) =    
+    member this.``smoke tests gets converted to NuXmv (gwam method)`` (testname:string) =    
 
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
@@ -74,7 +72,7 @@ type NuXmvGwamCheckSamSmokeTests (xunitOutput:ITestOutputHelper) =
         
     [<Theory>]
     [<MemberData("testdataDeterministic")>]
-    member this.``check smoke tests with NuXmvSpCheckSamSmokeTests`` (testname:string) =    
+    member this.``smoke tests gets converted to NuXmv (sp method)`` (testname:string) =    
 
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
@@ -90,7 +88,7 @@ type NuXmvGwamCheckSamSmokeTests (xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
                 do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
-                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
                 do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
                 do! SafetySharp.ITracing.removeTracing ()

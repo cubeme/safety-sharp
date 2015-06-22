@@ -13,7 +13,7 @@
     <AssemblyName>SafetySharp.ModelChecking.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>Model Checking Tests</Name>
+    <Name>Analysis Utilities Tests</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -61,6 +61,9 @@
     </Compile>
     <Compile Include="..\TestCases\SamSmokeTests.fs">
       <Link>SamSmokeTests.fs</Link>
+    </Compile>
+    <Compile Include="..\TestCases\ScmSmokeTests.fs">
+      <Link>ScmSmokeTests.fs</Link>
     </Compile>
     <Compile Include="Modelchecking\NuXmv\NuXmvModels.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvAstToFileTests.fs" />

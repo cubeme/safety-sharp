@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.22823.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compiler", "Source\Compiler\Compiler.csproj", "{8823091C-387F-4F4D-ABCD-8F71D1528CBB}"
 EndProject
@@ -9,7 +9,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis", "Source\Analysis
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp Tests", "Tests\SafetySharp\SafetySharp Tests.fsproj", "{ACDBA456-3B21-480D-B739-DCC7EAE6D233}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Model Checking Tests", "Tests\Model Checking\Model Checking Tests.fsproj", "{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis Utilities Tests", "Tests\Analysis Utilities\Analysis Utilities Tests.fsproj", "{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{17ADA692-CD6C-4F50-84FD-008F09179BC8}"
 EndProject
