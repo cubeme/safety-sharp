@@ -31,7 +31,7 @@ module TsamToDotTests =
 
     let internal inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
         let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-        let newDirectory = "../../Examples/Dot/TsamAsDot"
+        let newDirectory = "../../Examples/Dot/TsamAsDot.Generated"
         SafetySharp.FileSystem.FileName (sprintf "%s/%s.gv" newDirectory filenameWithoutPath)
                         
     let internal readInputFileAndGenerateDotFile (inputFile:string) = workflow {

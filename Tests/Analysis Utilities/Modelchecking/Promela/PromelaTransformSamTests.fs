@@ -40,7 +40,7 @@ type SamToPromelaTests (xunitOutput:ITestOutputHelper) =
     member this.``check smoke tests with EngineOption IgnoreRanges`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Promela/TransformedSam_IgnoreRanges"
+            let newDirectory = "../../Examples/Promela/TransformedSam_IgnoreRanges.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.pml" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SAM/""" + testname
@@ -69,7 +69,7 @@ type SamToPromelaTests (xunitOutput:ITestOutputHelper) =
     member this.``check smoke tests with EngineOption ForceRangesAfterStep`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Promela/TransformedSam_ForceRangesAfterStep"
+            let newDirectory = "../../Examples/Promela/TransformedSam_ForceRangesAfterStep.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.pml" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SAM/""" + testname
@@ -98,7 +98,7 @@ type SamToPromelaTests (xunitOutput:ITestOutputHelper) =
     member this.``check smoke tests with EngineOption ForceRangeAfterEveryAssignmentToAGlobalVar`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Promela/TransformedSam_ForceRangeAfterEveryAssignmentToAGlobalVar"
+            let newDirectory = "../../Examples/Promela/TransformedSam_ForceRangeAfterEveryAssignmentToAGlobalVar.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.pml" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SAM/""" + testname

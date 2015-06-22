@@ -42,7 +42,7 @@ type ScmToPromelaTests (xunitOutput:ITestOutputHelper) =
 
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Promela/TransformedScm"
+            let newDirectory = "../../Examples/Promela/TransformedScm.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SCM/""" + testname

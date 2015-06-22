@@ -42,7 +42,7 @@ type BoogieTransformSamTests (xunitOutput:ITestOutputHelper) =
     member this.``check smoke tests with gwam fast method`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Boogie/TransformedSam"
+            let newDirectory = "../../Examples/Boogie/TransformedSam.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.prism" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SAM/""" + testname

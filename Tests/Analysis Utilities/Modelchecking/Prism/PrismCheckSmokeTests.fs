@@ -40,7 +40,7 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
     member this.``check smoke tests with gwam fast method`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Prism/TransformedSamWithGwamFast"
+            let newDirectory = "../../Examples/Prism/TransformedSamWithGwamFast.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.prism" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SAM/""" + testname
@@ -73,7 +73,7 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
     member this.``check smoke tests with gwam method`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Prism/TransformedSamWithGwam"
+            let newDirectory = "../../Examples/Prism/TransformedSamWithGwam.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.prism" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SAM/""" + testname
@@ -106,7 +106,7 @@ type PrismCheckSmokeTests (xunitOutput:ITestOutputHelper) =
     member this.``check smoke tests with plain method`` (testname:string) =    
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Prism/TransformedSamWithPlain"
+            let newDirectory = "../../Examples/Prism/TransformedSamWithPlain.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.prism" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SAM/""" + testname

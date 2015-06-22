@@ -41,7 +41,7 @@ type SamToNuXmvTests (xunitOutput:ITestOutputHelper) =
 
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/NuXmv/TransformedSamGwam"
+            let newDirectory = "../../Examples/NuXmv/TransformedSamGwam.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SAM/""" + testname
@@ -76,7 +76,7 @@ type SamToNuXmvTests (xunitOutput:ITestOutputHelper) =
 
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/NuXmv/TransformedSamSp"
+            let newDirectory = "../../Examples/NuXmv/TransformedSamSp.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SAM/""" + testname

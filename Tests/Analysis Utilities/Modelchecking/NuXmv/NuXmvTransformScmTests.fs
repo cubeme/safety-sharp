@@ -42,7 +42,7 @@ type ScmToNuXmvTests (xunitOutput:ITestOutputHelper) =
 
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/NuXmv/TransformedScmGwam"
+            let newDirectory = "../../Examples/NuXmv/TransformedScmGwam.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
 
         let inputFile = """../../Examples/SCM/""" + testname
