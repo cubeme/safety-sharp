@@ -62,7 +62,7 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 			return a & b;
 		}
 
-		[Test(16)]
+		[Test(4)]
 		public bool M7(bool a, bool b)
 		{
 			return a | b;
@@ -110,7 +110,7 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 			return a && b;
 		}
 
-		[Test(16)]
+		[Test(4)]
 		public bool M15(bool a, bool b)
 		{
 			return a || b;

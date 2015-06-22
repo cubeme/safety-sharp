@@ -39,20 +39,30 @@ namespace Tests.Execution
 	{
 		private static readonly Random _random = new Random();
 		private readonly int _testCount;
-		public FieldInfo[] Fields;
 
 		public TestAttribute(int testCount)
 		{
 			_testCount = testCount;
 		}
 
-		public void ExecuteTests(object originalObject, object transformedObject, MethodInfo originalMethod, MethodInfo transformedMethod)
+		public void ExecuteTests(ITestOutputHelper output, object originalObject, object transformedObject,
+								 MethodInfo originalMethod, MethodInfo transformedMethod)
 		{
 			var parameters = originalMethod.GetParameters();
 			var originalArguments = new object[parameters.Length];
 			var transformedArguments = new object[parameters.Length];
 			var valueFactories = new Func<object>[parameters.Length];
-			Fields = originalObject.GetType().GetFields(BindingFlags.Public | BindingFlags.FlattenHierarchy | BindingFlags.Instance);
+			var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy | BindingFlags.Instance;
+			var originalFields = originalObject
+				.GetType()
+				.GetFields(flags)
+				.Where(f => f.FieldType == typeof(int) || f.FieldType == typeof(bool) || f.FieldType == typeof(double))
+				.ToArray();
+			var transformedFields = transformedObject
+				.GetType()
+				.GetFields(flags)
+				.Where(f => f.FieldType == typeof(int) || f.FieldType == typeof(bool) || f.FieldType == typeof(double))
+				.ToArray();
 
 			for (var i = 0; i < parameters.Length; ++i)
 			{
@@ -66,12 +76,18 @@ namespace Tests.Execution
 					Assert.NotReached("Unknown parameter type '{0}'.", parameters[i].ParameterType);
 			}
 
+			output.WriteLine("--------------------------------------");
+			output.WriteLine("Testing '{0}'", originalMethod);
+			output.WriteLine("--------------------------------------");
 			for (var i = 0; i < _testCount; ++i)
 			{
+				output.WriteLine("----- Inputs -----");
 				for (var j = 0; j < originalArguments.Length; ++j)
 				{
 					originalArguments[j] = valueFactories[j]();
 					transformedArguments[j] = originalArguments[j];
+
+					output.WriteLine("{0} = {1}", parameters[j].Name, originalArguments[j]);
 				}
 
 				var originalResult = originalMethod.Invoke(originalObject, originalArguments);
@@ -80,14 +96,18 @@ namespace Tests.Execution
 				transformedResult.ShouldBe(originalResult);
 				transformedArguments.ShouldBe(originalArguments);
 
-				foreach (var field in Fields)
-					field.GetValue(transformedObject).ShouldBe(field.GetValue(originalObject));
+				for (var j = 0; j < originalFields.Length; ++j)
+				{
+					output.WriteLine("Comparing field '{0}'", originalFields[j]);
+					var transformedField = transformedFields.Single(f => f.Name == originalFields[j].Name && f.FieldType == originalFields[j].FieldType);
+					transformedField.GetValue(transformedObject).ShouldBe(originalFields[j].GetValue(originalObject));
+				}
 			}
 		}
 
 		private static object RandomInt32()
 		{
-			return _random.Next() - _random.Next();
+			return _random.Next(-1000, 1000);
 		}
 
 		private static object RandomBoolean()
@@ -143,11 +163,8 @@ namespace Tests.Execution
 								 m.ReturnType == originalMethod.ReturnType &&
 								 m.GetParameters().Select(p => p.ParameterType).SequenceEqual(originalMethod.GetParameters().Select(p => p.ParameterType)));
 
-				methodInfo.Attribute.ExecuteTests(originalObj, transformedObj, originalMethod, transformedMethod);
+				methodInfo.Attribute.ExecuteTests(TestOutput, originalObj, transformedObj, originalMethod, transformedMethod);
 			}
-
-			foreach (var field in methods[0].Attribute.Fields)
-				Log("Tested field: {0}", field);
 		}
 	}
 
