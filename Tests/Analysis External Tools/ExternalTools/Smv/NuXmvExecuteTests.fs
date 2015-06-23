@@ -47,25 +47,25 @@ module NuXmvExecuteTestsBasic =
     let ``NuXmv starts in interactive mode`` () =
         let nuxmv = ExecuteNuxmv()
         let logFile = "startInteractiveMode.log"
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile //wait infinitely long
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile //wait infinitely long
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         ()
         
     [<Test>]
     let ``Shutdown of NuXmv can be forced`` () =
         let nuxmv = ExecuteNuxmv()
         let logFile = "forceShutdown.log"
-        nuxmv.StartNuXmvInteractive (-1) logFile |> ignore //wait infinitely long
+        nuxmv.StartSmvInteractive (-1) logFile |> ignore //wait infinitely long
         System.Threading.Thread.Sleep (100)
-        nuxmv.ForceShutdownNuXmv ()
+        nuxmv.ForceShutdownSmv ()
         
     [<Test>]
     let ``An echo-command can be executed`` () =
         let nuxmv = ExecuteNuxmv()
         let logFile = "echo.log"
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile |> ignore //wait infinitely long
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile |> ignore //wait infinitely long
         let outputTupleEcho = nuxmv.ExecuteAndIntepretCommand(NuSMVCommand.Echo("verbose_level"))
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputTupleEcho.HasSucceeded =? true
         
     //[<Test>]
@@ -75,31 +75,30 @@ module NuXmvExecuteTestsBasic =
 
 [<TestFixture>]
 module NuXmvExecuteTestsWithPrebuildModels =
+    let inputFile (testname:string) = """../../Examples/Smv/""" + testname
 
     [<Test>]
     let ``NuXmv doesn't read a file with an incomplete case distinction`` () =        
-        let filename = "Modelchecking/NuXmv/incomplete-case-distinction.smv"
+        let testname = SmvModels.``incomplete-case-distinction``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``incomplete-case-distinction``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? false
         outputResultBuildBdd.FailedCommand.IsSome =? true
         outputResultBuildBdd.FailedCommand.Value.Basic.Command =? (NuSMVCommand.BuildModel :> ICommand)
         
     [<Test>]
     let ``NuXmv doesn't read a file with an incomplete instantiation`` () =        
-        let filename = "Modelchecking/NuXmv/incomplete-instantiation.smv"
+        let testname = SmvModels.``incomplete-instantiation``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``incomplete-instantiation``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? false
         outputResultBuildBdd.FailedCommand.IsSome =? true
         outputResultBuildBdd.FailedCommand.Value.Basic.Command =? (NuSMVCommand.FlattenHierarchy :> ICommand)
@@ -107,18 +106,17 @@ module NuXmvExecuteTestsWithPrebuildModels =
     // interpretation of check_fsm
     [<Test>]
     let ``NuXmv doesn't read a file which is not fully defined 1`` () =        
-        let filename = "Modelchecking/NuXmv/not-fully-defined1.smv"
+        let testname = SmvModels.``not-fully-defined1``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``not-fully-defined1``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTupleCheckFsm = nuxmv.ExecuteCommand NuSMVCommand.CheckFsm
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? true
         outputTupleCheckFsm.HasSucceeded =? true
-        let checkFsmResultInterpreted = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm outputTupleCheckFsm
+        let checkFsmResultInterpreted = SmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm outputTupleCheckFsm
         checkFsmResultInterpreted.IsDeadlockFree =? false
         checkFsmResultInterpreted.IsTotal =? false
 
@@ -126,18 +124,17 @@ module NuXmvExecuteTestsWithPrebuildModels =
     // interpretation of check_fsm
     [<Test>]
     let ``NuXmv doesn't read a file which is not fully defined 2`` () =        
-        let filename = "Modelchecking/NuXmv/not-fully-defined2.smv"
+        let testname = SmvModels.``not-fully-defined2``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``not-fully-defined2``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTupleCheckFsm = nuxmv.ExecuteCommand NuSMVCommand.CheckFsm
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? true
         outputTupleCheckFsm.HasSucceeded =? true
-        let checkFsmResultInterpreted = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm outputTupleCheckFsm
+        let checkFsmResultInterpreted = SmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm outputTupleCheckFsm
         checkFsmResultInterpreted.IsDeadlockFree =? true
         checkFsmResultInterpreted.IsTotal =? false
 
@@ -145,74 +142,69 @@ module NuXmvExecuteTestsWithPrebuildModels =
     // interpretation of check_fsm
     [<Test>]
     let ``NuXmv reads a file which is fully defined`` () =        
-        let filename = "Modelchecking/NuXmv/fully-defined.smv"
+        let testname = SmvModels.``fully-defined``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``fully-defined``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTupleCheckFsm = nuxmv.ExecuteCommand NuSMVCommand.CheckFsm
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? true
         outputTupleCheckFsm.HasSucceeded =? true
-        let checkFsmResultInterpreted = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm outputTupleCheckFsm
+        let checkFsmResultInterpreted = SmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm outputTupleCheckFsm
         checkFsmResultInterpreted.IsDeadlockFree =? true
         checkFsmResultInterpreted.IsTotal =? true
 
 
     [<Test>]
     let ``NuXmv doesn't read a syntactical wrong model file 1`` () =        
-        let filename = "Modelchecking/NuXmv/wrong-syntax1.smv"
+        let testname = SmvModels.``wrong-syntax1``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``wrong-syntax1``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? false
         outputResultBuildBdd.FailedCommand.IsSome =? true
         outputResultBuildBdd.FailedCommand.Value.Basic.Command =? (NuSMVCommand.FlattenHierarchy :> ICommand)
         
     [<Test>]
     let ``NuXmv doesn't read a syntactical wrong model file 2`` () =        
-        let filename = "Modelchecking/NuXmv/wrong-syntax2.smv"
+        let testname = SmvModels.``wrong-syntax2``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``wrong-syntax2``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputTuple1 = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? false
         outputResultBuildBdd.FailedCommand.IsSome =? true
         outputResultBuildBdd.FailedCommand.Value.Basic.Command =? (NuSMVCommand.ReadModel(filename) :> ICommand)
         
     [<Test>]
     let ``NuXmv reads a file with a simple indeterminisitc model`` () =        
-        let filename = "Modelchecking/NuXmv/simple-indeterministic.smv"
+        let testname = SmvModels.``simple-indeterministic``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``simple-indeterministic``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? true
         outputResultBuildBdd.FailedCommand.IsSome =? false
 
         
     [<Test>]
     let ``NuXmv doesn't read a file which does not respect the range`` () =        
-        let filename = "Modelchecking/NuXmv/range-not-respected.smv"
+        let testname = SmvModels.``range-not-respected``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``range-not-respected``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? false
         outputResultBuildBdd.FailedCommand.IsSome =? true
         outputResultBuildBdd.FailedCommand.Value.Basic.Command =? (NuSMVCommand.BuildModel :> ICommand)
@@ -220,29 +212,27 @@ module NuXmvExecuteTestsWithPrebuildModels =
         
     [<Test>]
     let ``NuXmv reads a file with a simple determinisitc model`` () =        
-        let filename = "Modelchecking/NuXmv/simple-deterministic.smv"
+        let testname = SmvModels.``simple-deterministic``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``simple-deterministic``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         outputResultBuildBdd.HasSucceeded =? true
         outputResultBuildBdd.FailedCommand.IsSome =? false
 
     let internal customCommand (str:string) =
-        ({NuXmvCustomCommand.Command = str})
+        ({SmvCustomCommand.Command = str})
 
     [<Test>]
     let ``NuXmv validates valid ctl- and ltl-formulas and invariants`` () =
-        let filename = "Modelchecking/NuXmv/simple-indeterministic.smv"
+        let testname = SmvModels.``simple-indeterministic``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``simple-indeterministic``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         outputResultBuildBdd.HasSucceeded =? true
         let invariant = "(x=TRUE | x=FALSE)"
         let ctlProperty = sprintf "AG %s" invariant
@@ -259,24 +249,23 @@ module NuXmvExecuteTestsWithPrebuildModels =
         outputCheckPropertyCtl.HasSucceeded =? true
         outputCheckPropertyLtl.HasSucceeded =? true
         outputCheckPropertyInvar.HasSucceeded =? true        
-        let interpretationCtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec outputCheckPropertyCtl
-        let interpretationLtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec outputCheckPropertyLtl
-        let interpretationInvar = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar outputCheckPropertyInvar
+        let interpretationCtl = SmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec outputCheckPropertyCtl
+        let interpretationLtl = SmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec outputCheckPropertyLtl
+        let interpretationInvar = SmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar outputCheckPropertyInvar
         interpretationCtl.Result.IsSpecValid =? true
         interpretationLtl.Result.IsSpecValid =? true
         interpretationInvar.Result.IsSpecValid =? true
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()
         ()
         
     [<Test>]
     let ``NuXmv finds counterexample for invalid ctl- and ltl-formulas and invariants with input as named property`` () =
-        let filename = "Modelchecking/NuXmv/simple-deterministic.smv"
+        let testname = SmvModels.``simple-deterministic``
+        let filename = inputFile testname
         let logFile = filename+".log"
-        let code = SmvModels.``simple-deterministic``
-        FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputResultStart = nuxmv.StartSmvInteractive (-1) logFile
+        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         outputResultBuildBdd.HasSucceeded =? true
         let invariant = "x=TRUE"
         let ctlProperty = sprintf "AG %s" invariant
@@ -293,9 +282,9 @@ module NuXmvExecuteTestsWithPrebuildModels =
         outputCheckPropertyCtl.HasSucceeded =? true
         outputCheckPropertyLtl.HasSucceeded =? true
         outputCheckPropertyInvar.HasSucceeded =? true
-        let interpretationCtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec outputCheckPropertyCtl
-        let interpretationLtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec outputCheckPropertyLtl
-        let interpretationInvar = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar outputCheckPropertyInvar
+        let interpretationCtl = SmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec outputCheckPropertyCtl
+        let interpretationLtl = SmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec outputCheckPropertyLtl
+        let interpretationInvar = SmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar outputCheckPropertyInvar
         interpretationCtl.Result.IsSpecInvalid =? true
         interpretationLtl.Result.IsSpecInvalid =? true
         interpretationInvar.Result.IsSpecInvalid =? true
@@ -303,52 +292,5 @@ module NuXmvExecuteTestsWithPrebuildModels =
         interpretationLtl.Result.HasCounterExample =? true
         interpretationInvar.Result.HasCounterExample =? true
         // TODO: Check Traces
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()        
+        let outputResultQuit = nuxmv.QuitSmvAndWaitForExit()        
         ()        
-    
-[<TestFixture>]
-module NuXmvExecuteTestsWithAstModels =
-    
-    [<Test>]
-    let todo () =
-        ()
-    (*
-    
-    [<Test>]
-    let ``NuXmv finds counterexample for invalid ctl- and ltl-formulas and invariants with input as named property`` () =
-
-    
-    [<Test>]
-    let ``NuXmv validates valid ctl- and ltl-formulas and invariants with direct input`` () =
-    *)
-
-(*
-[<TestFixture>]
-module NuXmvExecuteTestsWithModelFromSafetySharpMetamodel =
-
-    open TestCase1
-    
-    [<Test>]
-    let ``test transformed model`` () =
-        let modelTransformer = MetamodelToNuXmv (testCase1Configuration)        
-        let nuXmvCode = modelTransformer.transformConfiguration
-        let nuXmvWriter = ExportNuXmvAstToFile()
-        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmvCode
-        let filename = "Modelchecking/NuXmv/testcase1.smv"
-        let logFile = filename+".log"
-        FileSystem.WriteToAsciiFile filename nuXmvCodeString
-
-        let nuxmv = ExecuteNuxmv()
-        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
-        let outputResultBuildBddBasic = outputResultBuildBdd.GetBasicResultsOfAllCommand
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
-        let outputUnprocessed = nuxmv.ReturnUnprocessedOutput ()
-
-        let outputTuples = [outputResultStart]@outputResultBuildBddBasic@[outputResultQuit]
-        let resultTuples = outputTuples |> List.map nuxmv.ReturnCommandResult |> String.concat ""
-        let result = resultTuples+outputUnprocessed
-
-        result.Length > 0 =? true
-        ()
-*)

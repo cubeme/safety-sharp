@@ -1,0 +1,7 @@
+MODULE main
+	VAR
+		x : boolean;
+	INIT
+		TRUE
+	TRANS
+		next(x) != FALSE & next(x) != TRUE

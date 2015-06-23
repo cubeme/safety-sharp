@@ -455,59 +455,59 @@ Creating LTL tableau variables...
         let expectationFalse1 = ["A";"AB";"AE"]
         let expectationFalse2 = ["D";"AB";"AD"]
         let expectationFalse3 = ["A";"AB";"AD";"E"]
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationEmpty =? true
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationTrue1 =? true
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse1 =? false
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
+        SmvInterpretResult.linesAsExpectedStr testInput expectationEmpty =? true
+        SmvInterpretResult.linesAsExpectedStr testInput expectationTrue1 =? true
+        SmvInterpretResult.linesAsExpectedStr testInput expectationFalse1 =? false
+        SmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
+        SmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
         
 
     [<Test>]
     let ``interpret failed flatten_command correctly`` () =
         let commandResult= {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.FlattenHierarchy;
-            NuXmvCommandResultBasic.Stderr  = ``flatten_hierarchy-ResultStderrFailed``;
-            NuXmvCommandResultBasic.Stdout  = ``flatten_hierarchy-ResultStdoutFailed``;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.FlattenHierarchy;
+            SmvCommandResultBasic.Stderr  = ``flatten_hierarchy-ResultStderrFailed``;
+            SmvCommandResultBasic.Stdout  = ``flatten_hierarchy-ResultStdoutFailed``;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
-        let interpretedResult = NuXmvInterpretResult.interpretResult commandResult
+        let interpretedResult = SmvInterpretResult.interpretResult commandResult
         interpretedResult.HasSucceeded =? false
         
     [<Test>]
     let ``interpret successful flatten_command correctly`` () =
         let commandResult= {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.FlattenHierarchy;
-            NuXmvCommandResultBasic.Stderr  = ``flatten_hierarchy-ResultStderrSuccess``;
-            NuXmvCommandResultBasic.Stdout  = ``flatten_hierarchy-ResultStdoutSuccess``;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.FlattenHierarchy;
+            SmvCommandResultBasic.Stderr  = ``flatten_hierarchy-ResultStderrSuccess``;
+            SmvCommandResultBasic.Stdout  = ``flatten_hierarchy-ResultStdoutSuccess``;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
-        let interpretedResult = NuXmvInterpretResult.interpretResult commandResult
+        let interpretedResult = SmvInterpretResult.interpretResult commandResult
         interpretedResult.HasSucceeded =? true
                            
     [<Test>]
     let ``interpret result of check_fsm correctly`` () =
         let dummyExpression = SimpleExpression.ConstExpression(ConstExpression.BooleanConstant(true))
         let commandResultCheckFsmNotTotalWithDeadlock = {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckFsm;
-            NuXmvCommandResultBasic.Stderr  = checkFsmNotTotalWithDeadlockStderr;
-            NuXmvCommandResultBasic.Stdout  = checkFsmNotTotalWithDeadlockStdout;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.CheckFsm;
+            SmvCommandResultBasic.Stderr  = checkFsmNotTotalWithDeadlockStderr;
+            SmvCommandResultBasic.Stdout  = checkFsmNotTotalWithDeadlockStdout;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
         let commandResultCheckFsmNotTotalWithoutDeadlock = {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckFsm;
-            NuXmvCommandResultBasic.Stderr  = checkFsmNotTotalWithoutDeadlockStderr;
-            NuXmvCommandResultBasic.Stdout  = checkFsmNotTotalWithoutDeadlockStdout;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.CheckFsm;
+            SmvCommandResultBasic.Stderr  = checkFsmNotTotalWithoutDeadlockStderr;
+            SmvCommandResultBasic.Stdout  = checkFsmNotTotalWithoutDeadlockStdout;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
         let commandResultCheckFsmTotal = {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckFsm;
-            NuXmvCommandResultBasic.Stderr  = checkFsmTotalStderr;
-            NuXmvCommandResultBasic.Stdout  = checkFsmTotalStdout;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.CheckFsm;
+            SmvCommandResultBasic.Stderr  = checkFsmTotalStderr;
+            SmvCommandResultBasic.Stdout  = checkFsmTotalStdout;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
-        let interpretedResultNotTotalWithDeadlock = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm commandResultCheckFsmNotTotalWithDeadlock
-        let interpretedResultNotTotalWithoutDeadlock = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm commandResultCheckFsmNotTotalWithoutDeadlock
-        let interpretedResultTotal = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm commandResultCheckFsmTotal
+        let interpretedResultNotTotalWithDeadlock = SmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm commandResultCheckFsmNotTotalWithDeadlock
+        let interpretedResultNotTotalWithoutDeadlock = SmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm commandResultCheckFsmNotTotalWithoutDeadlock
+        let interpretedResultTotal = SmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm commandResultCheckFsmTotal
         interpretedResultNotTotalWithDeadlock.IsTotal =? false
         interpretedResultNotTotalWithDeadlock.IsDeadlockFree =? false
         interpretedResultNotTotalWithoutDeadlock.IsTotal =? false
@@ -519,26 +519,26 @@ Creating LTL tableau variables...
     let ``interpret successful verifications correctly`` () =
         let dummyExpression = SimpleExpression.ConstExpression(ConstExpression.BooleanConstant(true))
         let commandResultCheckInvar = {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckInvar(dummyExpression);
-            NuXmvCommandResultBasic.Stderr  = checkValidInvariantStderr;
-            NuXmvCommandResultBasic.Stdout  = checkValidInvariantStdout;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.CheckInvar(dummyExpression);
+            SmvCommandResultBasic.Stderr  = checkValidInvariantStderr;
+            SmvCommandResultBasic.Stdout  = checkValidInvariantStdout;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
         let commandResultCheckCtl = {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckCtlSpec(CtlExpression.CtlSimpleExpression(dummyExpression));
-            NuXmvCommandResultBasic.Stderr  = checkValidCtlStderr;
-            NuXmvCommandResultBasic.Stdout  = checkValidCtlStdout;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.CheckCtlSpec(CtlExpression.CtlSimpleExpression(dummyExpression));
+            SmvCommandResultBasic.Stderr  = checkValidCtlStderr;
+            SmvCommandResultBasic.Stdout  = checkValidCtlStdout;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
         let commandResultCheckLtl = {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckLtlSpec(LtlExpression.LtlSimpleExpression(dummyExpression));
-            NuXmvCommandResultBasic.Stderr  = checkValidLtlStderr;
-            NuXmvCommandResultBasic.Stdout  = checkValidLtlStdout;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.CheckLtlSpec(LtlExpression.LtlSimpleExpression(dummyExpression));
+            SmvCommandResultBasic.Stderr  = checkValidLtlStderr;
+            SmvCommandResultBasic.Stdout  = checkValidLtlStdout;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
-        let interpretedResultInvar = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar commandResultCheckInvar
-        let interpretedResultCtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec commandResultCheckCtl
-        let interpretedResultLtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec commandResultCheckLtl
+        let interpretedResultInvar = SmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar commandResultCheckInvar
+        let interpretedResultCtl = SmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec commandResultCheckCtl
+        let interpretedResultLtl = SmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec commandResultCheckLtl
         interpretedResultInvar.Result.IsSpecValid =? true
         interpretedResultCtl.Result.IsSpecValid =? true
         interpretedResultLtl.Result.IsSpecValid =? true
@@ -547,26 +547,26 @@ Creating LTL tableau variables...
     let ``interpret verification result with counterexample correctly`` () =
         let dummyExpression = SimpleExpression.ConstExpression(ConstExpression.BooleanConstant(true))
         let commandResultCheckInvar = {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckInvar(dummyExpression);
-            NuXmvCommandResultBasic.Stderr  = checkInvalidInvariantStderr;
-            NuXmvCommandResultBasic.Stdout  = checkInvalidInvariantStdout;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.CheckInvar(dummyExpression);
+            SmvCommandResultBasic.Stderr  = checkInvalidInvariantStderr;
+            SmvCommandResultBasic.Stdout  = checkInvalidInvariantStdout;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
         let commandResultCheckCtl = {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckCtlSpec(CtlExpression.CtlSimpleExpression(dummyExpression));
-            NuXmvCommandResultBasic.Stderr  = checkInvalidCtlStderr;
-            NuXmvCommandResultBasic.Stdout  = checkInvalidCtlStdout;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.CheckCtlSpec(CtlExpression.CtlSimpleExpression(dummyExpression));
+            SmvCommandResultBasic.Stderr  = checkInvalidCtlStderr;
+            SmvCommandResultBasic.Stdout  = checkInvalidCtlStdout;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
         let commandResultCheckLtl = {
-            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckLtlSpec(LtlExpression.LtlSimpleExpression(dummyExpression));
-            NuXmvCommandResultBasic.Stderr  = checkInvalidLtlStderr;
-            NuXmvCommandResultBasic.Stdout  = checkInvalidLtlStdout;
-            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+            SmvCommandResultBasic.Command = NuSMVCommand.CheckLtlSpec(LtlExpression.LtlSimpleExpression(dummyExpression));
+            SmvCommandResultBasic.Stderr  = checkInvalidLtlStderr;
+            SmvCommandResultBasic.Stdout  = checkInvalidLtlStdout;
+            SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
-        let interpretedResultInvar = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar commandResultCheckInvar
-        let interpretedResultCtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec commandResultCheckCtl
-        let interpretedResultLtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec commandResultCheckLtl
+        let interpretedResultInvar = SmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar commandResultCheckInvar
+        let interpretedResultCtl = SmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec commandResultCheckCtl
+        let interpretedResultLtl = SmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec commandResultCheckLtl
         interpretedResultInvar.Result.IsSpecValid =? false
         match interpretedResultInvar.Result with
             | CheckOfSpecificationDetailedResult.Invalid(Some(counterexample)) ->
@@ -588,14 +588,14 @@ Creating LTL tableau variables...
     
     [<Test>]
     let ``interpret xml counterexample with combinatorial correctly`` () =
-        let interpretedResult = NuXmvInterpretResult.interpretCounterExample counterExampleWithCombinatorialXml
+        let interpretedResult = SmvInterpretResult.interpretCounterExample counterExampleWithCombinatorialXml
         interpretedResult.Loops =? [2; 6]
         interpretedResult.NumberOfLastExplicitStep =? 7
         ()
 
     [<Test>]
     let ``interpret xml counterexample with input variable correctly`` () =
-        let interpretedResult = NuXmvInterpretResult.interpretCounterExample counterExampleWithInputXml
+        let interpretedResult = SmvInterpretResult.interpretCounterExample counterExampleWithInputXml
         interpretedResult.Loops =? [1; 3; 4; 5]
         interpretedResult.NumberOfLastExplicitStep =? 6
         ()

@@ -141,26 +141,26 @@ module internal NuXmvEnvironmentVariables =
         | Bdd
         with interface IEnvironmentVariable
         
-type internal NuXmvCustomCommand =
+type internal SmvCustomCommand =
     {
         Command:string;
     }
     with interface ICommand
     
-type internal NuXmvStartedCommand() =
+type internal SmvStartedCommand() =
     class end
     with interface ICommand
 
 [<RequireQualifiedAccess>]
-type internal NuXmvCommandLine =
+type internal SmvCommandLine =
     | Help
     | Verbose
     | Interactive
     | AvoidLoadingDefaultSettings // -s
 
-module internal NuXmvHelpfulCommandsAndCommandSequences =
-    let commandLineStart = [ NuXmvCommandLine.Verbose; NuXmvCommandLine.Interactive; NuXmvCommandLine.AvoidLoadingDefaultSettings ]
-    let commandLineHelp = [ NuXmvCommandLine.Help ]
+module internal SmvHelpfulCommandsAndCommandSequences =
+    let commandLineStart = [ SmvCommandLine.Verbose; SmvCommandLine.Interactive; SmvCommandLine.AvoidLoadingDefaultSettings ]
+    let commandLineHelp = [ SmvCommandLine.Help ]
 
     let readModel (filename: string ) : ICommand = 
         NuSMVCommand.ReadModel filename :> ICommand
@@ -184,7 +184,7 @@ module internal NuXmvHelpfulCommandsAndCommandSequences =
    
 // for implementation see dependency graph in Figure 3.1: The dependency among NUXMV commands.
 [<RequireQualifiedAccess>]
-type internal NuXmvModeOfProgramm =
+type internal SmvModeOfProgramm =
     | NotStarted
     | InitialOrReseted
     | TechniqueForVerificationSet
@@ -197,31 +197,31 @@ type internal NuXmvModeOfProgramm =
     //| Simulation of TraceNumber:int
     //| TrackCounterexampleTrace of TraceNumber:int
 
-module internal NuXmvCommandHelpers =    
-    let isCommandExecutableInMode (command:ICommand) (mode:NuXmvModeOfProgramm) : bool =
-        let isNuXmvCommandExecutableInMode (command:NuXmvCommand) (mode:NuXmvModeOfProgramm) : bool =
+module internal SmvCommandHelpers =    
+    let isCommandExecutableInMode (command:ICommand) (mode:SmvModeOfProgramm) : bool =
+        let isNuXmvCommandExecutableInMode (command:NuXmvCommand) (mode:SmvModeOfProgramm) : bool =
             true
-        let isNuSMVCommandExecutableInMode (command:NuSMVCommand) (mode:NuXmvModeOfProgramm) : bool =
+        let isNuSMVCommandExecutableInMode (command:NuSMVCommand) (mode:SmvModeOfProgramm) : bool =
             true        
         match command with
-            | :? NuXmvCustomCommand as command -> true
-            | :? NuXmvStartedCommand as command -> if mode = NuXmvModeOfProgramm.NotStarted then true else false
+            | :? SmvCustomCommand as command -> true
+            | :? SmvStartedCommand as command -> if mode = SmvModeOfProgramm.NotStarted then true else false
             | :? NuSMVCommand as command -> isNuSMVCommandExecutableInMode command mode
             | :? NuXmvCommand as command -> isNuXmvCommandExecutableInMode command mode
             | _ -> failwith "NotImplementedYet"
     
     // for implementation see dependency graph in Figure 3.1: The dependency among NUXMV commands.
-    let nextModeOfProgram (command:ICommand) : NuXmvModeOfProgramm=        
-        let nextModeOfProgramNuXmv (command:NuXmvCommand) : NuXmvModeOfProgramm =
+    let nextModeOfProgram (command:ICommand) : SmvModeOfProgramm=        
+        let nextModeOfProgramNuXmv (command:NuXmvCommand) : SmvModeOfProgramm =
             match command with
-                | _ -> NuXmvModeOfProgramm.InitialOrReseted
-        let nextModeOfProgramNuSMV (command:NuSMVCommand) : NuXmvModeOfProgramm =
+                | _ -> SmvModeOfProgramm.InitialOrReseted
+        let nextModeOfProgramNuSMV (command:NuSMVCommand) : SmvModeOfProgramm =
             match command with
-                | NuSMVCommand.Quit -> NuXmvModeOfProgramm.Terminated
-                | _ -> NuXmvModeOfProgramm.InitialOrReseted
+                | NuSMVCommand.Quit -> SmvModeOfProgramm.Terminated
+                | _ -> SmvModeOfProgramm.InitialOrReseted
         match command with
-            | :? NuXmvCustomCommand as command -> NuXmvModeOfProgramm.Unknown
-            | :? NuXmvStartedCommand as command -> NuXmvModeOfProgramm.InitialOrReseted
+            | :? SmvCustomCommand as command -> SmvModeOfProgramm.Unknown
+            | :? SmvStartedCommand as command -> SmvModeOfProgramm.InitialOrReseted
             | :? NuSMVCommand as command -> nextModeOfProgramNuSMV command
             | :? NuXmvCommand as command -> nextModeOfProgramNuXmv command
             | _ -> failwith "NotImplementedYet"

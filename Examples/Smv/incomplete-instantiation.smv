@@ -1,0 +1,6 @@
+MODULE module_a(x,y)
+
+MODULE main
+	VAR
+		x : boolean;
+		y : module_a(x);

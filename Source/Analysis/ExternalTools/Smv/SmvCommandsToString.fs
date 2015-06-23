@@ -155,24 +155,24 @@ module internal SmvCommandsToString =
             | NuXmvCommand.WriteSimplifiedModelFunc  -> failwith "NotImplementedYet"
             | NuXmvCommand.BuildSimplifiedProperty   -> failwith "NotImplementedYet"
 
-    let exportCustomCommand (command:NuXmvCustomCommand) : string =
+    let exportCustomCommand (command:SmvCustomCommand) : string =
         command.Command
     
     let exportICommand (command:ICommand) : string =
         match command with
-            | :? NuXmvCustomCommand as command -> exportCustomCommand command
-            | :? NuXmvStartedCommand as command -> "NuXmv Started"
+            | :? SmvCustomCommand as command -> exportCustomCommand command
+            | :? SmvStartedCommand as command -> "Smv Started"
             | :? NuSMVCommand as command -> exportNuSMVCommand command
             | :? NuXmvCommand as command -> exportNuXmvCommand command
             | _ -> failwith "NotImplementedYet"
 
-    let exportNuXmvCommandLineArgument (argument:NuXmvCommandLine) : string =
+    let exportSmvCommandLineArgument (argument:SmvCommandLine) : string =
         match argument with
-            | NuXmvCommandLine.Help                        -> "-help"
-            | NuXmvCommandLine.Verbose                     -> "-v 1"
-            | NuXmvCommandLine.Interactive                 -> "-int"
-            | NuXmvCommandLine.AvoidLoadingDefaultSettings -> "-s"
+            | SmvCommandLine.Help                        -> "-help"
+            | SmvCommandLine.Verbose                     -> "-v 1"
+            | SmvCommandLine.Interactive                 -> "-int"
+            | SmvCommandLine.AvoidLoadingDefaultSettings -> "-s"
 
-    let exportNuXmvCommandLine (arguments:NuXmvCommandLine list) : string =
-        arguments |> List.map (fun argument -> exportNuXmvCommandLineArgument argument)
+    let exportNuXmvCommandLine (arguments:SmvCommandLine list) : string =
+        arguments |> List.map (fun argument -> exportSmvCommandLineArgument argument)
                   |> String.concat " "

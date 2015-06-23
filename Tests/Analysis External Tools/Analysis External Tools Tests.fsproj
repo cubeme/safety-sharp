@@ -65,13 +65,15 @@
     <Compile Include="..\TestCases\ScmSmokeTests.fs">
       <Link>ScmSmokeTests.fs</Link>
     </Compile>
-    <Compile Include="ExternalTools\NuXmv\NuXmvModels.fs" />
-    <Compile Include="ExternalTools\NuXmv\NuXmvAstToFileTests.fs" />
-    <Compile Include="ExternalTools\NuXmv\NuXmvInterpretResultTests.fs" />
-    <Compile Include="ExternalTools\NuXmv\NuXmvExecuteTests.fs" />
-    <Compile Include="ExternalTools\NuXmv\NuXmvTransformSamTests.fs" />
-    <Compile Include="ExternalTools\NuXmv\NuXmvTransformScmTests.fs" />
-    <Compile Include="ExternalTools\NuXmv\NuXmvCheckSamSmokeTests.fs" />
+    <Compile Include="ExternalTools\Smv\SmvModels.fs" />
+    <Compile Include="ExternalTools\Smv\SmvToStringTests.fs" />
+    <Compile Include="ExternalTools\Smv\SmvTransformSamTests.fs" />
+    <Compile Include="ExternalTools\Smv\SmvTransformScmTests.fs" />
+    <Compile Include="ExternalTools\Smv\NuXmvInterpretResultTests.fs" />
+    <Compile Include="ExternalTools\Smv\NuXmvExecuteTests.fs" />
+    <Compile Include="ExternalTools\Smv\NuXmvCheckSamSmokeTests.fs" />
+    <Compile Include="ExternalTools\Smv\NuSMV2ExecuteTests.fs" />
+    <Compile Include="ExternalTools\Smv\xSAPExecuteTests.fs" />
     <Compile Include="ExternalTools\Promela\PromelaAstToFileTests.fs" />
     <Compile Include="ExternalTools\Promela\PromelaExecuteTests.fs" />
     <Compile Include="ExternalTools\Promela\PromelaTransformSamTests.fs" />

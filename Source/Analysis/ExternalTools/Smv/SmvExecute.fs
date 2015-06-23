@@ -40,17 +40,17 @@ open SafetySharp.ExternalTools
 
 
 // idea:
-// * after each command an 'echo -2 nuXmv finished last command' is appended
-//   using 'set autoexec "echo -2 nuXmv finished last command"'
+// * after each command an 'echo -2 smv finished last command' is appended
+//   using 'set autoexec "echo -2 smv finished last command"'
 //   command finishes, when the stdout "nuXmv > " appears and
 //   the stderr prompt was shown. Thus we can ensure that both stderr and stdout
 //   were parsed until their end
 // * commands can also be separated by ";" so using
-//   'set autoexec "echo nuXmv finished last command; echo -2 nuXmv finished last command"'
+//   'set autoexec "echo smv finished last command; echo -2 smv finished last command"'
 //   could also be used as separation between two commands
 // * Stdout-Thread waits for Stderr-Thread
 //   ExecuteCommand-Thread waits for Stdout-Thread 
-//   We assume after a "nuXmv finished last command" nothing else is written into each Buffer
+//   We assume after a "smv finished last command" nothing else is written into each Buffer
 //   until a new command is executed
 // be cautious:
 //  - the command prompt does "nuXmv >" does not contain a line ending.
@@ -61,16 +61,16 @@ open SafetySharp.ExternalTools
 //    in stdout again (this time with a counter) or forbid chained-Commands to correctly determine the end of a command
 
 // Execution of Threads (usually without any error):
-//         Startup-Phase                                                                                                                                                                                                                 ┆  Command-Phase                                                                                                                                                      ┆ Shutdown-Phase                                                                                                                                                                                                ┆
-//       Start ─── call StartNuXmvInteractive ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  stdoutAndCommandFinishedBlocker.WaitOne ─────┆─ call ExecuteCommand ────────────────────────────────────────────────────────────────────────────────────────────── stdoutAndCommandFinishedBlocker.WaitOne ────────┆─ call QuitNuXmvAndWaitForExit ───────────────────────────────────────────────────────────────────────────────────  stdoutAndCommandFinishedBlocker.WaitOne ─ wait for end of the three threads below ─────────┆─ ...
-//                        ├─ new thread TaskReadStdout ─ TaskReadStdout.newLine* ─ command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ───────────────────────────────┆─ TaskReadStdout.newLine* ─── command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ────────────────┆─────── read StandardOutput.EndOfStream ─ set NuXmvModeOfProgramm.Terminated ─ stderrFinishedBlocker.WaitOne ─  stdoutAndCommandFinishedBlocker.Set ─⊸                                                         ┆
-//                        ├─ new thread TaskReadStderr ─ TaskReadStderr.newLine* ─ command-finished-token in stderr found ── stderrFinishedBlocker.Set ──────────────────────────────────────────────────────────────────────────────────┆─ TaskReadStderr.newline* ─── command-finished-token in stderr found ── stderrFinishedBlocker.Set ───────────────────────────────────────────────────────────────────┆──────────────────────────────────────── read StandardError.EndOfStream ── stderrFinishedBlocker.Set ─⊸                                                                                                        ┆
-//                        └─ new thread TaskWaitForEnd ─ start to wait for process end ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆────────── process ended ───⊸                                                                                                                                                                                  ┆
+//         Startup-Phase                                                                                                                                                                                                                 ┆  Command-Phase                                                                                                                                                      ┆ Shutdown-Phase                                                                                                                                                                                              ┆
+//       Start ─── call StartSmvInteractive ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  stdoutAndCommandFinishedBlocker.WaitOne ───────┆─ call ExecuteCommand ────────────────────────────────────────────────────────────────────────────────────────────── stdoutAndCommandFinishedBlocker.WaitOne ────────┆─ call QuitSmvAndWaitForExit ───────────────────────────────────────────────────────────────────────────────────  stdoutAndCommandFinishedBlocker.WaitOne ─ wait for end of the three threads below ─────────┆─ ...
+//                        ├─ new thread TaskReadStdout ─ TaskReadStdout.newLine* ─ command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ───────────────────────────────┆─ TaskReadStdout.newLine* ─── command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ────────────────┆─────── read StandardOutput.EndOfStream ─ set SmvModeOfProgramm.Terminated ─ stderrFinishedBlocker.WaitOne ─  stdoutAndCommandFinishedBlocker.Set ─⊸                                                         ┆
+//                        ├─ new thread TaskReadStderr ─ TaskReadStderr.newLine* ─ command-finished-token in stderr found ── stderrFinishedBlocker.Set ──────────────────────────────────────────────────────────────────────────────────┆─ TaskReadStderr.newline* ─── command-finished-token in stderr found ── stderrFinishedBlocker.Set ───────────────────────────────────────────────────────────────────┆──────────────────────────────────────── read StandardError.EndOfStream ── stderrFinishedBlocker.Set ─⊸                                                                                                      ┆
+//                        └─ new thread TaskWaitForEnd ─ start to wait for process end ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆────────── process ended ───⊸                                                                                                                                                                                ┆
 //
 // Execution of Threads (with one unsuccessful command which leads to a shutdown):
 //         Startup-Phase                                                                                                                                                                                                                 ┆  Command-Phase            ┆ Shutdown-Phase                                                                                                                                                ┆
-//       Start ─── call StartNuXmvInteractive ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  stdoutAndCommandFinishedBlocker.WaitOne ─────┆─ call ExecuteCommand ─────┆───────────────────────────────────────────────────────────────────────────────────────────────────────────────────── stdoutAndCommandFinishedBlocker.WaitOne ─┆─ ...
-//                        ├─ new thread TaskReadStdout ─ TaskReadStdout.newLine* ─ command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ───────────────────────────────┆─ TaskReadStdout.newLine* ─┆─────── read StandardOutput.EndOfStream ─ set NuXmvModeOfProgramm.Terminated ─ stderrFinishedBlocker.WaitOne ─  stdoutAndCommandFinishedBlocker.Set ─⊸         ┆
+//       Start ─── call StartSmvInteractive ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  stdoutAndCommandFinishedBlocker.WaitOne ───────┆─ call ExecuteCommand ─────┆───────────────────────────────────────────────────────────────────────────────────────────────────────────────────── stdoutAndCommandFinishedBlocker.WaitOne ─┆─ ...
+//                        ├─ new thread TaskReadStdout ─ TaskReadStdout.newLine* ─ command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ───────────────────────────────┆─ TaskReadStdout.newLine* ─┆─────── read StandardOutput.EndOfStream ─ set SmvModeOfProgramm.Terminated ─ stderrFinishedBlocker.WaitOne ─  stdoutAndCommandFinishedBlocker.Set ─⊸           ┆
 //                        ├─ new thread TaskReadStderr ─ TaskReadStderr.newLine* ─ command-finished-token in stderr found ── stderrFinishedBlocker.Set ──────────────────────────────────────────────────────────────────────────────────┆─ TaskReadStderr.newline* ─┆──────────────────────────────────────── read StandardError.EndOfStream ── stderrFinishedBlocker.Set ─⊸                                                        ┆
 //                        └─ new thread TaskWaitForEnd ─ start to wait for process end ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆───────────────────────────┆────────── process ended ───⊸                                                                                                                                  ┆
 // Remark: Unicode characters for visualization found on http://shapecatcher.com/unicode/block/Box_Drawing/
@@ -90,10 +90,10 @@ type internal ExecuteNusmvDerivate () =
     let stdoutAndCommandFinishedBlocker = new System.Threading.AutoResetEvent (false);
     let stderrFinishedBlocker = new System.Threading.AutoResetEvent (false);
     let mutable activeCommand : ICommand option =  None
-    let mutable lastCommandResult : NuXmvCommandResultBasic option = None
+    let mutable lastCommandResult : SmvCommandResultBasic option = None
 
     let mutable currentTechniqueForVerification = SmvCurrentTechniqueForVerification.NotDetermined
-    let mutable currentModeOfProgram = NuXmvModeOfProgramm.NotStarted
+    let mutable currentModeOfProgram = SmvModeOfProgramm.NotStarted
     
     let stdoutOutputBuffer = new System.Text.StringBuilder ()
     let stderrOutputBuffer = new System.Text.StringBuilder ()
@@ -133,10 +133,10 @@ type internal ExecuteNusmvDerivate () =
         let FinishCommandAndReleaseBlocker () =
             if activeCommand.IsSome then 
                 let newFinishedCommand = {
-                    NuXmvCommandResultBasic.Command = activeCommand.Value;
-                    NuXmvCommandResultBasic.Stdout = stdoutOutputBuffer.ToString();
-                    NuXmvCommandResultBasic.Stderr = stderrOutputBuffer.ToString();
-                    NuXmvCommandResultBasic.Failure = None; //Assume no failure occurred. If a failure occurred, ExecuteCommand detects it and corrects the result
+                    SmvCommandResultBasic.Command = activeCommand.Value;
+                    SmvCommandResultBasic.Stdout = stdoutOutputBuffer.ToString();
+                    SmvCommandResultBasic.Stderr = stderrOutputBuffer.ToString();
+                    SmvCommandResultBasic.Failure = None; //Assume no failure occurred. If a failure occurred, ExecuteCommand detects it and corrects the result
                 }
                 lastCommandResult <-  Some(newFinishedCommand)
                 activeCommand <- None
@@ -176,8 +176,8 @@ type internal ExecuteNusmvDerivate () =
                 // we set the currentModeOfProgram here, because only here we can assure, that
                 //    * we read everything from stderr
                 //    * the main thread still waits in ExecuteCommand and there is no race-condition between the
-                //      current command and a next command, which cannot be processed anymore, because nuXmv terminated.
-                currentModeOfProgram<-NuXmvModeOfProgramm.Terminated //must occur before FinishCommandAndReleaseBlocker
+                //      current command and a next command, which cannot be processed anymore, because smv terminated.
+                currentModeOfProgram<-SmvModeOfProgramm.Terminated //must occur before FinishCommandAndReleaseBlocker
                 stderrFinishedBlocker.WaitOne() |> ignore
                 FinishCommandAndReleaseBlocker ()
                 ()
@@ -194,12 +194,12 @@ type internal ExecuteNusmvDerivate () =
                     true
         )
     
-    member this.ExecuteCommand (command:ICommand) : NuXmvCommandResultBasic =
+    member this.ExecuteCommand (command:ICommand) : SmvCommandResultBasic =
         // if a command is currently executing, wait
         // TODO: I think we can safely remove this mutex
         commandActiveMutex.WaitOne() |> ignore
 
-        if currentModeOfProgram <> NuXmvModeOfProgramm.Terminated then
+        if currentModeOfProgram <> SmvModeOfProgramm.Terminated then
         
             activeCommand <- Some(command)
             // NuXmv uses GNU readline and accepts commands from it. So it might be necessary to strip anything
@@ -210,11 +210,11 @@ type internal ExecuteNusmvDerivate () =
 
             let resultFailureUnconsidered = lastCommandResult.Value            
             let resultFailureConsidered =
-                if currentModeOfProgram = NuXmvModeOfProgramm.Terminated then
+                if currentModeOfProgram = SmvModeOfProgramm.Terminated then
                     // command was executed unsuccessfully (if it was not the quit-command)
                     // and lead to the termination of nuXmv
                     {
-                        resultFailureUnconsidered with NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.NotDeterminedYet)
+                        resultFailureUnconsidered with SmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.NotDeterminedYet)
                     }
                 else
                     // command was executed successfully
@@ -226,45 +226,45 @@ type internal ExecuteNusmvDerivate () =
         else
             commandActiveMutex.ReleaseMutex()            
             {
-                NuXmvCommandResultBasic.Command=command;
-                NuXmvCommandResultBasic.Stderr="";
-                NuXmvCommandResultBasic.Stdout="";
-                NuXmvCommandResultBasic.Failure=Some(CommandResultProcessingFailure.NuXmvShutdown);
+                SmvCommandResultBasic.Command=command;
+                SmvCommandResultBasic.Stderr="";
+                SmvCommandResultBasic.Stdout="";
+                SmvCommandResultBasic.Failure=Some(CommandResultProcessingFailure.NuXmvShutdown);
             }
 
     
     // return Task, which can be awaited for
-    member this.ExecuteCommandAsync (command:ICommand) : System.Threading.Tasks.Task<NuXmvCommandResultBasic> =
+    member this.ExecuteCommandAsync (command:ICommand) : System.Threading.Tasks.Task<SmvCommandResultBasic> =
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> this.ExecuteCommand command
         )
     
-    member this.ExecuteAndIntepretCommand (command:ICommand) : INuXmvCommandResult =
+    member this.ExecuteAndIntepretCommand (command:ICommand) : ISmvCommandResult =
         command |> this.ExecuteCommand
-                |> NuXmvInterpretResult.interpretResult
+                |> SmvInterpretResult.interpretResult
 
-    member this.ExecuteAndIntepretCommandSequence (commands:ICommand list) : NuXmvCommandResultsInterpreted =
-        let rec processCommands (alreadySuccessfullyProcessedReverse:INuXmvCommandResult list) (commands) =
+    member this.ExecuteAndIntepretCommandSequence (commands:ICommand list) : SmvCommandResultsInterpreted =
+        let rec processCommands (alreadySuccessfullyProcessedReverse:ISmvCommandResult list) (commands) =
             match commands with
                 | command :: tail ->
                     let result = this.ExecuteCommand command
-                    let interpretedResult = NuXmvInterpretResult.interpretResult result
+                    let interpretedResult = SmvInterpretResult.interpretResult result
                     if interpretedResult.HasSucceeded then
                             processCommands (interpretedResult::alreadySuccessfullyProcessedReverse) tail
                     else
                         let successful = alreadySuccessfullyProcessedReverse |> List.rev
-                        NuXmvCommandResultsInterpreted.OneFailed(successful,interpretedResult)
+                        SmvCommandResultsInterpreted.OneFailed(successful,interpretedResult)
                 | [] ->
                     let successful = alreadySuccessfullyProcessedReverse |> List.rev
-                    NuXmvCommandResultsInterpreted.AllSuccessful(successful)        
+                    SmvCommandResultsInterpreted.AllSuccessful(successful)        
         commands |> processCommands []
         
     member this.ExecuteCommandString (command:string) =
-        this.ExecuteCommand {NuXmvCustomCommand.Command = command};
+        this.ExecuteCommand {SmvCustomCommand.Command = command};
 
     member this.IsToolRunable () : bool =
         use proc = new System.Diagnostics.Process()        
-        proc.StartInfo.Arguments <- SmvCommandsToString.exportNuXmvCommandLine NuXmvHelpfulCommandsAndCommandSequences.commandLineHelp
+        proc.StartInfo.Arguments <- SmvCommandsToString.exportNuXmvCommandLine SmvHelpfulCommandsAndCommandSequences.commandLineHelp
         proc.StartInfo.FileName <- this.FindTool ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
@@ -284,13 +284,13 @@ type internal ExecuteNusmvDerivate () =
             | _ -> false
 
 
-    member this.StartNuXmvInteractive (timeInMs:int) (pathToLog:string) : NuXmvCommandResultBasic =
-        let initialCommand = NuXmvStartedCommand() :> ICommand
+    member this.StartSmvInteractive (timeInMs:int) (pathToLog:string) : SmvCommandResultBasic =
+        let initialCommand = SmvStartedCommand() :> ICommand
         activeCommand<-Some(initialCommand) 
         commandActiveMutex.WaitOne() |> ignore
         
         // TODO: check if already started
-        proc.StartInfo.Arguments <- SmvCommandsToString.exportNuXmvCommandLine (NuXmvHelpfulCommandsAndCommandSequences.commandLineStart)
+        proc.StartInfo.Arguments <- SmvCommandsToString.exportNuXmvCommandLine (SmvHelpfulCommandsAndCommandSequences.commandLineStart)
         proc.StartInfo.FileName <- this.FindTool ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
@@ -306,14 +306,14 @@ type internal ExecuteNusmvDerivate () =
         processWaiter <- this.TaskWaitForEnd (timeInMs)
         
         // this.ExecuteCommand cannot be used during initialization, so use StandardInput directly
-        let quitOnFailure = SmvCommandsToString.exportICommand NuXmvHelpfulCommandsAndCommandSequences.enableOnFailureScriptQuits
+        let quitOnFailure = SmvCommandsToString.exportICommand SmvHelpfulCommandsAndCommandSequences.enableOnFailureScriptQuits
         proc.StandardInput.WriteLine(quitOnFailure)
-        let switchToXmlOutput = SmvCommandsToString.exportICommand NuXmvHelpfulCommandsAndCommandSequences.switchToXmlOutput
+        let switchToXmlOutput = SmvCommandsToString.exportICommand SmvHelpfulCommandsAndCommandSequences.switchToXmlOutput
         proc.StandardInput.WriteLine(switchToXmlOutput)
         // indication must be the last command!!!
         let enableIndicationOfCommandEnd =
             let commandForAutoexec = sprintf "echo %s; echo -2 %s" commandEndingStringStdout commandEndingStringStderr
-            SmvCommandsToString.exportICommand (NuXmvHelpfulCommandsAndCommandSequences.setAutoexec commandForAutoexec)            
+            SmvCommandsToString.exportICommand (SmvHelpfulCommandsAndCommandSequences.setAutoexec commandForAutoexec)            
         proc.StandardInput.WriteLine(enableIndicationOfCommandEnd) 
 
         stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
@@ -322,11 +322,11 @@ type internal ExecuteNusmvDerivate () =
         result.Value
                            
                        
-    member this.ForceShutdownNuXmv () =
-        currentModeOfProgram <- NuXmvModeOfProgramm.Terminated
+    member this.ForceShutdownSmv () =
+        currentModeOfProgram <- SmvModeOfProgramm.Terminated
         proc.Kill()
 
-    member this.QuitNuXmvAndWaitForExit () =
+    member this.QuitSmvAndWaitForExit () =
         let result = this.ExecuteCommand NuSMVCommand.Quit
         System.Threading.Tasks.Task.WaitAll(processOutputReader,processErrorReader,processWaiter)
         let exitCode = proc.ExitCode
@@ -337,7 +337,7 @@ type internal ExecuteNusmvDerivate () =
     // Debugging helpers
     /////////////////////////////
         
-    member this.ReturnCommandResult (entry:INuXmvCommandResult) : string = 
+    member this.ReturnCommandResult (entry:ISmvCommandResult) : string = 
         let stringBuilder = new System.Text.StringBuilder()
         stringBuilder.AppendLine ((SmvCommandsToString.exportICommand entry.Basic.Command)) |> ignore
         stringBuilder.AppendLine ("stdout:\n" + entry.Basic.Stdout) |> ignore
@@ -364,7 +364,32 @@ type internal ExecuteNusmvDerivate () =
 
 
         
-type internal ExecuteNusmv2 = unit
+type internal ExecuteNusmv2 () = 
+    inherit ExecuteNusmvDerivate ()
+
+    static member FindNuSMV (): string =
+        let tryCandidate (filename:string) : bool =
+            System.IO.File.Exists filename
+        let candidatesManual = [
+            "..\\..\\Dependencies\\NuSMV\\NuSMV.exe";
+        ]
+        let candidatesOfPath =
+            let paths=System.Environment.GetEnvironmentVariable("PATH").Split(';')
+            paths |> Array.map (fun path -> System.IO.Path.Combine(path,"NuSMV.exe"))
+                  |> Array.toList
+        let candidateOfNuXmvPath =
+            let path=System.Environment.GetEnvironmentVariable("NUSMV_DIR")
+            if path = null then
+                []
+            else
+                [System.IO.Path.Combine(path,"NuSMV.exe")]
+        let candidates = candidateOfNuXmvPath @ candidatesManual @ candidatesOfPath
+        match candidates |> Seq.tryFind tryCandidate with
+            | Some(filename) -> filename
+            | None -> failwith "Please add NuSMV installation folder into PATH\n or set the environmental variable NUSMV_DIR\n or copy NuSMV-executable into the dependency folder (Dependencies\\NuSMV\\NuSMV.exe). You can download NuSMV from http://nusmv.fbk.eu"
+
+    override this.FindTool () : string = ExecuteNusmv2.FindNuSMV ()
+    override this.promptString with get() = "NuSMV > "
 
 type internal ExecuteNuxmv () = 
     inherit ExecuteNusmvDerivate ()
@@ -373,7 +398,7 @@ type internal ExecuteNuxmv () =
         let tryCandidate (filename:string) : bool =
             System.IO.File.Exists filename
         let candidatesManual = [
-            "..\\..\\..\\..\\Dependencies\\NuXmv.exe";
+            "..\\..\\Dependencies\\NuXmv\\NuXmv.exe";
         ]
         let candidatesOfPath =
             let paths=System.Environment.GetEnvironmentVariable("PATH").Split(';')
@@ -388,9 +413,34 @@ type internal ExecuteNuxmv () =
         let candidates = candidateOfNuXmvPath @ candidatesManual @ candidatesOfPath
         match candidates |> Seq.tryFind tryCandidate with
             | Some(filename) -> filename
-            | None -> failwith "Please add NuXmv installation folder into PATH\n or set the environmental variable NUXMV_PATH\n or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
+            | None -> failwith "Please add NuXmv installation folder into PATH\n or set the environmental variable NUXMV_DIR\n or copy NuXmv-executable into the dependency folder (Dependencies\\NuXmv\\\NuXmv.exe). You can download NuXmv from http://nuxmv.fbk.eu"
 
     override this.FindTool () : string = ExecuteNuxmv.FindNuXmv ()
     override this.promptString with get() = "nuXmv > "
 
-type internal ExecuteXsap = unit
+type internal ExecuteXsap () = 
+    inherit ExecuteNusmvDerivate ()
+
+    static member FindXSap (): string =
+        let tryCandidate (filename:string) : bool =
+            System.IO.File.Exists filename
+        let candidatesManual = [
+            "..\\..\\Dependencies\\xSAP\\xSAP-win64.exe";
+        ]
+        let candidatesOfPath =
+            let paths=System.Environment.GetEnvironmentVariable("PATH").Split(';')
+            paths |> Array.map (fun path -> System.IO.Path.Combine(path,"xSAP-win64.exe"))
+                  |> Array.toList
+        let candidateOfNuXmvPath =
+            let path=System.Environment.GetEnvironmentVariable("XSAP_DIR")
+            if path = null then
+                []
+            else
+                [System.IO.Path.Combine(path,"xSAP-win64.exe")]
+        let candidates = candidateOfNuXmvPath @ candidatesManual @ candidatesOfPath
+        match candidates |> Seq.tryFind tryCandidate with
+            | Some(filename) -> filename
+            | None -> failwith "Please add xSAP installation folder into PATH\n or set the environmental variable XSAP_DIR\n or copy xSAP-executable into the dependency folder (Dependencies\\xSAP\xSAP-win64.exe). You can download xSAP from https://es-static.fbk.eu/tools/xsap/"
+
+    override this.FindTool () : string = ExecuteXsap.FindXSap ()
+    override this.promptString with get() = "xSAP > "

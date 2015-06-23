@@ -43,23 +43,23 @@ type CommandResultProcessingFailure =
     | SemanticalError
     | ExecutionTimeExceeded
 
-type internal INuXmvCommandResult =
+type internal ISmvCommandResult =
     interface
-        abstract member Basic : NuXmvCommandResultBasic
+        abstract member Basic : SmvCommandResultBasic
         abstract member HasSucceeded : bool
     end
 
-and internal NuXmvCommandResultBasic = {
+and internal SmvCommandResultBasic = {
     Command : ICommand;
     Stderr : string;
     Stdout : string;
     Failure : CommandResultProcessingFailure option;
 }   with
-        interface INuXmvCommandResult with
+        interface ISmvCommandResult with
             member this.Basic = this
             member this.HasSucceeded =
                 this.Failure.IsNone
-        // to allow access without casting to ":> INuXmvCommandResult"
+        // to allow access without casting to ":> ISmvCommandResult"
         member this.HasSucceeded =
                 this.Failure.IsNone
 
@@ -238,17 +238,17 @@ type internal CheckOfSpecificationDetailedResult =
                 | _ -> failwith "no counterexample provided"
 
 type internal NuXmvCommandResultInterpretedCheckOfSpecification = {
-    Basic : NuXmvCommandResultBasic;
+    Basic : SmvCommandResultBasic;
     Result : CheckOfSpecificationDetailedResult;
 }
 
 type internal NuXmvCommandResultInterpretedCheckFsm = {
-    Basic : NuXmvCommandResultBasic;
+    Basic : SmvCommandResultBasic;
     IsTotal : bool;
     IsDeadlockFree : bool;
 }
     with
-        interface INuXmvCommandResult with
+        interface ISmvCommandResult with
             member this.Basic = this.Basic
             member this.HasSucceeded =
                 this.Basic.HasSucceeded
@@ -258,11 +258,11 @@ type internal NuXmvCommandResultInterpretedCheckFsm = {
 
 
 type internal NuXmvCommandResultInterpretedBasic = {
-    Basic : NuXmvCommandResultBasic;
+    Basic : SmvCommandResultBasic;
     Successful : bool;
 }
     with
-        interface INuXmvCommandResult with
+        interface ISmvCommandResult with
             member this.Basic = this.Basic
             member this.HasSucceeded =
                 this.Successful
@@ -270,9 +270,9 @@ type internal NuXmvCommandResultInterpretedBasic = {
                 this.Successful
     
 
-type internal NuXmvCommandResultsInterpreted =
-    | AllSuccessful of Successful:INuXmvCommandResult list
-    | OneFailed of Successful:INuXmvCommandResult list * Failed:INuXmvCommandResult
+type internal SmvCommandResultsInterpreted =
+    | AllSuccessful of Successful:ISmvCommandResult list
+    | OneFailed of Successful:ISmvCommandResult list * Failed:ISmvCommandResult
     with
         member this.HasSucceeded =
             match this with
@@ -296,7 +296,7 @@ type internal NuXmvCommandResultsInterpreted =
                 | OneFailed (successful,failed) -> successful@[failed] |> List.map (fun result -> result.Basic)
     end
 
-module internal NuXmvInterpretResult =
+module internal SmvInterpretResult =
     //////////////////////////////////////
     // helpers
     //////////////////////////////////////
@@ -316,7 +316,7 @@ module internal NuXmvInterpretResult =
         regex.IsMatch(str)
     
     // this should only be used for commands, where the result doesn't need further interpretation
-    let successFromBool (success:bool) (result:NuXmvCommandResultBasic) : INuXmvCommandResult =
+    let successFromBool (success:bool) (result:SmvCommandResultBasic) : ISmvCommandResult =
         let newResult =
             if success then 
                 {
@@ -325,13 +325,13 @@ module internal NuXmvInterpretResult =
                 }
             else
                 {
-                    NuXmvCommandResultInterpretedBasic.Basic= {result with NuXmvCommandResultBasic.Failure=Some(CommandResultProcessingFailure.Unclear)};
+                    NuXmvCommandResultInterpretedBasic.Basic= {result with SmvCommandResultBasic.Failure=Some(CommandResultProcessingFailure.Unclear)};
                     NuXmvCommandResultInterpretedBasic.Successful=false;
                 }
-        newResult :> INuXmvCommandResult
+        newResult :> ISmvCommandResult
             
     // this should only be used for commands, where the result doesn't need further interpretation
-    let otherwise (result:NuXmvCommandResultBasic) : INuXmvCommandResult=
+    let otherwise (result:SmvCommandResultBasic) : ISmvCommandResult=
         successFromBool (result.HasSucceeded) result
 
     let regexOption = System.Text.RegularExpressions.RegexOptions.Singleline ||| System.Text.RegularExpressions.RegexOptions.Multiline
@@ -347,18 +347,18 @@ module internal NuXmvInterpretResult =
     //       http://www.regular-expressions.info/catastrophic.html
         
     let regexReadModel = new System.Text.RegularExpressions.Regex("""\AParsing file \".*\" [.][.][.][.][.] done[.]""")
-    let interpretResultOfNuSMVCommandReadModel (result:NuXmvCommandResultBasic) =
+    let interpretResultOfNuSMVCommandReadModel (result:SmvCommandResultBasic) =
         let success = linesAsExpectedRegex result.Stderr regexReadModel
         successFromBool success result
 
-    let interpretResultOfNuSMVCommandFlattenHierarchy (result:NuXmvCommandResultBasic) =
+    let interpretResultOfNuSMVCommandFlattenHierarchy (result:SmvCommandResultBasic) =
         let success = linesAsExpectedStr result.Stderr ["Flattening hierarchy...";"...done"]
         successFromBool success result
             
     let regexCheckFsmTotal = new System.Text.RegularExpressions.Regex("""^The transition relation is total""",regexOption)
     let regexCheckFsmNotTotalWithDeadlock = new System.Text.RegularExpressions.Regex("""^The transition relation is not total.*The transition relation is not deadlock-free""",regexOption)
     let regexCheckFsmNotTotalWithoutDeadlock = new System.Text.RegularExpressions.Regex("""^The transition relation is not total.*so the machine is deadlock-free""",regexOption)
-    let interpretResultOfNuSMVCommandCheckFsm (result:NuXmvCommandResultBasic) =
+    let interpretResultOfNuSMVCommandCheckFsm (result:SmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckFsmTotal then
             {
                 NuXmvCommandResultInterpretedCheckFsm.Basic=result;
@@ -389,7 +389,7 @@ module internal NuXmvInterpretResult =
     
     let regexCheckCtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true([\r])?$""",regexOption) //[\r]? is because on windows systems newline is not \n but \r\n
     let regexCheckCtlSpecInvalid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
-    let interpretResultOfNuSMVCommandCheckCtlSpec (result:NuXmvCommandResultBasic) =
+    let interpretResultOfNuSMVCommandCheckCtlSpec (result:SmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckCtlSpecValid then
             {
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
@@ -406,7 +406,7 @@ module internal NuXmvInterpretResult =
         
     let regexCheckLtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true([\r])?$""",regexOption) //[\r]? is because on windows systems newline is not \n but \r\n
     let regexCheckLtlSpecInvalid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
-    let interpretResultOfNuSMVCommandCheckLtlSpec (result:NuXmvCommandResultBasic) =
+    let interpretResultOfNuSMVCommandCheckLtlSpec (result:SmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckLtlSpecValid then
             {
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
@@ -423,7 +423,7 @@ module internal NuXmvInterpretResult =
         
     let regexCheckInvarValid = new System.Text.RegularExpressions.Regex("""\A-- invariant .* is true([\r])?$""",regexOption) //[\r]? is because on windows systems newline is not \n but \r\n
     let regexCheckInvarInvalid = new System.Text.RegularExpressions.Regex("""\A-- invariant .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
-    let interpretResultOfNuSMVCommandCheckInvar (result:NuXmvCommandResultBasic) =
+    let interpretResultOfNuSMVCommandCheckInvar (result:SmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckInvarValid then
             {
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
@@ -443,19 +443,19 @@ module internal NuXmvInterpretResult =
     //////////////////////////////////////
     
 
-    let interpretResultOfNuXmvCommand (result:NuXmvCommandResultBasic) (command:NuXmvCommand) : INuXmvCommandResult =
+    let interpretResultOfNuXmvCommand (result:SmvCommandResultBasic) (command:NuXmvCommand) : ISmvCommandResult =
         match command with
             | _ -> otherwise result
 
         
-    let interpretResultOfNuSMVCommand (result:NuXmvCommandResultBasic) (command:NuSMVCommand) : INuXmvCommandResult =
+    let interpretResultOfNuSMVCommand (result:SmvCommandResultBasic) (command:NuSMVCommand) : ISmvCommandResult =
         match command with
             | NuSMVCommand.ReadModel (_) ->    interpretResultOfNuSMVCommandReadModel result
             | NuSMVCommand.FlattenHierarchy -> interpretResultOfNuSMVCommandFlattenHierarchy result 
-            | NuSMVCommand.CheckFsm ->         (interpretResultOfNuSMVCommandCheckFsm result) :> INuXmvCommandResult
+            | NuSMVCommand.CheckFsm ->         (interpretResultOfNuSMVCommandCheckFsm result) :> ISmvCommandResult
             | _ -> otherwise result
     
-    let interpretResult (result:NuXmvCommandResultBasic) : INuXmvCommandResult =
+    let interpretResult (result:SmvCommandResultBasic) : ISmvCommandResult =
         match result.Command with
             | :? NuSMVCommand as command -> interpretResultOfNuSMVCommand result command
             | :? NuXmvCommand as command -> interpretResultOfNuXmvCommand result command

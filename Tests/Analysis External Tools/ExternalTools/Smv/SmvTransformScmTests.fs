@@ -1,6 +1,6 @@
 ﻿// The MIT License (MIT)
 // 
-// Copyright (c) 2014-2015, Institute for Software & Systems Engineering
+// Copyright (c) 2014-2015, Institute for Software & Systems Engineeringgineering
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.ExternalTools
-
+    
 open Xunit
 open Xunit.Abstractions
 
@@ -30,27 +30,29 @@ open SafetySharp.Workflow
 open SafetySharp.ExternalTools.Smv
 open SafetySharp.EngineOptions
 
-type SamToNuXmvTests (xunitOutput:ITestOutputHelper) =
+type ScmToNuXmvTests (xunitOutput:ITestOutputHelper) =
 
-    static member testdataAll = TestCases.SamSmokeTests.smoketestsAll
-    static member testdataDeterministic = TestCases.SamSmokeTests.smoketestsDeterministic        
+
+    static member testdataAll = TestCases.ScmSmokeTests.smoketestsAll
+    static member testdataDeterministic = TestCases.ScmSmokeTests.smoketestsDeterministic        
         
     [<Theory>]
     [<MemberData("testdataDeterministic")>]
-    member this.``smoke tests gets converted to NuXmv (gwam method)`` (testname:string) =    
+    member this.``check smoke tests with NuXmvGwamCheckSamSmokeTests`` (testname:string) =    
 
         let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
             let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/NuXmv/TransformedSamGwam.Generated"
+            let newDirectory = "../../Examples/Smv/TransformedScmGwam.Generated"
             SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
 
-        let inputFile = """../../Examples/SAM/""" + testname
+        let inputFile = """../../Examples/SCM/""" + testname
         
         let smokeTestWorkflow = workflow {
                 do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
                 do! readFile inputFile
                 do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
-                do! SafetySharp.Models.SamParser.parseStringWorkflow
+                do! SafetySharp.Models.ScmParser.parseStringWorkflow ()                
+                do! SafetySharp.Models.ScmToSam.transformIscmToSam
                 do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
                 do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
@@ -63,41 +65,12 @@ type SamToNuXmvTests (xunitOutput:ITestOutputHelper) =
                 let outputFile = inputFileNameToOutputFileName inputFile
                 do! printToFile outputFile
             }
+
         let runSmokeTest (inputFile) =
             SafetySharp.Workflow.runWorkflow_getState smokeTestWorkflow
         let output = runSmokeTest inputFile
         do xunitOutput.WriteLine (sprintf "%s" output)
         ()
 
-        
-    [<Theory>]
-    [<MemberData("testdataDeterministic")>]
-    member this.``smoke tests gets converted to NuXmv (sp method)`` (testname:string) =    
+           
 
-        let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
-            let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/NuXmv/TransformedSamSp.Generated"
-            SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
-
-        let inputFile = """../../Examples/SAM/""" + testname
-        
-        let smokeTestWorkflow = workflow {
-                do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
-                do! readFile inputFile
-                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
-                do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-                do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
-                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
-                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
-                do! SafetySharp.ExternalTools.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
-                do! SafetySharp.ITracing.removeTracing ()
-                do! SafetySharp.ExternalTools.SmvToString.workflow ()
-                let outputFile = inputFileNameToOutputFileName inputFile
-                do! printToFile outputFile
-            }
-        let runSmokeTest (inputFile) =
-            SafetySharp.Workflow.runWorkflow_getState smokeTestWorkflow
-        let output = runSmokeTest inputFile
-        do xunitOutput.WriteLine (sprintf "%s" output)
-        ()

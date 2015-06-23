@@ -159,8 +159,8 @@ module internal AtDccaLtl =
                     do! SafetySharp.ExternalTools.SmvToString.workflow ()
                     let filename = "verification.smv" |> SafetySharp.FileSystem.FileName
                     do! saveToFile filename
-                    do nuxmvExecutor.StartNuXmvInteractive (0) ("verification.smv.log") |> ignore
-                    let readmodel = nuxmvExecutor.ExecuteAndIntepretCommandSequence(SafetySharp.ExternalTools.Smv.NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd "verification.smv")
+                    do nuxmvExecutor.StartSmvInteractive (0) ("verification.smv.log") |> ignore
+                    let readmodel = nuxmvExecutor.ExecuteAndIntepretCommandSequence(SafetySharp.ExternalTools.Smv.SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd "verification.smv")
                     assert readmodel.HasSucceeded
                     return (nuxmvModel,forwardTracer)
             }
@@ -170,7 +170,7 @@ module internal AtDccaLtl =
             let checkFormulaElement (formulaElement:ElementToCheck) =
                     let nuxmvLtl = SafetySharp.ExternalTools.ScmVeToNuXmv.transformLtlExpression forwardTracer formulaElement.CorrespondingFormula
                     let nuXmvResult = nuxmvExecutor.ExecuteCommand(SafetySharp.ExternalTools.Smv.NuSMVCommand.CheckLtlSpec nuxmvLtl)
-                    let nuXmvInterpretation = SafetySharp.ExternalTools.Smv.NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec nuXmvResult
+                    let nuXmvInterpretation = SafetySharp.ExternalTools.Smv.SmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec nuXmvResult
                     (formulaElement.FaultsWhichMayAppear,nuXmvInterpretation)
 
             let checkIfSizeIsSafe (knownUnsafe:Set<FaultPath> list) (size:int) : Set<FaultPath> list = //returns new knownUnsafe
@@ -191,5 +191,5 @@ module internal AtDccaLtl =
             
             let fullDcca : Set<FaultPath> list =
                 {0..numberOfAllFaults} |> Seq.toList |> List.fold checkIfSizeIsSafe ([]:Set<FaultPath> list)
-            do nuxmvExecutor.ForceShutdownNuXmv () 
+            do nuxmvExecutor.ForceShutdownSmv () 
             fullDcca
