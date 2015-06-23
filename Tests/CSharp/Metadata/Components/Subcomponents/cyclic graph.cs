@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.Subcomponents
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -52,6 +53,7 @@ namespace Tests.Metadata.Components.Subcomponents
 			_a = new C6(this);
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Subcomponents.Length.ShouldBe(1);

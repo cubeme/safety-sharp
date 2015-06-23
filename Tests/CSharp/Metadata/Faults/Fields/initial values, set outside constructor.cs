@@ -20,10 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
+
 namespace Tests.Metadata.Faults.Fields
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -40,6 +43,7 @@ namespace Tests.Metadata.Faults.Fields
 			private readonly bool _z = true;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fields.Length.ShouldBe(4);

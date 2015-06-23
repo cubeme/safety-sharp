@@ -23,12 +23,14 @@
 namespace Tests.Metadata.OccurrencePatterns.StepMethods
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
 
 	internal class X3 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].OccurrencePattern.UpdateMethods.Length.ShouldBe(2);

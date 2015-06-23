@@ -20,49 +20,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.Statements
+namespace SafetySharp.Runtime.Expressions
 {
 	using System;
-	using Expressions;
+	using System.Collections.Generic;
 	using MetadataAnalyzers;
 	using Utilities;
 
 	/// <summary>
-	///     Represents an assignment to a field.
+	///     Represents an invocation of a S# method.
 	/// </summary>
-	public sealed class FieldAssignmentStatement : Statement
+	public sealed class MethodInvocationExpression : Expression
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="field">The metadata of the field the <paramref name="expression" /> should be assigned to.</param>
-		/// <param name="expression">The expression representing the value that should be assigned to the <paramref name="field" />.</param>
-		public FieldAssignmentStatement(FieldMetadata field, Expression expression)
+		/// <param name="method">The metadata of the method that should be invoked by the expression.</param>
+		/// <param name="arguments">The arguments the method should be invoked with.</param>
+		public MethodInvocationExpression(MethodMetadata method, params ArgumentExpression[] arguments)
 		{
-			Requires.NotNull(field, () => field);
-			Requires.NotNull(expression, () => expression);
+			Requires.NotNull(method, () => method);
+			Requires.NotNull(arguments, () => arguments);
 
-			Field = field;
-			Expression = expression;
+			Arguments = arguments;
+			Method = method;
 		}
 
 		/// <summary>
-		///     Gets the expression representing the value that is assigned to the <see cref="Field" />.
+		///     Gets the arguments the method is invoked with.
 		/// </summary>
-		public Expression Expression { get; private set; }
+		public IEnumerable<ArgumentExpression> Arguments { get; private set; }
 
 		/// <summary>
-		///     Gets the metadata of the field that the <see cref="Expressions.Expression" /> is assigned to.
+		///     Gets the metadata of the method invoked by the expression.
 		/// </summary>
-		public FieldMetadata Field { get; private set; }
+		public MethodMetadata Method { get; private set; }
 
 		/// <summary>
-		///     Calls the <see cref="MethodBodyVisitor.VisitFieldAssignmentStatement" /> method on the <paramref name="visitor" />.
+		///     Calls the <see cref="MethodBodyVisitor.VisitMethodInvocationExpression" /> method on the <paramref name="visitor" />.
 		/// </summary>
 		/// <param name="visitor">The visitor that should be accepted.</param>
 		internal override void Accept(MethodBodyVisitor visitor)
 		{
-			visitor.VisitFieldAssignmentStatement(this);
+			visitor.VisitMethodInvocationExpression(this);
 		}
 	}
 }

@@ -23,6 +23,7 @@
 namespace Tests.Metadata.OccurrencePatterns.Fields
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
@@ -40,6 +41,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 
 	internal class X15 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(2);

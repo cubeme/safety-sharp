@@ -24,6 +24,7 @@ namespace Tests.Execution.Faults.ProvidedPorts
 {
 	using System;
 	using System.Diagnostics;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -36,6 +37,7 @@ namespace Tests.Execution.Faults.ProvidedPorts
 			return -1;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			var nondeterministicBehavior = (NondeterministicFaultInjection)Metadata.ProvidedPorts[0].Behaviors.FaultInjections[0];

@@ -23,6 +23,7 @@
 namespace Tests.Execution.Faults.RequiredPorts
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
@@ -41,6 +42,7 @@ namespace Tests.Execution.Faults.RequiredPorts
 			return 1;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fault.IsOccurring = true;
@@ -71,6 +73,7 @@ namespace Tests.Execution.Faults.RequiredPorts
 			return 1;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fault.IsOccurring = true;

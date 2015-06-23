@@ -121,5 +121,54 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 		{
 			return a + 1 > b * 2 - 1 & !c;
 		}
+
+		[Test(16)]
+		public int M17(ref int a, int b)
+		{
+			a += b;
+			return a;
+		}
+
+		[Test(16)]
+		public int M18(ref int a, int b)
+		{
+			a -= b;
+			return a;
+		}
+
+		[Test(16)]
+		public int M19(ref int a, int b)
+		{
+			a *= b;
+			return a;
+		}
+
+		[Test(16)]
+		public int M20(ref int a, int b)
+		{
+			a /= b;
+			return a;
+		}
+
+		[Test(16)]
+		public int M21(ref int a, int b)
+		{
+			a %= b;
+			return a;
+		}
+
+		[Test(4)]
+		public bool M22(ref bool a, bool b)
+		{
+			a &= b;
+			return a;
+		}
+
+		[Test(4)]
+		public bool M23(ref bool a, bool b)
+		{
+			a |= b;
+			return a;
+		}
 	}
 }

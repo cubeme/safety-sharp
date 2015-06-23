@@ -26,9 +26,6 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 
 	internal class C7 : SemanticEqualityComponent
 	{
-		private int _f1;
-		private bool _f2;
-
 		[Test(16)]
 		public int M1(int a)
 		{
@@ -67,15 +64,6 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 
 			z = a * 2;
 			return b | a < z ? q + 17 : a - 3;
-		}
-
-		[Test(16)]
-		public int M5(int a)
-		{
-			_f1 = a + 1;
-			_f2 = a > 0;
-
-			return _f2 | a < 7 ? _f1 + 17 : a - 3;
 		}
 	}
 }

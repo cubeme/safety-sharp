@@ -38,15 +38,15 @@ namespace SafetySharp.Runtime.MetadataAnalyzers
 		protected internal abstract void VisitConditionalExpression(ConditionalExpression expression);
 		protected internal abstract void VisitDoubleLiteralExpression(DoubleLiteralExpression expression);
 		protected internal abstract void VisitFieldExpression(FieldExpression expression);
+		protected internal abstract void VisitMethodInvocationExpression(MethodInvocationExpression expression);
 		protected internal abstract void VisitIntegerLiteralExpression(IntegerLiteralExpression expression);
 		protected internal abstract void VisitUnaryExpression(UnaryExpression expression);
 		protected internal abstract void VisitVariableExpression(VariableExpression expression);
 		protected internal abstract void VisitBlockStatement(BlockStatement statement);
 		protected internal abstract void VisitChoiceStatement(ChoiceStatement statement);
-		protected internal abstract void VisitFieldAssignmentStatement(FieldAssignmentStatement statement);
-		protected internal abstract void VisitMethodInvocationStatement(MethodInvocationStatement statement);
+		protected internal abstract void VisitExpressionStatement(ExpressionStatement statement);
+		protected internal abstract void VisitAssignmentStatement(AssignmentStatement statement);
 		protected internal abstract void VisitReturnStatement(ReturnStatement statement);
-		protected internal abstract void VisitVariableAssignmentStatement(VariableAssignmentStatement statement);
 
 		/// <summary>
 		///     Visits the <paramref name="statement" />.

@@ -20,14 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
+
 namespace Tests.Metadata.Faults.Fields
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
+	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
-	using SafetySharp.Runtime;
 
 	internal class X10 : TestComponent
 	{
@@ -37,6 +40,7 @@ namespace Tests.Metadata.Faults.Fields
 			private readonly int _x = 0;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
@@ -55,6 +59,7 @@ namespace Tests.Metadata.Faults.Fields
 			private readonly double _x = 0;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
@@ -73,6 +78,7 @@ namespace Tests.Metadata.Faults.Fields
 			private readonly bool _x = false;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
@@ -91,6 +97,7 @@ namespace Tests.Metadata.Faults.Fields
 			private readonly E _x = E.A;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);

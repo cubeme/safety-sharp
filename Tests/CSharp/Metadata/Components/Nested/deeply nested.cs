@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.Nested
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -48,6 +49,7 @@ namespace Tests.Metadata.Components.Nested
 
 	internal class X8 : X7<double>.A.B<int>.C.Y<bool>
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(3);

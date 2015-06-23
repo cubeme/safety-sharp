@@ -27,17 +27,14 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 	internal class C3 : SemanticEqualityComponent
 	{
 		[Test(16)]
-		public int M(ref int i)
+		public int M1(ref int i)
 		{
 			i = i + 1;
 			return i - 1;
 		}
-	}
 
-	internal class C4 : SemanticEqualityComponent
-	{
 		[Test(16)]
-		public int M(int j, out int i)
+		public int M2(int j, out int i)
 		{
 			i = j + 1;
 			return i - 1;

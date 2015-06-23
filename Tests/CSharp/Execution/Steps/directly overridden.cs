@@ -23,6 +23,7 @@
 namespace Tests.Execution.Steps
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 
@@ -32,9 +33,10 @@ namespace Tests.Execution.Steps
 
 		public override void Update()
 		{
-			++_i;
+			_i = _i + 1;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			ExecuteUpdate();

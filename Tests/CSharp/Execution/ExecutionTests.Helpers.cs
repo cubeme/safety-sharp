@@ -45,24 +45,13 @@ namespace Tests.Execution
 			_testCount = testCount;
 		}
 
-		public void ExecuteTests(ITestOutputHelper output, object originalObject, object transformedObject,
+		public void ExecuteTests(ITestOutputHelper output, Component originalComponent, Component transformedComponent,
 								 MethodInfo originalMethod, MethodInfo transformedMethod)
 		{
 			var parameters = originalMethod.GetParameters();
 			var originalArguments = new object[parameters.Length];
 			var transformedArguments = new object[parameters.Length];
 			var valueFactories = new Func<object>[parameters.Length];
-			var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy | BindingFlags.Instance;
-			var originalFields = originalObject
-				.GetType()
-				.GetFields(flags)
-				.Where(f => f.FieldType == typeof(int) || f.FieldType == typeof(bool) || f.FieldType == typeof(double))
-				.ToArray();
-			var transformedFields = transformedObject
-				.GetType()
-				.GetFields(flags)
-				.Where(f => f.FieldType == typeof(int) || f.FieldType == typeof(bool) || f.FieldType == typeof(double))
-				.ToArray();
 
 			for (var i = 0; i < parameters.Length; ++i)
 			{
@@ -90,17 +79,19 @@ namespace Tests.Execution
 					output.WriteLine("{0} = {1}", parameters[j].Name, originalArguments[j]);
 				}
 
-				var originalResult = originalMethod.Invoke(originalObject, originalArguments);
-				var transformedResult = transformedMethod.Invoke(transformedObject, transformedArguments);
+				var originalResult = originalMethod.Invoke(originalComponent, originalArguments);
+				var transformedResult = transformedMethod.Invoke(transformedComponent, transformedArguments);
 
 				transformedResult.ShouldBe(originalResult);
 				transformedArguments.ShouldBe(originalArguments);
 
-				for (var j = 0; j < originalFields.Length; ++j)
+				for (var j = 0; j < originalComponent.Metadata.Fields.Length; ++j)
 				{
-					output.WriteLine("Comparing field '{0}'", originalFields[j]);
-					var transformedField = transformedFields.Single(f => f.Name == originalFields[j].Name && f.FieldType == originalFields[j].FieldType);
-					transformedField.GetValue(transformedObject).ShouldBe(originalFields[j].GetValue(originalObject));
+					var originalField = originalComponent.Metadata.Fields[j];
+					output.WriteLine("Comparing field '{0}'", originalField.FieldInfo);
+
+					var transformedField = transformedComponent.Metadata.Fields.Single(f => f.Name == originalField.Name);
+					transformedField.FieldInfo.GetValue(transformedComponent).ShouldBe(originalField.FieldInfo.GetValue(originalComponent));
 				}
 			}
 		}
@@ -123,13 +114,15 @@ namespace Tests.Execution
 
 	public class SemanticEqualityComponent : TestComponent
 	{
-		private object CreateTransformedComponent()
+		private Component CreateTransformedComponent()
 		{
 			var serializer = new CSharpSerializer();
 			var code = serializer.Serialize(Metadata);
 
 			TestOutput.WriteLine("==========================================");
+			TestOutput.WriteLine("==========================================");
 			TestOutput.WriteLine("Serialized Metadata");
+			TestOutput.WriteLine("==========================================");
 			TestOutput.WriteLine("==========================================");
 			TestOutput.WriteLine("{0}", code);
 
@@ -137,8 +130,8 @@ namespace Tests.Execution
 			Tests.CheckForSafetySharpDiagnostics(compilation);
 			var assembly = Tests.CompileSafetySharp(compilation, TestOutput);
 
-			var componentType = assembly.GetTypes().Single(type => typeof(Component).IsAssignableFrom(type));
-			return Activator.CreateInstance(componentType);
+			var componentType = assembly.GetTypes().First(type => typeof(Component).IsAssignableFrom(type));
+			return (Component)Activator.CreateInstance(componentType);
 		}
 
 		protected override void Check()
@@ -151,19 +144,20 @@ namespace Tests.Execution
 			if (methods.Length == 0)
 				throw new TestException("Unable to find any methods that should be tested.");
 
-			var originalObj = this;
-			var transformedObj = CreateTransformedComponent();
+			var originalComponent = this;
+			var transformedComponent = CreateTransformedComponent();
+			transformedComponent.MetadataBuilder.FinalizeMetadata("C");
 
 			foreach (var methodInfo in methods)
 			{
 				var originalMethod = methodInfo.Method;
-				var transformedMethod = transformedObj
+				var transformedMethod = transformedComponent
 					.GetType().GetMethods()
 					.Single(m => m.Name == originalMethod.Name &&
 								 m.ReturnType == originalMethod.ReturnType &&
 								 m.GetParameters().Select(p => p.ParameterType).SequenceEqual(originalMethod.GetParameters().Select(p => p.ParameterType)));
 
-				methodInfo.Attribute.ExecuteTests(TestOutput, originalObj, transformedObj, originalMethod, transformedMethod);
+				methodInfo.Attribute.ExecuteTests(TestOutput, originalComponent, transformedComponent, originalMethod, transformedMethod);
 			}
 		}
 	}

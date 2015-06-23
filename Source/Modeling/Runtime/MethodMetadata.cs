@@ -28,7 +28,6 @@ namespace SafetySharp.Runtime
 	using System.Reflection;
 	using CompilerServices;
 	using Modeling;
-	using Statements;
 	using Utilities;
 
 	/// <summary>
@@ -64,7 +63,7 @@ namespace SafetySharp.Runtime
 
 			_object = obj;
 
-			Name = name ?? method.Name;
+			Name = EscapeName(name ?? method.Name);
 			MethodInfo = method;
 			BaseMethod = baseMethod;
 
@@ -83,6 +82,7 @@ namespace SafetySharp.Runtime
 				IntendedBehavior = MethodInfo;
 
 			Behaviors = new MethodBehaviorCollection(obj, this);
+			ImplementedMethods = DetermineImplementedInterfaceMethods().ToArray();
 
 			_methodBody = new Lazy<MethodBodyMetadata>(() =>
 			{
@@ -225,6 +225,46 @@ namespace SafetySharp.Runtime
 					return this;
 
 				return OverridingMethod.VirtuallyInvokedMethod;
+			}
+		}
+
+		/// <summary>
+		///     Gets the interface methods implemented by the method.
+		/// </summary>
+		internal IEnumerable<MethodInfo> ImplementedMethods { get; private set; }
+
+		/// <summary>
+		///     Escapes the <paramref name="methodName" />.
+		/// </summary>
+		/// <param name="methodName">The method name that should be escaped.</param>
+		internal static string EscapeName(string methodName)
+		{
+			return methodName.Replace(".", "_").Replace("<", "__").Replace(">", "__");
+		}
+
+		/// <summary>
+		///     Determines the interface methods implemented by the method.
+		/// </summary>
+		private IEnumerable<MethodInfo> DetermineImplementedInterfaceMethods()
+		{
+			var type = _object.GetType();
+			var interfaceMaps = type.GetInterfaces().Select(implementedInterface => type.GetInterfaceMap(implementedInterface));
+
+			foreach (var interfaceMap in interfaceMaps)
+			{
+				for (var i = 0; i < interfaceMap.InterfaceMethods.Length; ++i)
+				{
+					// We can't use == to compare the method infos as their ReflectedType property does not match... how annoying
+					var nameMatches = interfaceMap.TargetMethods[i].Name == MethodInfo.Name;
+					var returnMatches = interfaceMap.TargetMethods[i].ReturnType == MethodInfo.ReturnType;
+					var declaringTypeMatches = interfaceMap.TargetMethods[i].DeclaringType == MethodInfo.DeclaringType;
+					var interfaceParameterTypes = interfaceMap.TargetMethods[i].GetParameters().Select(p => p.ParameterType);
+					var methodParameterTypes = MethodInfo.GetParameters().Select(p => p.ParameterType);
+					var parametersMatch = interfaceParameterTypes.SequenceEqual(methodParameterTypes);
+
+					if (nameMatches && returnMatches && declaringTypeMatches && parametersMatch)
+						yield return interfaceMap.InterfaceMethods[i];
+				}
 			}
 		}
 

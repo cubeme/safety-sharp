@@ -109,6 +109,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			Requires.NotNull(fieldSymbol, () => fieldSymbol);
 			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);
 
+			obj = obj is BaseExpressionSyntax ? syntaxGenerator.ThisExpression() : obj;
 			var fieldInfo = fieldSymbol.GetFieldInfoExpression(syntaxGenerator);
 			var reflectionHelpersType = SyntaxFactory.ParseTypeName(typeof(ReflectionHelpers).FullName);
 			var getFieldMetadata = syntaxGenerator.MemberAccessExpression(reflectionHelpersType, "GetFieldMetadata");

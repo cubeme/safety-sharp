@@ -30,9 +30,8 @@ namespace Tests.Metadata.Components.ProvidedPorts
 
 	internal abstract class X6<T1, T2> : TestComponent
 	{
-		public T1 M(ref T2 i)
+		public void M(ref T1 t, ref T2 i)
 		{
-			return default(T1);
 		}
 
 		public int N(int i)

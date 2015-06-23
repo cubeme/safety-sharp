@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.StepMethods
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -30,6 +31,7 @@ namespace Tests.Metadata.Components.StepMethods
 
 	internal class X1 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.UpdateMethods.Length.ShouldBe(1);

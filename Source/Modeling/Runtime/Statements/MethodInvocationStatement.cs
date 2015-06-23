@@ -23,61 +23,37 @@
 namespace SafetySharp.Runtime.Statements
 {
 	using System;
-	using System.Collections.Generic;
 	using Expressions;
 	using MetadataAnalyzers;
 	using Utilities;
 
 	/// <summary>
-	///     Represents the invocation of a S# method, optionally storing the method's return value in a variable,
-	///     field, or method parameter.
+	///     Represents a side-effecting expression whose value is ignored.
 	/// </summary>
-	public sealed class MethodInvocationStatement : Statement
+	public sealed class ExpressionStatement : Statement
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="method">The metadata of the method that should be invoked by the expression.</param>
-		/// <param name="arguments">The arguments the method should be invoked with.</param>
-		/// <param name="returnValue">
-		///     The expression representing the variable, field, or method parameter the method's return value should be stored in.
-		///     Must be <c>null</c> if the method doesn't return a value; can be <c>null</c> if the method's return value should be
-		///     discarded.
-		/// </param>
-		public MethodInvocationStatement(MethodMetadata method, IEnumerable<ArgumentExpression> arguments, Expression returnValue)
+		/// <param name="expression">The expression that is used as a statement.</param>
+		public ExpressionStatement(Expression expression)
 		{
-			Requires.NotNull(method, () => method);
-			Requires.NotNull(arguments, () => arguments);
-			Requires.That(method.MethodInfo.ReturnType != typeof(void) || returnValue == null, "Cannot store result of void-returning method.");
-
-			Arguments = arguments;
-			ReturnValue = returnValue;
-			Method = method;
+			Requires.NotNull(expression, () => expression);
+			Expression = expression;
 		}
 
 		/// <summary>
-		///     Gets the arguments the method is invoked with.
+		///     Gets the expression that is used as a statement.
 		/// </summary>
-		public IEnumerable<ArgumentExpression> Arguments { get; private set; }
+		public Expression Expression { get; private set; }
 
 		/// <summary>
-		///     Gets the expression representing the variable, field, or method parameter the method's return value should is stored in.
-		///     Returns <c>null</c> if the method's return value is discarded or the method doesn't return a value.
-		/// </summary>
-		public Expression ReturnValue { get; private set; }
-
-		/// <summary>
-		///     Gets the metadata of the method invoked by the expression.
-		/// </summary>
-		public MethodMetadata Method { get; private set; }
-
-		/// <summary>
-		///     Calls the <see cref="MethodBodyVisitor.VisitMethodInvocationStatement" /> method on the <paramref name="visitor" />.
+		///     Calls the <see cref="MethodBodyVisitor.VisitExpressionStatement" /> method on the <paramref name="visitor" />.
 		/// </summary>
 		/// <param name="visitor">The visitor that should be accepted.</param>
 		internal override void Accept(MethodBodyVisitor visitor)
 		{
-			visitor.VisitMethodInvocationStatement(this);
+			visitor.VisitExpressionStatement(this);
 		}
 	}
 }

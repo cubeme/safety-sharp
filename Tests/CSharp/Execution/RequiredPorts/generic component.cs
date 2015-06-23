@@ -23,6 +23,7 @@
 namespace Tests.Execution.RequiredPorts
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 
@@ -43,6 +44,7 @@ namespace Tests.Execution.RequiredPorts
 
 	internal class X7 : X6<int>
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			N(2).ShouldBe(2);
@@ -52,6 +54,7 @@ namespace Tests.Execution.RequiredPorts
 
 	internal class X8 : X6<bool>
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			N(false).ShouldBe(false);

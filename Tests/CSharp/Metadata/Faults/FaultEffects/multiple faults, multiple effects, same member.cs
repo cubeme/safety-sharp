@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Faults.FaultEffects
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime;
@@ -36,6 +37,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			return i;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults.Length.ShouldBe(2);
@@ -88,6 +90,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 	{
 		public extern int M(ref int i);
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults.Length.ShouldBe(2);
@@ -142,6 +145,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 		{
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults.Length.ShouldBe(2);

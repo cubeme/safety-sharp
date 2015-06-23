@@ -28,41 +28,43 @@ namespace SafetySharp.Runtime.Statements
 	using Utilities;
 
 	/// <summary>
-	///     Represents an assignment to a local variable or method parameter.
+	///     Represents an assignment to a field, local variable, or method parameter.
 	/// </summary>
-	public sealed class VariableAssignmentStatement : Statement
+	public sealed class AssignmentStatement : Statement
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="variable">The metadata of the variable the <paramref name="expression" /> should be assigned to.</param>
-		/// <param name="expression">The expression representing the value that should be assigned to the <paramref name="variable" />.</param>
-		public VariableAssignmentStatement(VariableMetadata variable, Expression expression)
+		/// <param name="assignmentTarget">The target the <paramref name="expression" /> should be assigned to.</param>
+		/// <param name="expression">
+		///     The expression representing the value that should be assigned to the <paramref name="assignmentTarget" />.
+		/// </param>
+		public AssignmentStatement(Expression assignmentTarget, Expression expression)
 		{
-			Requires.NotNull(variable, () => variable);
+			Requires.NotNull(assignmentTarget, () => assignmentTarget);
 			Requires.NotNull(expression, () => expression);
 
-			Variable = variable;
+			AssignmentTarget = assignmentTarget;
 			Expression = expression;
 		}
 
 		/// <summary>
-		///     Gets the expression representing the value that is assigned to the <see cref="Variable" />.
+		///     Gets the expression representing the value that is assigned to the <see cref="AssignmentTarget" />.
 		/// </summary>
 		public Expression Expression { get; private set; }
 
 		/// <summary>
-		///     Gets the metadata of the variable that the <see cref="Expressions.Expression" /> is assigned to.
+		///     Gets the <see cref="Expression" /> representing the target of the assignment.
 		/// </summary>
-		public VariableMetadata Variable { get; private set; }
+		public Expression AssignmentTarget { get; private set; }
 
 		/// <summary>
-		///     Calls the <see cref="MethodBodyVisitor.VisitVariableAssignmentStatement" /> method on the <paramref name="visitor" />.
+		///     Calls the <see cref="MethodBodyVisitor.VisitAssignmentStatement" /> method on the <paramref name="visitor" />.
 		/// </summary>
 		/// <param name="visitor">The visitor that should be accepted.</param>
 		internal override void Accept(MethodBodyVisitor visitor)
 		{
-			visitor.VisitVariableAssignmentStatement(this);
+			visitor.VisitAssignmentStatement(this);
 		}
 	}
 }

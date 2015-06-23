@@ -24,6 +24,7 @@ namespace Tests.Normalization.LiftedExpressions.Lifted
 {
 	using System;
 	using System.Linq.Expressions;
+	using Metadata.Models.Components;
 	using SafetySharp.CompilerServices;
 
 	public class Test5
@@ -74,7 +75,7 @@ namespace Tests.Normalization.LiftedExpressions.Lifted
 			new Test5(1
 					  + 1);
 
-			O(M(2 -
+			O(M<>(2 -
 				1)
 			  + 0,
 				3

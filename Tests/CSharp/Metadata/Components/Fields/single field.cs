@@ -24,6 +24,7 @@ namespace Tests.Metadata.Components.Fields
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 	using SafetySharp.Runtime;
@@ -32,6 +33,7 @@ namespace Tests.Metadata.Components.Fields
 	{
 		private readonly int _x = 0;
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(1);
@@ -46,6 +48,7 @@ namespace Tests.Metadata.Components.Fields
 	{
 		private readonly double _x = 0;
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(1);
@@ -60,6 +63,7 @@ namespace Tests.Metadata.Components.Fields
 	{
 		private readonly bool _x = false;
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(1);
@@ -74,6 +78,7 @@ namespace Tests.Metadata.Components.Fields
 	{
 		private readonly E _x = E.A;
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(1);

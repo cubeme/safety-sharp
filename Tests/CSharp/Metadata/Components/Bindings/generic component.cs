@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.Bindings
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -44,6 +45,7 @@ namespace Tests.Metadata.Components.Bindings
 			Bind(RequiredPorts.M = ProvidedPorts.N);
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(1);

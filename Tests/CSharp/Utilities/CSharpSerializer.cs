@@ -26,7 +26,6 @@ namespace Tests.Utilities
 	using System.Globalization;
 	using System.Linq;
 	using System.Reflection;
-	using System.Runtime.InteropServices;
 	using SafetySharp.Runtime;
 	using SafetySharp.Runtime.Expressions;
 	using SafetySharp.Runtime.MetadataAnalyzers;
@@ -37,23 +36,22 @@ namespace Tests.Utilities
 	/// </summary>
 	public sealed class CSharpSerializer
 	{
-		private readonly StatementWriter _statementWriter;
 		private readonly CodeWriter _writer = new CodeWriter();
 
 		public CSharpSerializer()
 		{
-			_statementWriter = new StatementWriter(_writer);
+			_writer.AppendLine("using SafetySharp.Modeling;");
+			_writer.AppendLine("using SafetySharp.Modeling.Faults;");
+			_writer.NewLine();
 		}
 
 		public string Serialize(ComponentMetadata metadata)
 		{
-			_writer.AppendLine("using SafetySharp.Modeling;");
-			_writer.AppendLine("using SafetySharp.Modeling.Faults;");
-			_writer.NewLine();
-
-			_writer.AppendLine("class {0} : Component", metadata.Name ?? "C");
+			_writer.AppendLine("public class {0} : Component", metadata.Name ?? "C");
 			_writer.AppendBlockStatement(() =>
 			{
+				var statementWriter = new StatementWriter(metadata, _writer);
+
 				foreach (var field in metadata.Fields)
 					_writer.AppendLine("public {0} {1};", field.Type.FullName, field.Name);
 
@@ -67,11 +65,24 @@ namespace Tests.Utilities
 				{
 					_writer.AppendLine("public {0} {1}({2})", ReturnType(port.MethodInfo.ReturnType), port.Name,
 						String.Join(", ", port.MethodInfo.GetParameters().Select(Parameter)));
-					_statementWriter.Visit(port.MethodBody);
+					statementWriter.Visit(port.MethodBody);
 				}
 
 				_writer.AppendLine("public override void Update()");
-				_statementWriter.Visit(metadata.StepMethod.MethodBody);
+				statementWriter.Visit(metadata.StepMethod.MethodBody);
+
+				foreach (var subcomponent in metadata.Subcomponents)
+				{
+					Serialize(subcomponent);
+					_writer.AppendLine("public {0} _{0} = new {0}();", subcomponent.Name);
+				}
+
+				_writer.AppendLine("public {0}()", metadata.Name ?? "C");
+				_writer.AppendBlockStatement(() =>
+				{
+					foreach (var binding in metadata.Bindings)
+						_writer.AppendLine("Bind(RequiredPorts.{0} = ProvidedPorts.{1});", binding.RequiredPort.Name, binding.ProvidedPort.Name);
+				});
 			});
 
 			return _writer.ToString();
@@ -88,7 +99,7 @@ namespace Tests.Utilities
 		private static string Parameter(ParameterInfo parameter)
 		{
 			var type = parameter.ParameterType.FullName;
-			if (parameter.ParameterType.IsByRef && parameter.ParameterType.GetCustomAttribute<OutAttribute>() != null)
+			if (parameter.ParameterType.IsByRef && parameter.IsOut)
 				type = String.Format("out {0}", parameter.ParameterType.GetElementType().FullName);
 			else if (parameter.ParameterType.IsByRef)
 				type = String.Format("ref {0}", parameter.ParameterType.GetElementType().FullName);
@@ -98,10 +109,12 @@ namespace Tests.Utilities
 
 		private class StatementWriter : MethodBodyVisitor
 		{
+			private readonly ComponentMetadata _metadata;
 			private readonly CodeWriter _writer;
 
-			public StatementWriter(CodeWriter writer)
+			public StatementWriter(ComponentMetadata metadata, CodeWriter writer)
 			{
+				_metadata = metadata;
 				_writer = writer;
 			}
 
@@ -133,7 +146,7 @@ namespace Tests.Utilities
 						throw new ArgumentOutOfRangeException();
 				}
 
-				Visit(expression);
+				Visit(expression.Expression);
 			}
 
 			protected internal override void VisitBinaryExpression(BinaryExpression expression)
@@ -197,11 +210,13 @@ namespace Tests.Utilities
 
 			protected internal override void VisitConditionalExpression(ConditionalExpression expression)
 			{
+				_writer.Append("(");
 				Visit(expression.Condition);
 				_writer.Append(" ? ");
 				Visit(expression.TrueBranch);
 				_writer.Append(" : ");
 				Visit(expression.FalseBranch);
+				_writer.Append(")");
 			}
 
 			protected internal override void VisitDoubleLiteralExpression(DoubleLiteralExpression expression)
@@ -211,6 +226,7 @@ namespace Tests.Utilities
 
 			protected internal override void VisitFieldExpression(FieldExpression expression)
 			{
+				WriteMemberAccess((ComponentMetadata)expression.Field.DeclaringObject);
 				_writer.Append("{0}", expression.Field.Name);
 			}
 
@@ -235,6 +251,20 @@ namespace Tests.Utilities
 
 				_writer.Append("(");
 				Visit(expression.Operand);
+				_writer.Append(")");
+			}
+
+			protected internal override void VisitExpressionStatement(ExpressionStatement statement)
+			{
+				Visit(statement.Expression);
+				_writer.Append(";");
+			}
+
+			protected internal override void VisitMethodInvocationExpression(MethodInvocationExpression expression)
+			{
+				WriteMemberAccess((ComponentMetadata)expression.Method.DeclaringObject);
+				_writer.Append("{0}(", expression.Method.Name);
+				_writer.AppendSeparated(expression.Arguments, ", ", Visit);
 				_writer.Append(")");
 			}
 
@@ -269,16 +299,12 @@ namespace Tests.Utilities
 				}
 			}
 
-			protected internal override void VisitFieldAssignmentStatement(FieldAssignmentStatement statement)
+			protected internal override void VisitAssignmentStatement(AssignmentStatement statement)
 			{
-				_writer.Append("{0} = ", statement.Field.Name);
+				Visit(statement.AssignmentTarget);
+				_writer.Append(" = ");
 				Visit(statement.Expression);
 				_writer.AppendLine(";");
-			}
-
-			protected internal override void VisitMethodInvocationStatement(MethodInvocationStatement statement)
-			{
-				throw new NotImplementedException();
 			}
 
 			protected internal override void VisitReturnStatement(ReturnStatement statement)
@@ -293,11 +319,15 @@ namespace Tests.Utilities
 				}
 			}
 
-			protected internal override void VisitVariableAssignmentStatement(VariableAssignmentStatement statement)
+			private void WriteMemberAccess(ComponentMetadata component)
 			{
-				_writer.Append("{0} = ", statement.Variable.Name);
-				Visit(statement.Expression);
-				_writer.AppendLine(";");
+				if (component == _metadata)
+					_writer.Append("this.");
+				else
+				{
+					WriteMemberAccess(component.ParentComponent);
+					_writer.Append("_{0}.", component.Name);
+				}
 			}
 		}
 	}

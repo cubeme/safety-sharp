@@ -23,10 +23,12 @@
 namespace Tests.Execution.Steps
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Utilities;
 
 	internal class X1 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			// No exception

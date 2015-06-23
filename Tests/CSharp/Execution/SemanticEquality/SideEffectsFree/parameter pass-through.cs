@@ -27,7 +27,19 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 	internal class C2 : SemanticEqualityComponent
 	{
 		[Test(16)]
-		public int M(int i)
+		public int M1(int i)
+		{
+			return i;
+		}
+
+		[Test(16)]
+		public bool M2(bool i)
+		{
+			return i;
+		}
+
+		[Test(16)]
+		public double M3(double i)
 		{
 			return i;
 		}

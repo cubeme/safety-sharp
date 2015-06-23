@@ -118,11 +118,11 @@
     <Compile Include="CompilerServices\ReflectionHelpers.cs" />
     <Compile Include="Runtime\Statements\BlockStatement.cs" />
     <Compile Include="Runtime\Statements\ChoiceStatement.cs" />
-    <Compile Include="Runtime\Statements\FieldAssignmentStatement.cs" />
+    <Compile Include="Runtime\Statements\AssignmentStatement.cs" />
+    <Compile Include="Runtime\Expressions\MethodInvocationExpression.cs" />
     <Compile Include="Runtime\Statements\MethodInvocationStatement.cs" />
     <Compile Include="Runtime\Statements\ReturnStatement.cs" />
     <Compile Include="Runtime\Statements\Statement.cs" />
-    <Compile Include="Runtime\Statements\VariableAssignmentStatement.cs" />
     <Compile Include="Runtime\StepMethodMetadata.cs" />
     <Compile Include="Runtime\VariableMetadata.cs" />
     <Compile Include="Utilities\Assert.cs" />

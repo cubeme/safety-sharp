@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Faults.StepMethods
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
@@ -40,6 +41,7 @@ namespace Tests.Metadata.Faults.StepMethods
 
 	internal class X3 : X2<int>
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].UpdateMethods.Length.ShouldBe(2);

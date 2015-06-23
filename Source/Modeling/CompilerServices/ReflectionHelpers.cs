@@ -23,6 +23,7 @@
 namespace SafetySharp.CompilerServices
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
 	using Modeling;
@@ -173,6 +174,83 @@ namespace SafetySharp.CompilerServices
 			Requires.That(fieldMetadata != null, () => field, "The occurrence pattern does not declare the given field.");
 
 			return fieldMetadata;
+		}
+
+		/// <summary>
+		///     Gets the <paramref name="component" />'s <see cref="MethodMetadata" /> for the <paramref name="method" />.
+		/// </summary>
+		/// <param name="component">The component instance the metadata should be returned for.</param>
+		/// <param name="method">The method the metadata should be returned for.</param>
+		/// <param name="isVirtualCall">Indicates whether the method is called virtually or non-virtually.</param>
+		public static MethodMetadata GetMethodMetadata(IComponent component, MethodInfo method, bool isVirtualCall)
+		{
+			Requires.NotNull(component, () => component);
+			Requires.NotNull(method, () => method);
+			Requires.OfType<Component>(component, () => component);
+
+			return GetMethodMetadata((Component)component, method, isVirtualCall);
+		}
+
+		/// <summary>
+		///     Gets the <paramref name="component" />'s <see cref="MethodMetadata" /> for the <paramref name="method" />.
+		/// </summary>
+		/// <param name="component">The component instance the metadata should be returned for.</param>
+		/// <param name="method">The method the metadata should be returned for.</param>
+		/// <param name="isVirtualCall">Indicates whether the method is called virtually or non-virtually.</param>
+		public static MethodMetadata GetMethodMetadata(Component component, MethodInfo method, bool isVirtualCall)
+		{
+			Requires.NotNull(component, () => component);
+			Requires.NotNull(method, () => method);
+
+			var methods = component
+				.Metadata.RequiredPorts.Cast<MethodMetadata>()
+				.Concat(component.Metadata.ProvidedPorts)
+				.Concat(component.Metadata.UpdateMethods);
+
+			return FindMethodMetadata(methods, method, isVirtualCall);
+		}
+
+		/// <summary>
+		///     Gets the <paramref name="fault" />'s <see cref="MethodMetadata" /> for the <paramref name="method" />.
+		/// </summary>
+		/// <param name="fault">The fault instance the metadata should be returned for.</param>
+		/// <param name="method">The method the metadata should be returned for.</param>
+		/// <param name="isVirtualCall">Indicates whether the method is called virtually or non-virtually.</param>
+		public static MethodMetadata GetMethodMetadata(Fault fault, MethodInfo method, bool isVirtualCall)
+		{
+			Requires.NotNull(fault, () => fault);
+			Requires.NotNull(method, () => method);
+
+			return FindMethodMetadata(fault.Metadata.Effects, method, isVirtualCall);
+		}
+
+		/// <summary>
+		///     Gets the <see cref="MethodMetadata" /> contained in the <paramref name="methods" /> set that corresponds to the
+		///     <paramref name="method" />.
+		/// </summary>
+		/// <param name="methods">The candidate methods the metadata should be selected from.</param>
+		/// <param name="method">The field the metadata should be returned for.</param>
+		/// <param name="isVirtualCall">Indicates whether the method is called virtually or non-virtually.</param>
+		private static MethodMetadata FindMethodMetadata(IEnumerable<MethodMetadata> methods, MethodInfo method, bool isVirtualCall)
+		{
+			MethodMetadata methodMetadata;
+			if (method.DeclaringType.IsInterface)
+			{
+				var implementingMethods = methods.Where(m => m.ImplementedMethods.Any(implementation => implementation == method)).ToArray();
+				Requires.That(implementingMethods.Length > 0, () => method, "Unable to determine the implementing method.");
+				Requires.That(implementingMethods.Length < 2, () => method, "Unable to uniquely determine the implementing method.");
+
+				methodMetadata = implementingMethods[0];
+			}
+			else
+				methodMetadata = methods.SingleOrDefault(m => m.MethodInfo == method);
+
+			Requires.That(methodMetadata != null, () => method, "No metadata could be found for the given method.");
+
+			if (isVirtualCall)
+				return methodMetadata.VirtuallyInvokedMethod;
+
+			return methodMetadata;
 		}
 	}
 }

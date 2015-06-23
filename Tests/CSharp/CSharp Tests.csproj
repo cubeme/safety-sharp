@@ -278,6 +278,13 @@
     <Compile Include="Execution\Other\operators.cs" />
     <Compile Include="Execution\Other\method call.cs" />
     <Compile Include="Execution\Other\fields.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\fields.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\explicit interface methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\implicit interface methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\literals.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\inherited methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\overloaded methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\simple methods.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffectsFree\variables.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffectsFree\unary operators.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffectsFree\binary operators.cs" />
@@ -299,6 +306,7 @@
     <Compile Include="Metadata\Components\Fields\initial values as array.cs" />
     <Compile Include="Metadata\Components\Fields\multiple fields with same name.cs" />
     <Compile Include="Metadata\Components\Fields\unsupported field type.cs" />
+    <Compile Include="Metadata\Components\ProvidedPorts\implementing ports.cs" />
     <Compile Include="Metadata\Components\Subcomponents\single property subcomponent.cs" />
     <Compile Include="Metadata\Components\Subcomponents\subcomponents with same name.cs" />
     <Compile Include="Metadata\Diagnostics\Bindings\Valid\different roots and levels.cs" />

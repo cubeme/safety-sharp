@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Faults.FaultEffects
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -34,6 +35,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 		{
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Effects.Length.ShouldBe(1);
@@ -51,7 +53,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 		}
 
 		[Transient]
-		private class F : Fault<Faults.X2>
+		private class F : Fault<X2>
 		{
 			public void M()
 			{
@@ -63,6 +65,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 	{
 		public extern void M();
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Effects.Length.ShouldBe(1);
@@ -95,6 +98,7 @@ namespace Tests.Metadata.Faults.FaultEffects
 			base.Update();
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Effects.Length.ShouldBe(1);

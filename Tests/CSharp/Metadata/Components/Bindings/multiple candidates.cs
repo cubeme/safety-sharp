@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.Bindings
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -41,6 +42,7 @@ namespace Tests.Metadata.Components.Bindings
 		private extern void N();
 		private extern void N(int i);
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
@@ -71,6 +73,7 @@ namespace Tests.Metadata.Components.Bindings
 
 		private extern void N();
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
@@ -98,6 +101,7 @@ namespace Tests.Metadata.Components.Bindings
 		private extern void N();
 		private extern void N(int i);
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
@@ -128,6 +132,7 @@ namespace Tests.Metadata.Components.Bindings
 
 		private extern void N(int i);
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
@@ -159,6 +164,7 @@ namespace Tests.Metadata.Components.Bindings
 		private extern void N();
 		private extern void N(int i);
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
@@ -190,6 +196,7 @@ namespace Tests.Metadata.Components.Bindings
 		private extern void N();
 		private extern void N(bool b);
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
@@ -221,6 +228,7 @@ namespace Tests.Metadata.Components.Bindings
 		private extern void N(ref bool b);
 		private extern void N(int i);
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
@@ -252,6 +260,7 @@ namespace Tests.Metadata.Components.Bindings
 		private extern void N();
 		private extern void N(ref int i);
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(1);
