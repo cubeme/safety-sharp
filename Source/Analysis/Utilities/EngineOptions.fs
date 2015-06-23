@@ -37,6 +37,14 @@ module internal EngineOptionHelpers =
             typeOfEngineOption.AssemblyQualifiedName
         let newElement = (nameOfEngineOptionAsString,toAdd :> IEngineOption)
         newElement :: currentStandards
+
+    let nameOfEngineOptionAsString<'engineOption when 'engineOption :> IEngineOption> () =
+        let typeOfEngineOption = typeof<'engineOption>
+        typeOfEngineOption.AssemblyQualifiedName
+
+    let createEngineOptionNameSettingTuple<'engineOption when 'engineOption :> IEngineOption> (engineOption:'engineOption) : string*IEngineOption=
+        let name = nameOfEngineOptionAsString<'engineOption> ()
+        (name,engineOption :> IEngineOption)
         
 
 module internal TsamEngineOptions =
@@ -68,11 +76,26 @@ module internal TsamEngineOptions =
     let standardValues : (string*IEngineOption) list =
             [] |> EngineOptionHelpers.addStandardToList (SemanticsOfAssignmentToRangedVariables.IgnoreRanges)
 
+            
+module internal AtEngineOptions =
+
+    [<RequireQualifiedAccessAttribute>]
+    type StandardVerifier =
+        | NuSMV
+        with
+            interface IEngineOption
+
+    let standardValues : (string*IEngineOption) list =
+            [] |> EngineOptionHelpers.addStandardToList (StandardVerifier.NuSMV)
+
+
 module DefaultEngineOptions = 
 
     let private DefaultEngineOptionsLazy =
         lazy (
-            let elements = TsamEngineOptions.standardValues
+            let elements =
+                TsamEngineOptions.standardValues @
+                AtEngineOptions.standardValues
             elements |> Map.ofList
         )
 

@@ -161,11 +161,20 @@ module internal Workflow =
             (),newWfState
         WorkflowFunction(behavior)
         
+        
+    let setEngineOption_WithName<'state> (nameOfEngineOptionAsString:string) (engineOption:SafetySharp.EngineOptions.IEngineOption) : EndogenousWorkflowFunction<'state> =
+        let behavior (wfState:WorkflowState<'state>) =
+            let newWfState =
+                { wfState with
+                    WorkflowState.EngineOptions = wfState.EngineOptions.Add(nameOfEngineOptionAsString,engineOption);
+                    // WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
+                }
+            (),newWfState
+        WorkflowFunction(behavior)
+        
     let getEngineOption<'state,'engineOption when 'engineOption :> SafetySharp.EngineOptions.IEngineOption> () : WorkflowFunction<'state,'state,'engineOption> =
         let behavior (wfState:WorkflowState<'state>) =
-            let nameOfEngineOptionAsString =
-                let typeOfEngineOption = typeof<'engineOption>
-                typeOfEngineOption.AssemblyQualifiedName
+            let nameOfEngineOptionAsString = SafetySharp.EngineOptions.EngineOptionHelpers.nameOfEngineOptionAsString<'engineOption> ()
             let result =
                 if wfState.EngineOptions.ContainsKey nameOfEngineOptionAsString then
                     (wfState.EngineOptions.Item nameOfEngineOptionAsString) :?> 'engineOption
