@@ -32,7 +32,6 @@ namespace SafetySharp.Compiler.Normalization
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
 	using Runtime;
-	using Runtime.Statements;
 
 	/// <summary>
 	///     Normalizes the bodies of analyzable methods. For instance:
@@ -75,7 +74,11 @@ namespace SafetySharp.Compiler.Normalization
 		{
 			var compilation = Compilation;
 
-			//compilation = ApplyNormalizer<SideEffectsNormalizer>(compilation, Syntax);
+			compilation = ApplyNormalizer<ExpressionMethodNormalizer>(compilation, Syntax);
+			compilation = ApplyNormalizer<OptionalArgumentNormalizer>(compilation, Syntax);
+			compilation = ApplyNormalizer<NamedArgumentNormalizer>(compilation, Syntax);
+			compilation = ApplyNormalizer<CompoundAssignmentNormalizer>(compilation, Syntax);
+			compilation = ApplyNormalizer<SideEffectsNormalizer>(compilation, Syntax);
 			//compilation = ApplyNormalizer<SingleExitPointNormalizer>(compilation, Syntax);
 			//compilation = ApplyNormalizer<UpdateInliningNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<MethodBodyCreationNormalizer>(compilation, Syntax);
@@ -108,11 +111,10 @@ namespace SafetySharp.Compiler.Normalization
 		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
 		{
-			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
-
-			if (!methodSymbol.IsProvidedPort(Compilation) && !methodSymbol.IsUpdateMethod(Compilation))
+			if (!methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
 				return methodDeclaration;
 
+			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
 			if (methodSymbol.IsAbstract || methodSymbol.IsExtern)
 				return methodDeclaration;
 

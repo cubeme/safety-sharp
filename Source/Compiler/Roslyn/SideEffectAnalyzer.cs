@@ -142,6 +142,11 @@ namespace SafetySharp.Compiler.Roslyn
 				}
 			}
 
+			public override bool VisitConditionalExpression(ConditionalExpressionSyntax node)
+			{
+				return Visit(node.Condition) && Visit(node.WhenTrue) && Visit(node.WhenFalse);
+			}
+
 			public override bool VisitBinaryExpression(BinaryExpressionSyntax node)
 			{
 				switch (node.Kind())

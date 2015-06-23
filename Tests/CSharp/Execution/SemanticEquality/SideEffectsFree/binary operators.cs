@@ -47,13 +47,13 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 		[Test(16)]
 		public int M4(int a, int b)
 		{
-			return a / b;
+			return a / (b == 0 ? 1 : b);
 		}
 
 		[Test(16)]
 		public int M5(int a, int b)
 		{
-			return a % b;
+			return a % (b == 0 ? 1 : b);
 		}
 
 		[Test(4)]
@@ -146,14 +146,14 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 		[Test(16)]
 		public int M20(ref int a, int b)
 		{
-			a /= b;
+			a /= (b == 0 ? 1 : b);
 			return a;
 		}
 
 		[Test(16)]
 		public int M21(ref int a, int b)
 		{
-			a %= b;
+			a %= (b == 0 ? 1 : b);
 			return a;
 		}
 

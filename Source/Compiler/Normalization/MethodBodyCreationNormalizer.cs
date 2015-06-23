@@ -49,14 +49,10 @@ namespace SafetySharp.Compiler.Normalization
 		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
 		{
+			if (!methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
+				return methodDeclaration;
+
 			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
-
-			if (!methodSymbol.IsProvidedPort(Compilation) && !methodSymbol.IsUpdateMethod(Compilation))
-				return methodDeclaration;
-
-			if (methodSymbol.IsAbstract)
-				return methodDeclaration;
-
 			var rewriter = new Rewriter(SemanticModel, Syntax);
 			var body = rewriter.Rewrite(methodSymbol, methodDeclaration.Body);
 			return methodDeclaration.WithBody(body.NormalizeWhitespace());
@@ -101,33 +97,27 @@ namespace SafetySharp.Compiler.Normalization
 				// Initialize the metadata for the method's parameters
 				foreach (var parameter in methodSymbol.Parameters)
 				{
-					var type = SyntaxFactory.TypeOfExpression((TypeSyntax)_syntax.TypeExpression(parameter.Type));
+					var type = _syntax.TypeOfExpression(parameter.Type);
 					var parameterObject = Create<VariableMetadata>(_syntax.LiteralExpression(parameter.Name), type);
 					statements.Add(_syntax.LocalDeclarationStatement(parameter.Name, parameterObject));
 				}
+
+				// new [] { param_1, ..., param_n }
+				var parameterNames = methodSymbol.Parameters.Select(p => (ExpressionSyntax)_syntax.IdentifierName(p.Name));
+				var parametersArray = _syntax.ArrayCreationExpression<VariableMetadata>(_semanticModel, parameterNames);
 
 				// Initialize the metadata for the method's local variables
 				foreach (var local in locals)
 				{
 					var localSymbol = local.GetDeclaredSymbol<ILocalSymbol>(_semanticModel);
-					var type = SyntaxFactory.TypeOfExpression((TypeSyntax)_syntax.TypeExpression(localSymbol.Type));
+					var type = _syntax.TypeOfExpression(localSymbol.Type);
 					var parameterObject = Create<VariableMetadata>(_syntax.LiteralExpression(localSymbol.Name), type);
 					statements.Add(_syntax.LocalDeclarationStatement(localSymbol.Name, parameterObject));
 				}
 
-				var variableArrayType = _syntax.ArrayTypeExpression(SyntaxFactory.ParseTypeName(typeof(VariableMetadata).FullName));
-
-				// new [] { param_1, ..., param_n }
-				var parametersNames = methodSymbol.Parameters.Select(p => (ExpressionSyntax)_syntax.IdentifierName(p.Name));
-				var parametersArguments = SyntaxFactory.SeparatedList(parametersNames);
-				var parametersInitialization = SyntaxFactory.InitializerExpression(SyntaxKind.ArrayInitializerExpression, parametersArguments);
-				var parametersArray = SyntaxFactory.ArrayCreationExpression((ArrayTypeSyntax)variableArrayType, parametersInitialization);
-
 				// new [] { local_1, ..., local_n }
-				var localsNames = locals.Select(local => (ExpressionSyntax)_syntax.IdentifierName(local.Identifier.ValueText));
-				var localsArguments = SyntaxFactory.SeparatedList(localsNames);
-				var localsInitialization = SyntaxFactory.InitializerExpression(SyntaxKind.ArrayInitializerExpression, localsArguments);
-				var localsArray = SyntaxFactory.ArrayCreationExpression((ArrayTypeSyntax)variableArrayType, localsInitialization);
+				var localNames = locals.Select(local => (ExpressionSyntax)_syntax.IdentifierName(local.Identifier.ValueText));
+				var localsArray = _syntax.ArrayCreationExpression<VariableMetadata>(_semanticModel, localNames);
 
 				// new MethodBody(params, locals, body)
 				var body = Visit(methodBody);
@@ -275,9 +265,6 @@ namespace SafetySharp.Compiler.Normalization
 					case SyntaxKind.LogicalNotExpression:
 						unaryOperator = UnaryOperator.Not;
 						break;
-					case SyntaxKind.PreIncrementExpression:
-					case SyntaxKind.PreDecrementExpression:
-						throw new NotImplementedException();
 					default:
 						Assert.NotReached("Unsupported unary operator kind.");
 						return null;
@@ -286,14 +273,6 @@ namespace SafetySharp.Compiler.Normalization
 				var unaryOperatorType = _syntax.TypeExpression(_semanticModel.GetTypeSymbol<UnaryOperator>());
 				var memberAccess = _syntax.MemberAccessExpression(unaryOperatorType, _syntax.IdentifierName(unaryOperator.ToString()));
 				return Create<UnaryExpression>(memberAccess, operand);
-			}
-
-			/// <summary>
-			///     Generates the <see cref="Expression" /> that represents the <paramref name="unaryExpression" />.
-			/// </summary>
-			public override SyntaxNode VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax unaryExpression)
-			{
-				throw new NotImplementedException();
 			}
 
 			/// <summary>
@@ -373,7 +352,7 @@ namespace SafetySharp.Compiler.Normalization
 			{
 				if (statement.Expression.Kind() == SyntaxKind.SimpleAssignmentExpression)
 					return Visit(statement.Expression);
-				
+
 				return Create<ExpressionStatement>(Visit(statement.Expression));
 			}
 
@@ -386,6 +365,34 @@ namespace SafetySharp.Compiler.Normalization
 					return Create<ReturnStatement>();
 
 				return Create<ReturnStatement>(Visit(returnStatement.Expression));
+			}
+
+			/// <summary>
+			///     Generates the <see cref="Statement" /> that represents the <paramref name="ifStatement" />.
+			/// </summary>
+			public override SyntaxNode VisitIfStatement(IfStatementSyntax ifStatement)
+			{
+				var unaryOperatorType = _syntax.TypeExpression(_semanticModel.GetTypeSymbol<UnaryOperator>());
+				var unaryOperator = _syntax.MemberAccessExpression(unaryOperatorType, UnaryOperator.Not.ToString());
+
+				var condition = (ExpressionSyntax)Visit(ifStatement.Condition);
+				var thenStatement = (ExpressionSyntax)Visit(ifStatement.Statement);
+
+				if (ifStatement.Else == null)
+				{
+					var guards = _syntax.ArrayCreationExpression<Expression>(_semanticModel, condition);
+					var statements = _syntax.ArrayCreationExpression<Statement>(_semanticModel, thenStatement);
+					return Create<ChoiceStatement>(guards, statements, _syntax.TrueLiteralExpression());
+				}
+				else
+				{
+					var elseCondition = (ExpressionSyntax)Create<UnaryExpression>(unaryOperator, condition);
+					var elseStatement = (ExpressionSyntax)Visit(ifStatement.Else.Statement);
+
+					var guards = _syntax.ArrayCreationExpression<Expression>(_semanticModel, condition, elseCondition);
+					var statements = _syntax.ArrayCreationExpression<Statement>(_semanticModel, thenStatement, elseStatement);
+					return Create<ChoiceStatement>(guards, statements, _syntax.TrueLiteralExpression());
+				}
 			}
 
 			/// <summary>

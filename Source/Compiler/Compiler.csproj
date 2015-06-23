@@ -126,9 +126,13 @@
     <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.cs" />
     <Compile Include="CompilationException.cs" />
+    <Compile Include="Normalization\CompoundAssignmentNormalizer.cs" />
+    <Compile Include="Normalization\ExpressionMethodNormalizer.cs" />
     <Compile Include="Normalization\InitialValuesNormalizer.cs" />
     <Compile Include="Normalization\MetadataNormalizer.cs" />
     <Compile Include="Normalization\MethodBodyNormalizer.cs" />
+    <Compile Include="Normalization\NamedArgumentNormalizer.cs" />
+    <Compile Include="Normalization\OptionalArgumentNormalizer.cs" />
     <Compile Include="Normalization\RootComponentsNormalizer.cs" />
     <Compile Include="Normalization\SafetySharpAttributeNormalizer.cs" />
     <Compile Include="Normalization\BindingNormalizer.cs" />
@@ -147,6 +151,7 @@
     <Compile Include="Roslyn\Analyzer.cs" />
     <Compile Include="Roslyn\DiagnosticInfo.cs" />
     <Compile Include="Normalization\SideEffectsNormalizer.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxGeneratorExtensions.cs" />
     <Compile Include="Roslyn\Syntax\IdentifierExtensions.cs" />
     <Compile Include="Roslyn\SymbolNormalizer.cs" />
     <Compile Include="Roslyn\SyntaxNormalizer.cs" />

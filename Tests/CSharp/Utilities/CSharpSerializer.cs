@@ -287,15 +287,22 @@ namespace Tests.Utilities
 				for (var i = 0; i < statement.Guards.Count; ++i)
 				{
 					if (i == 0)
+					{
 						_writer.Append("if (");
+						Visit(statement.Guards[i]);
+						_writer.Append(")");
+					}
+					else if (i == statement.Guards.Count - 1 && statement.IsDeterministic)
+						_writer.Append("else");
 					else
+					{
 						_writer.Append("else if (");
+						Visit(statement.Guards[i]);
+						_writer.Append(")");
+					}
 
-					Visit(statement.Guards[i]);
-					_writer.Append(")");
 					_writer.NewLine();
-
-					Visit(statement.Statements[i]);
+					_writer.AppendBlockStatement(() => Visit(statement.Statements[i]));
 				}
 			}
 

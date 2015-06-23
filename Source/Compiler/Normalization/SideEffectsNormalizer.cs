@@ -24,7 +24,9 @@ namespace SafetySharp.Compiler.Normalization
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.Immutable;
 	using System.Linq;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -35,240 +37,631 @@ namespace SafetySharp.Compiler.Normalization
 	using Runtime;
 	using Utilities;
 
-	public class SideEffectsNormalizer : SyntaxNormalizer
+	/// <summary>
+	///     Replaces all side-effecting expressions within the method bodies that metadata is generated for with semantically
+	///     equivalent side-effect free versions.
+	/// </summary>
+	public sealed class SideEffectsNormalizer : SyntaxNormalizer
 	{
-		private readonly Rewriter _rewriter = new Rewriter();
-
 		/// <summary>
 		///     Normalizes the <paramref name="methodDeclaration" />.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
 		{
-			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
-
-			if (!methodSymbol.IsProvidedPort(Compilation) && !methodSymbol.IsUpdateMethod(Compilation))
+			if (!methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
 				return methodDeclaration;
 
-			return methodDeclaration.WithBody(null);//(BlockSyntax)_rewriter.Visit(methodDeclaration.Body));
+			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
+			var rewriter = new Rewriter(SemanticModel, Syntax);
+
+			var transformedBody = rewriter.Rewrite(methodSymbol, methodDeclaration.Body);
+			return methodDeclaration.WithExpressionBody(null).WithBody(transformedBody).NormalizeWhitespace();
 		}
 
-		private class Rewriter : CSharpSyntaxWalker
+		/// <summary>
+		///     Rewrites a method body.
+		/// </summary>
+		private class Rewriter : CSharpSyntaxVisitor<Rewriter.Result>
 		{
+			/// <summary>
+			///     The analyzer that is used to check whether an expression has potential side effects.
+			/// </summary>
 			private readonly SideEffectAnalyzer _analyzer;
+
+			/// <summary>
+			///     The local variables generated during the rewrite.
+			/// </summary>
+			private readonly List<GeneratedVariable> _generatedVariables = new List<GeneratedVariable>();
+
+			/// <summary>
+			///     The name scope that is used to generate unique names for generated variables.
+			/// </summary>
+			private readonly NameScope _nameScope = new NameScope();
+
+			/// <summary>
+			///     The semantic model that is used for semantic analysis of the method body.
+			/// </summary>
 			private readonly SemanticModel _semanticModel;
+
+			/// <summary>
+			///     The syntax generator that is used to generate the new method body code.
+			/// </summary>
 			private readonly SyntaxGenerator _syntax;
-			private NameScope _nameScope;
-			private SyntaxNode _result;
-			private List<SyntaxNode> _statements = new List<SyntaxNode>();
 
-			public StatementSyntax Rewrite(SyntaxNode methodBody)
+			/// <summary>
+			///     Initializes a new instance.
+			/// </summary>
+			/// <param name="semanticModel">The semantic model that should be used for semantic analysis of the method body.</param>
+			/// <param name="syntax">The syntax generator that should be used to generate the new method body code.</param>
+			public Rewriter(SemanticModel semanticModel, SyntaxGenerator syntax)
 			{
-				_statements.Clear();
-				_result = null;
-				_nameScope = new NameScope();
-
-				Visit(methodBody);
-				// TODO: Wrap expression body in return
-				return SyntaxFactory.Block(_statements.Cast<StatementSyntax>());
+				_semanticModel = semanticModel;
+				_syntax = syntax;
+				_analyzer = new SideEffectAnalyzer(semanticModel);
 			}
 
-			private SyntaxNode MakeTemporaryVariable()
+			/// <summary>
+			///     Rewrites the <paramref name="methodBody" /> of the <paramref name="methodSymbol" />.
+			/// </summary>
+			/// <param name="methodSymbol">The method whose body should be rewritten.</param>
+			/// <param name="methodBody">The method body that should be rewritten.</param>
+			public BlockSyntax Rewrite(IMethodSymbol methodSymbol, StatementSyntax methodBody)
 			{
-				return _result = _syntax.IdentifierName(_nameScope.MakeUnique("t"));
+				var parameters = methodSymbol.Parameters.Select(parameter => parameter.Name);
+				var locals = methodBody.Descendants<VariableDeclaratorSyntax>().Select(local => _semanticModel.GetDeclaredSymbol(local).Name);
+				var baseSymbols = _semanticModel.LookupBaseMembers(methodBody.SpanStart);
+				var selfSymbols = _semanticModel.LookupSymbols(methodBody.SpanStart);
+
+				_nameScope.AddRange(parameters);
+				_nameScope.AddRange(locals);
+				_nameScope.AddRange(baseSymbols.Select(symbol => symbol.Name));
+				_nameScope.AddRange(selfSymbols.Select(symbol => symbol.Name));
+
+				var result = Visit(methodBody);
+				var statements = new List<StatementSyntax>();
+
+				statements.AddRange(_generatedVariables.Select(
+					variable => (StatementSyntax)_syntax.LocalDeclarationStatement(variable.Type, variable.Name)));
+
+				statements.AddRange(result.Statements);
+				return SyntaxFactory.Block(statements);
 			}
 
-			public override void VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node)
+			/// <summary>
+			///     Rewrites the <paramref name="literal" />.
+			/// </summary>
+			public override Result VisitLiteralExpression(LiteralExpressionSyntax literal)
 			{
-				Visit(node.Operand);
+				return new Result(literal);
+			}
 
-				switch (node.Kind())
+			/// <summary>
+			///     Rewrites the <paramref name="identifier" />.
+			/// </summary>
+			public override Result VisitIdentifierName(IdentifierNameSyntax identifier)
+			{
+				if (_analyzer.IsSideEffectFree(identifier))
+					return new Result(identifier);
+
+				var symbol = identifier.GetReferencedSymbol(_semanticModel);
+				if (symbol is IMethodSymbol)
+					return Result.Default.WithExpression(identifier);
+
+				var variable = GenerateVariable(identifier);
+				return Result.Default.WithExpression(variable).WithExpressionStatement(_syntax.AssignmentStatement(variable.Identifier, identifier));
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="expression" />.
+			/// </summary>
+			public override Result VisitThisExpression(ThisExpressionSyntax expression)
+			{
+				return new Result(expression);
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="expression" />.
+			/// </summary>
+			public override Result VisitBaseExpression(BaseExpressionSyntax expression)
+			{
+				return new Result(expression);
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="expression" />.
+			/// </summary>
+			public override Result VisitParenthesizedExpression(ParenthesizedExpressionSyntax expression)
+			{
+				var result = Visit(expression.Expression);
+				return result.WithExpression(SyntaxFactory.ParenthesizedExpression(result.Expression));
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="unaryExpression" />.
+			/// </summary>
+			public override Result VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax unaryExpression)
+			{
+				var result = Visit(unaryExpression.Operand);
+				var variable = GenerateVariable(unaryExpression);
+
+				switch (unaryExpression.Kind())
 				{
 					case SyntaxKind.PostIncrementExpression:
-						MakeTemporaryVariable();
-						AddExpressionStatement(_syntax.AssignmentStatement(_result, node.Operand));
-						AddExpressionStatement(_syntax.AssignmentStatement(node.Operand, _syntax.AddExpression(node.Operand, _syntax.LiteralExpression(1))));
-						break;
+						return result
+							.WithStatements(result)
+							.WithExpressionStatement((ExpressionSyntax)_syntax.AssignmentStatement(variable.Identifier, result.Expression))
+							.WithExpressionStatement((ExpressionSyntax)_syntax.AssignmentStatement(result.Expression,
+								_syntax.AddExpression(result.Expression, _syntax.LiteralExpression(1))))
+							.WithExpression(variable);
 					case SyntaxKind.PostDecrementExpression:
-						MakeTemporaryVariable();
-						AddExpressionStatement(_syntax.AssignmentStatement(_result, node.Operand));
-						AddExpressionStatement(_syntax.AssignmentStatement(node.Operand,
-							_syntax.SubtractExpression(node.Operand, _syntax.LiteralExpression(1))));
-						break;
+						return result
+							.WithStatements(result)
+							.WithExpressionStatement((ExpressionSyntax)_syntax.AssignmentStatement(variable.Identifier, result.Expression))
+							.WithExpressionStatement((ExpressionSyntax)_syntax.AssignmentStatement(result.Expression,
+								_syntax.SubtractExpression(result.Expression, _syntax.LiteralExpression(1))))
+							.WithExpression(variable);
 					default:
-						Assert.NotReached("Encountered an unexpected unary operator: {0}.", node.Kind());
-						break;
+						Assert.NotReached("Encountered an unexpected unary operator: {0}.", unaryExpression.Kind());
+						return default(Result);
 				}
 			}
 
-			public override void VisitLiteralExpression(LiteralExpressionSyntax node)
+			/// <summary>
+			///     Rewrites the <paramref name="unaryExpression" />.
+			/// </summary>
+			public override Result VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax unaryExpression)
 			{
-				_result = node;
+				if (_analyzer.IsSideEffectFree(unaryExpression))
+					return new Result(unaryExpression);
+
+				var result = Visit(unaryExpression.Operand);
+
+				switch (unaryExpression.Kind())
+				{
+					case SyntaxKind.UnaryPlusExpression:
+					case SyntaxKind.UnaryMinusExpression:
+					case SyntaxKind.BitwiseNotExpression:
+					case SyntaxKind.LogicalNotExpression:
+						var symbol = _semanticModel.GetSymbolInfo(unaryExpression).Symbol as IMethodSymbol;
+						Assert.NotNull(symbol, "Expected a valid method symbol.");
+						Assert.That(symbol.IsBuiltInOperator(_semanticModel), "Overloaded operators are not supported.");
+
+						return result.WithStatements(result).WithExpression(unaryExpression.WithOperand(result.Expression));
+					case SyntaxKind.PreIncrementExpression:
+						return result
+							.WithStatements(result)
+							.WithExpressionStatement(_syntax.AssignmentStatement(result.Expression,
+								_syntax.AddExpression(result.Expression, _syntax.LiteralExpression(1))))
+							.WithExpression(result.Expression);
+					case SyntaxKind.PreDecrementExpression:
+						return result
+							.WithStatements(result)
+							.WithExpressionStatement(_syntax.AssignmentStatement(result.Expression,
+								_syntax.SubtractExpression(result.Expression, _syntax.LiteralExpression(1))))
+							.WithExpression(result.Expression);
+					default:
+						Assert.NotReached("Encountered an unexpected unary operator: {0}.", unaryExpression.Kind());
+						return default(Result);
+				}
 			}
 
-			public override void VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node)
+			/// <summary>
+			///     Rewrites the <paramref name="binaryExpression" />.
+			/// </summary>
+			public override Result VisitBinaryExpression(BinaryExpressionSyntax binaryExpression)
 			{
-				if (_analyzer.IsSideEffectFree(node))
-					_result = node;
-				else
+				if (_analyzer.IsSideEffectFree(binaryExpression))
+					return Result.Default.WithExpression(binaryExpression);
+
+				var leftResult = Visit(binaryExpression.Left);
+				var rightResult = Visit(binaryExpression.Right);
+
+				switch (binaryExpression.Kind())
 				{
-					Visit(node.Operand);
+					case SyntaxKind.AddExpression:
+					case SyntaxKind.SubtractExpression:
+					case SyntaxKind.MultiplyExpression:
+					case SyntaxKind.DivideExpression:
+					case SyntaxKind.ModuloExpression:
+					case SyntaxKind.LeftShiftExpression:
+					case SyntaxKind.RightShiftExpression:
+					case SyntaxKind.BitwiseOrExpression:
+					case SyntaxKind.BitwiseAndExpression:
+					case SyntaxKind.ExclusiveOrExpression:
+					case SyntaxKind.EqualsExpression:
+					case SyntaxKind.NotEqualsExpression:
+					case SyntaxKind.LessThanExpression:
+					case SyntaxKind.LessThanOrEqualExpression:
+					case SyntaxKind.GreaterThanExpression:
+					case SyntaxKind.GreaterThanOrEqualExpression:
+						var symbol = _semanticModel.GetSymbolInfo(binaryExpression).Symbol as IMethodSymbol;
+						Assert.NotNull(symbol, "Expected a valid method symbol.");
+						Requires.That(symbol.IsBuiltInOperator(_semanticModel), "Overloaded operators are not supported.");
 
-					switch (node.Kind())
+						return leftResult
+							.WithStatements(rightResult)
+							.WithExpression(SyntaxFactory.BinaryExpression(binaryExpression.Kind(), leftResult.Expression, rightResult.Expression));
+
+					case SyntaxKind.LogicalOrExpression:
+						var orVariable = GenerateVariable(_semanticModel.GetTypeSymbol<bool>());
+
+						return new Result(orVariable.Identifier)
+							.WithStatements(leftResult.Statements)
+							.WithStatement(_syntax.IfStatement(
+								leftResult.Expression,
+								new[] { _syntax.AssignmentStatement(orVariable.Identifier, _syntax.TrueLiteralExpression()) },
+								rightResult.Statements.Concat(new[] { _syntax.AssignmentStatement(orVariable.Identifier, rightResult.Expression) })));
+
+					case SyntaxKind.LogicalAndExpression:
+						var andVariable = GenerateVariable(_semanticModel.GetTypeSymbol<bool>());
+
+						return new Result(andVariable.Identifier)
+							.WithStatements(leftResult.Statements)
+							.WithStatement(_syntax.IfStatement(
+								leftResult.Expression,
+								rightResult.Statements.Concat(new[] { _syntax.AssignmentStatement(andVariable.Identifier, rightResult.Expression) }),
+								new[] { _syntax.AssignmentStatement(andVariable.Identifier, _syntax.FalseLiteralExpression()) }));
+					default:
+						Assert.NotReached("Encountered an unexpected binary operator: {0}.", binaryExpression.Kind());
+						return Result.Default;
+				}
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="expression" />.
+			/// </summary>
+			public override Result VisitMemberAccessExpression(MemberAccessExpressionSyntax expression)
+			{
+				var result = Visit(expression.Expression);
+				return result.WithExpression((ExpressionSyntax)_syntax.MemberAccessExpression(result.Expression, expression.Name));
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="expression" />.
+			/// </summary>
+			public override Result VisitConditionalExpression(ConditionalExpressionSyntax expression)
+			{
+				if (_analyzer.IsSideEffectFree(expression))
+					return new Result(expression);
+
+				var conditionResult = Visit(expression.Condition);
+				var trueResult = Visit(expression.WhenTrue);
+				var falseResult = Visit(expression.WhenFalse);
+
+				var variable = GenerateVariable(expression.WhenTrue);
+
+				return new Result(variable.Identifier)
+					.WithStatements(conditionResult)
+					.WithStatement(_syntax.IfStatement(
+						conditionResult.Expression,
+						trueResult.Statements.Concat(new[] { _syntax.AssignmentStatement(variable.Identifier, trueResult.Expression) }),
+						falseResult.Statements.Concat(new[] { _syntax.AssignmentStatement(variable.Identifier, falseResult.Expression) })));
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="assignment" />.
+			/// </summary>
+			public override Result VisitAssignmentExpression(AssignmentExpressionSyntax assignment)
+			{
+				Requires.That(_analyzer.IsSideEffectFree(assignment.Left), "Left-hand side of assignment has side effect.");
+
+				var result = Visit(assignment.Right);
+				return result
+					.WithExpressionStatement(_syntax.AssignmentStatement(assignment.Left, result.Expression))
+					.WithExpression(assignment.Left);
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="invocation" />.
+			/// </summary>
+			public override Result VisitInvocationExpression(InvocationExpressionSyntax invocation)
+			{
+				var methodSymbol = invocation.GetReferencedSymbol<IMethodSymbol>(_semanticModel);
+				var argumentResults = invocation.ArgumentList.Arguments.Select(
+					argument =>
 					{
-						case SyntaxKind.UnaryPlusExpression:
-						case SyntaxKind.UnaryMinusExpression:
-						case SyntaxKind.BitwiseNotExpression:
-						case SyntaxKind.LogicalNotExpression:
-							var symbol = _semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
-							Assert.NotNull(symbol, "Expected a valid method symbol.");
+						// Unfortunately, ArgumentSyntax does not derive from ExpressionSyntax
+						var argumentResult = Visit(argument.Expression);
+						return new { Statements = argumentResult.Statements, Argument = argument.WithExpression(argumentResult.Expression) };
+					}).ToArray();
 
-							if (!symbol.IsBuiltInOperator(_semanticModel))
-							{
-								AddExpressionStatement(node.WithOperand((ExpressionSyntax)_result));
-							}
-							else
-								_result = node.WithOperand((ExpressionSyntax)_result);
-							break;
-						case SyntaxKind.PreIncrementExpression:
-							AddExpressionStatement(_syntax.AssignmentStatement(node.Operand, _syntax.AddExpression(node.Operand, _syntax.LiteralExpression(1))));
-							_result = node.Operand;
-							break;
-						case SyntaxKind.PreDecrementExpression:
-							AddExpressionStatement(_syntax.AssignmentStatement(node.Operand,
-								_syntax.SubtractExpression(node.Operand, _syntax.LiteralExpression(1))));
-							_result = node.Operand;
-							break;
-						default:
-							Assert.NotReached("Encountered an unexpected unary operator: {0}.", node.Kind());
-							break;
+				var result = argumentResults.Aggregate(Visit(invocation.Expression), (r, argResult) => r.WithStatements(argResult.Statements));
+				var transformedInvocation = _syntax.InvocationExpression(result.Expression, argumentResults.Select(argResult => argResult.Argument));
+
+				if (methodSymbol.ReturnsVoid)
+					return result.WithExpressionStatement(transformedInvocation).WithoutExpression();
+
+				var variable = GenerateVariable(methodSymbol.ReturnType);
+				return result.WithExpressionStatement(_syntax.AssignmentStatement(variable.Identifier, transformedInvocation)).WithExpression(variable);
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="returnStatement" />.
+			/// </summary>
+			public override Result VisitReturnStatement(ReturnStatementSyntax returnStatement)
+			{
+				if (returnStatement.Expression == null || _analyzer.IsSideEffectFree(returnStatement.Expression))
+					return new Result(returnStatement);
+
+				var result = Visit(returnStatement.Expression);
+				return result.WithStatement(_syntax.ReturnStatement(result.Expression)).WithoutExpression();
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="declaration" />.
+			/// </summary>
+			public override Result VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax declaration)
+			{
+				var result = Result.Default;
+				var type = declaration.Declaration.Type;
+
+				foreach (var variable in declaration.Declaration.Variables)
+				{
+					if (variable.Initializer == null)
+						result = result.WithStatement(_syntax.LocalDeclarationStatement(type, variable.Identifier.ValueText));
+					else
+					{
+						var initializerResult = Visit(variable.Initializer.Value);
+						var local = _syntax.LocalDeclarationStatement(type, variable.Identifier.ValueText, initializerResult.Expression);
+						result = result.WithStatements(initializerResult).WithStatement(local);
+					}
+
+					result = result.WithoutExpression();
+				}
+
+				return result;
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="statement" />.
+			/// </summary>
+			public override Result VisitExpressionStatement(ExpressionStatementSyntax statement)
+			{
+				return Visit(statement.Expression).WithoutExpression();
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="statement" />.
+			/// </summary>
+			public override Result VisitIfStatement(IfStatementSyntax statement)
+			{
+				var conditionResult = Visit(statement.Condition);
+				var thenResult = Visit(statement.Statement);
+
+				if (statement.Else == null)
+					return conditionResult.WithStatement(_syntax.IfStatement(conditionResult.Expression, thenResult.Statements)).WithoutExpression();
+
+				var elseResult = Visit(statement.Else.Statement);
+
+				return conditionResult
+					.WithStatement(_syntax.IfStatement(conditionResult.Expression, thenResult.Statements, elseResult.Statements))
+					.WithoutExpression();
+			}
+
+			/// <summary>
+			///     Rewrites the <paramref name="block" />.
+			/// </summary>
+			public override Result VisitBlock(BlockSyntax block)
+			{
+				var blockResult = block.Statements.Aggregate(Result.Default,
+					(result, statement) => result.WithStatements(Visit(statement)).WithoutExpression());
+
+				return Result.Default.WithStatement(SyntaxFactory.Block(blockResult.Statements)).WithoutExpression();
+			}
+
+			/// <summary>
+			///     Throws an <see cref="InvalidOperationException" />, indicating that <paramref name="node" /> is not supported by the
+			///     rewriter.
+			/// </summary>
+			/// <param name="node">The unsupported syntax node.</param>
+			public override Result DefaultVisit(SyntaxNode node)
+			{
+				Assert.NotReached("Unsupported syntax node: '{0}'.", node.Kind());
+				return default(Result);
+			}
+
+			/// <summary>
+			///     Generates a new variable.
+			/// </summary>
+			/// <param name="expression">The expression that should be assigned to the variable.</param>
+			private GeneratedVariable GenerateVariable(ExpressionSyntax expression)
+			{
+				Requires.NotNull(expression, () => expression);
+				return GenerateVariable(_semanticModel.GetTypeInfo(expression).Type);
+			}
+
+			/// <summary>
+			///     Generates a new variable.
+			/// </summary>
+			/// <param name="type">The type of the variable.</param>
+			private GeneratedVariable GenerateVariable(ITypeSymbol type)
+			{
+				Requires.NotNull(type, () => type);
+
+				var variable = new GeneratedVariable(type, _nameScope.MakeUnique("t"));
+				_generatedVariables.Add(variable);
+
+				return variable;
+			}
+
+			/// <summary>
+			///     Represents a local variable generated during the rewrite.
+			/// </summary>
+			public struct GeneratedVariable
+			{
+				/// <summary>
+				///     Initializes a new instance.
+				/// </summary>
+				/// <param name="type">The type of the variable.</param>
+				/// <param name="name">The name of the variable.</param>
+				public GeneratedVariable(ITypeSymbol type, string name)
+					: this()
+				{
+					Requires.NotNull(type, () => type);
+					Requires.NotNull(name, () => name);
+
+					Type = type;
+					Name = name;
+				}
+
+				/// <summary>
+				///     Gets the type of the variable.
+				/// </summary>
+				public ITypeSymbol Type { get; private set; }
+
+				/// <summary>
+				///     Gets the name of the variable.
+				/// </summary>
+				public string Name { get; private set; }
+
+				/// <summary>
+				///     Gets the identifier of the variable.
+				/// </summary>
+				public IdentifierNameSyntax Identifier
+				{
+					get { return SyntaxFactory.IdentifierName(Name); }
+				}
+			}
+
+			/// <summary>
+			///     Represents the results of a rewrite.
+			/// </summary>
+			public struct Result
+			{
+				/// <summary>
+				///     Gets the default result.
+				/// </summary>
+				public static readonly Result Default = new Result((ExpressionSyntax)null);
+
+				/// <summary>
+				///     The resulting expression of the rewrite that should be used by subsequent expressions.
+				/// </summary>
+				private ExpressionSyntax _expression;
+
+				/// <summary>
+				///     The sequence of statements that constitute the method's body.
+				/// </summary>
+				private ImmutableList<StatementSyntax> _statements;
+
+				/// <summary>
+				///     Initializes a new instance.
+				/// </summary>
+				/// <param name="expression">The resulting expression of the rewrite that should be used in subsequent computations.</param>
+				public Result(ExpressionSyntax expression)
+					: this()
+				{
+					_expression = expression;
+					_statements = ImmutableList<StatementSyntax>.Empty;
+				}
+
+				/// <summary>
+				///     Initializes a new instance.
+				/// </summary>
+				/// <param name="statement">The statement that has to be executed.</param>
+				public Result(StatementSyntax statement)
+					: this()
+				{
+					_statements = ImmutableList<StatementSyntax>.Empty.Add(statement);
+				}
+
+				/// <summary>
+				///     Gets the resulting expression of the rewrite that should be used by subsequent expressions.
+				/// </summary>
+				public ExpressionSyntax Expression
+				{
+					get
+					{
+						Requires.That(_expression != null, "No expression has been set.");
+						return _expression;
 					}
 				}
-			}
 
-			private void AddExpressionStatement(SyntaxNode expression)
-			{
-				_statements.Add((StatementSyntax)_syntax.ExpressionStatement(expression));
-			}
-
-			public override void VisitBinaryExpression(BinaryExpressionSyntax node)
-			{
-				if (_analyzer.IsSideEffectFree(node))
-					_result = node;
-				else
+				/// <summary>
+				///     Gets the sequence of statements that constitute the method's body.
+				/// </summary>
+				public IEnumerable<StatementSyntax> Statements
 				{
-					var statements = _statements.ToList();
-
-					_statements.Clear();
-					Visit(node.Left);
-					var t1 = (ExpressionSyntax)_result;
-					var s1 = _statements.ToArray();
-
-					_statements.Clear();
-					Visit(node.Right);
-					var t2 = (ExpressionSyntax)_result;
-					var s2 = _statements.ToArray();
-
-					_statements = statements;
-
-					switch (node.Kind())
-					{
-						case SyntaxKind.AddExpression:
-						case SyntaxKind.SubtractExpression:
-						case SyntaxKind.MultiplyExpression:
-						case SyntaxKind.DivideExpression:
-						case SyntaxKind.ModuloExpression:
-						case SyntaxKind.LeftShiftExpression:
-						case SyntaxKind.RightShiftExpression:
-						case SyntaxKind.BitwiseOrExpression:
-						case SyntaxKind.BitwiseAndExpression:
-						case SyntaxKind.ExclusiveOrExpression:
-						case SyntaxKind.EqualsExpression:
-						case SyntaxKind.NotEqualsExpression:
-						case SyntaxKind.LessThanExpression:
-						case SyntaxKind.LessThanOrEqualExpression:
-						case SyntaxKind.GreaterThanExpression:
-						case SyntaxKind.GreaterThanOrEqualExpression:
-							var symbol = _semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
-							Assert.NotNull(symbol, "Expected a valid method symbol.");
-
-							if (!symbol.IsBuiltInOperator(_semanticModel))
-							{
-								// TODO
-							}
-							else
-							{
-								_result = SyntaxFactory.BinaryExpression(node.Kind(), t1, t2);
-								_statements.AddRange(s1);
-								_statements.AddRange(s2);
-							}
-							break;
-						case SyntaxKind.LogicalOrExpression:
-							var tmp1 = MakeTemporaryVariable();
-
-							_statements.AddRange(s1);
-							_statements.Add((StatementSyntax)_syntax.IfStatement(t1,
-								new[] { _syntax.AssignmentStatement(tmp1, _syntax.TrueLiteralExpression()) },
-								s2.Concat(new[] { _syntax.AssignmentStatement(tmp1, t2) })));
-							_result = tmp1;
-							break;
-						case SyntaxKind.LogicalAndExpression:
-							var tmp2 = MakeTemporaryVariable();
-
-							_statements.AddRange(s1);
-							_statements.Add((StatementSyntax)_syntax.IfStatement(t1,
-								s2.Concat(new[] { _syntax.AssignmentStatement(tmp2, t2) }),
-								new[] { _syntax.AssignmentStatement(tmp2, _syntax.FalseLiteralExpression()) }));
-							_result = tmp2;
-							break;
-						default:
-							Assert.NotReached("Encountered an unexpected binary operator: {0}.", node.Kind());
-							return;
-					}
+					get { return _statements; }
 				}
-			}
 
-			public override void VisitAssignmentExpression(AssignmentExpressionSyntax node)
-			{
-				Visit(node.Right);
-				AddExpressionStatement(node.WithRight((ExpressionSyntax)_result));
-			}
-
-			public override void VisitIfStatement(IfStatementSyntax node)
-			{
-				Visit(node.Condition);
-				var condition = _result;
-
-				var statements = _statements.ToList();
-				_statements.Clear();
-
-				Visit(node.Statement);
-				var thenStatements = _statements.ToArray();
-
-				_statements.Clear();
-				Visit(node.Else);
-				var elseStatements = _statements.ToArray();
-
-				_statements = statements;
-				_statements.Add(_syntax.IfStatement(condition, thenStatements, node.Else == null ? null : elseStatements));
-			}
-
-			public override void VisitIdentifierName(IdentifierNameSyntax node)
-			{
-				if (_analyzer.IsSideEffectFree(node))
-					_result = node;
-				else
-					AddExpressionStatement(_syntax.AssignmentStatement(MakeTemporaryVariable(), node));
-			}
-
-			public override void VisitReturnStatement(ReturnStatementSyntax node)
-			{
-				if (node.Expression == null || _analyzer.IsSideEffectFree(node.Expression))
-					_statements.Add(node);
-				else
+				/// <summary>
+				///     Appends an <see cref="ExpressionStatementSyntax" /> containing the <paramref name="expression" /> to the sequence of
+				///     generated <see cref="Statements" />.
+				/// </summary>
+				/// <param name="expression">The expression that should be appended.</param>
+				[Pure]
+				public Result WithExpressionStatement(SyntaxNode expression)
 				{
-					Visit(node.Expression);
-					_statements.Add(_syntax.ReturnStatement(_result));
+					Requires.NotNull(expression, () => expression);
+					Requires.OfType<ExpressionSyntax>(expression, () => expression);
+
+					return WithStatement(SyntaxFactory.ExpressionStatement((ExpressionSyntax)expression));
+				}
+
+				/// <summary>
+				///     Appends the <paramref name="statement" /> to the sequence of generated <see cref="Statements" />.
+				/// </summary>
+				/// <param name="statement">The statement that should be appended.</param>
+				[Pure]
+				public Result WithStatement(SyntaxNode statement)
+				{
+					Requires.NotNull(statement, () => statement);
+					Requires.OfType<StatementSyntax>(statement, () => statement);
+
+					return new Result { _expression = _expression, _statements = _statements.Add((StatementSyntax)statement) };
+				}
+
+				/// <summary>
+				///     Appends the <paramref name="statements" /> to the sequence of generated <see cref="Statements" />.
+				/// </summary>
+				/// <param name="statements">The statements that should be appended.</param>
+				[Pure]
+				public Result WithStatements(IEnumerable<StatementSyntax> statements)
+				{
+					Requires.NotNull(statements, () => statements);
+					return new Result { _expression = _expression, _statements = _statements.AddRange(statements) };
+				}
+
+				/// <summary>
+				///     Appends the <paramref name="result" />'s <see cref="Statements" /> to the sequence of generated
+				///     <see cref="Statements" />.
+				/// </summary>
+				/// <param name="result">The result whose statements should be appended.</param>
+				[Pure]
+				public Result WithStatements(Result result)
+				{
+					return WithStatements(result.Statements);
+				}
+
+				/// <summary>
+				///     Replaces the result's <see cref="Expression" /> with <paramref name="expression" />.
+				/// </summary>
+				/// <param name="expression">The new resulting expression.</param>
+				[Pure]
+				public Result WithExpression(ExpressionSyntax expression)
+				{
+					Requires.NotNull(expression, () => expression);
+					return new Result { _expression = expression, _statements = _statements };
+				}
+
+				/// <summary>
+				///     Replaces the result's <see cref="Expression" /> with the <paramref name="variable" />'s identifier.
+				/// </summary>
+				/// <param name="variable">The variable representing the result of an expression.</param>
+				[Pure]
+				public Result WithExpression(GeneratedVariable variable)
+				{
+					return new Result { _expression = variable.Identifier, _statements = _statements };
+				}
+
+				/// <summary>
+				///     Removes the result's <see cref="Expression" />.
+				/// </summary>
+				[Pure]
+				public Result WithoutExpression()
+				{
+					return new Result { _expression = null, _statements = _statements };
 				}
 			}
 		}

@@ -28,6 +28,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Symbols;
 	using Utilities;
 
 	/// <summary>
@@ -168,6 +169,27 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 			}
 
 			return methodDeclaration.WithModifiers(modifiers);
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether metadata for the <paramref name="methodDeclaration" />'s body should be generated.
+		/// </summary>
+		/// <param name="methodDeclaration">The method declaration that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used for semantic analysis.</param>
+		[Pure]
+		public static bool GenerateMethodBodyMetadata([NotNull] this MethodDeclarationSyntax methodDeclaration,
+													  [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(methodDeclaration, () => methodDeclaration);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			var methodSymbol = methodDeclaration.GetMethodSymbol(semanticModel);
+			if (methodSymbol.IsAbstract)
+				return false;
+
+			return methodSymbol.IsProvidedPort(semanticModel) ||
+				   methodSymbol.IsUpdateMethod(semanticModel) ||
+				   methodSymbol.IsFaultEffect(semanticModel);
 		}
 	}
 }

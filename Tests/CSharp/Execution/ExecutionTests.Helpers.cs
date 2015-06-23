@@ -98,7 +98,7 @@ namespace Tests.Execution
 
 		private static object RandomInt32()
 		{
-			return _random.Next(-1000, 1000);
+			return _random.Next(-200, 200);
 		}
 
 		private static object RandomBoolean()

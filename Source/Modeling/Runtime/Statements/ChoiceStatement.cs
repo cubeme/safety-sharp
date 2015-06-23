@@ -39,7 +39,8 @@ namespace SafetySharp.Runtime.Statements
 		/// </summary>
 		/// <param name="guards">The expressions representing the guards of the individual nondeterministic choices.</param>
 		/// <param name="statements">The statements representing the actions of the individual nondeterministic choices.</param>
-		public ChoiceStatement(IReadOnlyList<Expression> guards, IReadOnlyList<Statement> statements)
+		/// <param name="isDeterministic">Indicates whether the choice is deterministic.</param>
+		public ChoiceStatement(IReadOnlyList<Expression> guards, IReadOnlyList<Statement> statements, bool isDeterministic)
 		{
 			Requires.NotNull(guards, () => guards);
 			Requires.NotNull(statements, () => statements);
@@ -47,6 +48,7 @@ namespace SafetySharp.Runtime.Statements
 
 			Guards = guards;
 			Statements = statements;
+			IsDeterministic = isDeterministic;
 		}
 
 		/// <summary>
@@ -58,6 +60,11 @@ namespace SafetySharp.Runtime.Statements
 		///     Gets the statements representing the actions belonging to the <see cref="Guards" />.
 		/// </summary>
 		public IReadOnlyList<Statement> Statements { get; private set; }
+
+		/// <summary>
+		///     Gets a value indicating whether the choice is deterministic.
+		/// </summary>
+		public bool IsDeterministic { get; private set; }
 
 		/// <summary>
 		///     Calls the <see cref="MethodBodyVisitor.VisitChoiceStatement" /> method on the <paramref name="visitor" />.

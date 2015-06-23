@@ -23,14 +23,14 @@
 namespace Tests.Execution.SemanticEquality.SideEffectsFree
 {
 	using System;
-	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime.Expressions;
-	using SafetySharp.Runtime.Statements;
 
 	internal class C4 : SemanticEqualityComponent
 	{
 		private readonly C _c = new C();
+		private int _a;
+		private int _b;
+		private bool _d;
 		private int _f;
 
 		public C4()
@@ -51,6 +51,13 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 		private void H(out int a)
 		{
 			a = 7;
+		}
+
+		private void I(int a = 3, int b = 5, bool c = false)
+		{
+			_a = a;
+			_b = b;
+			_d = c;
 		}
 
 		private extern int Req(int a);
@@ -98,7 +105,7 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 			a = Req(a);
 		}
 
-		[Test(1)]
+		[Test(8)]
 		public void M8(out int a)
 		{
 			a = this.Req(2);
@@ -110,6 +117,90 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 			_c.F = 33;
 			_c.Update();
 			_f = _c.F + 2;
+		}
+
+		[Test(16)]
+		public void M9(int a, int b, bool c)
+		{
+			I(a, b, c);
+		}
+
+		[Test(16)]
+		public void M10(int a, int b, bool c)
+		{
+			I(c: c, a: b, b: a);
+		}
+
+		[Test(16)]
+		public void M11(int a, int b, bool c)
+		{
+			I(b: b, a: a, c: c);
+		}
+
+		[Test(1)]
+		public void M12()
+		{
+			I();
+		}
+
+		[Test(16)]
+		public void M13(int b)
+		{
+			I(a: b);
+		}
+
+		[Test(16)]
+		public void M14(int a)
+		{
+			I(a: a);
+		}
+
+		[Test(16)]
+		public void M15(int a)
+		{
+			I(b: a);
+		}
+
+		[Test(16)]
+		public void M16(bool c)
+		{
+			I(c: c);
+		}
+
+		[Test(16)]
+		public void M17(int a, int b)
+		{
+			I(a: b, b: a);
+		}
+
+		[Test(16)]
+		public void M18(int a, int b)
+		{
+			I(b: b, a: a);
+		}
+
+		[Test(16)]
+		public void M19(int a, bool c)
+		{
+			I(c: c, a: a);
+		}
+
+		[Test(16)]
+		public void M20(int b, bool c)
+		{
+			I(b: b, c: c);
+		}
+
+		[Test(16)]
+		public void M21(int b, bool c)
+		{
+			I(c: c, b: b);
+		}
+
+		[Test(16)]
+		public void M22(int a, bool c)
+		{
+			I(a: a, c: c);
 		}
 
 		private class C : Component

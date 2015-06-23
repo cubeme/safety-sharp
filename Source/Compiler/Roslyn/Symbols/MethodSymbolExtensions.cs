@@ -280,7 +280,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 
 			return methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<int>()) ||
 				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<bool>()) ||
-				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<decimal>());
+				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<double>());
 		}
 
 		/// <summary>
