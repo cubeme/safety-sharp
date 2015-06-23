@@ -145,7 +145,7 @@ module internal AtDccaLtl =
         //              NuXmv-Code
         /////////////////////////////////////////////////
         member this.checkWithNuXmv () =            
-            let nuxmvExecutor = new SafetySharp.ExternalTools.Smv.ExecuteNuXmv()
+            let nuxmvExecutor = new SafetySharp.ExternalTools.Smv.ExecuteNuxmv()
             
             let transformModelToNuXmv = workflow {
                     do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)

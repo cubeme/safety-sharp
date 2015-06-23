@@ -35,17 +35,17 @@ module NuXmvExecuteTestsBasic =
 
     [<Test>]
     let ``NuXmv is in PATH or in dependency folder`` () =
-        let path = ExecuteNuXmv.FindNuXmv ()
+        let path = ExecuteNuxmv.FindNuXmv ()
         (path.Length > 0) =? true
         
     [<Test>]
     let ``NuXmv is runable and shows help`` () =
-        let nuxmv = ExecuteNuXmv()
-        nuxmv.IsNuXmvRunable () =? true
+        let nuxmv = ExecuteNuxmv()
+        nuxmv.IsToolRunable () =? true
     
     [<Test>]
     let ``NuXmv starts in interactive mode`` () =
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let logFile = "startInteractiveMode.log"
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile //wait infinitely long
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
@@ -53,7 +53,7 @@ module NuXmvExecuteTestsBasic =
         
     [<Test>]
     let ``Shutdown of NuXmv can be forced`` () =
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let logFile = "forceShutdown.log"
         nuxmv.StartNuXmvInteractive (-1) logFile |> ignore //wait infinitely long
         System.Threading.Thread.Sleep (100)
@@ -61,7 +61,7 @@ module NuXmvExecuteTestsBasic =
         
     [<Test>]
     let ``An echo-command can be executed`` () =
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let logFile = "echo.log"
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile |> ignore //wait infinitely long
         let outputTupleEcho = nuxmv.ExecuteAndIntepretCommand(NuSMVCommand.Echo("verbose_level"))
@@ -82,7 +82,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``incomplete-case-distinction``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
@@ -96,7 +96,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``incomplete-instantiation``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
@@ -111,7 +111,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``not-fully-defined1``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTupleCheckFsm = nuxmv.ExecuteCommand NuSMVCommand.CheckFsm
@@ -130,7 +130,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``not-fully-defined2``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTupleCheckFsm = nuxmv.ExecuteCommand NuSMVCommand.CheckFsm
@@ -149,7 +149,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``fully-defined``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTupleCheckFsm = nuxmv.ExecuteCommand NuSMVCommand.CheckFsm
@@ -167,7 +167,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``wrong-syntax1``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
@@ -181,7 +181,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``wrong-syntax2``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
@@ -195,7 +195,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``simple-indeterministic``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
@@ -209,7 +209,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``range-not-respected``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
@@ -224,7 +224,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``simple-deterministic``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
@@ -240,7 +240,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``simple-indeterministic``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         outputResultBuildBdd.HasSucceeded =? true
@@ -274,7 +274,7 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let logFile = filename+".log"
         let code = SmvModels.``simple-deterministic``
         FileSystem.WriteToAsciiFile filename code
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         outputResultBuildBdd.HasSucceeded =? true
@@ -338,7 +338,7 @@ module NuXmvExecuteTestsWithModelFromSafetySharpMetamodel =
         let logFile = filename+".log"
         FileSystem.WriteToAsciiFile filename nuXmvCodeString
 
-        let nuxmv = ExecuteNuXmv()
+        let nuxmv = ExecuteNuxmv()
         let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputResultBuildBddBasic = outputResultBuildBdd.GetBasicResultsOfAllCommand

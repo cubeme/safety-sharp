@@ -77,22 +77,22 @@ open SafetySharp.ExternalTools
 
 
 [<RequireQualifiedAccess>]
-type internal NuXmvCurrentTechniqueForVerification =
+type internal SmvCurrentTechniqueForVerification =
     | NotDetermined
     | SmtMode
     | BddMode
     
                     
 
-
-type internal ExecuteNuXmv() =    
+[<AbstractClass>]
+type internal ExecuteNusmvDerivate () =    
     let commandActiveMutex = new System.Threading.Mutex()
     let stdoutAndCommandFinishedBlocker = new System.Threading.AutoResetEvent (false);
     let stderrFinishedBlocker = new System.Threading.AutoResetEvent (false);
     let mutable activeCommand : ICommand option =  None
     let mutable lastCommandResult : NuXmvCommandResultBasic option = None
 
-    let mutable currentTechniqueForVerification = NuXmvCurrentTechniqueForVerification.NotDetermined
+    let mutable currentTechniqueForVerification = SmvCurrentTechniqueForVerification.NotDetermined
     let mutable currentModeOfProgram = NuXmvModeOfProgramm.NotStarted
     
     let stdoutOutputBuffer = new System.Text.StringBuilder ()
@@ -103,34 +103,17 @@ type internal ExecuteNuXmv() =
     let mutable processWaiter : System.Threading.Tasks.Task<bool> = null
     let proc = new System.Diagnostics.Process()
     
-    let commandEndingStringStdout = "nuXmv finished last command stdout"
-    let commandEndingStringStderr = "nuXmv finished last command stderr"
-    let promptString = "nuXmv > "
+    let commandEndingStringStdout = "smv finished last command stdout"
+    let commandEndingStringStderr = "smv finished last command stderr"
     
+    abstract promptString : string with get
+
+    abstract member FindTool : unit -> string;
+
     ///////////////////////////////////////////////////
-    // NuXmv-Process and Interactive Console Management
+    // Smv-Process and Interactive Console Management
     ///////////////////////////////////////////////////
 
-    static member FindNuXmv (): string =
-        let tryCandidate (filename:string) : bool =
-            System.IO.File.Exists filename
-        let candidatesManual = [
-            "..\\..\\..\\..\\Dependencies\\NuXmv.exe";
-        ]
-        let candidatesOfPath =
-            let paths=System.Environment.GetEnvironmentVariable("PATH").Split(';')
-            paths |> Array.map (fun path -> System.IO.Path.Combine(path,"NuXmv.exe"))
-                  |> Array.toList
-        let candidateOfNuXmvPath =
-            let path=System.Environment.GetEnvironmentVariable("NUXMV_DIR")
-            if path = null then
-                []
-            else
-                [System.IO.Path.Combine(path,"NuXmv.exe")]
-        let candidates = candidateOfNuXmvPath @ candidatesManual @ candidatesOfPath
-        match candidates |> Seq.tryFind tryCandidate with
-            | Some(filename) -> filename
-            | None -> failwith "Please add NuXmv installation folder into PATH\n or set the environmental variable NUXMV_PATH\n or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
         
     member this.TaskReadStderr () : System.Threading.Tasks.Task =
         System.Threading.Tasks.Task.Factory.StartNew(
@@ -168,6 +151,7 @@ type internal ExecuteNuXmv() =
                 ()
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
+                let promptString = this.promptString
                 let mutable needToRemovePromptFromCurrentLine = false //Before the first command is no prompt
                 while proc.StandardOutput.EndOfStream <> true do
                     let newLine = proc.StandardOutput.ReadLine()
@@ -278,10 +262,10 @@ type internal ExecuteNuXmv() =
     member this.ExecuteCommandString (command:string) =
         this.ExecuteCommand {NuXmvCustomCommand.Command = command};
 
-    member this.IsNuXmvRunable () : bool =
+    member this.IsToolRunable () : bool =
         use proc = new System.Diagnostics.Process()        
         proc.StartInfo.Arguments <- SmvCommandsToString.exportNuXmvCommandLine NuXmvHelpfulCommandsAndCommandSequences.commandLineHelp
-        proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
+        proc.StartInfo.FileName <- this.FindTool ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
         proc.StartInfo.UseShellExecute <-  false
@@ -307,7 +291,7 @@ type internal ExecuteNuXmv() =
         
         // TODO: check if already started
         proc.StartInfo.Arguments <- SmvCommandsToString.exportNuXmvCommandLine (NuXmvHelpfulCommandsAndCommandSequences.commandLineStart)
-        proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
+        proc.StartInfo.FileName <- this.FindTool ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
         proc.StartInfo.UseShellExecute <-  false
@@ -377,3 +361,36 @@ type internal ExecuteNuXmv() =
         printUnprocessed ()
         printActiveCommand ()
         stringBuilder.ToString()
+
+
+        
+type internal ExecuteNusmv2 = unit
+
+type internal ExecuteNuxmv () = 
+    inherit ExecuteNusmvDerivate ()
+
+    static member FindNuXmv (): string =
+        let tryCandidate (filename:string) : bool =
+            System.IO.File.Exists filename
+        let candidatesManual = [
+            "..\\..\\..\\..\\Dependencies\\NuXmv.exe";
+        ]
+        let candidatesOfPath =
+            let paths=System.Environment.GetEnvironmentVariable("PATH").Split(';')
+            paths |> Array.map (fun path -> System.IO.Path.Combine(path,"NuXmv.exe"))
+                  |> Array.toList
+        let candidateOfNuXmvPath =
+            let path=System.Environment.GetEnvironmentVariable("NUXMV_DIR")
+            if path = null then
+                []
+            else
+                [System.IO.Path.Combine(path,"NuXmv.exe")]
+        let candidates = candidateOfNuXmvPath @ candidatesManual @ candidatesOfPath
+        match candidates |> Seq.tryFind tryCandidate with
+            | Some(filename) -> filename
+            | None -> failwith "Please add NuXmv installation folder into PATH\n or set the environmental variable NUXMV_PATH\n or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
+
+    override this.FindTool () : string = ExecuteNuxmv.FindNuXmv ()
+    override this.promptString with get() = "nuXmv > "
+
+type internal ExecuteXsap = unit
