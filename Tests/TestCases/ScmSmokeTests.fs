@@ -33,6 +33,7 @@ module internal ScmSmokeTests =
             "callInstHierarchy1.scm";
             "callInstFromBeh2.scm";
             "simpleComponentWithFaults3.scm";
+            "dcca1.scm";
         ] |> Seq.map (fun (a) -> [|a|])
 
     let smoketestsAll =

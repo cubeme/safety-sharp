@@ -141,7 +141,7 @@ module AtDccaLtlTests =
         (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo1;faultNo2] |> Set.ofList))) =? true
     
     [<Test>]
-    let ``perform DCCA on dcca1 with NuXmv`` () =
+    let ``perform DCCA on dcca1 with NuSMV`` () =
         let inputFile = """../../Examples/SCM/dcca1.scm"""
         let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
         let hazard = 
@@ -152,7 +152,7 @@ module AtDccaLtlTests =
         let analyzer = AtDccaLtl.PerformDccaWithLtlFormulas (scmExample.Model,hazard)
         
 
-        let dccaResult = analyzer.checkWithNuXmv ()
+        let dccaResult = analyzer.checkWithNuSMV ()
         dccaResult.Length =? 3
         (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo1;faultNo4] |> Set.ofList))) =? true
         (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo2;faultNo3;faultNo4] |> Set.ofList))) =? true

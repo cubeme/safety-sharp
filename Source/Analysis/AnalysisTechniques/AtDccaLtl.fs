@@ -142,34 +142,34 @@ module internal AtDccaLtl =
 
             
         /////////////////////////////////////////////////
-        //              NuXmv-Code
+        //              NuSMV-Code
         /////////////////////////////////////////////////
-        member this.checkWithNuXmv () =            
-            let nuxmvExecutor = new SafetySharp.ExternalTools.Smv.ExecuteNuxmv()
+        member this.checkWithNuSMV () =            
+            let nusmvExecutor = new SafetySharp.ExternalTools.Smv.ExecuteNusmv2()
             
-            let transformModelToNuXmv = workflow {
+            let transformModelToNuSMV = workflow {
                     do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
 
                     do! SafetySharp.Models.ScmMutable.setInitialPlainModelState untransformedModel
                     do! SafetySharp.ExternalTools.ScmToNuXmv.transformConfiguration ()
                     do! logForwardTracesOfOrigins ()
                     let! forwardTracer = getForwardTracer ()
-                    let! nuxmvModel = getState ()
+                    let! nusmvModel = getState ()
                     do! SafetySharp.ITracing.removeTracing ()
                     do! SafetySharp.ExternalTools.SmvToString.workflow ()
                     let filename = "verification.smv" |> SafetySharp.FileSystem.FileName
                     do! saveToFile filename
-                    do nuxmvExecutor.StartSmvInteractive (0) ("verification.smv.log") |> ignore
-                    let readmodel = nuxmvExecutor.ExecuteAndIntepretCommandSequence(SafetySharp.ExternalTools.Smv.SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd "verification.smv")
+                    do nusmvExecutor.StartSmvInteractive (0) ("verification.smv.log") |> ignore
+                    let readmodel = nusmvExecutor.ExecuteAndIntepretCommandSequence(SafetySharp.ExternalTools.Smv.SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd "verification.smv")
                     assert readmodel.HasSucceeded
-                    return (nuxmvModel,forwardTracer)
+                    return (nusmvModel,forwardTracer)
             }
-            let ((nuxmvModel,forwardTracer),wfStateWithNuxmvModel) = runWorkflow_getResultAndWfState transformModelToNuXmv            
+            let ((nusmvModel,forwardTracer),wfStateWithNusmvModel) = runWorkflow_getResultAndWfState transformModelToNuSMV            
             
 
             let checkFormulaElement (formulaElement:ElementToCheck) =
-                    let nuxmvLtl = SafetySharp.ExternalTools.ScmVeToNuXmv.transformLtlExpression forwardTracer formulaElement.CorrespondingFormula
-                    let nuXmvResult = nuxmvExecutor.ExecuteCommand(SafetySharp.ExternalTools.Smv.NuSMVCommand.CheckLtlSpec nuxmvLtl)
+                    let nusmvLtl = SafetySharp.ExternalTools.ScmVeToNuXmv.transformLtlExpression forwardTracer formulaElement.CorrespondingFormula
+                    let nuXmvResult = nusmvExecutor.ExecuteCommand(SafetySharp.ExternalTools.Smv.NuSMVCommand.CheckLtlSpec nusmvLtl)
                     let nuXmvInterpretation = SafetySharp.ExternalTools.Smv.SmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec nuXmvResult
                     (formulaElement.FaultsWhichMayAppear,nuXmvInterpretation)
 
@@ -186,10 +186,10 @@ module internal AtDccaLtl =
                             acc // model checker finds no counterexample. Formula is true. Combination is safe.
                         | SafetySharp.ExternalTools.Smv.CheckOfSpecificationDetailedResult.Undetermined ->
                             printfn "stdout: %s\n stderr: %s" (result.Basic.Stdout) (result.Basic.Stderr)
-                            failwith "Could not be checked with Spin. Possible reason: Search depth too small. Consult full log"
+                            failwith "Could not be checked with NuSMV. Consult full log"
                 checkedFormulas |> List.fold calculateNewKnownUnsafe knownUnsafe
             
             let fullDcca : Set<FaultPath> list =
                 {0..numberOfAllFaults} |> Seq.toList |> List.fold checkIfSizeIsSafe ([]:Set<FaultPath> list)
-            do nuxmvExecutor.ForceShutdownSmv () 
+            do nusmvExecutor.ForceShutdownSmv () 
             fullDcca

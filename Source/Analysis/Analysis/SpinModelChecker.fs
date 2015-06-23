@@ -69,7 +69,7 @@ type SpinModelChecker (model : Model) =
     let minimalCutSets = ltlDcca.checkWithPromela ()
     //let minimalCutSets  =
     //    let result : Set<ScmHelpers.FaultPath> list ref = ref ([])
-    //    let threadWithBiggerStack = new System.Threading.Thread( (fun () -> result := ltlDcca.checkWithNuXmv () ), 1024*1024*8) //HACK: for a bigger stack
+    //    let threadWithBiggerStack = new System.Threading.Thread( (fun () -> result := ltlDcca.checkWithNuSMV () ), 1024*1024*8) //HACK: for a bigger stack
     //    do threadWithBiggerStack.Start ()
     //    do threadWithBiggerStack.Join ()
     //    result.Value
