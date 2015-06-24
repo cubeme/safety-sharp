@@ -26,7 +26,7 @@ open NUnit.Framework
 
 open SafetySharp.Models
 open SafetySharp.Workflow
-open SafetySharp.Analysis.Techniques
+open SafetySharp.AnalysisTechniques
 open SafetySharp.Models.ScmVerificationElements
 
 [<TestFixture>]

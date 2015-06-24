@@ -23,7 +23,6 @@
 namespace SafetySharp.SafetyAnalysisTestScript
 
 module internal SatsParser =
-    open SafetySharp
 
     open FParsec
     open SafetySharp.GenericParsers
@@ -34,6 +33,10 @@ module internal SatsParser =
         LetBindings : Map<LetIdentifier,LetType>;
     }
         with
+            static member initialUserState =
+                {
+                    UserState.LetBindings = Map.empty<LetIdentifier,LetType>;
+                }
             member us.hasLetBinding (binding:LetIdentifier): bool =
                 us.LetBindings.ContainsKey binding
             member us.isLetBindingOfType (binding:LetIdentifier) (letType:LetType): bool =
@@ -46,19 +49,22 @@ module internal SatsParser =
                     LetBindings = us.LetBindings.Add(letIdentifier,letType)
                 }                
 
+
+
     let str_ws1 (str:string)= (pstring str) .>> spaces1
     let str_ws (str:string)= (pstring str) .>> spaces
 
-    let parseUntilSemicolon = manySatisfy (fun c -> c <> ';')
-
-    let pfilename = parseUntilSemicolon
+    let parseUntilSemicolon<'us> : Parser<string,'us> = manySatisfy (fun c -> c <> ';')    
+    let parseInQuotations<'us> : Parser<string,'us> = between (pchar '"') (pchar '"') (manySatisfy (fun c -> c <> '"'))
+    
+    let pfilename = parseInQuotations
 
     //////////////////////////////////////////////////////////
     //   DO
     //////////////////////////////////////////////////////////
     let parseDoStatement_SetEngineOption : Parser<DoStatement,UserState> =
         let standardVerifier =
-            let nusmv = pstring "NuSMV" >>% ( (EngineOptionHelpers.createEngineOptionNameSettingTuple AtEngineOptions.StandardVerifier.NuSMV) |> DoStatement.SetEngineOption )
+            let nusmv = pstring "NuSMV" >>% ( (AtEngineOptions.StandardVerifier.NuSMV :> SafetySharp.EngineOptions.IEngineOption) |> DoStatement.SetEngineOption )
             let verifiers = nusmv
             (str_ws1 "standardVerifier") >>. nusmv
         (attempt standardVerifier)
@@ -112,14 +118,22 @@ module internal SatsParser =
 
     let parseLetStatement_AtLtlFormula : Parser<LetStatement,UserState> =
         let createLetStatement (letIdentifier:LetIdentifier) (formula:string) : LetStatement =
-            LetStatement.AtLtlFormula
+            LetStatement.AtLtlFormula(letIdentifier,formula)
         pipe2 ( (parseLetIdentifierOfTypeDecl LetType.LetTypePropertyResult) .>> spaces .>> (str_ws "=") .>> (str_ws1 "verifyLtl") )
-              (parseUntilSemicolon)
+              (parseInQuotations)
+              createLetStatement
+              
+    let parseLetStatement_AtDccaLtl : Parser<LetStatement,UserState> =
+        let createLetStatement (letIdentifier:LetIdentifier) (hazard:string) : LetStatement =
+            LetStatement.AtDccaLtl(letIdentifier,hazard)
+        pipe2 ( (parseLetIdentifierOfTypeDecl LetType.LetTypeDccaResult) .>> spaces .>> (str_ws "=") .>> (str_ws1 "verifyDccaLtl") )
+              (parseInQuotations)
               createLetStatement
 
     let parseLetStatement : Parser<LetStatement,UserState> =        
         let letStatements =
-            (attempt parseLetStatement_AtLtlFormula)
+            (attempt parseLetStatement_AtLtlFormula) <|>
+            (attempt parseLetStatement_AtDccaLtl)
         (str_ws1 "let") >>. letStatements
 
         
@@ -128,10 +142,14 @@ module internal SatsParser =
     //////////////////////////////////////////////////////////
     
     let parseExpectStatement_ExpectPropertyResult : Parser<ExpectStatement,UserState> =
-        let createLetStatement (letIdentifier:LetIdentifier) (formula:string) : ExpectStatement =
-            ExpectStatement.ExpectPropertyResult
+        let createLetStatement (letIdentifier:LetIdentifier) (result:SafetySharp.Ternary.Ternary) : ExpectStatement =
+            ExpectStatement.ExpectPropertyResult(letIdentifier,result)
+        let parseResult : Parser<SafetySharp.Ternary.Ternary,_> =
+            (str_ws "valid" >>% SafetySharp.Ternary.Ternary.True) <|>
+            (str_ws "invalid" >>% SafetySharp.Ternary.Ternary.False) <|>
+            (str_ws "unknown" >>% SafetySharp.Ternary.Ternary.Unknown)
         pipe2 ( (parseLetIdentifierOfTypeInst LetType.LetTypePropertyResult) .>> (str_ws "result") .>> (str_ws "="))
-              (parseUntilSemicolon)
+              (parseResult)
               createLetStatement
     
     let parseExpectStatement : Parser<ExpectStatement,UserState> =               
@@ -159,3 +177,22 @@ module internal SatsParser =
                 SatsPgm.LetBindings = Map.empty<LetIdentifier,LetType>
             }
         many parseSatsStatement_ws |>> createSatsPgm
+
+    let parseSatsFile = spaces >>. parseSatsPgm_ws
+
+        
+    open SafetySharp.Workflow
+    open SafetySharp.Models.ScmMutable
+    
+    let parseStringWorkflow () : ExogenousWorkflowFunction<string,SatsPgm> = workflow {        
+        let runWithUserState parser str = runParserOnString parser UserState.initialUserState "" str
+
+        let parseWithParser parser str =
+            match runWithUserState parser str with
+            | Success(result, _, _)   -> result
+            | Failure(errorMsg, a, b) -> failwith errorMsg
+            
+        let! model = SafetySharp.Workflow.getState ()
+        let satsPgm = parseWithParser (parseSatsFile .>> eof) model
+        do! updateState satsPgm
+    }

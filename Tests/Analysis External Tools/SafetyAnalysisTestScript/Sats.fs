@@ -25,7 +25,7 @@ namespace SafetySharp.SafetyAnalysisTestScript
 module internal Sats =
 
     type DoStatement =
-        | SetEngineOption of OptionName:string * Option:SafetySharp.EngineOptions.IEngineOption
+        | SetEngineOption of Option:SafetySharp.EngineOptions.IEngineOption
         | SetModel of FileName:string
         // For reports        
         // | PrintHtmlReport
@@ -35,7 +35,7 @@ module internal Sats =
     type LetIdentifier = string        
 
     type LetType =
-        //| LetTypeDccaResult
+        | LetTypeDccaResult
         | LetTypePropertyResult
         //| LetTypeSimulationResult
         //| LetTypeProbabiilityResult
@@ -43,13 +43,13 @@ module internal Sats =
     type LetStatement =
         //| AtStepInvariant
         //| AtReachable
-        | AtLtlFormula
+        | AtLtlFormula of LetIdentifier:LetIdentifier * Formula:string
         //| AtLtlFormula_withSpin
         //| AtLtlFormula_withNusmv
         //| AtLtlFormula_withNuxmv
         //| AtLtlFormula_withXsap
         //| AtCtlFormula_withNusmv
-        //| AtDccaLtl
+        | AtDccaLtl of LetIdentifier:LetIdentifier * Hazard:string
         //| AtDccaLtl_withSpin
         //| AtDccaLtl_withNusmv
         //| AtDccaLtl_withNuxmv
@@ -86,8 +86,8 @@ module internal Sats =
         //| Simulate_withPrism
         
     type ExpectStatement =
-        //| ExpectDccaResult
-        | ExpectPropertyResult
+        | ExpectDccaResult  of LetIdentifier:LetIdentifier * Result:(Set<SafetySharp.Models.ScmHelpers.FaultPath> list)
+        | ExpectPropertyResult of LetIdentifier:LetIdentifier * Result:SafetySharp.Ternary.Ternary
         //| ExpectSimulationResult
         //| ExpectProbabiilityResult
 
