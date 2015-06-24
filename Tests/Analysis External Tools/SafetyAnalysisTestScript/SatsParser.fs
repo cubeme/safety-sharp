@@ -67,17 +67,19 @@ module internal SatsParser =
             let nusmv = pstring "NuSMV" >>% ( (AtEngineOptions.StandardVerifier.NuSMV :> SafetySharp.EngineOptions.IEngineOption) |> DoStatement.SetEngineOption )
             let verifiers = nusmv
             (str_ws1 "standardVerifier") >>. nusmv
-        (attempt standardVerifier)
+        let engineOptions =
+            (attempt standardVerifier)
+        (str_ws1 "setEngineOption") >>. engineOptions
                 
     let parseDoStatement_SetModel : Parser<DoStatement,UserState> =
-        (pfilename |>> DoStatement.SetModel)
+        (str_ws1 "setMainModel") >>.(pfilename |>> DoStatement.SetMainModel)
         
 
     let parseDoStatement : Parser<DoStatement,UserState> =
         let doStatements =
             (attempt parseDoStatement_SetEngineOption) <|>
             (attempt parseDoStatement_SetModel)
-        (str_ws1 "setEngineOption") >>. doStatements
+        (str_ws1 "do") >>. doStatements
 
         
     //////////////////////////////////////////////////////////
@@ -182,7 +184,7 @@ module internal SatsParser =
 
         
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmMutable
+    open SafetySharp.Models.ScmTracer
     
     let parseStringWorkflow () : ExogenousWorkflowFunction<string,SatsPgm> = workflow {        
         let runWithUserState parser str = runParserOnString parser UserState.initialUserState "" str

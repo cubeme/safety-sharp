@@ -163,11 +163,11 @@ module internal ScmToSam =
     ////////////////////////////////////////////////
             
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmMutable
+    open SafetySharp.Models.ScmTracer
     open SafetySharp.Models.ScmHelpers
 
-    let transformIscmToSam<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>>
-                        : ExogenousWorkflowFunction<'oldState,SamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+    let transformIscmToSam<'traceableOfOrigin,'oldState when 'oldState :> IScmTracer<'traceableOfOrigin,'oldState>>
+                        : ExogenousWorkflowFunction<'oldState,SamTracer.SamTracer<'traceableOfOrigin>> = workflow {
         do! ScmRewriterFlattenModel.flattenModel ()
         do! iscmCommitForwardTracerMap ()
         let! state = getState ()
@@ -182,9 +182,9 @@ module internal ScmToSam =
             intermediateTracer beforeTransform
         let transformed =
             {
-                SamMutable.MutablePgm.Pgm = newModel
-                SamMutable.MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                SamMutable.MutablePgm.ForwardTracer = tracer;
+                SamTracer.SamTracer.Pgm = newModel
+                SamTracer.SamTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                SamTracer.SamTracer.ForwardTracer = tracer;
             }
         do! updateState transformed
     }

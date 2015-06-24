@@ -142,7 +142,7 @@ module internal TsamChangeIdentifier =
     
     open SafetySharp.Workflow
     
-    let changeIdentifiers<'traceableOfOrigin> (forbiddenNames:Set<string>) : EndogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+    let changeIdentifiers<'traceableOfOrigin> (forbiddenNames:Set<string>) : EndogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>> = workflow {
         let! mutablePgm = getState ()
         
         let changeIdsState = ChangeIdentifierState.initial forbiddenNames SafetySharp.FreshNameGenerator.namegenerator_c_like
@@ -156,12 +156,12 @@ module internal TsamChangeIdentifier =
                 | Traceable(_var) ->
                     Traceable.Traceable(forwardTrace.Item _var)
 
-        let newMutablePgm =
+        let newTsamTracer =
             { mutablePgm with
-                TsamMutable.MutablePgm.Pgm=newPgm;
-                TsamMutable.MutablePgm.ForwardTracer=tracer;
+                TsamTracer.TsamTracer.Pgm=newPgm;
+                TsamTracer.TsamTracer.ForwardTracer=tracer;
             }
-        do! updateState newMutablePgm
+        do! updateState newTsamTracer
     }
 
 

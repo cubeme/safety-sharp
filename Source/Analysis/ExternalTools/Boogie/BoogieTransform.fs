@@ -329,7 +329,7 @@ module internal TsamToBoogie =
                 member this.getTraceables : BoogieSimplifiedAst.Traceable list = []
     
     let transformVcSamToBoogieWf<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,BoogiePgmTracer<'traceableOfOrigin>> = workflow {
+            : ExogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>,BoogiePgmTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
         let model = state.Pgm

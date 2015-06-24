@@ -54,15 +54,15 @@ module internal VcGuardWithAssignmentModel =
 
     open SafetySharp.Workflow
     open SafetySharp.Models.Tsam
-    open SafetySharp.Models.TsamMutable
+    open SafetySharp.Models.TsamTracer
 
     let phase1TreeifyAndNormalize () : TsamWorkflowFunction<_,unit> = workflow {
         // Example:
         //           ┌─ 4 ─┐                      ┌─ 4 ─ 6
         // 1 ─ 2 ─ 3 ┤     ├ 6    ===>  1 ─ 2 ─ 3 ┤   
         //           └─ 5 ─┘                      └─ 5 ─ 6
-        do! TsamMutable.treeifyStm ()
-        do! TsamMutable.unnestBlocks ()
+        do! TsamTracer.treeifyStm ()
+        do! TsamTracer.unnestBlocks ()
     }
 
     let phase2PushAssignmentsNotAtTheEnd () : TsamWorkflowFunction<_,unit> = workflow {
@@ -1018,7 +1018,7 @@ module internal VcGuardWithAssignmentModel =
                
 
 
-    let transformTsamToGwaModelWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
+    let transformTsamToGwaModelWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
         do! transformTsamToTsamInGuardToAssignmentForm ()
 
         let! state = getState ()

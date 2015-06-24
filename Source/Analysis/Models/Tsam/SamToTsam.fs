@@ -94,13 +94,13 @@ module internal SamToTsam =
     open SafetySharp.Workflow
 
     let transformSamToTsam<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<SamMutable.MutablePgm<'traceableOfOrigin>,TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+            : ExogenousWorkflowFunction<SamTracer.SamTracer<'traceableOfOrigin>,TsamTracer.TsamTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let transformed =
             {
-                TsamMutable.MutablePgm.Pgm = translatePgm (state.Pgm);
-                TsamMutable.MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                TsamMutable.MutablePgm.ForwardTracer = state.ForwardTracer;
+                TsamTracer.TsamTracer.Pgm = translatePgm (state.Pgm);
+                TsamTracer.TsamTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TsamTracer.TsamTracer.ForwardTracer = state.ForwardTracer;
             }
         do! updateState transformed
     }

@@ -472,7 +472,7 @@ module internal TransitionSystemAsRelationExpr =
     }   
 
     let transformTsamToTsareWithSpWorkflow<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
+            : ExogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
 
         assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
@@ -488,7 +488,7 @@ module internal TransitionSystemAsRelationExpr =
     }
 
     let transformTsamToTsareWithSpUnoptimizedWorkflow<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
+            : ExogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         
         assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
@@ -504,7 +504,7 @@ module internal TransitionSystemAsRelationExpr =
     }
 
     let transformTsamToTsareWithWpWorkflow<'traceableOfOrigin> (``yes, I know what I do. I am sure the input program is deterministic``: bool)
-            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
+            : ExogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         
         assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)
@@ -520,7 +520,7 @@ module internal TransitionSystemAsRelationExpr =
     }
 
     let transformTsamToTsareWithPropagationWorkflow<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
+            : ExogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         
         assert (state.Pgm.Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly = SafetySharp.Ternary.True)

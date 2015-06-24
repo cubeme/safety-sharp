@@ -27,7 +27,7 @@ module internal ScmRewriterLevelUp =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
-    open ScmMutable
+    open ScmTracer
     
     type ScmRewriterLevelUpState<'traceableOfOrigin> = {
         Model : ScmModel;
@@ -68,7 +68,7 @@ module internal ScmRewriterLevelUp =
                     (levelUp.ArtificialFaultsOldToNew)
             member levelUp.oldToNewMaps3=                
                     (levelUp.ArtificialFaultsOldToNew,levelUp.ArtificialFieldsOldToNew)
-            interface IScmMutable<'traceableOfOrigin,ScmRewriterLevelUpState<'traceableOfOrigin>> with
+            interface IScmTracer<'traceableOfOrigin,ScmRewriterLevelUpState<'traceableOfOrigin>> with
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with
@@ -777,8 +777,8 @@ module internal ScmRewriterLevelUp =
         do! removeSubComponent ()
     }
               
-    let findSubComponentForLevelingUp () : IScmMutableWorkflowFunction<_,_,CompPath option> = workflow {
-        let! model = ScmMutable.iscmGetModel ()
+    let findSubComponentForLevelingUp () : IScmTracerWorkflowFunction<_,_,CompPath option> = workflow {
+        let! model = ScmTracer.iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         if rootComp.Subs = [] then
             // nothing to do, we are done
@@ -853,14 +853,14 @@ module internal ScmRewriterLevelUp =
     }
     
     
-    let assertNoSubcomponent () : IScmMutableWorkflowFunction<_,_,unit> = workflow {
-        let! model = ScmMutable.iscmGetModel ()
+    let assertNoSubcomponent () : IScmTracerWorkflowFunction<_,_,unit> = workflow {
+        let! model = ScmTracer.iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         assert (rootComp.Subs=[])
         return ()
     }
     
-    let prepareForLevelingUp<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
+    let prepareForLevelingUp<'traceableOfOrigin,'oldState when 'oldState :> IScmTracer<'traceableOfOrigin,'oldState>> ()
                         : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState<'traceableOfOrigin>> = workflow {
         let emptyLevelUpState
                 (model:ScmModel)
@@ -898,7 +898,7 @@ module internal ScmRewriterLevelUp =
 
 
     // This function must implement the conversion from 'oldState to ScmRewriterLevelUpState
-    let levelUpSubcomponentsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
+    let levelUpSubcomponentsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmTracer<'traceableOfOrigin,'oldState>> ()
                         : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState<'traceableOfOrigin>> = workflow {
         do! prepareForLevelingUp ()
         do! (iterateToFixpoint (selectAndLevelUpSubcomponent ()))

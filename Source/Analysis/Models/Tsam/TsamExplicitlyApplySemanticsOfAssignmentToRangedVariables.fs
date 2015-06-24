@@ -161,10 +161,10 @@ module internal TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables =
         newPgm
         
     open SafetySharp.Workflow
-    open SafetySharp.Models.TsamMutable
+    open SafetySharp.Models.TsamTracer
 
     let applySemanticsWorkflow<'traceableOfOrigin> ()
-            : EndogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+            : EndogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>> = workflow {
         let! semanticsOfAssignmentToRangedVariables =
             getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()
 

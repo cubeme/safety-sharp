@@ -22,18 +22,18 @@
 
 namespace SafetySharp.Models
 
-module internal TsamMutable =
+module internal TsamTracer =
 
     open SafetySharp.ITracing
     open SafetySharp.Models.TsamHelpers
 
-    type MutablePgm<'traceableOfOrigin> = {
+    type TsamTracer<'traceableOfOrigin> = {
         Pgm : Tsam.Pgm;
         TraceablesOfOrigin : 'traceableOfOrigin list;
         ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
     }
         with
-            interface ITracing<Tsam.Pgm,'traceableOfOrigin,Tsam.Traceable,MutablePgm<'traceableOfOrigin>> with
+            interface ITracing<Tsam.Pgm,'traceableOfOrigin,Tsam.Traceable,TsamTracer<'traceableOfOrigin>> with
                 member this.getModel = this.Pgm
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
@@ -45,7 +45,7 @@ module internal TsamMutable =
     open SafetySharp.Workflow
         
     type TsamWorkflowFunction<'traceableOfOrigin,'returnType> =
-        WorkflowFunction<MutablePgm<'traceableOfOrigin>,MutablePgm<'traceableOfOrigin>,'returnType>
+        WorkflowFunction<TsamTracer<'traceableOfOrigin>,TsamTracer<'traceableOfOrigin>,'returnType>
             
     let getTsamModel ()
             : TsamWorkflowFunction<_,Tsam.Pgm> = workflow {
@@ -54,19 +54,19 @@ module internal TsamMutable =
     }
 
     let updateTsamModel<'traceableOfOrigin> (pgm:Tsam.Pgm)
-            : EndogenousWorkflowFunction<MutablePgm<'traceableOfOrigin>> = workflow {
+            : EndogenousWorkflowFunction<TsamTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let tsamMutable =
             {
-                MutablePgm.Pgm = pgm;
-                MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                MutablePgm.ForwardTracer = state.ForwardTracer;
+                TsamTracer.Pgm = pgm;
+                TsamTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TsamTracer.ForwardTracer = state.ForwardTracer;
             }
         do! updateState tsamMutable
     }
     
     let unnestBlocks<'traceableOfOrigin> ()
-            : EndogenousWorkflowFunction<MutablePgm<'traceableOfOrigin>> = workflow {
+            : EndogenousWorkflowFunction<TsamTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let newPgm =
             { state.Pgm with
@@ -74,15 +74,15 @@ module internal TsamMutable =
             }
         let tsamMutable =
             {
-                MutablePgm.Pgm = newPgm;
-                MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                MutablePgm.ForwardTracer = state.ForwardTracer;
+                TsamTracer.Pgm = newPgm;
+                TsamTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TsamTracer.ForwardTracer = state.ForwardTracer;
             }
         do! updateState tsamMutable
     }
     
     let treeifyStm<'traceableOfOrigin> ()
-            : EndogenousWorkflowFunction<MutablePgm<'traceableOfOrigin>> = workflow {
+            : EndogenousWorkflowFunction<TsamTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let newPgm =
             { state.Pgm with
@@ -90,15 +90,15 @@ module internal TsamMutable =
             }
         let tsamMutable =
             {
-                MutablePgm.Pgm = newPgm;
-                MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                MutablePgm.ForwardTracer = state.ForwardTracer;
+                TsamTracer.Pgm = newPgm;
+                TsamTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TsamTracer.ForwardTracer = state.ForwardTracer;
             }
         do! updateState tsamMutable
     }
 
     let prependKeepValueAssignments<'traceableOfOrigin> ()
-            : EndogenousWorkflowFunction<MutablePgm<'traceableOfOrigin>> = workflow {
+            : EndogenousWorkflowFunction<TsamTracer<'traceableOfOrigin>> = workflow {
         // Find every global variable, which was not written to. Prepend statements which keep their value.
         // This is useful for the SSA-Form to express that a variable should keep its value.
         let! state = getState ()
@@ -137,9 +137,9 @@ module internal TsamMutable =
             }
         let tsamMutable =
             {
-                MutablePgm.Pgm = newPgm;
-                MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                MutablePgm.ForwardTracer = state.ForwardTracer;
+                TsamTracer.Pgm = newPgm;
+                TsamTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TsamTracer.ForwardTracer = state.ForwardTracer;
             }
         do! updateState tsamMutable
     }

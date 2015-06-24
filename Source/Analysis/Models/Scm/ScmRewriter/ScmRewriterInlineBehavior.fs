@@ -27,7 +27,7 @@ module internal ScmRewriterInlineBehavior =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
-    open ScmMutable
+    open ScmTracer
     
     // Currently only works in the root component
     
@@ -57,7 +57,7 @@ module internal ScmRewriterInlineBehavior =
         (*ArtificialLocalVarOldToNew : Map<VarDecl,VarDecl>;*)
     }
         with
-            interface IScmMutable<'traceableOfOrigin,ScmRewriterInlineBehaviorState<'traceableOfOrigin>> with
+            interface IScmTracer<'traceableOfOrigin,ScmRewriterInlineBehaviorState<'traceableOfOrigin>> with
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with
@@ -411,7 +411,7 @@ module internal ScmRewriterInlineBehavior =
                                 StepDecl.Behavior = inlineBehavior.InlinedBehavior;
                             }
                         rootComp.replaceStep (stepDecl,newStep) 
-            do! ScmMutable.iscmSetModel (ScmModel(newModelroot))
+            do! ScmTracer.iscmSetModel (ScmModel(newModelroot))
             do! removeInlineBehaviorState ()
         }
 
@@ -445,7 +445,7 @@ module internal ScmRewriterInlineBehavior =
 
 
 
-    let inlineBehaviorsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>>
+    let inlineBehaviorsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmTracer<'traceableOfOrigin,'oldState>>
                         : ExogenousWorkflowFunction<'oldState,ScmRewriterInlineBehaviorState<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()

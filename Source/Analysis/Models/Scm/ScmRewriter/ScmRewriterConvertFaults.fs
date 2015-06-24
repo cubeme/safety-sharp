@@ -27,7 +27,7 @@ module internal ScmRewriterConvertFaults =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
-    open ScmMutable
+    open ScmTracer
     
     
                                         
@@ -45,7 +45,7 @@ module internal ScmRewriterConvertFaults =
         BehaviorsToRewrite : BehaviorWithLocation list;
     }
         with
-            interface IScmMutable<'traceableOfOrigin,ScmRewriterConvertFaultsState<'traceableOfOrigin>> with
+            interface IScmTracer<'traceableOfOrigin,ScmRewriterConvertFaultsState<'traceableOfOrigin>> with
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with
@@ -370,7 +370,7 @@ module internal ScmRewriterConvertFaults =
             convertFaultsState
             
     
-    let convertFaultsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
+    let convertFaultsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmTracer<'traceableOfOrigin,'oldState>> ()
                         : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertFaultsState<'traceableOfOrigin>> = workflow {
         let! model = iscmGetModel ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()

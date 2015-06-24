@@ -445,10 +445,10 @@ module internal StochasticProgramGraphToNuXmv =
 
 module internal ScmToNuXmv =
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmMutable
+    open SafetySharp.Models.ScmTracer
     open SafetySharp.Analysis.VerificationCondition
                 
-    let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state>> ()
+    let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()
                         : ExogenousWorkflowFunction<'state,GenericToSmv.SmvTracer<'traceableOfOrigin>> = workflow {
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SafetySharp.Models.SamToTsam.transformSamToTsam ()

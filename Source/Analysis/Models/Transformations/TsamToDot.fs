@@ -35,7 +35,7 @@ module internal TsamToDot =
     open SafetySharp.Workflow
 
     let exportModelWorkflow () 
-            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,Digraph> = workflow {
+            : ExogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>,Digraph> = workflow {
         let! pgm = getState ()
         let asString = exportModel (pgm.Pgm)
         do! updateState asString

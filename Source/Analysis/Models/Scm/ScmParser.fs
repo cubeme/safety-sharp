@@ -772,9 +772,9 @@ module internal ScmParser =
     
     
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmMutable
+    open SafetySharp.Models.ScmTracer
     
-    let parseStringWorkflow () : ExogenousWorkflowFunction<string,ScmMutable.SimpleScmMutable<Scm.Traceable>> = workflow {
+    let parseStringWorkflow () : ExogenousWorkflowFunction<string,ScmTracer.SimpleScmTracer<Scm.Traceable>> = workflow {
         
         let runWithUserState parser str = runParserOnString parser UserState.initialUserState "" str
 

@@ -43,7 +43,7 @@ type CompleteRewriteTests () =
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
             do! ScmRewriterFlattenModel.flattenModel ()  
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! model = getState ()
             do printf "%s" (SafetySharp.Models.ScmToString.toString model.Model.getRootComp)
             do! SafetySharp.Workflow.printNewParagraphToStdout ()

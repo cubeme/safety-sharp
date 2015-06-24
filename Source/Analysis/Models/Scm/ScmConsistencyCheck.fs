@@ -246,13 +246,13 @@ module internal ScmConsistencyCheck =
     ////////////////////////////////////////////////////////////////////////////////////////////
     
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmMutable
+    open SafetySharp.Models.ScmTracer
     
     /////////////
     // workflow to check, if all traceables are actually in the model
     ////////////
 
-    let ``check if all traced traceables from origin actually exists``<'state,'traceableOfOrigin,'returnType when 'state :> IScmMutable<'traceableOfOrigin,'state>>
+    let ``check if all traced traceables from origin actually exists``<'state,'traceableOfOrigin,'returnType when 'state :> IScmTracer<'traceableOfOrigin,'state>>
             ()
             : WorkflowFunction<'state,'state,bool> = workflow {
         let! traceablesOfOrigin = iscmGetTraceablesOfOrigin ()

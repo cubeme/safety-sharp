@@ -178,7 +178,7 @@ module internal VcGuardWithAssignmentModelFast =
     open SafetySharp.Workflow
 
         
-    let transformWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
+    let transformWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let model = state.Pgm
 

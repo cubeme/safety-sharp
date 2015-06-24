@@ -48,8 +48,8 @@ module TsamHelpers =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! SafetySharp.Models.TsamMutable.unnestBlocks ()
-            let! model = SafetySharp.Models.TsamMutable.getTsamModel ()
+            do! SafetySharp.Models.TsamTracer.unnestBlocks ()
+            let! model = SafetySharp.Models.TsamTracer.getTsamModel ()
             do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
             let! modelString = getState ()
             return (model,modelString)
@@ -59,8 +59,8 @@ module TsamHelpers =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! SafetySharp.Models.TsamMutable.treeifyStm ()
-            let! model = SafetySharp.Models.TsamMutable.getTsamModel ()
+            do! SafetySharp.Models.TsamTracer.treeifyStm ()
+            let! model = SafetySharp.Models.TsamTracer.getTsamModel ()
             do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
             let! modelString = getState ()
             return (model,modelString)

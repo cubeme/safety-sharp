@@ -22,18 +22,18 @@
 
 namespace SafetySharp.Models
 
-module internal SamMutable =
+module internal SamTracer =
 
     open SamHelpers
     open SafetySharp.ITracing
 
-    type MutablePgm<'traceableOfOrigin> = {
+    type SamTracer<'traceableOfOrigin> = {
         Pgm : Sam.Pgm;
         TraceablesOfOrigin : 'traceableOfOrigin list;
         ForwardTracer : 'traceableOfOrigin -> Sam.Traceable;
     }
         with
-            interface ITracing<Sam.Pgm,'traceableOfOrigin,Sam.Traceable,MutablePgm<'traceableOfOrigin>> with
+            interface ITracing<Sam.Pgm,'traceableOfOrigin,Sam.Traceable,SamTracer<'traceableOfOrigin>> with
                 member this.getModel = this.Pgm
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
@@ -45,7 +45,7 @@ module internal SamMutable =
     open SafetySharp.Workflow
         
     type SamWorkflowFunction<'traceableOfOrigin,'returnType> =
-        WorkflowFunction<MutablePgm<'traceableOfOrigin>,MutablePgm<'traceableOfOrigin>,'returnType>
+        WorkflowFunction<SamTracer<'traceableOfOrigin>,SamTracer<'traceableOfOrigin>,'returnType>
             
     let getSamModel ()
             : SamWorkflowFunction<_,Sam.Pgm> = workflow {
@@ -54,12 +54,12 @@ module internal SamMutable =
     }
 
     let setInitialSamModel<'oldIrrelevantState> (pgm:Sam.Pgm)
-            : WorkflowFunction<'oldIrrelevantState,MutablePgm<Sam.Traceable>,unit> = workflow {
+            : WorkflowFunction<'oldIrrelevantState,SamTracer<Sam.Traceable>,unit> = workflow {
         let samMutable =
             {
-                MutablePgm.Pgm = pgm;
-                MutablePgm.TraceablesOfOrigin = pgm.getTraceables;
-                MutablePgm.ForwardTracer = id;
+                SamTracer.Pgm = pgm;
+                SamTracer.TraceablesOfOrigin = pgm.getTraceables;
+                SamTracer.ForwardTracer = id;
             }
         do! updateState samMutable
     }

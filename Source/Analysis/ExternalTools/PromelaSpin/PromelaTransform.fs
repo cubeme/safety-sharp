@@ -288,7 +288,7 @@ module internal SamToPromela =
                 member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> PrTraceable)) = {this with ForwardTracer=forwardTracer}
                 member this.getTraceables = []
     
-    let transformConfigurationWf<'traceableOfOrigin> () : ExogenousWorkflowFunction<SamMutable.MutablePgm<'traceableOfOrigin>,PromelaTracer<'traceableOfOrigin>> = workflow {
+    let transformConfigurationWf<'traceableOfOrigin> () : ExogenousWorkflowFunction<SamTracer.SamTracer<'traceableOfOrigin>,PromelaTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()        
         let! semanticsOfAssignmentToRangedVariables =            
             getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()   
@@ -324,10 +324,10 @@ module internal SamToPromela =
 module internal ScmToPromela =
 
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmMutable
+    open SafetySharp.Models.ScmTracer
     open SafetySharp.Analysis.VerificationCondition
                 
-    let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state>> ()
+    let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()
                         : ExogenousWorkflowFunction<'state,SamToPromela.PromelaTracer<'traceableOfOrigin>> = workflow {
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SamToPromela.transformConfigurationWf ()

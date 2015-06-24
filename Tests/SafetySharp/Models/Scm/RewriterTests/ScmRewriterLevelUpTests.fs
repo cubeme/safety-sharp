@@ -65,7 +65,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpField ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
@@ -101,7 +101,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpField ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -136,7 +136,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpFault ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -171,7 +171,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -207,7 +207,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -247,7 +247,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.levelUpAndRewriteBindingDeclaredInChild ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -296,7 +296,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -346,7 +346,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -396,7 +396,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -446,7 +446,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -496,7 +496,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -546,7 +546,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -596,7 +596,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -646,7 +646,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -697,7 +697,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -745,7 +745,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpSubcomponent ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -788,7 +788,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteProvPort ()
             do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -854,7 +854,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.rewriteProvPort ()
             do! ScmRewriterLevelUp.rewriteProvPort ()
             do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -929,7 +929,7 @@ type LevelUpWithIterateToFixpoint () =
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! (iterateToFixpoint (ScmRewriterLevelUp.levelUpField ())) 
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }        
@@ -980,7 +980,7 @@ type CompleteLevelUpTests () =
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
             do! levelUpSubcomponentsWrapper  ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -1007,7 +1007,7 @@ type CompleteLevelUpTests () =
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
             do! levelUpSubcomponentsWrapper ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
@@ -1034,7 +1034,7 @@ type CompleteLevelUpTests () =
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
             do! levelUpSubcomponentsWrapper ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -1058,7 +1058,7 @@ type CompleteLevelUpTests () =
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
             do! levelUpSubcomponentsWrapper ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -1082,7 +1082,7 @@ type CompleteLevelUpTests () =
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
             do! levelUpSubcomponentsWrapper ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -1106,7 +1106,7 @@ type CompleteLevelUpTests () =
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
             do! levelUpSubcomponentsWrapper ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
@@ -1131,7 +1131,7 @@ type CompleteLevelUpTests () =
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
             do! levelUpSubcomponentsWrapper ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -1156,7 +1156,7 @@ type CompleteLevelUpTests () =
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
             do! levelUpSubcomponentsWrapper ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }
@@ -1180,7 +1180,7 @@ type CompleteLevelUpTests () =
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
             do! levelUpSubcomponentsWrapper ()
-            do! ScmMutable.iscmCommitForwardTracerMap ()
+            do! ScmTracer.iscmCommitForwardTracerMap ()
             let! leveledUpModel = getState ()
             return (oldModel,leveledUpModel)
         }

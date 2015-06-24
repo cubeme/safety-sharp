@@ -355,8 +355,8 @@ module internal TsamPassiveFormFS01 =
     open SafetySharp.Models.SamHelpers
 
     let passifyPgm<'traceableOfOrigin>
-            () : EndogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
-        do! TsamMutable.prependKeepValueAssignments ()
+            () : EndogenousWorkflowFunction<TsamTracer.TsamTracer<'traceableOfOrigin>> = workflow {
+        do! TsamTracer.prependKeepValueAssignments ()
         let! state = getState ()
         let pgm = state.Pgm
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)

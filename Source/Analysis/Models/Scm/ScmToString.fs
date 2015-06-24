@@ -278,9 +278,9 @@ module internal ScmToString =
         writer.ToString ()
         
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmMutable
+    open SafetySharp.Models.ScmTracer
     
-    let modelToStringWorkflow<'state,'traceableOfOrigin when 'state :> IScmMutable<'traceableOfOrigin,'state>> ()
+    let modelToStringWorkflow<'state,'traceableOfOrigin when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()
             : WorkflowFunction<'state,string,unit> = workflow {
         let! model = iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp

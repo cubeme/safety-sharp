@@ -37,7 +37,7 @@ module internal SatsScmExecutor =
     type VerificationResult = unit
     
     type SatsExecutionState = {
-        ParsedModel : SafetySharp.Models.ScmMutable.SimpleScmMutable<SafetySharp.Models.Scm.Traceable> option;
+        AnalysisContext : SafetySharp.AnalysisTechniques.AnalysisContext;
         VerificationResults : Map<LetIdentifier,VerificationResult>;
     }
 
