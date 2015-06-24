@@ -26,7 +26,6 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Roslyn;
 	using Roslyn.Syntax;
 
 	/// <summary>
@@ -43,19 +42,8 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	///     For example, compound assignments such as <c>x += 1</c> or <c>y -= x + 1</c> are normalized to <c>x = x + (1)</c> and
 	///     <c>y = y - (x + 1)</c>, respectively.
 	/// </summary>
-	public class CompoundAssignmentNormalizer : SyntaxNormalizer
+	public class CompoundAssignmentNormalizer : QuotationNormalizer
 	{
-		/// <summary>
-		///     Normalizes the <paramref name="methodDeclaration" />.
-		/// </summary>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
-		{
-			if (methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
-				return base.VisitMethodDeclaration(methodDeclaration);
-
-			return methodDeclaration;
-		}
-
 		/// <summary>
 		///     Normalizes the <paramref name="expression" /> if it represents a compound assignment.
 		/// </summary>

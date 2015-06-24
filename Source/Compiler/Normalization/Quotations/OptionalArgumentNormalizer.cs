@@ -29,7 +29,6 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Roslyn;
 	using Roslyn.Syntax;
 	using Utilities;
 
@@ -48,19 +47,8 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	///  		M(c: 4, a: 1, b: 2);
 	/// 	</code>
 	/// </summary>
-	public class OptionalArgumentNormalizer : SyntaxNormalizer
+	public class OptionalArgumentNormalizer : QuotationNormalizer
 	{
-		/// <summary>
-		///     Normalizes the <paramref name="methodDeclaration" />.
-		/// </summary>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
-		{
-			if (methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
-				return base.VisitMethodDeclaration(methodDeclaration);
-
-			return methodDeclaration;
-		}
-
 		/// <summary>
 		///     Adds omitted optional arguments to the <paramref name="invocation" />.
 		/// </summary>

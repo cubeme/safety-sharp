@@ -41,17 +41,13 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	///     Replaces all side-effecting expressions within the method bodies that metadata is generated for with semantically
 	///     equivalent side-effect free versions.
 	/// </summary>
-	public sealed class SideEffectsNormalizer : SyntaxNormalizer
+	public sealed class SideEffectsNormalizer : QuotationNormalizer
 	{
 		/// <summary>
 		///     Normalizes the <paramref name="methodDeclaration" />.
 		/// </summary>
-		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
+		protected override SyntaxNode Normalize(MethodDeclarationSyntax methodDeclaration)
 		{
-			if (!methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
-				return methodDeclaration;
-
 			var rewriter = new Rewriter(SemanticModel, Syntax);
 			var transformedBody = rewriter.Rewrite(methodDeclaration);
 			return methodDeclaration.WithExpressionBody(null).WithBody(transformedBody).NormalizeWhitespace();
@@ -304,7 +300,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 			public override Result VisitMemberAccessExpression(MemberAccessExpressionSyntax expression)
 			{
 				var fieldSymbol = expression.GetReferencedSymbol(_semanticModel) as IFieldSymbol;
-				if (fieldSymbol != null && fieldSymbol.ContainingType.TypeKind==TypeKind.Enum)
+				if (fieldSymbol != null && fieldSymbol.ContainingType.TypeKind == TypeKind.Enum)
 					return new Result(expression);
 
 				var result = Visit(expression.Expression);

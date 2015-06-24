@@ -29,7 +29,6 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Editing;
-	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
 	using Runtime;
@@ -41,17 +40,13 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	/// <summary>
 	///     Rewrites the body of a method from regular C# code to <see cref="Statement" /> and <see cref="Expression" /> trees.
 	/// </summary>
-	public sealed class MethodBodyCreationNormalizer : SyntaxNormalizer
+	public sealed class MethodBodyCreationNormalizer : QuotationNormalizer
 	{
 		/// <summary>
 		///     Normalizes the <paramref name="methodDeclaration" />.
 		/// </summary>
-		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
+		protected override SyntaxNode Normalize(MethodDeclarationSyntax methodDeclaration)
 		{
-			if (!methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
-				return methodDeclaration;
-
 			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
 			var rewriter = new Rewriter(SemanticModel, Syntax);
 			var body = rewriter.Rewrite(methodSymbol, methodDeclaration.Body);
@@ -185,7 +180,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 						var fieldMetadata = ((IFieldSymbol)symbol).GetFieldMetadataExpression(_syntax.ThisExpression(), _syntax);
 						return Create<FieldExpression>(fieldMetadata);
 					default:
-						Assert.NotReached("Unexpected symbol kind.");
+						Assert.NotReached("Unexpected symbol kind '{0}'.", symbol.Kind);
 						return null;
 				}
 			}

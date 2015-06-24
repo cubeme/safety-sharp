@@ -20,11 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Methods.Required
+namespace Tests.Normalization.Methods.Provided
 {
 	using System;
 	using SafetySharp.Modeling;
-	using Utilities;
 
 	interface I1 : IComponent
 	{
@@ -32,15 +31,15 @@ namespace Tests.Normalization.Methods.Required
 		int M();
 	}
 	
-	internal partial class In9 : Component, Tests.Normalization.Methods.Required.I1
+	internal partial class In9 : Component, Tests.Normalization.Methods.Provided.I1
 	{
-		int global::Tests.Normalization.Methods.Required.I1.M()
+		int Tests.Normalization.Methods.Provided.I1.M()
 		{
 			return 1;
 		}
 	}
 
-	internal partial class Out9 : Component, global::Tests.Normalization.Methods.Required.I1
+	internal partial class Out9 : Component, Tests.Normalization.Methods.Provided.I1
 	{
 		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
 		private int __Behavior0__()
@@ -62,6 +61,6 @@ namespace Tests.Normalization.Methods.Required
 		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		int global::Tests.Normalization.Methods.Required.I1.M() => this.__backingField0__();
+		int Tests.Normalization.Methods.Provided.I1.M() => this.__backingField0__();
 	}
 }

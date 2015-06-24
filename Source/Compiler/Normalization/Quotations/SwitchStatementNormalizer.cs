@@ -27,14 +27,13 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Roslyn;
 	using Roslyn.Syntax;
 	using Runtime;
 
 	/// <summary>
 	///     Replaces <c>switch</c> statements with the corresponding <c>if</c> statement.
 	/// </summary>
-	public sealed class SwitchStatementNormalizer : SyntaxNormalizer
+	public sealed class SwitchStatementNormalizer : QuotationNormalizer
 	{
 		/// <summary>
 		///     The name scope that is used to generate unique names for the switch expression.
@@ -44,13 +43,10 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 		/// <summary>
 		///     Normalizes the <paramref name="methodDeclaration" />.
 		/// </summary>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
+		protected override SyntaxNode Normalize(MethodDeclarationSyntax methodDeclaration)
 		{
-			if (!methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
-				return methodDeclaration;
-
 			_nameScope = methodDeclaration.GetNameScope(SemanticModel, includeLocals: true);
-			return base.VisitMethodDeclaration(methodDeclaration).NormalizeWhitespace();
+			return base.Normalize(methodDeclaration).NormalizeWhitespace();
 		}
 
 		/// <summary>

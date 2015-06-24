@@ -24,48 +24,48 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 {
 	using System;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Roslyn;
 	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Replaces all method declarations with expression bodies with regular method declarations.
-	/// 
-	///     For instance:
-	///     <code>
-	///     	public int X() => 1;
-	///     	// becomes:
-	///     	public int X() { return 1; }
-	/// 
-	///         public void X() => X();
-	///     	// becomes:
-	///     	public void X() { X(); }
-	///     	
-	///     	[A] bool I.X(bool b) => !b;
-	///     	// becomes:
-	///     	[A] bool I.X(bool b) { return !b; }
-	///    	</code>
+	///     Normalizes methods for which the method body initialization code is generated.
 	/// </summary>
-	public class ExpressionMethodNormalizer : QuotationNormalizer
+	public abstract class QuotationNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
 		///     Normalizes the <paramref name="methodDeclaration" />.
 		/// </summary>
-		protected override SyntaxNode Normalize(MethodDeclarationSyntax methodDeclaration)
+		public override sealed SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
 		{
-			// Nothing to do here for methods without expression bodies
-			if (methodDeclaration.ExpressionBody == null)
-				return methodDeclaration;
+			if (methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
+				return Normalize(methodDeclaration);
 
-			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
-			StatementSyntax statementBody;
+			return methodDeclaration;
+		}
 
-			if (methodSymbol.ReturnsVoid)
-				statementBody = (StatementSyntax)Syntax.ExpressionStatement(methodDeclaration.ExpressionBody.Expression);
-			else
-				statementBody = (StatementSyntax)Syntax.ReturnStatement(methodDeclaration.ExpressionBody.Expression);
+		/// <summary>
+		///     Does not normalize the <paramref name="constructorDeclaration" />.
+		/// </summary>
+		public override SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax constructorDeclaration)
+		{
+			return constructorDeclaration;
+		}
 
-			return methodDeclaration.WithExpressionBody(null).WithBody(SyntaxFactory.Block(statementBody).NormalizeWhitespace());
+		/// <summary>
+		///     Does not normalize the <paramref name="propertyDeclaration" />.
+		/// </summary>
+		public override SyntaxNode VisitPropertyDeclaration(PropertyDeclarationSyntax propertyDeclaration)
+		{
+			return propertyDeclaration;
+		}
+
+		/// <summary>
+		///     Normalizes the <paramref name="methodDeclaration" />.
+		/// </summary>
+		protected virtual SyntaxNode Normalize(MethodDeclarationSyntax methodDeclaration)
+		{
+			return base.VisitMethodDeclaration(methodDeclaration);
 		}
 	}
 }

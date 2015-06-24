@@ -24,7 +24,6 @@ namespace Tests.Normalization.Methods.Required
 {
 	using System;
 	using SafetySharp.Modeling;
-	using Utilities;
 
 	interface I1 : IComponent
 	{
@@ -34,15 +33,15 @@ namespace Tests.Normalization.Methods.Required
 	
 	internal partial class In9 : Component, Tests.Normalization.Methods.Required.I1
 	{
-		extern void global::Tests.Normalization.Methods.Required.I1.M();
+		extern void Tests.Normalization.Methods.Required.I1.M();
 	}
 
-	internal partial class Out9 : Component, global::Tests.Normalization.Methods.Required.I1
+	internal partial class Out9 : Component, Tests.Normalization.Methods.Required.I1
 	{
 		[SafetySharp.Modeling.RequiredAttribute]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		void global::Tests.Normalization.Methods.Required.I1.M() => this.__backingField0__();
+		void Tests.Normalization.Methods.Required.I1.M() => this.__backingField0__();
 	}
 
 	partial class Out9

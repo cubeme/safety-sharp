@@ -25,7 +25,6 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using System;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Roslyn;
 	using Roslyn.Syntax;
 
 	/// <summary>
@@ -37,19 +36,8 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	///     if (x) { S; }
 	///     </code>
 	/// </summary>
-	public sealed class BlockNormalizer : SyntaxNormalizer
+	public sealed class BlockNormalizer : QuotationNormalizer
 	{
-		/// <summary>
-		///     Normalizes the <paramref name="methodDeclaration" />.
-		/// </summary>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
-		{
-			if (methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
-				return base.VisitMethodDeclaration(methodDeclaration);
-
-			return methodDeclaration;
-		}
-
 		/// <summary>
 		///     Normalizes the <paramref name="ifStatement" />.
 		/// </summary>

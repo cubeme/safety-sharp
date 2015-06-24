@@ -27,14 +27,13 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Roslyn;
 	using Roslyn.Syntax;
 	using Runtime;
 
 	/// <summary>
 	///     Ensures that all names of local variables are unique within a method's scope, and renames them otherwise.
 	/// </summary>
-	public sealed class LocalVariablesNormalizer : SyntaxNormalizer
+	public sealed class LocalVariablesNormalizer : QuotationNormalizer
 	{
 		/// <summary>
 		///     Maps each local variable to its new name.
@@ -54,14 +53,11 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 		/// <summary>
 		///     Normalizes the <paramref name="methodDeclaration" />.
 		/// </summary>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
+		protected override SyntaxNode Normalize(MethodDeclarationSyntax methodDeclaration)
 		{
-			if (!methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
-				return methodDeclaration;
-
 			_withinMethod = true;
 			_nameScope = methodDeclaration.GetNameScope(SemanticModel, includeLocals: false);
-			methodDeclaration = (MethodDeclarationSyntax)base.VisitMethodDeclaration(methodDeclaration);
+			methodDeclaration = (MethodDeclarationSyntax)base.Normalize(methodDeclaration);
 
 			_withinMethod = false;
 			return methodDeclaration;

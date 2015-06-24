@@ -29,7 +29,6 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Editing;
-	using Roslyn;
 	using Roslyn.Syntax;
 	using Utilities;
 
@@ -54,7 +53,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	///     return returnValue;
 	///     </code>
 	/// </summary>
-	public sealed class SingleExitPointNormalizer : SyntaxNormalizer
+	public sealed class SingleExitPointNormalizer : QuotationNormalizer
 	{
 		/// <summary>
 		///     The identifier of the variable indicating that the method has returned.
@@ -74,11 +73,8 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 		/// <summary>
 		///     Normalizes the <paramref name="methodDeclaration" />.
 		/// </summary>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
+		protected override SyntaxNode Normalize(MethodDeclarationSyntax methodDeclaration)
 		{
-			if (!methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
-				return methodDeclaration;
-
 			var returnCount = methodDeclaration.Descendants<ReturnStatementSyntax>().Count();
 
 			// If there is no return statement within the method's body, there's nothing to do
@@ -99,7 +95,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 
 			var rewriter = new Rewriter(Syntax, _hasReturnedVariable);
 			methodDeclaration = (MethodDeclarationSyntax)rewriter.Visit(methodDeclaration);
-			methodDeclaration = (MethodDeclarationSyntax)base.VisitMethodDeclaration(methodDeclaration);
+			methodDeclaration = (MethodDeclarationSyntax)base.Normalize(methodDeclaration);
 
 			// Generate the declarations for the local variables
 			var hasReturnedLocal = Syntax.LocalDeclarationStatement(Syntax.TypeExpression<bool>(SemanticModel),
@@ -114,7 +110,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 				// If the method returns a value, add the final return statement, which by now is the only one within the entire method body
 				statements = statements.Add((StatementSyntax)Syntax.ReturnStatement(_returnValueVariable));
 			}
-			
+
 			return methodDeclaration.WithBody(SyntaxFactory.Block(statements)).NormalizeWhitespace();
 		}
 

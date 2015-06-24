@@ -27,7 +27,6 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Roslyn;
 	using Roslyn.Syntax;
 
 	/// <summary>
@@ -46,19 +45,8 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	///   		M(1, 2);
 	///  	</code>
 	/// </summary>
-	public class NamedArgumentNormalizer : SyntaxNormalizer
+	public class NamedArgumentNormalizer : QuotationNormalizer
 	{
-		/// <summary>
-		///     Normalizes the <paramref name="methodDeclaration" />.
-		/// </summary>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
-		{
-			if (methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
-				return base.VisitMethodDeclaration(methodDeclaration);
-
-			return methodDeclaration;
-		}
-
 		/// <summary>
 		///     Reorders the named arguments of the <paramref name="invocation" />.
 		/// </summary>
