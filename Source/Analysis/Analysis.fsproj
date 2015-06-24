@@ -75,6 +75,7 @@
     <Compile Include="Models\Scm\ScmHelpers.fs" />
     <Compile Include="Models\Scm\ScmTracer.fs" />
     <Compile Include="Models\Scm\ScmParser.fs" />
+    <Compile Include="Models\Scm\ScmVeParser.fs" />
     <Compile Include="Models\Scm\ScmToString.fs" />
     <Compile Include="Models\Scm\ScmConsistencyCheck.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterBase.fs" />
