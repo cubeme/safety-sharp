@@ -25,6 +25,7 @@ namespace SafetySharp.Compiler.Normalization
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Runtime.CompilerServices;
 	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -128,7 +129,10 @@ namespace SafetySharp.Compiler.Normalization
 				statements: methodBody.Statements);
 
 			var suppressAttribute = Syntax.Attribute(typeof(SuppressTransformationAttribute).FullName);
-			AddMembers(methodSymbol.ContainingType, (MethodDeclarationSyntax)Syntax.AddAttributes(metadataMethod, suppressAttribute));
+			var compilerGeneratedAttribute = Syntax.Attribute(typeof(CompilerGeneratedAttribute).FullName);
+
+			metadataMethod = Syntax.AddAttributes(metadataMethod, suppressAttribute, compilerGeneratedAttribute);
+			AddMembers(methodSymbol.ContainingType, (MethodDeclarationSyntax)metadataMethod);
 
 			var metadataAttribute = Syntax.Attribute(typeof(MethodBodyMetadataAttribute).FullName, Syntax.LiteralExpression(metadataMethodName));
 			return Syntax.AddAttributes(methodDeclaration, metadataAttribute);
