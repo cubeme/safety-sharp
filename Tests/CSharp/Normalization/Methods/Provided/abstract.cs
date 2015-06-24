@@ -35,7 +35,7 @@ namespace Tests.Normalization.Methods.Provided
 
 	internal abstract partial class Out1 : Component
 	{
-		[global::SafetySharp.Modeling.ProvidedAttribute()]
+		[global::SafetySharp.Modeling.ProvidedAttribute]
 		public abstract void M1();
 
 		[SafetySharp.Modeling.ProvidedAttribute]

@@ -129,15 +129,15 @@ namespace Tests.Utilities
 				.Create("DynamicTestAssembly")
 				.WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 				.AddSyntaxTrees(syntaxTrees)
-				.AddReferences(MetadataReference.CreateFromAssembly(typeof(object).Assembly))
-				.AddReferences(MetadataReference.CreateFromAssembly(typeof(DynamicAttribute).Assembly))
-				.AddReferences(MetadataReference.CreateFromAssembly(typeof(Component).Assembly))
-				.AddReferences(MetadataReference.CreateFromAssembly(typeof(DiagnosticAttribute).Assembly))
-				.AddReferences(MetadataReference.CreateFromAssembly(typeof(DiagnosticIdentifier).Assembly))
-				.AddReferences(MetadataReference.CreateFromAssembly(typeof(Should).Assembly))
-				.AddReferences(MetadataReference.CreateFromAssembly(typeof(ImmutableArray).Assembly))
-				.AddReferences(MetadataReference.CreateFromAssembly(typeof(DiagnosticIdentifier).Assembly))
-				.AddReferences(MetadataReference.CreateFromAssembly(typeof(BindingNormalizer).Assembly));
+				.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
+				.AddReferences(MetadataReference.CreateFromFile(typeof(DynamicAttribute).Assembly.Location))
+				.AddReferences(MetadataReference.CreateFromFile(typeof(Component).Assembly.Location))
+				.AddReferences(MetadataReference.CreateFromFile(typeof(DiagnosticAttribute).Assembly.Location))
+				.AddReferences(MetadataReference.CreateFromFile(typeof(DiagnosticIdentifier).Assembly.Location))
+				.AddReferences(MetadataReference.CreateFromFile(typeof(Should).Assembly.Location))
+				.AddReferences(MetadataReference.CreateFromFile(typeof(ImmutableArray).Assembly.Location))
+				.AddReferences(MetadataReference.CreateFromFile(typeof(DiagnosticIdentifier).Assembly.Location))
+				.AddReferences(MetadataReference.CreateFromFile(typeof(BindingNormalizer).Assembly.Location));
 
 			var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
 			if (errors.Length != 0)

@@ -95,7 +95,7 @@ namespace Tests.Normalization.Methods.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __Delegate0__();
 
-		[global::SafetySharp.Modeling.ProvidedAttribute()]
+		[global::SafetySharp.Modeling.ProvidedAttribute]
 		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
@@ -112,7 +112,7 @@ namespace Tests.Normalization.Methods.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __Delegate1__();
 
-		[global::System.Diagnostics.DebuggerHiddenAttribute()]
+		[global::System.Diagnostics.DebuggerHiddenAttribute]
 		[SafetySharp.Modeling.ProvidedAttribute]
 		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior1__")]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField1__")]
@@ -129,8 +129,8 @@ namespace Tests.Normalization.Methods.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __Delegate2__();
 
-		[global::System.Diagnostics.DebuggerHiddenAttribute()]
-		[global::System.Diagnostics.DebuggerStepThroughAttribute()]
+		[global::System.Diagnostics.DebuggerHiddenAttribute]
+		[global::System.Diagnostics.DebuggerStepThroughAttribute]
 		[SafetySharp.Modeling.ProvidedAttribute]
 		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior2__")]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField2__")]
@@ -146,8 +146,8 @@ namespace Tests.Normalization.Methods.Provided
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private delegate void __Delegate3__();
 
-		[global::System.Diagnostics.DebuggerHiddenAttribute()]
-		[global::System.Diagnostics.DebuggerStepThroughAttribute()]
+		[global::System.Diagnostics.DebuggerHiddenAttribute]
+		[global::System.Diagnostics.DebuggerStepThroughAttribute]
 		[SafetySharp.Modeling.ProvidedAttribute]
 		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior3__")]
 		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField3__")]

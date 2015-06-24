@@ -84,11 +84,11 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     let csharpCompilation = 
         CSharpCompilation
             .Create(Path.GetFileNameWithoutExtension assemblyPath)
-            .AddReferences(MetadataReference.CreateFromAssembly typeof<obj>.Assembly)
-            .AddReferences(MetadataReference.CreateFromAssembly typeof<Component>.Assembly)
-            .AddReferences(MetadataReference.CreateFromAssembly typeof<System.Linq.Expressions.Expression>.Assembly)
-            .AddReferences(MetadataReference.CreateFromAssembly typeof<TestCompilation>.Assembly)
-            .AddReferences(MetadataReference.CreateFromAssembly typeof<Microsoft.CSharp.RuntimeBinder.Binder>.Assembly)
+            .AddReferences(MetadataReference.CreateFromFile typeof<obj>.Assembly.Location)
+            .AddReferences(MetadataReference.CreateFromFile typeof<Component>.Assembly.Location)
+            .AddReferences(MetadataReference.CreateFromFile typeof<System.Linq.Expressions.Expression>.Assembly.Location)
+            .AddReferences(MetadataReference.CreateFromFile typeof<TestCompilation>.Assembly.Location)
+            .AddReferences(MetadataReference.CreateFromFile typeof<Microsoft.CSharp.RuntimeBinder.Binder>.Assembly.Location)
             .AddSyntaxTrees(syntaxTree)
             .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithOptimizationLevel OptimizationLevel.Release)
 
