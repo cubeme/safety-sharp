@@ -28,6 +28,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Runtime;
 	using Symbols;
 	using Utilities;
 
@@ -193,6 +194,33 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 			return methodSymbol.IsProvidedPort(semanticModel) ||
 				   methodSymbol.IsUpdateMethod(semanticModel) ||
 				   methodSymbol.IsFaultEffect(semanticModel);
+		}
+
+		/// <summary>
+		///     Gets a <see cref="NameScope" /> instance that is preinitialized with all names that are in-scope within the
+		///     <paramref name="methodDeclaration" />.
+		/// </summary>
+		/// <param name="methodDeclaration">The method declaration the <see cref="NameScope" /> should be returned for.</param>
+		/// <param name="semanticModel">The semantic model that should be used for semantic analysis.</param>
+		/// <param name="includeLocals">A value indicating whether the names of local variables should be added to the name scope.</param>
+		[Pure, NotNull]
+		internal static NameScope GetNameScope([NotNull] this MethodDeclarationSyntax methodDeclaration, [NotNull] SemanticModel semanticModel,
+											   bool includeLocals)
+		{
+			var parameters = methodDeclaration.ParameterList.Parameters.Select(parameter => parameter.Identifier.ValueText);
+			var locals = methodDeclaration.Descendants<VariableDeclaratorSyntax>().Select(local => local.Identifier.ValueText);
+			var baseSymbols = semanticModel.LookupBaseMembers(methodDeclaration.Body.SpanStart);
+			var selfSymbols = semanticModel.LookupSymbols(methodDeclaration.SpanStart);
+
+			var nameScope = new NameScope();
+			nameScope.AddRange(parameters);
+			nameScope.AddRange(baseSymbols.Select(symbol => symbol.Name));
+			nameScope.AddRange(selfSymbols.Select(symbol => symbol.Name));
+
+			if (includeLocals)
+				nameScope.AddRange(locals);
+
+			return nameScope;
 		}
 	}
 }

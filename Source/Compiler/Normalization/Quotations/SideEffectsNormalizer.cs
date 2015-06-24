@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Normalization
+namespace SafetySharp.Compiler.Normalization.Quotations
 {
 	using System;
 	using System.Collections.Generic;
@@ -52,10 +52,8 @@ namespace SafetySharp.Compiler.Normalization
 			if (!methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
 				return methodDeclaration;
 
-			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
 			var rewriter = new Rewriter(SemanticModel, Syntax);
-
-			var transformedBody = rewriter.Rewrite(methodSymbol, methodDeclaration.Body);
+			var transformedBody = rewriter.Rewrite(methodDeclaration);
 			return methodDeclaration.WithExpressionBody(null).WithBody(transformedBody).NormalizeWhitespace();
 		}
 
@@ -75,11 +73,6 @@ namespace SafetySharp.Compiler.Normalization
 			private readonly List<GeneratedVariable> _generatedVariables = new List<GeneratedVariable>();
 
 			/// <summary>
-			///     The name scope that is used to generate unique names for generated variables.
-			/// </summary>
-			private readonly NameScope _nameScope = new NameScope();
-
-			/// <summary>
 			///     The semantic model that is used for semantic analysis of the method body.
 			/// </summary>
 			private readonly SemanticModel _semanticModel;
@@ -88,6 +81,11 @@ namespace SafetySharp.Compiler.Normalization
 			///     The syntax generator that is used to generate the new method body code.
 			/// </summary>
 			private readonly SyntaxGenerator _syntax;
+
+			/// <summary>
+			///     The name scope that is used to generate unique names for generated variables.
+			/// </summary>
+			private NameScope _nameScope;
 
 			/// <summary>
 			///     Initializes a new instance.
@@ -102,30 +100,24 @@ namespace SafetySharp.Compiler.Normalization
 			}
 
 			/// <summary>
-			///     Rewrites the <paramref name="methodBody" /> of the <paramref name="methodSymbol" />.
+			///     Rewrites the <paramref name="methodDeclaration" />'s body.
 			/// </summary>
-			/// <param name="methodSymbol">The method whose body should be rewritten.</param>
-			/// <param name="methodBody">The method body that should be rewritten.</param>
-			public BlockSyntax Rewrite(IMethodSymbol methodSymbol, StatementSyntax methodBody)
+			/// <param name="methodDeclaration">The method declaration that should be rewritten.</param>
+			public BlockSyntax Rewrite(MethodDeclarationSyntax methodDeclaration)
 			{
-				var parameters = methodSymbol.Parameters.Select(parameter => parameter.Name);
-				var locals = methodBody.Descendants<VariableDeclaratorSyntax>().Select(local => _semanticModel.GetDeclaredSymbol(local).Name);
-				var baseSymbols = _semanticModel.LookupBaseMembers(methodBody.SpanStart);
-				var selfSymbols = _semanticModel.LookupSymbols(methodBody.SpanStart);
+				_nameScope = methodDeclaration.GetNameScope(_semanticModel, includeLocals: true);
 
-				_nameScope.AddRange(parameters);
-				_nameScope.AddRange(locals);
-				_nameScope.AddRange(baseSymbols.Select(symbol => symbol.Name));
-				_nameScope.AddRange(selfSymbols.Select(symbol => symbol.Name));
+				var result = Visit(methodDeclaration.Body);
+				var statements = result.Statements.ToArray();
 
-				var result = Visit(methodBody);
-				var statements = new List<StatementSyntax>();
+				Assert.That(statements.Length == 1, "Expected a single block statement.");
+				Assert.OfType<BlockSyntax>(statements[0]);
 
-				statements.AddRange(_generatedVariables.Select(
+				var blockStatement = (BlockSyntax)statements[0];
+				var updatedStatements = blockStatement.Statements.InsertRange(0, _generatedVariables.Select(
 					variable => (StatementSyntax)_syntax.LocalDeclarationStatement(variable.Type, variable.Name)));
 
-				statements.AddRange(result.Statements);
-				return SyntaxFactory.Block(statements);
+				return blockStatement.WithStatements(updatedStatements);
 			}
 
 			/// <summary>
@@ -429,12 +421,16 @@ namespace SafetySharp.Compiler.Normalization
 				var thenResult = Visit(statement.Statement);
 
 				if (statement.Else == null)
-					return conditionResult.WithStatement(_syntax.IfStatement(conditionResult.Expression, thenResult.Statements)).WithoutExpression();
+				{
+					return conditionResult
+						.WithStatement(_syntax.IfThenElseStatement(conditionResult.Expression, thenResult.Statements, null))
+						.WithoutExpression();
+				}
 
 				var elseResult = Visit(statement.Else.Statement);
 
 				return conditionResult
-					.WithStatement(_syntax.IfStatement(conditionResult.Expression, thenResult.Statements, elseResult.Statements))
+					.WithStatement(_syntax.IfThenElseStatement(conditionResult.Expression, thenResult.Statements, elseResult.Statements))
 					.WithoutExpression();
 			}
 

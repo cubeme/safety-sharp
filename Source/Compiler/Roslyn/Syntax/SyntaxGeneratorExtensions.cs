@@ -24,6 +24,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
@@ -37,6 +38,50 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 	/// </summary>
 	public static class SyntaxGeneratorExtensions
 	{
+		/// <summary>
+		///     Wraps the <paramref name="statements" /> in a <see cref="BlockSyntax" />, unless <paramref name="statements" /> is a
+		///     single <see cref="BlockSyntax" /> already.
+		/// </summary>
+		/// <param name="syntaxGenerator">The syntax generator that should be used to generate the expression.</param>
+		/// <param name="statements">The statements that should be wrapped in a block.</param>
+		[Pure, NotNull]
+		public static BlockSyntax AsBlock([NotNull] this SyntaxGenerator syntaxGenerator,
+										  [NotNull] IEnumerable<StatementSyntax> statements)
+		{
+			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);
+			Requires.NotNull(statements, () => statements);
+
+			var statementArray = statements.ToArray();
+
+			if (statementArray.Length == 1 && statementArray[0] is BlockSyntax)
+				return (BlockSyntax)statementArray[0];
+
+			return SyntaxFactory.Block(statementArray);
+		}
+
+		/// <summary>
+		///     Generates an <c>if (condition) { thenStatements } else { elseStatements }</c> statement.
+		/// </summary>
+		/// <param name="syntaxGenerator">The syntax generator that should be used to generate the expression.</param>
+		/// <param name="condition">The condition of the statement.</param>
+		/// <param name="thenStatements">The then statements of the then-path.</param>
+		/// <param name="elseStatements">The then statements of the else-path; can be <c>null</c> if there is no else-path.</param>
+		[Pure, NotNull]
+		public static StatementSyntax IfThenElseStatement([NotNull] this SyntaxGenerator syntaxGenerator, [NotNull] ExpressionSyntax condition,
+														  [NotNull] IEnumerable<StatementSyntax> thenStatements,
+														  IEnumerable<StatementSyntax> elseStatements)
+		{
+			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);
+			Requires.NotNull(condition, () => condition);
+			Requires.NotNull(thenStatements, () => thenStatements);
+
+			var thenStatement = syntaxGenerator.AsBlock(thenStatements);
+			var elseStatement = elseStatements != null ? syntaxGenerator.AsBlock(elseStatements) : null;
+			var elseClause = elseStatement != null ? SyntaxFactory.ElseClause(elseStatement) : null;
+
+			return SyntaxFactory.IfStatement(condition, thenStatement, elseClause);
+		}
+
 		/// <summary>
 		///     Generates a <see cref="TypeSyntax" /> for type <typeparamref name="T" />.
 		/// </summary>

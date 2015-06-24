@@ -30,6 +30,7 @@ namespace Tests.Utilities
 	using SafetySharp.Runtime.Expressions;
 	using SafetySharp.Runtime.MetadataAnalyzers;
 	using SafetySharp.Runtime.Statements;
+	using SafetySharp.Utilities;
 
 	/// <summary>
 	///     Serializes S# metadata to C# code.
@@ -257,7 +258,7 @@ namespace Tests.Utilities
 			protected internal override void VisitExpressionStatement(ExpressionStatement statement)
 			{
 				Visit(statement.Expression);
-				_writer.Append(";");
+				_writer.AppendLine(";");
 			}
 
 			protected internal override void VisitMethodInvocationExpression(MethodInvocationExpression expression)
@@ -284,6 +285,8 @@ namespace Tests.Utilities
 
 			protected internal override void VisitChoiceStatement(ChoiceStatement statement)
 			{
+				Requires.That(statement.IsDeterministic, "Unsupported nondeterministic choice.");
+
 				for (var i = 0; i < statement.Guards.Count; ++i)
 				{
 					if (i == 0)
@@ -302,7 +305,7 @@ namespace Tests.Utilities
 					}
 
 					_writer.NewLine();
-					_writer.AppendBlockStatement(() => Visit(statement.Statements[i]));
+					Visit(statement.Statements[i]);
 				}
 			}
 

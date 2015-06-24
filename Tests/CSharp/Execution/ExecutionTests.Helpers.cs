@@ -120,12 +120,10 @@ namespace Tests.Execution
 			var serializer = new CSharpSerializer();
 			var code = serializer.Serialize(Metadata);
 
-			Output.Trace("==========================================");
-			Output.Trace("==========================================");
-			Output.Trace("Serialized Metadata");
-			Output.Trace("==========================================");
-			Output.Trace("==========================================");
-			Output.Trace("{0}", code);
+			Output.Log("==========================================");
+			Output.Log("Transformed Code");
+			Output.Log("==========================================");
+			Output.Log("{0}", code);
 
 			var compilation = Tests.CreateCompilation(code);
 			Tests.CheckForSafetySharpDiagnostics(compilation);

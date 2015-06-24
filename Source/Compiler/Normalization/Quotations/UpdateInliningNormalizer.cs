@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler.Normalization
+namespace SafetySharp.Compiler.Normalization.Quotations
 {
 	using System;
 	using Roslyn;
 
-	public sealed class SingleExitPointNormalizer : SyntaxNormalizer
+	public sealed class UpdateInliningNormalizer : SyntaxNormalizer
 	{
 	}
 }

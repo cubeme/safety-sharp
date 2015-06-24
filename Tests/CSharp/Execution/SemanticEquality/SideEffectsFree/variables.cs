@@ -26,6 +26,8 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 
 	internal class C7 : SemanticEqualityComponent
 	{
+		private int b = 0;
+
 		[Test(16)]
 		public int M1(int a)
 		{
@@ -64,6 +66,45 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 
 			z = a * 2;
 			return b | a < z ? q + 17 : a - 3;
+		}
+
+		[Test(16)]
+		public int M5(int a)
+		{
+			if (a > 0)
+			{
+				var c = a > 3;
+				if (c)
+					return 1;
+			}
+			else
+			{
+				var c = a + 2;
+				if (c < -5)
+					return 2;
+			}
+
+			return 3;
+		}
+
+		[Test(16)]
+		public int M6(int a)
+		{
+			this.b = a;
+			if (a > 0)
+			{
+				var b = a > 3;
+				if (b || this.b > 0)
+					return 1;
+			}
+			else
+			{
+				var b = a + 2;
+				if (b < -5)
+					return 2;
+			}
+
+			return 3;
 		}
 	}
 }

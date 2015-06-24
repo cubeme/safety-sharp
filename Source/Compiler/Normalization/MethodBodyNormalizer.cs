@@ -28,6 +28,7 @@ namespace SafetySharp.Compiler.Normalization
 	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Quotations;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
@@ -75,6 +76,7 @@ namespace SafetySharp.Compiler.Normalization
 			var compilation = Compilation;
 
 			compilation = ApplyNormalizer<ExpressionMethodNormalizer>(compilation, Syntax);
+			compilation = ApplyNormalizer<LocalVariablesNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<OptionalArgumentNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<NamedArgumentNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<CompoundAssignmentNormalizer>(compilation, Syntax);
