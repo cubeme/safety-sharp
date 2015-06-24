@@ -24,6 +24,7 @@ namespace Tests.Normalization.LiftedExpressions.Lifted
 {
 	using System;
 	using System.Linq.Expressions;
+	using Metadata.Models.Components;
 	using SafetySharp.CompilerServices;
 
 	public class Test5

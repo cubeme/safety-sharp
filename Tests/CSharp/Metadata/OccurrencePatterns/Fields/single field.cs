@@ -24,12 +24,14 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
 
 	internal class X2 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(1);
@@ -57,6 +59,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 
 	internal class X3 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(1);
@@ -84,6 +87,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 
 	internal class X4 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(1);
@@ -111,6 +115,7 @@ namespace Tests.Metadata.OccurrencePatterns.Fields
 
 	internal class X5 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].OccurrencePattern.Fields.Length.ShouldBe(1);

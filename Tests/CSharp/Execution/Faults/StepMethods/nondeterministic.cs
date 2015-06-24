@@ -24,6 +24,7 @@ namespace Tests.Execution.Faults.StepMethods
 {
 	using System;
 	using System.Diagnostics;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -44,6 +45,7 @@ namespace Tests.Execution.Faults.StepMethods
 			return _x;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			var nondeterministicBehavior = (NondeterministicFaultInjection)Metadata.UpdateMethods[1].Behaviors.FaultInjections[0];

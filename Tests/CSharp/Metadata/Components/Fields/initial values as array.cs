@@ -24,6 +24,7 @@ namespace Tests.Metadata.Components.Fields
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -45,6 +46,7 @@ namespace Tests.Metadata.Components.Fields
 		{
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
@@ -67,6 +69,7 @@ namespace Tests.Metadata.Components.Fields
 		{
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());

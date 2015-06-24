@@ -23,6 +23,7 @@
 namespace Tests.Execution.ProvidedPorts
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 
@@ -41,6 +42,7 @@ namespace Tests.Execution.ProvidedPorts
 			return i * i;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			M(3).ShouldBe(9);

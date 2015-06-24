@@ -64,6 +64,19 @@ namespace SafetySharp.Compiler.Roslyn
 		}
 
 		/// <summary>
+		///     Applies a normalizer of type <typeparamref name="T" /> to the <paramref name="compilation." />
+		/// </summary>
+		/// <typeparam name="T">The type of the normalizer that should be applied to <paramref name="compilation" />.</typeparam>
+		/// <param name="compilation">The compilation that should be normalized.</param>
+		/// <param name="syntaxGenerator">The syntax generator that the normalizer should use to generate syntax nodes.</param>
+		[NotNull]
+		public static Compilation ApplyNormalizer<T>([NotNull] Compilation compilation, [NotNull] SyntaxGenerator syntaxGenerator)
+			where T : Normalizer, new()
+		{
+			return new T().Normalize(compilation, syntaxGenerator);
+		}
+
+		/// <summary>
 		///     Normalizes the <see cref="Compilation" />.
 		/// </summary>
 		protected abstract Compilation Normalize();

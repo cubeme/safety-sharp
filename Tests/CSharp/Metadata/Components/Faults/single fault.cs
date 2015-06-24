@@ -20,16 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metadata.Faults
+namespace Tests.Metadata.Components.Faults
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
 
-	public class X2 : TestComponent
+	public class X4 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults.Length.ShouldBe(1);

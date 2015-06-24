@@ -24,35 +24,34 @@ namespace Tests.Utilities
 {
 	using System;
 	using SafetySharp.Compiler;
-	using Xunit.Abstractions;
 
 	public class CSharpErrorReporter : IErrorReporter
 	{
-		private readonly ITestOutputHelper _output;
+		private readonly TestTraceOutput _output;
 
-		public CSharpErrorReporter(ITestOutputHelper output)
+		public CSharpErrorReporter(TestTraceOutput output)
 		{
 			_output = output;
 		}
 
 		public void Die(string message, params object[] arguments)
 		{
-			_output.WriteLine("{0}", String.Format(message, arguments));
+			_output.Log("{0}", String.Format(message, arguments));
 		}
 
 		public void Error(string message, params object[] arguments)
 		{
-			_output.WriteLine("{0}", String.Format(message, arguments));
+			_output.Log("{0}", String.Format(message, arguments));
 		}
 
 		public void Warn(string message, params object[] arguments)
 		{
-			_output.WriteLine("{0}", String.Format(message, arguments));
+			_output.Log("{0}", String.Format(message, arguments));
 		}
 
 		public void Info(string message, params object[] arguments)
 		{
-			_output.WriteLine("{0}", String.Format(message, arguments));
+			_output.Log("{0}", String.Format(message, arguments));
 		}
 	}
 }

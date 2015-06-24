@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.Bindings
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -51,6 +52,7 @@ namespace Tests.Metadata.Components.Bindings
 		public new extern void M2();
 		public new extern void M3();
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(3);

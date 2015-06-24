@@ -23,6 +23,7 @@
 namespace Tests.Execution.RequiredPorts
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 
@@ -78,6 +79,7 @@ namespace Tests.Execution.RequiredPorts
 		private extern int D(int i);
 		private extern int E(int i);
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			A(3).ShouldBe(9);

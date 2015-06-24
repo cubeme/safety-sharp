@@ -271,16 +271,24 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		///     <see cref="bool" />, or <see cref="decimal" /> types.
 		/// </summary>
 		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
-		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
-		public static bool IsBuiltInOperator([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
+		public static bool IsBuiltInOperator([NotNull] this IMethodSymbol methodSymbol)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
-			Requires.NotNull(semanticModel, () => semanticModel);
 
-			return methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<int>()) ||
-				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<bool>()) ||
-				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<decimal>());
+			return methodSymbol.ContainingType.SpecialType == SpecialType.System_Byte ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Int16 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Int32 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Int64 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_SByte ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_UInt16 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_UInt32 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_UInt64 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Decimal ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Single ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Double ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Boolean ||
+				   methodSymbol.ContainingType.TypeKind == TypeKind.Enum;
 		}
 
 		/// <summary>
@@ -436,7 +444,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Gets the expression that selects the <paramref name="methodSymbol" /> at runtime using reflection.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol the code should be created for.</param>
+		/// <param name="methodSymbol">The method the code should be created for.</param>
 		/// <param name="syntaxGenerator">The syntax generator that should be used.</param>
 		/// <param name="methodName">
 		///     The name of the method that should be used; if <c>null</c>, <see cref="methodSymbol" />'s name is
@@ -463,6 +471,28 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			var reflectionHelpersType = SyntaxFactory.ParseTypeName(typeof(ReflectionHelpers).FullName);
 			var getMethodMethod = syntaxGenerator.MemberAccessExpression(reflectionHelpersType, "GetMethod");
 			return (ExpressionSyntax)syntaxGenerator.InvocationExpression(getMethodMethod, declaringTypeArg, nameArg, parameters, returnType);
+		}
+
+		/// <summary>
+		///     Gets the expression that selects the metadata of the <paramref name="methodSymbol" /> at runtime using reflection.
+		/// </summary>
+		/// <param name="methodSymbol">The method the code should be generated for.</param>
+		/// <param name="obj">The object the method metadata should be retrieved for.</param>
+		/// <param name="syntaxGenerator">The syntax generator that should be used.</param>
+		[Pure]
+		public static ExpressionSyntax GetMethodMetadataExpression([NotNull] this IMethodSymbol methodSymbol,
+																   [NotNull] SyntaxNode obj,
+																   [NotNull] SyntaxGenerator syntaxGenerator)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);
+
+			var isVirtualCall = syntaxGenerator.LiteralExpression(!(obj is BaseExpressionSyntax));
+			obj = obj is BaseExpressionSyntax ? syntaxGenerator.ThisExpression() : obj;
+			var methodInfo = methodSymbol.GetMethodInfoExpression(syntaxGenerator);
+			var reflectionHelpersType = SyntaxFactory.ParseTypeName(typeof(ReflectionHelpers).FullName);
+			var getMethodMetadata = syntaxGenerator.MemberAccessExpression(reflectionHelpersType, "GetMethodMetadata");
+			return (ExpressionSyntax)syntaxGenerator.InvocationExpression(getMethodMetadata, obj, methodInfo, isVirtualCall);
 		}
 
 		/// <summary>

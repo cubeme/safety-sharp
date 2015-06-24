@@ -23,11 +23,13 @@
 namespace Tests.Metadata.Components.Fields
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 
 	internal class X1 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(0);

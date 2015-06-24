@@ -33,9 +33,31 @@ namespace SafetySharp.Runtime
 	internal class NameScope
 	{
 		/// <summary>
-		///     The list of names that are in use already.
+		///     The set of names that are in use already.
 		/// </summary>
-		private readonly List<string> _knownNames = new List<string>();
+		private readonly HashSet<string> _knownNames = new HashSet<string>();
+
+		/// <summary>
+		///     Adds the <paramref name="name" /> to the name scope.
+		/// </summary>
+		/// <param name="name">The name that should be added.</param>
+		public void Add(string name)
+		{
+			Requires.NotNullOrWhitespace(name, () => name);
+			_knownNames.Add(name);
+		}
+
+		/// <summary>
+		///     Adds the <paramref name="names" /> to the name scope.
+		/// </summary>
+		/// <param name="names">The names that should be added.</param>
+		public void AddRange(IEnumerable<string> names)
+		{
+			Requires.NotNull(names, () => names);
+
+			foreach (var name in names)
+				Add(name);
+		}
 
 		/// <summary>
 		///     Makes <paramref name="name" /> unique within the name scope.
@@ -43,6 +65,8 @@ namespace SafetySharp.Runtime
 		/// <param name="name">The name that should be made unique.</param>
 		public string MakeUnique(string name)
 		{
+			Requires.NotNullOrWhitespace(name, () => name);
+
 			// Check if the name is unique already; in that case, don't change it
 			if (!IsUnique(name))
 			{

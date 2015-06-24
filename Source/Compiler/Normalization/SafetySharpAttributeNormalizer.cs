@@ -32,7 +32,7 @@ namespace SafetySharp.Compiler.Normalization
 	/// <summary>
 	///     Adds the <see cref="SafetySharpAttribute" /> to the compilation.
 	/// </summary>
-	public sealed class SafetySharpAttributeNormalizer : SyntaxNormalizer
+	public sealed class SafetySharpAttributeNormalizer : Normalizer
 	{
 		/// <summary>
 		///     The name of the resource that stores the embedded original S# assembly.

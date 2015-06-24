@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.Faults
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 
@@ -38,6 +39,7 @@ namespace Tests.Metadata.Components.Faults
 
 		private extern void N();
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults.Length.ShouldBe(0);

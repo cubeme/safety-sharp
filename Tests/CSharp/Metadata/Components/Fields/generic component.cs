@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.Fields
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -46,6 +47,7 @@ namespace Tests.Metadata.Components.Fields
 		{
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(2);
@@ -73,7 +75,8 @@ namespace Tests.Metadata.Components.Fields
 			{
 			}
 
-			protected override void Check()
+			[SuppressTransformation]
+		protected override void Check()
 			{
 				Metadata.Fields.Length.ShouldBe(2);
 

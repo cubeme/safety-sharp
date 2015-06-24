@@ -96,7 +96,7 @@ namespace SafetySharp.Runtime
 				Requires.NotNull(faultEffect, () => faultEffect);
 				Requires.NotNull(affectedMethod, () => affectedMethod);
 
-				var name = _effectNameScope.MakeUnique(faultEffect.Name);
+				var name = _effectNameScope.MakeUnique(MethodMetadata.EscapeName(faultEffect.Name));
 				_faultEffects.Add(new FaultEffectMetadata(_fault, faultEffect, affectedMethod, name));
 			}
 

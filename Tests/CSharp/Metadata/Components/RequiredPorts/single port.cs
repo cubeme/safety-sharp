@@ -24,6 +24,7 @@ namespace Tests.Metadata.Components.RequiredPorts
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -32,6 +33,7 @@ namespace Tests.Metadata.Components.RequiredPorts
 	{
 		private extern void M();
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.RequiredPorts.Length.ShouldBe(1);
@@ -46,6 +48,7 @@ namespace Tests.Metadata.Components.RequiredPorts
 			Metadata.RequiredPorts[0].IntendedBehavior.ShouldBe(null);
 			Metadata.RequiredPorts[0].VirtuallyInvokedMethod.ShouldBe(Metadata.RequiredPorts[0]);
 			Metadata.RequiredPorts[0].Name.ShouldBe("M");
+			Metadata.RequiredPorts[0].ImplementedMethods.ShouldBeEmpty();
 		}
 	}
 }

@@ -23,11 +23,13 @@
 namespace Tests.Metadata.Components.RequiredPorts
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 
 	internal class X1 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.RequiredPorts.Length.ShouldBe(0);

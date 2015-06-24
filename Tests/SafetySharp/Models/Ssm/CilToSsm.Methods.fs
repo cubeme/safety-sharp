@@ -264,7 +264,7 @@ module Methods =
                 Kind = ProvPort
             }
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``call interface method on other class without parameters`` () =
         transformMethod "interface I { void N(); } I i; void M() { i.N(); }" =?
             {
@@ -276,7 +276,7 @@ module Methods =
                 Kind = ProvPort
             }
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``call interface method on other class with parameter and return value`` () =
         transformMethod "interface I { int N(int n); } I i; int M() { return i.N(4); }" =? 
             {
@@ -1404,7 +1404,7 @@ module Methods =
                 }
             ]
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``method of generic type calling method of generic subcomponent via generic constraint`` () =
         let c = "interface I<T1, T2> { T1 M(T2 p); } class A<T1, T2> : Component, I<T1, T2> { T1 f; public T1 M(T2 p) { return f; } } class B<T, T1, T2> : Component where T : I<T1, T2>, new() { T a = new T(); T1 N(T2 x) { return a.M(x); } }"
         transform c "new B<A<bool, int>, bool, int>()" =? 

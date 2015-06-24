@@ -23,6 +23,7 @@
 namespace Tests.Execution.Faults.StepMethods
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
@@ -37,6 +38,7 @@ namespace Tests.Execution.Faults.StepMethods
 			_x = 3;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			_x = 0;

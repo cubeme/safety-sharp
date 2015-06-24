@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.RequiredPorts
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -35,6 +36,7 @@ namespace Tests.Metadata.Components.RequiredPorts
 
 	internal class X7 : X6<int, bool>
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.RequiredPorts.Length.ShouldBe(2);

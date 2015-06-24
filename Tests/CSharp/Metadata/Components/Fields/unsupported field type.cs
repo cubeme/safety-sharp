@@ -23,6 +23,7 @@
 namespace Tests.Metadata.Components.Fields
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 
@@ -30,6 +31,7 @@ namespace Tests.Metadata.Components.Fields
 	{
 		private readonly string _x = "";
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(0);
@@ -43,6 +45,7 @@ namespace Tests.Metadata.Components.Fields
 
 	internal class X18 : X15<object>
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Fields.Length.ShouldBe(0);

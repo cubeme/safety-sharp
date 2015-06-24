@@ -52,30 +52,18 @@ namespace Tests.Utilities
 	public class Tests
 	{
 		/// <summary>
-		///     Writes to the test output stream.
-		/// </summary>
-		private readonly ITestOutputHelper _output;
-
-		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="output">The stream that should be used to write the test output.</param>
-		protected Tests(ITestOutputHelper output = null)
+		public Tests(ITestOutputHelper output = null)
 		{
-			_output = output;
+			Output = new TestTraceOutput(output);
 		}
 
 		/// <summary>
-		///     Writes the formatted <paramref name="message" /> to the test output stream.
+		///     Gets the output that writes to the test output stream.
 		/// </summary>
-		/// <param name="message">The formatted message that should be written.</param>
-		/// <param name="args">The format arguments of the message.</param>
-		[StringFormatMethod("message")]
-		protected void Log(string message, params object[] args)
-		{
-			Assert.NotNull(_output, "A test output helper must be provided via the constructor.");
-			_output.WriteLine(message, args);
-		}
+		public TestTraceOutput Output { get; private set; }
 
 		/// <summary>
 		///     Gets the name of the file that calls this method.
@@ -88,10 +76,10 @@ namespace Tests.Utilities
 
 		/// <summary>
 		///     Compiles the <paramref name="syntaxTree" />, instantiates all non-abstract classes implementing
-		///     <see cref="ITestableObject" />, and executes the <see cref="ITestableObject.Test" /> method for each instance.
+		///     <see cref="ITestableObject" />, and returns them.
 		/// </summary>
-		/// <param name="syntaxTree">The syntax tree that should be compiled and tested.</param>
-		protected void ExecuteDynamicTests(SyntaxTree syntaxTree)
+		/// <param name="syntaxTree">The syntax tree that should be compiled.</param>
+		protected IEnumerable<ITestableObject> GetTestableObjects(SyntaxTree syntaxTree)
 		{
 			var compilation = CreateCompilation(syntaxTree);
 			var semanticModel = compilation.GetSemanticModel(syntaxTree);
@@ -108,19 +96,25 @@ namespace Tests.Utilities
 				throw new TestException("Unable to find any testable class declarations.");
 
 			var assembly = CompileSafetySharp(compilation);
+			return testableTypes.Select(testableType => (ITestableObject)Activator.CreateInstance(assembly.GetType(testableType)));
+		}
 
-			foreach (var testableType in testableTypes)
-			{
-				var obj = (ITestableObject)Activator.CreateInstance(assembly.GetType(testableType));
-				obj.Test(_output);
-			}
+		/// <summary>
+		///     Compiles the <paramref name="syntaxTree" />, instantiates all non-abstract classes implementing
+		///     <see cref="ITestableObject" />, and executes the <see cref="ITestableObject.Test" /> method for each instance.
+		/// </summary>
+		/// <param name="syntaxTree">The syntax tree that should be compiled and tested.</param>
+		protected void ExecuteDynamicTests(SyntaxTree syntaxTree)
+		{
+			foreach (var obj in GetTestableObjects(syntaxTree))
+				obj.Test(Output);
 		}
 
 		/// <summary>
 		///     Creates a compilation for the <paramref name="compilationUnits" />.
 		/// </summary>
 		/// <param name="compilationUnits">The compilation units the compilation should contain.</param>
-		protected static Compilation CreateCompilation(params string[] compilationUnits)
+		public static Compilation CreateCompilation(params string[] compilationUnits)
 		{
 			return CreateCompilation(compilationUnits.Select(unit => SyntaxFactory.ParseSyntaxTree(unit)).ToArray());
 		}
@@ -129,7 +123,7 @@ namespace Tests.Utilities
 		///     Creates a compilation for the <paramref name="syntaxTrees" />.
 		/// </summary>
 		/// <param name="syntaxTrees">The syntax trees the compilation should contain.</param>
-		protected static Compilation CreateCompilation(params SyntaxTree[] syntaxTrees)
+		public static Compilation CreateCompilation(params SyntaxTree[] syntaxTrees)
 		{
 			var compilation = CSharpCompilation
 				.Create("DynamicTestAssembly")
@@ -156,7 +150,7 @@ namespace Tests.Utilities
 		///     Runs the S# analyzers on the given compilation, ensuring that the compilation contains no errors.
 		/// </summary>
 		/// <param name="compilation">The compilation that should be checked.</param>
-		protected static void CheckForSSharpDiagnostics(Compilation compilation)
+		public static void CheckForSafetySharpDiagnostics(Compilation compilation)
 		{
 			var errors = compilation
 				.WithAnalyzers(Compiler.Analyzers)
@@ -173,7 +167,8 @@ namespace Tests.Utilities
 		///     loaded into the app domain.
 		/// </summary>
 		/// <param name="compilation">The compilation that should be compiled.</param>
-		protected Assembly CompileSafetySharp(Compilation compilation)
+		/// <param name="output">The output that should be used to write test output.</param>
+		public static Assembly CompileSafetySharp(Compilation compilation, TestTraceOutput output)
 		{
 			using (var workspace = new AdhocWorkspace())
 			{
@@ -185,13 +180,13 @@ namespace Tests.Utilities
 				foreach (var syntaxTree in compilation.SyntaxTrees)
 					project = project.AddDocument(syntaxTree.FilePath, syntaxTree.GetRoot().GetText(Encoding.UTF8)).Project;
 
-				var errorReporter = new CSharpErrorReporter(_output);
+				var errorReporter = new CSharpErrorReporter(output);
 				var compiler = new Compiler(errorReporter);
 
 				try
 				{
 					var assembly = compiler.Compile(project);
-					Log("{0}", SyntaxTreesToString(compiler.Compilation));
+					output.Trace("{0}", SyntaxTreesToString(compiler.Compilation));
 
 					return assembly;
 				}
@@ -200,6 +195,16 @@ namespace Tests.Utilities
 					throw new TestException("{0}\n\n{1}", e.Message, SyntaxTreesToString(compiler.Compilation));
 				}
 			}
+		}
+
+		/// <summary>
+		///     Compiles the <paramref name="compilation" /> with the S# compiler and returns the resulting assembly that has been
+		///     loaded into the app domain.
+		/// </summary>
+		/// <param name="compilation">The compilation that should be compiled.</param>
+		protected Assembly CompileSafetySharp(Compilation compilation)
+		{
+			return CompileSafetySharp(compilation, Output);
 		}
 
 		/// <summary>

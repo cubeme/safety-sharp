@@ -23,7 +23,6 @@
 namespace Tests.Utilities
 {
 	using System;
-	using Xunit.Abstractions;
 
 	/// <summary>
 	///     Represents a testable object that is compiled and instantiated dynamically during test execution.
@@ -33,6 +32,7 @@ namespace Tests.Utilities
 		/// <summary>
 		///     Executes the tests of the object.
 		/// </summary>
-		void Test(ITestOutputHelper output);
+		/// <param name="output">The output that should be used to write test output.</param>
+		void Test(TestTraceOutput output);
 	}
 }

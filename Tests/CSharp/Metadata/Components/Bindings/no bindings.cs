@@ -23,11 +23,13 @@
 namespace Tests.Metadata.Components.Bindings
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using Shouldly;
 	using Utilities;
 
 	internal class X1 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Bindings.Length.ShouldBe(0);

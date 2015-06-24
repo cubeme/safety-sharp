@@ -94,10 +94,15 @@ namespace SafetySharp.Compiler.Roslyn
 				var symbol = _semanticModel.GetSymbolInfo(node).Symbol;
 				Assert.NotNull(symbol, "Expected a valid symbol.");
 
-				if (symbol is ILocalSymbol || symbol is IFieldSymbol)
-					return true;
-
-				return false;
+				switch (symbol.Kind)
+				{
+					case SymbolKind.Field:
+					case SymbolKind.Local:
+					case SymbolKind.Parameter:
+						return true;
+					default:
+						return false;
+				}
 			}
 
 			public override bool VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node)
@@ -111,7 +116,7 @@ namespace SafetySharp.Compiler.Roslyn
 						var symbol = _semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
 						Assert.NotNull(symbol, "Expected a valid method symbol.");
 
-						if (symbol.IsBuiltInOperator(_semanticModel))
+						if (symbol.IsBuiltInOperator())
 							return Visit(node.Operand);
 
 						return false;
@@ -137,6 +142,11 @@ namespace SafetySharp.Compiler.Roslyn
 				}
 			}
 
+			public override bool VisitConditionalExpression(ConditionalExpressionSyntax node)
+			{
+				return Visit(node.Condition) && Visit(node.WhenTrue) && Visit(node.WhenFalse);
+			}
+
 			public override bool VisitBinaryExpression(BinaryExpressionSyntax node)
 			{
 				switch (node.Kind())
@@ -160,7 +170,7 @@ namespace SafetySharp.Compiler.Roslyn
 						var symbol = _semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
 						Assert.NotNull(symbol, "Expected a valid method symbol.");
 
-						if (symbol.IsBuiltInOperator(_semanticModel))
+						if (symbol.IsBuiltInOperator())
 							return Visit(node.Left) && Visit(node.Right);
 
 						return false;
@@ -171,7 +181,7 @@ namespace SafetySharp.Compiler.Roslyn
 						var leftType = _semanticModel.GetTypeInfo(node.Left).Type;
 						var rightType = _semanticModel.GetTypeInfo(node.Left).Type;
 
-						if (leftType.IsBuiltType(_semanticModel) && rightType.IsBuiltType(_semanticModel))
+						if (leftType.IsBuiltInType(_semanticModel) && rightType.IsBuiltInType(_semanticModel))
 							return Visit(node.Left) && Visit(node.Right);
 
 						goto case SyntaxKind.AddExpression;

@@ -36,6 +36,11 @@ namespace SafetySharp.Runtime
 	public abstract class MethodMetadata
 	{
 		/// <summary>
+		///     The block statement representing the method's body.
+		/// </summary>
+		private readonly Lazy<MethodBodyMetadata> _methodBody;
+
+		/// <summary>
 		///     The S# object the method belongs to.
 		/// </summary>
 		private readonly IMetadataObject _object;
@@ -58,7 +63,7 @@ namespace SafetySharp.Runtime
 
 			_object = obj;
 
-			Name = name ?? method.Name;
+			Name = EscapeName(name ?? method.Name);
 			MethodInfo = method;
 			BaseMethod = baseMethod;
 
@@ -77,6 +82,13 @@ namespace SafetySharp.Runtime
 				IntendedBehavior = MethodInfo;
 
 			Behaviors = new MethodBehaviorCollection(obj, this);
+			ImplementedMethods = DetermineImplementedInterfaceMethods().ToArray();
+
+			_methodBody = new Lazy<MethodBodyMetadata>(() =>
+			{
+				var methodBodyAttribute = MethodInfo.GetCustomAttribute<MethodBodyMetadataAttribute>();
+				return methodBodyAttribute == null ? null : methodBodyAttribute.GetMethodBody(obj, MethodInfo);
+			});
 		}
 
 		/// <summary>
@@ -138,6 +150,15 @@ namespace SafetySharp.Runtime
 		///     Gets the underlying CLR method.
 		/// </summary>
 		internal MethodInfo MethodInfo { get; private set; }
+
+		/// <summary>
+		///     Gets the metadata of the method's body. Returns <c>null</c> when <see cref="HasImplementation" /> is <c>false</c> or the
+		///     method is not analyzable.
+		/// </summary>
+		public MethodBodyMetadata MethodBody
+		{
+			get { return _methodBody.Value; }
+		}
 
 		/// <summary>
 		///     Gets the type of a delegate that can refer to the method. Returns <c>null</c> when
@@ -204,6 +225,46 @@ namespace SafetySharp.Runtime
 					return this;
 
 				return OverridingMethod.VirtuallyInvokedMethod;
+			}
+		}
+
+		/// <summary>
+		///     Gets the interface methods implemented by the method.
+		/// </summary>
+		internal IEnumerable<MethodInfo> ImplementedMethods { get; private set; }
+
+		/// <summary>
+		///     Escapes the <paramref name="methodName" />.
+		/// </summary>
+		/// <param name="methodName">The method name that should be escaped.</param>
+		internal static string EscapeName(string methodName)
+		{
+			return methodName.Replace(".", "_").Replace("<", "__").Replace(">", "__");
+		}
+
+		/// <summary>
+		///     Determines the interface methods implemented by the method.
+		/// </summary>
+		private IEnumerable<MethodInfo> DetermineImplementedInterfaceMethods()
+		{
+			var type = _object.GetType();
+			var interfaceMaps = type.GetInterfaces().Select(implementedInterface => type.GetInterfaceMap(implementedInterface));
+
+			foreach (var interfaceMap in interfaceMaps)
+			{
+				for (var i = 0; i < interfaceMap.InterfaceMethods.Length; ++i)
+				{
+					// We can't use == to compare the method infos as their ReflectedType property does not match... how annoying
+					var nameMatches = interfaceMap.TargetMethods[i].Name == MethodInfo.Name;
+					var returnMatches = interfaceMap.TargetMethods[i].ReturnType == MethodInfo.ReturnType;
+					var declaringTypeMatches = interfaceMap.TargetMethods[i].DeclaringType == MethodInfo.DeclaringType;
+					var interfaceParameterTypes = interfaceMap.TargetMethods[i].GetParameters().Select(p => p.ParameterType);
+					var methodParameterTypes = MethodInfo.GetParameters().Select(p => p.ParameterType);
+					var parametersMatch = interfaceParameterTypes.SequenceEqual(methodParameterTypes);
+
+					if (nameMatches && returnMatches && declaringTypeMatches && parametersMatch)
+						yield return interfaceMap.InterfaceMethods[i];
+				}
 			}
 		}
 

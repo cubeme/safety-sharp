@@ -23,12 +23,14 @@
 namespace Tests.Metadata.Faults.StepMethods
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
 
 	internal class X4 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].UpdateMethods.Length.ShouldBe(1);
@@ -46,7 +48,7 @@ namespace Tests.Metadata.Faults.StepMethods
 		}
 
 		[Transient]
-		private class F : Fault<X2>
+		private class F : Fault<X4>
 		{
 		}
 	}

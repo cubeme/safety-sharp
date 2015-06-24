@@ -23,12 +23,14 @@
 namespace Tests.Metadata.Faults.StepMethods
 {
 	using System;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
 
 	internal class X2 : TestComponent
 	{
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].UpdateMethods.Length.ShouldBe(2);

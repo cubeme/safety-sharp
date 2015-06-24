@@ -24,6 +24,7 @@ namespace Tests.Metadata.Components.Subcomponents
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -50,6 +51,7 @@ namespace Tests.Metadata.Components.Subcomponents
 		public readonly X10 D2 = new X10();
 		public new readonly X10 D = new X10();
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Subcomponents.Length.ShouldBe(6);

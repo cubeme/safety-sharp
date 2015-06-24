@@ -24,6 +24,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Runtime;
 	using Shouldly;
 	using Utilities;
@@ -48,9 +49,10 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Bind(RequiredPorts.N = base.ProvidedPorts.M);
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
-			Metadata.ProvidedPorts.Length.ShouldBe(4);
+			Metadata.ProvidedPorts.Length.ShouldBe(3);
 
 			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(X10).GetMethod("M"));
 			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
@@ -64,20 +66,14 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(true);
 			Metadata.ProvidedPorts[1].Name.ShouldBe("M1");
 
-			Metadata.ProvidedPorts[2].MethodInfo.ShouldBe(typeof(X11).GetMethod("Check", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[2].MethodInfo.ShouldBe(typeof(X11).GetMethod("__SynthesizedPort0__", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[2].Name.ShouldBe("Check");
-
-			Metadata.ProvidedPorts[3].MethodInfo.ShouldBe(typeof(X11).GetMethod("__SynthesizedPort0__", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.ProvidedPorts[3].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[3].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[3].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[3].Name.ShouldBe("__SynthesizedPort0__");
-			Metadata.ProvidedPorts[3].CanBeAffectedByFaultEffects.ShouldBe(true);
-			Metadata.ProvidedPorts[3].HasImplementation.ShouldBe(true);
-			Metadata.ProvidedPorts[3].IntendedBehavior.ShouldBe(typeof(X11).GetMethod("__Behavior4__",
+			Metadata.ProvidedPorts[2].Name.ShouldBe("__SynthesizedPort0__");
+			Metadata.ProvidedPorts[2].CanBeAffectedByFaultEffects.ShouldBe(true);
+			Metadata.ProvidedPorts[2].HasImplementation.ShouldBe(true);
+			Metadata.ProvidedPorts[2].IntendedBehavior.ShouldBe(typeof(X11).GetMethod("__Behavior3__",
 				BindingFlags.Instance | BindingFlags.NonPublic));
 		}
 	}

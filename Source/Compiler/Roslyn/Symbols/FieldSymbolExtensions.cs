@@ -94,5 +94,26 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			var getFieldMethod = syntaxGenerator.MemberAccessExpression(reflectionHelpersType, "GetField");
 			return (ExpressionSyntax)syntaxGenerator.InvocationExpression(getFieldMethod, declaringTypeArg, fieldTypeArg, nameArg);
 		}
+
+		/// <summary>
+		///     Gets the expression that selects the metadata of the <paramref name="fieldSymbol" /> at runtime using reflection.
+		/// </summary>
+		/// <param name="fieldSymbol">The field the code should be generated for.</param>
+		/// <param name="obj">The object the field metadata should be retrieved for.</param>
+		/// <param name="syntaxGenerator">The syntax generator that should be used.</param>
+		[Pure]
+		public static ExpressionSyntax GetFieldMetadataExpression([NotNull] this IFieldSymbol fieldSymbol,
+																  [NotNull] SyntaxNode obj,
+																  [NotNull] SyntaxGenerator syntaxGenerator)
+		{
+			Requires.NotNull(fieldSymbol, () => fieldSymbol);
+			Requires.NotNull(syntaxGenerator, () => syntaxGenerator);
+
+			obj = obj is BaseExpressionSyntax ? syntaxGenerator.ThisExpression() : obj;
+			var fieldInfo = fieldSymbol.GetFieldInfoExpression(syntaxGenerator);
+			var reflectionHelpersType = SyntaxFactory.ParseTypeName(typeof(ReflectionHelpers).FullName);
+			var getFieldMetadata = syntaxGenerator.MemberAccessExpression(reflectionHelpersType, "GetFieldMetadata");
+			return (ExpressionSyntax)syntaxGenerator.InvocationExpression(getFieldMetadata, obj, fieldInfo);
+		}
 	}
 }

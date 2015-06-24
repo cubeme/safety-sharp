@@ -24,6 +24,7 @@ namespace Tests.Metadata.Components.StepMethods
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime;
 	using Shouldly;
@@ -35,6 +36,7 @@ namespace Tests.Metadata.Components.StepMethods
 		{
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.UpdateMethods.Length.ShouldBe(2);
@@ -47,6 +49,7 @@ namespace Tests.Metadata.Components.StepMethods
 			Metadata.UpdateMethods[0].OverridingMethod.ShouldBe(Metadata.UpdateMethods[1]);
 			Metadata.UpdateMethods[0].VirtuallyInvokedMethod.ShouldBe(Metadata.UpdateMethods[1]);
 			Metadata.UpdateMethods[0].Name.ShouldBe("Update");
+			Metadata.UpdateMethods[0].ImplementedMethods.ShouldBeEmpty();
 
 			Metadata.UpdateMethods[1].MethodInfo.ShouldBe(typeof(X2).GetMethod("Update"));
 			Metadata.UpdateMethods[1].DeclaringObject.ShouldBe(this.GetMetadata());
@@ -57,6 +60,7 @@ namespace Tests.Metadata.Components.StepMethods
 			Metadata.UpdateMethods[1].CanBeAffectedByFaultEffects.ShouldBe(true);
 			Metadata.UpdateMethods[1].HasImplementation.ShouldBe(true);
 			Metadata.UpdateMethods[1].VirtuallyInvokedMethod.ShouldBe(Metadata.UpdateMethods[1]);
+			Metadata.UpdateMethods[1].ImplementedMethods.ShouldBe(new[] { typeof(IComponent).GetMethod("Update") });
 			Metadata.UpdateMethods[1].IntendedBehavior.ShouldBe(typeof(X2).GetMethod("__Behavior0__",
 				BindingFlags.Instance | BindingFlags.NonPublic));
 

@@ -24,6 +24,7 @@ namespace Tests.Metadata.Faults.Fields
 {
 	using System;
 	using System.Reflection;
+	using SafetySharp.CompilerServices;
 	using SafetySharp.Modeling.Faults;
 	using Shouldly;
 	using Utilities;
@@ -37,6 +38,7 @@ namespace Tests.Metadata.Faults.Fields
 			private readonly int _x = 0;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
@@ -55,6 +57,7 @@ namespace Tests.Metadata.Faults.Fields
 			private readonly double _x = 0;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
@@ -73,6 +76,7 @@ namespace Tests.Metadata.Faults.Fields
 			private readonly bool _x = false;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);
@@ -91,6 +95,7 @@ namespace Tests.Metadata.Faults.Fields
 			private readonly E _x = E.A;
 		}
 
+		[SuppressTransformation]
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fields.Length.ShouldBe(1);

@@ -126,9 +126,18 @@
     <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.cs" />
     <Compile Include="CompilationException.cs" />
-    <Compile Include="Normalization\SetInitialValuesNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\BlockNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\CompoundAssignmentNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\ExpressionMethodNormalizer.cs" />
+    <Compile Include="Normalization\InitialValuesNormalizer.cs" />
     <Compile Include="Normalization\MetadataNormalizer.cs" />
-    <Compile Include="Normalization\AddRootComponentsNormalizer.cs" />
+    <Compile Include="Normalization\MethodBodyNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\LocalVariablesNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\NamedArgumentNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\OptionalArgumentNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\QuotationNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\SwitchStatementNormalizer.cs" />
+    <Compile Include="Normalization\RootComponentsNormalizer.cs" />
     <Compile Include="Normalization\SafetySharpAttributeNormalizer.cs" />
     <Compile Include="Normalization\BindingNormalizer.cs" />
     <Compile Include="Normalization\DebugInfoNormalizer.cs" />
@@ -136,12 +145,16 @@
     <Compile Include="Normalization\MethodNormalizer.cs" />
     <Compile Include="Normalization\LiftedExpressionNormalizer.cs" />
     <Compile Include="Compiler.cs" />
+    <Compile Include="Normalization\Quotations\SingleExitPointNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\MethodBodyCreationNormalizer.cs" />
     <Compile Include="Port.cs" />
     <Compile Include="PortCollection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Roslyn\Analyzer.cs" />
     <Compile Include="Roslyn\DiagnosticInfo.cs" />
+    <Compile Include="Normalization\Quotations\SideEffectsNormalizer.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxGeneratorExtensions.cs" />
     <Compile Include="Roslyn\Syntax\IdentifierExtensions.cs" />
     <Compile Include="Roslyn\SymbolNormalizer.cs" />
     <Compile Include="Roslyn\SyntaxNormalizer.cs" />
@@ -177,6 +190,7 @@
       <Name>Modeling</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

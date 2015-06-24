@@ -200,7 +200,7 @@ namespace SafetySharp.Runtime
 					Requires.That(baseMetadata != null, () => basePort, "The base port is unknown.");
 				}
 
-				var name = _providedPortsNameScope.MakeUnique(providedPort.Name);
+				var name = _providedPortsNameScope.MakeUnique(MethodMetadata.EscapeName(providedPort.Name));
 				_providedPorts.Add(new ProvidedPortMetadata(_component, providedPort, name, baseMetadata));
 			}
 
@@ -215,7 +215,7 @@ namespace SafetySharp.Runtime
 				Requires.That(requiredPort.HasAttribute<RequiredAttribute>(), () => requiredPort,
 					"The method must be marked with'{0}'.", typeof(RequiredAttribute).FullName);
 
-				var name = _requiredPortsNameScope.MakeUnique(requiredPort.Name);
+				var name = _requiredPortsNameScope.MakeUnique(MethodMetadata.EscapeName(requiredPort.Name));
 				_requiredPorts.Add(new RequiredPortMetadata(_component, requiredPort, name));
 			}
 
@@ -237,7 +237,6 @@ namespace SafetySharp.Runtime
 				var metadata = new StepMethodMetadata(_component, stepMethod, baseMetadata);
 
 				Requires.That(metadata.CanBeAffectedByFaultEffects, () => stepMethod, "Component step methods must be sensitive to fault effects.");
-
 				_stepMethods.Add(metadata);
 			}
 

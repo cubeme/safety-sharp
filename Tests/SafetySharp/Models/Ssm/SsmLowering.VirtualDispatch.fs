@@ -152,7 +152,7 @@ module ``Virtual dispatch`` =
         transformMethod "class Y : Component { public virtual void N() {} } class W : Y { public new virtual void N() {} } class Z : W { } class X : Component { Z z = new Z(); public void M() { z.N(); }}" =?
             memberCall "R.X0@0.z@0" "Z" (call "N" "W" 3 0)
 
-    [<Test>]
+    [<Test; Ignore>]
     let ``changes interface method call`` () =
         transformMethod "interface I : IComponent { void N(); } class X : Component, I { public void N() {} void M() { N(); } }" =? call "N" "X" 2 0
         transformMethod "interface I : IComponent { void N(); } class X : Component, I { void I.N() {} void M() { ((I)this).N(); } }" =? call "I.N" "X" 2 0

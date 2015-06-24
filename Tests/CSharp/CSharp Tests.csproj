@@ -25,7 +25,7 @@
     <WarningLevel>4</WarningLevel>
     <WarningsAsErrors>
     </WarningsAsErrors>
-    <NoWarn>0626 0649 414</NoWarn>
+    <NoWarn>0626 0649 414 162 1522</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -273,6 +273,29 @@
     <Compile Include="Execution\RequiredPorts\non-inherited.cs" />
     <Compile Include="Execution\RequiredPorts\overridden.cs" />
     <Compile Include="Execution\RequiredPorts\replaced.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\switch.cs" />
+    <Compile Include="Utilities\TestTraceOutput.cs" />
+    <None Include="Execution\SemanticEquality\SideEffectsFree\expression bodies.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffects\control flow.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffects\variables.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffects\returning control flow.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffects\operators.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffects\method call.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffects\fields.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\fields.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\explicit interface methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\if-then-else.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\implicit interface methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\literals.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\inherited methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\overloaded methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\simple methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\variables.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\unary operators.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\binary operators.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\ref parameters.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\parameter pass-through.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\empty body.cs" />
     <Compile Include="Execution\Steps\base calls.cs" />
     <Compile Include="Execution\Steps\indirectly overridden.cs" />
     <Compile Include="Execution\Steps\directly overridden.cs" />
@@ -288,6 +311,7 @@
     <Compile Include="Metadata\Components\Fields\initial values as array.cs" />
     <Compile Include="Metadata\Components\Fields\multiple fields with same name.cs" />
     <Compile Include="Metadata\Components\Fields\unsupported field type.cs" />
+    <Compile Include="Metadata\Components\ProvidedPorts\implementing ports.cs" />
     <Compile Include="Metadata\Components\Subcomponents\single property subcomponent.cs" />
     <Compile Include="Metadata\Components\Subcomponents\subcomponents with same name.cs" />
     <Compile Include="Metadata\Diagnostics\Bindings\Valid\different roots and levels.cs" />
@@ -476,9 +500,11 @@
     <None Include="Normalization\Partial\Unchanged\interface declarations.cs" />
     <None Include="Normalization\Partial\Unchanged\struct declarations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="Utilities\CSharpErrorReporter.cs" />
     <Compile Include="Utilities\CSharpException.cs" />
     <Compile Include="Utilities\ITestableObject.cs" />
+    <Compile Include="Utilities\CSharpSerializer.cs" />
     <Compile Include="Utilities\TestComponent.cs" />
     <Compile Include="Utilities\TestException.cs" />
     <Compile Include="Utilities\TestModel.cs" />

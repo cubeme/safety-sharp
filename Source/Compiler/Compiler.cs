@@ -291,19 +291,6 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
-		///     Applies a normalizer of type <typeparamref name="T" /> to the <paramref name="compilation." />
-		/// </summary>
-		/// <typeparam name="T">The type of the normalizer that should be applied to <paramref name="compilation" />.</typeparam>
-		/// <param name="compilation">The compilation that should be normalized.</param>
-		/// <param name="syntaxGenerator">The syntax generator that the normalizer should use to generate syntax nodes.</param>
-		[NotNull]
-		private static Compilation ApplyNormalizer<T>([NotNull] Compilation compilation, [NotNull] SyntaxGenerator syntaxGenerator)
-			where T : Normalizer, new()
-		{
-			return new T().Normalize(compilation, syntaxGenerator);
-		}
-
-		/// <summary>
 		///     Applies the required normalizations to the simulation code.
 		/// </summary>
 		/// <param name="compilation">The compilation that should be normalized.</param>
@@ -311,15 +298,16 @@ namespace SafetySharp.Compiler
 		[NotNull]
 		private static Compilation NormalizeSimulationCode([NotNull] Compilation compilation, [NotNull] SyntaxGenerator syntaxGenerator)
 		{
-			compilation = ApplyNormalizer<DebugInfoNormalizer>(compilation, syntaxGenerator);
-			compilation = ApplyNormalizer<SafetySharpAttributeNormalizer>(compilation, syntaxGenerator);
-			compilation = ApplyNormalizer<PartialNormalizer>(compilation, syntaxGenerator);
-			compilation = ApplyNormalizer<LiftedExpressionNormalizer>(compilation, syntaxGenerator);
-			compilation = ApplyNormalizer<SetInitialValuesNormalizer>(compilation, syntaxGenerator);
-			compilation = ApplyNormalizer<AddRootComponentsNormalizer>(compilation, syntaxGenerator);
-			compilation = ApplyNormalizer<BindingNormalizer>(compilation, syntaxGenerator);
-			compilation = ApplyNormalizer<MethodNormalizer>(compilation, syntaxGenerator);
-			compilation = ApplyNormalizer<MetadataNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<DebugInfoNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<SafetySharpAttributeNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<PartialNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<MethodBodyNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<LiftedExpressionNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<InitialValuesNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<RootComponentsNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<BindingNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<MethodNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<MetadataNormalizer>(compilation, syntaxGenerator);
 
 			return compilation;
 		}

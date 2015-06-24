@@ -36,7 +36,7 @@ namespace SafetySharp.Compiler.Normalization
 	///     Replaces all invocations of any of the <c>SetInitialValues</c> methods with an invocation of the corresponding metadata
 	///     builder's <c>WithInitialValues</c> method.
 	/// </summary>
-	public sealed class SetInitialValuesNormalizer : SyntaxNormalizer
+	public sealed class InitialValuesNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
 		///     Normalizes the <paramref name="statement" /> if it is an invocation of a <c>SetInitialValues</c> method.
