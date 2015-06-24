@@ -124,7 +124,16 @@ namespace Tests.Utilities
 				_writer.AppendBlockStatement(() =>
 				{
 					foreach (var variable in metadata.LocalVariables)
-						_writer.AppendLine("{0} {1};", variable.Type.FullName, variable.Name);
+					{
+						string defaultValue = null;
+						if (variable.Type == typeof(int))
+							defaultValue = "0";
+						if (variable.Type == typeof(double))
+							defaultValue = "0.0";
+						if (variable.Type == typeof(bool))
+							defaultValue = "false";
+						_writer.AppendLine("{0} {1} = {2};", variable.Type.FullName, variable.Name, defaultValue);
+					}
 
 					foreach (var s in metadata.Body.Statements)
 						Visit(s);

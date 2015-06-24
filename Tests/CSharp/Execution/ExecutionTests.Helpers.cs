@@ -66,9 +66,7 @@ namespace Tests.Execution
 					Assert.NotReached("Unknown parameter type '{0}'.", parameters[i].ParameterType);
 			}
 
-			output.Trace("--------------------------------------");
-			output.Trace("Testing '{0}'", originalMethod);
-			output.Trace("--------------------------------------");
+			output.Log("Testing '{0}'", originalMethod);
 			for (var i = 0; i < _testCount; ++i)
 			{
 				output.Trace("----- Inputs -----");

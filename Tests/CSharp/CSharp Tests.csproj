@@ -25,7 +25,7 @@
     <WarningLevel>4</WarningLevel>
     <WarningsAsErrors>
     </WarningsAsErrors>
-    <NoWarn>0626 0649 414</NoWarn>
+    <NoWarn>0626 0649 414 162</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

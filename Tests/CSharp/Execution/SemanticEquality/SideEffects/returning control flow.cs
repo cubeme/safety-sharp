@@ -161,6 +161,7 @@ namespace Tests.Execution.SemanticEquality.SideEffects
 					--y;
 					return y;
 				}
+				++y;
 			}
 			else
 			{
@@ -171,6 +172,24 @@ namespace Tests.Execution.SemanticEquality.SideEffects
 			_f1 = -x + _f1 * F1(_f1 < 0 ? --_f1 : ++_f2) + (y * 2 - ((_f1 = --_f1) > 0 ? ++_f1 : (_f1 += _f2 + F1(_f2--))) + _f2);
 
 			return _f1;
+		}
+
+		// Tests dead code elimination
+		[Test(128)]
+		public int M8(int x, int y)
+		{
+			if (x > y)
+				return 1;
+
+			if (x == y)
+			{
+				return 0;
+				x++;
+				--y;
+			}
+
+			return 2;
+			++x;
 		}
 
 		private int F1(int x)

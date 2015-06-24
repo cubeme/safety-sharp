@@ -77,12 +77,13 @@ namespace SafetySharp.Compiler.Normalization
 
 			compilation = ApplyNormalizer<ExpressionMethodNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<LocalVariablesNormalizer>(compilation, Syntax);
+			compilation = ApplyNormalizer<BlockNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<OptionalArgumentNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<NamedArgumentNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<CompoundAssignmentNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<SideEffectsNormalizer>(compilation, Syntax);
-			//compilation = ApplyNormalizer<SingleExitPointNormalizer>(compilation, Syntax);
-			//compilation = ApplyNormalizer<UpdateInliningNormalizer>(compilation, Syntax);
+			compilation = ApplyNormalizer<SingleExitPointNormalizer>(compilation, Syntax);
+			compilation = ApplyNormalizer<UpdateInliningNormalizer>(compilation, Syntax);
 			compilation = ApplyNormalizer<MethodBodyCreationNormalizer>(compilation, Syntax);
 
 			_implementationMethods =

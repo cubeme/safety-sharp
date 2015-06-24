@@ -28,7 +28,16 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Roslyn;
 	using Roslyn.Syntax;
 
-	public sealed class UpdateInliningNormalizer : SyntaxNormalizer
+	/// <summary>
+	///     Ensures that <see cref="BlockSyntax" /> instances are used at all places where single statements are also allowed. For
+	///     instance:
+	///     <code>
+	///     if (x) S;
+	///     // becomes
+	///     if (x) { S; }
+	///     </code>
+	/// </summary>
+	public sealed class BlockNormalizer : SyntaxNormalizer
 	{
 		/// <summary>
 		///     Normalizes the <paramref name="methodDeclaration" />.
@@ -39,6 +48,15 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 				return base.VisitMethodDeclaration(methodDeclaration);
 
 			return methodDeclaration;
+		}
+
+		/// <summary>
+		///     Normalizes the <paramref name="ifStatement" />.
+		/// </summary>
+		public override SyntaxNode VisitIfStatement(IfStatementSyntax ifStatement)
+		{
+			var elseStatement = ifStatement.Else == null ? null : new[] { ifStatement.Else.Statement };
+			return Syntax.IfThenElseStatement(ifStatement.Condition, new[] { ifStatement.Statement }, elseStatement);
 		}
 	}
 }
