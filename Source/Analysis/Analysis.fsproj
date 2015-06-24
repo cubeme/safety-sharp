@@ -172,6 +172,7 @@
     <Compile Include="AnalysisTechniques\AtProbabilisticFullModel.fs" />
     <Compile Include="AnalysisTechniques\AtContract.fs" />
     <Compile Include="AnalysisTechniques\AtMethodsCalled.fs" />
+    <Compile Include="AnalysisTechniques\AnalysisContext.fs" />
     <Compile Include="Analysis\SpinModelChecker.fs" />
     <Compile Include="Analysis\MemberAccess.fs" />
     <Compile Include="AssemblyInfo.fs" />

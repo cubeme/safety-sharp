@@ -180,21 +180,19 @@ module internal SatsParser =
             }
         many parseSatsStatement_ws |>> createSatsPgm
 
-    let parseSatsFile = spaces >>. parseSatsPgm_ws
+    let parseSatsFile (str:string) : SatsPgm =
+        let fileParser = spaces >>. parseSatsPgm_ws .>> eof    
+        let parsedFile = runParserOnString fileParser UserState.initialUserState "" str
+        match parsedFile with
+            | Success(result, _, _)   -> result
+            | Failure(errorMsg, a, b) -> failwith errorMsg
 
         
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmTracer
     
-    let parseStringWorkflow () : ExogenousWorkflowFunction<string,SatsPgm> = workflow {        
-        let runWithUserState parser str = runParserOnString parser UserState.initialUserState "" str
-
-        let parseWithParser parser str =
-            match runWithUserState parser str with
-            | Success(result, _, _)   -> result
-            | Failure(errorMsg, a, b) -> failwith errorMsg
-            
+    let parseSatsFileWorkflow () : ExogenousWorkflowFunction<string,SatsPgm> = workflow {
         let! model = SafetySharp.Workflow.getState ()
-        let satsPgm = parseWithParser (parseSatsFile .>> eof) model
+        let satsPgm = parseSatsFile model
         do! updateState satsPgm
     }

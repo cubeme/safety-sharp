@@ -32,7 +32,6 @@ module internal SatsSamExecutor =
 module internal SatsScmExecutor =
     
     open Sats
-    open SafetySharp.Workflow
 
     type VerificationResult = unit
     
@@ -46,84 +45,71 @@ module internal SatsScmExecutor =
         | InvalidInput
         | FailureDuringVerification
         
-    let executeDoStatementWf (doStatement:DoStatement) : WorkflowFunction<SatsExecutionState,SatsExecutionState,SatsExecutionResult> = workflow {
+    let executeDoStatement (previousState:SatsExecutionState) (doStatement:DoStatement) : SatsExecutionState*SatsExecutionResult =
         match doStatement with
-            | DoStatement.SetEngineOption (iengineOption) ->
-                do! setIEngineOption iengineOption
-                return SatsExecutionResult.FinishedSuccessful
-            | DoStatement.SetModel(filename) ->
-                let! executionState = getState ()
-                do! readFile filename
-                do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
-                let! parsedModel = getState ()
-                let newExecutionState =
-                    { executionState with
-                        SatsExecutionState.ParsedModel = Some(parsedModel);
-                    }
-                do! updateState newExecutionState
-                return SatsExecutionResult.FinishedSuccessful
-    }
+            | DoStatement.SetEngineOption (engineOption) ->
+                do previousState.AnalysisContext.setEngineOption (engineOption)
+                (previousState,SatsExecutionResult.FinishedSuccessful)
+            | DoStatement.SetMainModel(filename) ->
+                do previousState.AnalysisContext.setMainModelFromFile (filename)
+                (previousState,SatsExecutionResult.FinishedSuccessful)
 
-    let executeLetStatementtWf (letStatement:LetStatement) : WorkflowFunction<SatsExecutionState,SatsExecutionState,SatsExecutionResult> = workflow {
+    let executeLetStatement (previousState:SatsExecutionState) (letStatement:LetStatement) : SatsExecutionState*SatsExecutionResult =
         match letStatement with
             | LetStatement.AtLtlFormula (letIdentifier,formula) ->
-                let! executionState = getState ()
-                let model = executionState.ParsedModel.Value.Model
                 //let ltlAnalyzer = SafetySharp.AnalysisTechniques.AtLtlFormula.AnalyseLtlFormulas(model)
                 //do ltlAnalyzer.addLtlFormula ()
                 //do ltlAnalyzer.checkWithPromela()
                 let newExecutionState =
-                    { executionState with
-                        SatsExecutionState.VerificationResults = executionState.VerificationResults;
+                    { previousState with
+                        SatsExecutionState.VerificationResults = previousState.VerificationResults;
                     }
-                return SatsExecutionResult.FinishedSuccessful                
+                (newExecutionState, SatsExecutionResult.FinishedSuccessful)
             | LetStatement.AtDccaLtl (letIdentifier,hazard) ->
-                let! executionState = getState ()
-                let model = executionState.ParsedModel.Value.Model
                 //let hazard = SafetySharp.Models.ScmParser.
                 //let dccaLtlAnalyzer = SafetySharp.AnalysisTechniques.AtDccaLtl.PerformDccaWithLtlFormulas (model,hazard)
                 //let result = dccaLtlAnalyzer.checkWithNuSMV()
                 let newExecutionState =
-                    { executionState with
-                        SatsExecutionState.VerificationResults = executionState.VerificationResults;
+                    { previousState with
+                        SatsExecutionState.VerificationResults = previousState.VerificationResults;
                     }
-                return SatsExecutionResult.FinishedSuccessful     
-    }
+                (newExecutionState, SatsExecutionResult.FinishedSuccessful)
 
-    let executeExpectStatementWf (expectStatement:ExpectStatement) : WorkflowFunction<SatsExecutionState,SatsExecutionState,SatsExecutionResult> = workflow {
-        return SatsExecutionResult.FinishedSuccessful
-    }
+    let executeExpectStatement (previousState:SatsExecutionState) (expectStatement:ExpectStatement) : SatsExecutionState*SatsExecutionResult =
+        (previousState,SatsExecutionResult.FinishedSuccessful)
 
-    let executeSatsStatementWf (previousResult:SatsExecutionResult) (satsStatement:SatsStatement)
-                : WorkflowFunction<SatsExecutionState,SatsExecutionState,SatsExecutionResult> = workflow {
+    let executeSatsStatement (previousState:SatsExecutionState,previousResult:SatsExecutionResult) (satsStatement:SatsStatement) : SatsExecutionState*SatsExecutionResult =
         match previousResult with
             | FinishedSuccessful ->
                 match satsStatement with
-                    | SatsStatement.DoStatement (doStatement) -> return! (executeDoStatementWf doStatement)
-                    | SatsStatement.LetStatement (letStatement) -> return! (executeLetStatementtWf letStatement)
-                    | SatsStatement.ExpectStatement (expectStatement) -> return! (executeExpectStatementWf expectStatement)
+                    | SatsStatement.DoStatement (doStatement) -> executeDoStatement previousState doStatement
+                    | SatsStatement.LetStatement (letStatement) -> executeLetStatement previousState letStatement
+                    | SatsStatement.ExpectStatement (expectStatement) -> executeExpectStatement previousState expectStatement
             | _ ->
-                return previousResult
-    }
+                (previousState,previousResult)
 
-    let executeSatsPgmWf : WorkflowFunction<SatsPgm,SatsExecutionResult,unit> = workflow {
-        let! satsPgm = getState ()
+    let executeSatsPgm (satsPgm:SatsPgm) (engineOptions:SafetySharp.EngineOptions.IEngineOption list) : SatsExecutionState*SatsExecutionResult =
         let initialExecutionState =
             {
-                SatsExecutionState.ParsedModel = None;
+                SatsExecutionState.AnalysisContext = new SafetySharp.AnalysisTechniques.AnalysisContext();
                 SatsExecutionState.VerificationResults = Map.empty<LetIdentifier,VerificationResult>;
             }
-        do! updateState initialExecutionState
-        let! finalExecutionResult = listFold executeSatsStatementWf (SatsExecutionResult.FinishedSuccessful) (satsPgm.Pgm)
-        do! updateState SatsExecutionResult.FinishedSuccessful
-    }
+        do engineOptions |> List.iter (fun engineOption -> initialExecutionState.AnalysisContext.setEngineOption engineOption)
+        let finalExecutionState,finalExecutionResult = (satsPgm.Pgm) |> List.fold executeSatsStatement (initialExecutionState,SatsExecutionResult.FinishedSuccessful) 
+        finalExecutionState,finalExecutionResult
+
+    
+    let executeSatsPgmFile (filename:string) (engineOptions:SafetySharp.EngineOptions.IEngineOption list) : SatsExecutionState*SatsExecutionResult =
+        let input = System.IO.File.ReadAllText filename
+        let satsPgm = SatsParser.parseSatsFile input
+        let finalExecutionState,finalExecutionResult = executeSatsPgm satsPgm engineOptions
+        finalExecutionState,finalExecutionResult
+
+    open SafetySharp.Workflow
 
     let executeSatsPgmFileWf (filename:string) (engineOptions:SafetySharp.EngineOptions.IEngineOption list)
-            : WorkflowFunction<unit,SatsExecutionResult,unit> = workflow {
-        do! listIter_seqState setIEngineOption engineOptions
-        do! readFile filename
-        do! SatsParser.parseStringWorkflow ()
-        do! executeSatsPgmWf
+            : WorkflowFunction<unit,SatsExecutionState*SatsExecutionResult,unit> = workflow {
+        let result = executeSatsPgmFile filename engineOptions
+        do! updateState result
     }
     
-    let executeSatsPgmFile = executeSatsPgmFileWf
