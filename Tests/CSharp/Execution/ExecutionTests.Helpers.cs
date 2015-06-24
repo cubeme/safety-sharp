@@ -24,6 +24,7 @@ namespace Tests.Execution
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
 	using System.Reflection;
@@ -45,7 +46,7 @@ namespace Tests.Execution
 			_testCount = testCount;
 		}
 
-		public void ExecuteTests(ITestOutputHelper output, Component originalComponent, Component transformedComponent,
+		public void ExecuteTests(TestTraceOutput output, Component originalComponent, Component transformedComponent,
 								 MethodInfo originalMethod, MethodInfo transformedMethod)
 		{
 			var parameters = originalMethod.GetParameters();
@@ -65,18 +66,18 @@ namespace Tests.Execution
 					Assert.NotReached("Unknown parameter type '{0}'.", parameters[i].ParameterType);
 			}
 
-			output.WriteLine("--------------------------------------");
-			output.WriteLine("Testing '{0}'", originalMethod);
-			output.WriteLine("--------------------------------------");
+			output.Trace("--------------------------------------");
+			output.Trace("Testing '{0}'", originalMethod);
+			output.Trace("--------------------------------------");
 			for (var i = 0; i < _testCount; ++i)
 			{
-				output.WriteLine("----- Inputs -----");
+				output.Trace("----- Inputs -----");
 				for (var j = 0; j < originalArguments.Length; ++j)
 				{
 					originalArguments[j] = valueFactories[j]();
 					transformedArguments[j] = originalArguments[j];
 
-					output.WriteLine("{0} = {1}", parameters[j].Name, originalArguments[j]);
+					output.Trace("{0} = {1}", parameters[j].Name, originalArguments[j]);
 				}
 
 				var originalResult = originalMethod.Invoke(originalComponent, originalArguments);
@@ -88,7 +89,7 @@ namespace Tests.Execution
 				for (var j = 0; j < originalComponent.Metadata.Fields.Length; ++j)
 				{
 					var originalField = originalComponent.Metadata.Fields[j];
-					output.WriteLine("Comparing field '{0}'", originalField.FieldInfo);
+					output.Trace("Comparing field '{0}'", originalField.FieldInfo);
 
 					var transformedField = transformedComponent.Metadata.Fields.Single(f => f.Name == originalField.Name);
 					transformedField.FieldInfo.GetValue(transformedComponent).ShouldBe(originalField.FieldInfo.GetValue(originalComponent));
@@ -119,16 +120,16 @@ namespace Tests.Execution
 			var serializer = new CSharpSerializer();
 			var code = serializer.Serialize(Metadata);
 
-			TestOutput.WriteLine("==========================================");
-			TestOutput.WriteLine("==========================================");
-			TestOutput.WriteLine("Serialized Metadata");
-			TestOutput.WriteLine("==========================================");
-			TestOutput.WriteLine("==========================================");
-			TestOutput.WriteLine("{0}", code);
+			Output.Trace("==========================================");
+			Output.Trace("==========================================");
+			Output.Trace("Serialized Metadata");
+			Output.Trace("==========================================");
+			Output.Trace("==========================================");
+			Output.Trace("{0}", code);
 
 			var compilation = Tests.CreateCompilation(code);
 			Tests.CheckForSafetySharpDiagnostics(compilation);
-			var assembly = Tests.CompileSafetySharp(compilation, TestOutput);
+			var assembly = Tests.CompileSafetySharp(compilation, Output);
 
 			var componentType = assembly.GetTypes().First(type => typeof(Component).IsAssignableFrom(type));
 			return (Component)Activator.CreateInstance(componentType);
@@ -157,7 +158,7 @@ namespace Tests.Execution
 								 m.ReturnType == originalMethod.ReturnType &&
 								 m.GetParameters().Select(p => p.ParameterType).SequenceEqual(originalMethod.GetParameters().Select(p => p.ParameterType)));
 
-				methodInfo.Attribute.ExecuteTests(TestOutput, originalComponent, transformedComponent, originalMethod, transformedMethod);
+				methodInfo.Attribute.ExecuteTests(Output, originalComponent, transformedComponent, originalMethod, transformedMethod);
 			}
 		}
 	}

@@ -23,11 +23,8 @@
 namespace Tests.Utilities
 {
 	using System;
-	using JetBrains.Annotations;
 	using SafetySharp.Modeling;
-	using SafetySharp.Utilities;
 	using Shouldly;
-	using Xunit.Abstractions;
 
 	/// <summary>
 	///     Represents a base class for testable models that are compiled and instantiated dynamically during test execution.
@@ -35,17 +32,17 @@ namespace Tests.Utilities
 	public abstract class TestModel : Model, ITestableObject
 	{
 		/// <summary>
-		///     Writes to the test output stream.
+		///     Gets the output that writes to the test output stream.
 		/// </summary>
-		private ITestOutputHelper _output;
+		public TestTraceOutput Output { get; private set; }
 
 		/// <summary>
 		///     Executes the tests of the object.
 		/// </summary>
 		/// <param name="output">The output that should be used to write test output.</param>
-		public void Test(ITestOutputHelper output)
+		public void Test(TestTraceOutput output)
 		{
-			_output = output;
+			Output = output;
 
 			Seal();
 			Metadata.Model.ShouldBe(this);
@@ -57,17 +54,5 @@ namespace Tests.Utilities
 		///     Checks the test assertions.
 		/// </summary>
 		protected abstract void Check();
-
-		/// <summary>
-		///     Writes the formatted <paramref name="message" /> to the test output stream.
-		/// </summary>
-		/// <param name="message">The formatted message that should be written.</param>
-		/// <param name="args">The format arguments of the message.</param>
-		[StringFormatMethod("message")]
-		protected void Log(string message, params object[] args)
-		{
-			Assert.NotNull(_output, "A test output helper is not available.");
-			_output.WriteLine(message, args);
-		}
 	}
 }

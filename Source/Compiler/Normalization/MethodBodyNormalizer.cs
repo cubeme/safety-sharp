@@ -88,7 +88,7 @@ namespace SafetySharp.Compiler.Normalization
 				 from methodDeclaration in syntaxTree.Descendants<MethodDeclarationSyntax>()
 				 let semanticModel = compilation.GetSemanticModel(syntaxTree)
 				 let methodSymbol = methodDeclaration.GetMethodSymbol(semanticModel)
-				 where methodSymbol.IsUpdateMethod(Compilation) || methodSymbol.IsProvidedPort(Compilation)
+				 where methodDeclaration.GenerateMethodBodyMetadata(semanticModel)
 				 select new { Key = GetMethodKey(methodSymbol), MethodBody = methodDeclaration.Body })
 					.ToDictionary(m => m.Key, m => m.MethodBody);
 
@@ -115,9 +115,6 @@ namespace SafetySharp.Compiler.Normalization
 				return methodDeclaration;
 
 			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
-			if (methodSymbol.IsAbstract || methodSymbol.IsExtern)
-				return methodDeclaration;
-
 			var methodBody = _implementationMethods[GetMethodKey(methodSymbol)];
 			var metadataMethodName = (methodDeclaration.Identifier.ValueText + "MethodBody" + _methodCount++).ToSynthesized();
 

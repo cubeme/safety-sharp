@@ -273,6 +273,7 @@
     <Compile Include="Execution\RequiredPorts\non-inherited.cs" />
     <Compile Include="Execution\RequiredPorts\overridden.cs" />
     <Compile Include="Execution\RequiredPorts\replaced.cs" />
+    <Compile Include="Utilities\TestTraceOutput.cs" />
     <None Include="Execution\SemanticEquality\SideEffectsFree\expression bodies.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffects\control flow.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffects\variables.cs" />

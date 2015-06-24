@@ -189,14 +189,12 @@ namespace SafetySharp.Compiler.Normalization
 				{
 					case SyntaxKind.PostIncrementExpression:
 						return result
-							.WithStatements(result)
 							.WithExpressionStatement((ExpressionSyntax)_syntax.AssignmentStatement(variable.Identifier, result.Expression))
 							.WithExpressionStatement((ExpressionSyntax)_syntax.AssignmentStatement(result.Expression,
 								_syntax.AddExpression(result.Expression, _syntax.LiteralExpression(1))))
 							.WithExpression(variable);
 					case SyntaxKind.PostDecrementExpression:
 						return result
-							.WithStatements(result)
 							.WithExpressionStatement((ExpressionSyntax)_syntax.AssignmentStatement(variable.Identifier, result.Expression))
 							.WithExpressionStatement((ExpressionSyntax)_syntax.AssignmentStatement(result.Expression,
 								_syntax.SubtractExpression(result.Expression, _syntax.LiteralExpression(1))))
@@ -227,16 +225,14 @@ namespace SafetySharp.Compiler.Normalization
 						Assert.NotNull(symbol, "Expected a valid method symbol.");
 						Assert.That(symbol.IsBuiltInOperator(_semanticModel), "Overloaded operators are not supported.");
 
-						return result.WithStatements(result).WithExpression(unaryExpression.WithOperand(result.Expression));
+						return result.WithExpression(unaryExpression.WithOperand(result.Expression));
 					case SyntaxKind.PreIncrementExpression:
 						return result
-							.WithStatements(result)
 							.WithExpressionStatement(_syntax.AssignmentStatement(result.Expression,
 								_syntax.AddExpression(result.Expression, _syntax.LiteralExpression(1))))
 							.WithExpression(result.Expression);
 					case SyntaxKind.PreDecrementExpression:
 						return result
-							.WithStatements(result)
 							.WithExpressionStatement(_syntax.AssignmentStatement(result.Expression,
 								_syntax.SubtractExpression(result.Expression, _syntax.LiteralExpression(1))))
 							.WithExpression(result.Expression);
@@ -252,10 +248,12 @@ namespace SafetySharp.Compiler.Normalization
 			public override Result VisitBinaryExpression(BinaryExpressionSyntax binaryExpression)
 			{
 				if (_analyzer.IsSideEffectFree(binaryExpression))
-					return Result.Default.WithExpression(binaryExpression);
+					return new Result(binaryExpression);
 
 				var leftResult = Visit(binaryExpression.Left);
 				var rightResult = Visit(binaryExpression.Right);
+				var leftVariable = GenerateVariable(binaryExpression.Left);
+				var result = leftResult.WithExpressionStatement(_syntax.AssignmentStatement(leftVariable.Identifier, leftResult.Expression));
 
 				switch (binaryExpression.Kind())
 				{
@@ -279,15 +277,15 @@ namespace SafetySharp.Compiler.Normalization
 						Assert.NotNull(symbol, "Expected a valid method symbol.");
 						Requires.That(symbol.IsBuiltInOperator(_semanticModel), "Overloaded operators are not supported.");
 
-						return leftResult
+						return result
 							.WithStatements(rightResult)
-							.WithExpression(SyntaxFactory.BinaryExpression(binaryExpression.Kind(), leftResult.Expression, rightResult.Expression));
+							.WithExpression(SyntaxFactory.BinaryExpression(binaryExpression.Kind(), leftVariable.Identifier, rightResult.Expression));
 
 					case SyntaxKind.LogicalOrExpression:
 						var orVariable = GenerateVariable(_semanticModel.GetTypeSymbol<bool>());
 
-						return new Result(orVariable.Identifier)
-							.WithStatements(leftResult.Statements)
+						return result
+							.WithExpression(orVariable.Identifier)
 							.WithStatement(_syntax.IfStatement(
 								leftResult.Expression,
 								new[] { _syntax.AssignmentStatement(orVariable.Identifier, _syntax.TrueLiteralExpression()) },
@@ -296,8 +294,8 @@ namespace SafetySharp.Compiler.Normalization
 					case SyntaxKind.LogicalAndExpression:
 						var andVariable = GenerateVariable(_semanticModel.GetTypeSymbol<bool>());
 
-						return new Result(andVariable.Identifier)
-							.WithStatements(leftResult.Statements)
+						return result
+							.WithExpression(andVariable.Identifier)
 							.WithStatement(_syntax.IfStatement(
 								leftResult.Expression,
 								rightResult.Statements.Concat(new[] { _syntax.AssignmentStatement(andVariable.Identifier, rightResult.Expression) }),
@@ -344,6 +342,7 @@ namespace SafetySharp.Compiler.Normalization
 			/// </summary>
 			public override Result VisitAssignmentExpression(AssignmentExpressionSyntax assignment)
 			{
+				Requires.That(assignment.Kind() == SyntaxKind.SimpleAssignmentExpression, "Unexpected compound assignment.");
 				Requires.That(_analyzer.IsSideEffectFree(assignment.Left), "Left-hand side of assignment has side effect.");
 
 				var result = Visit(assignment.Right);

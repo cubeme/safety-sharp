@@ -61,6 +61,8 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		public override SyntaxNode VisitAssignmentExpression(AssignmentExpressionSyntax expression)
 		{
+			expression = (AssignmentExpressionSyntax)base.VisitAssignmentExpression(expression);
+
 			SyntaxKind expressionKind;
 			switch (expression.Kind())
 			{

@@ -184,7 +184,10 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var methodSymbol = methodDeclaration.GetMethodSymbol(semanticModel);
-			if (methodSymbol.IsAbstract)
+			if (methodSymbol.IsAbstract || methodSymbol.IsExtern)
+				return false;
+
+			if (methodSymbol.ContainingType.TypeKind != TypeKind.Class)
 				return false;
 
 			return methodSymbol.IsProvidedPort(semanticModel) ||

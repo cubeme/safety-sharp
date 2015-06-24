@@ -24,11 +24,8 @@ namespace Tests.Utilities
 {
 	using System;
 	using System.Reflection;
-	using JetBrains.Annotations;
 	using SafetySharp.Modeling;
-	using SafetySharp.Utilities;
 	using Shouldly;
-	using Xunit.Abstractions;
 
 	/// <summary>
 	///     Represents a base class for testable components that are compiled and instantiated dynamically during test execution.
@@ -38,7 +35,7 @@ namespace Tests.Utilities
 		/// <summary>
 		///     Gets the output that writes to the test output stream.
 		/// </summary>
-		public ITestOutputHelper TestOutput { get; private set; }
+		public TestTraceOutput Output { get; private set; }
 
 		/// <summary>
 		///     Gets the reflection information for the <see cref="Component.Update" /> method.
@@ -52,9 +49,9 @@ namespace Tests.Utilities
 		///     Executes the tests of the object.
 		/// </summary>
 		/// <param name="output">The output that should be used to write test output.</param>
-		public void Test(ITestOutputHelper output)
+		public void Test(TestTraceOutput output)
 		{
-			TestOutput = output;
+			Output = output;
 
 			MetadataBuilder.FinalizeMetadata();
 			Metadata.Component.ShouldBe(this);
@@ -66,18 +63,6 @@ namespace Tests.Utilities
 		///     Checks the test assertions.
 		/// </summary>
 		protected abstract void Check();
-
-		/// <summary>
-		///     Writes the formatted <paramref name="message" /> to the test output stream.
-		/// </summary>
-		/// <param name="message">The formatted message that should be written.</param>
-		/// <param name="args">The format arguments of the message.</param>
-		[StringFormatMethod("message")]
-		protected void Log(string message, params object[] args)
-		{
-			Assert.NotNull(TestOutput, "A test output helper is not available.");
-			TestOutput.WriteLine(message, args);
-		}
 
 		/// <summary>
 		///     Executes the component's <see cref="Component.Update" /> method.

@@ -52,30 +52,18 @@ namespace Tests.Utilities
 	public class Tests
 	{
 		/// <summary>
-		///     Writes to the test output stream.
-		/// </summary>
-		private readonly ITestOutputHelper _output;
-
-		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="output">The stream that should be used to write the test output.</param>
 		public Tests(ITestOutputHelper output = null)
 		{
-			_output = output;
+			Output = new TestTraceOutput(output);
 		}
 
 		/// <summary>
-		///     Writes the formatted <paramref name="message" /> to the test output stream.
+		///     Gets the output that writes to the test output stream.
 		/// </summary>
-		/// <param name="message">The formatted message that should be written.</param>
-		/// <param name="args">The format arguments of the message.</param>
-		[StringFormatMethod("message")]
-		protected void Log(string message, params object[] args)
-		{
-			Assert.NotNull(_output, "A test output helper must be provided via the constructor.");
-			_output.WriteLine(message, args);
-		}
+		public TestTraceOutput Output { get; private set; }
 
 		/// <summary>
 		///     Gets the name of the file that calls this method.
@@ -119,7 +107,7 @@ namespace Tests.Utilities
 		protected void ExecuteDynamicTests(SyntaxTree syntaxTree)
 		{
 			foreach (var obj in GetTestableObjects(syntaxTree))
-				obj.Test(_output);
+				obj.Test(Output);
 		}
 
 		/// <summary>
@@ -180,7 +168,7 @@ namespace Tests.Utilities
 		/// </summary>
 		/// <param name="compilation">The compilation that should be compiled.</param>
 		/// <param name="output">The output that should be used to write test output.</param>
-		public static Assembly CompileSafetySharp(Compilation compilation, ITestOutputHelper output)
+		public static Assembly CompileSafetySharp(Compilation compilation, TestTraceOutput output)
 		{
 			using (var workspace = new AdhocWorkspace())
 			{
@@ -198,7 +186,7 @@ namespace Tests.Utilities
 				try
 				{
 					var assembly = compiler.Compile(project);
-					output.WriteLine("{0}", SyntaxTreesToString(compiler.Compilation));
+					output.Trace("{0}", SyntaxTreesToString(compiler.Compilation));
 
 					return assembly;
 				}
@@ -216,7 +204,7 @@ namespace Tests.Utilities
 		/// <param name="compilation">The compilation that should be compiled.</param>
 		protected Assembly CompileSafetySharp(Compilation compilation)
 		{
-			return CompileSafetySharp(compilation, _output);
+			return CompileSafetySharp(compilation, Output);
 		}
 
 		/// <summary>
