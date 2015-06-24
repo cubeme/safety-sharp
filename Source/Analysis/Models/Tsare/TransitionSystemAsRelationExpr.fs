@@ -45,7 +45,7 @@ module internal TransitionSystemAsRelationExpr =
         VirtualNextVarToVar : Map<Var,Var>;
         VarToVirtualNextVar : Map<Var,Var>;
         Init : Expr;
-        Trans : Expr;
+        Trans : Expr; //TODO: Idea: Maybe allow more parallel Transitions. A topological sorting of the variables in Tsam.Pgm could find out, which assignments are independent of each other (e.g: if at the end of each step the faults are evaluated, they could also just be executed in parallel. This might speed up the algorithms of the underlying Tools. At least the size of the Trans-Expr is reduced dramatically in such cases). This might make it necessary to introduce more Pgms in Tsam.
     }
 
     open SafetySharp.ITracing
