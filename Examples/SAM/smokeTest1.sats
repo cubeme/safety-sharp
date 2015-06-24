@@ -1,4 +1,5 @@
-do setModel "smokeTest1.sam";
+do setEmptyModel
+do injectSamModel "simple" "smokeTest1.sam";
 let check1 = verifyLtl "X (i == 200)";
 let check2 = verifyLtl "G (i == 200)";
 let check3 = verifyLtl "X (G (i == 200))";
