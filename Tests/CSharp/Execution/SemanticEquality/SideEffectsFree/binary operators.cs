@@ -170,5 +170,24 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 			a |= b;
 			return a;
 		}
+
+		[Test(1)]
+		public bool M24()
+		{
+			return X.A == X.B;
+		}
+
+		[Test(1)]
+		public bool M25()
+		{
+			return X.A != X.B;
+		}
+
+		private enum X
+		{
+			A,
+			B,
+			C
+		}
 	}
 }

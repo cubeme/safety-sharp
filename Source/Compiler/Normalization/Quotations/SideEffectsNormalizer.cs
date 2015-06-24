@@ -215,7 +215,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 					case SyntaxKind.LogicalNotExpression:
 						var symbol = _semanticModel.GetSymbolInfo(unaryExpression).Symbol as IMethodSymbol;
 						Assert.NotNull(symbol, "Expected a valid method symbol.");
-						Assert.That(symbol.IsBuiltInOperator(_semanticModel), "Overloaded operators are not supported.");
+						Assert.That(symbol.IsBuiltInOperator(), "Overloaded operators are not supported.");
 
 						return result.WithExpression(unaryExpression.WithOperand(result.Expression));
 					case SyntaxKind.PreIncrementExpression:
@@ -267,7 +267,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 					case SyntaxKind.GreaterThanOrEqualExpression:
 						var symbol = _semanticModel.GetSymbolInfo(binaryExpression).Symbol as IMethodSymbol;
 						Assert.NotNull(symbol, "Expected a valid method symbol.");
-						Requires.That(symbol.IsBuiltInOperator(_semanticModel), "Overloaded operators are not supported.");
+						Requires.That(symbol.IsBuiltInOperator(), "Overloaded operators are not supported.");
 
 						return result
 							.WithStatements(rightResult)
@@ -303,6 +303,10 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 			/// </summary>
 			public override Result VisitMemberAccessExpression(MemberAccessExpressionSyntax expression)
 			{
+				var fieldSymbol = expression.GetReferencedSymbol(_semanticModel) as IFieldSymbol;
+				if (fieldSymbol != null && fieldSymbol.ContainingType.TypeKind==TypeKind.Enum)
+					return new Result(expression);
+
 				var result = Visit(expression.Expression);
 				return result.WithExpression((ExpressionSyntax)_syntax.MemberAccessExpression(result.Expression, expression.Name));
 			}

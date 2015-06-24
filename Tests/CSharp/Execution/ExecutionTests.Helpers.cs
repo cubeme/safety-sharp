@@ -25,6 +25,7 @@ namespace Tests.Execution
 	using System;
 	using System.Collections.Generic;
 	using System.Diagnostics;
+	using System.Globalization;
 	using System.IO;
 	using System.Linq;
 	using System.Reflection;
@@ -80,6 +81,12 @@ namespace Tests.Execution
 
 				var originalResult = originalMethod.Invoke(originalComponent, originalArguments);
 				var transformedResult = transformedMethod.Invoke(transformedComponent, transformedArguments);
+
+				if (originalResult != null && originalResult.GetType().IsEnum)
+				{
+					originalResult = ((IConvertible)originalResult).ToInt32(CultureInfo.InvariantCulture);
+					transformedResult = ((IConvertible)transformedResult).ToInt32(CultureInfo.InvariantCulture);
+				}
 
 				transformedResult.ShouldBe(originalResult);
 				transformedArguments.ShouldBe(originalArguments);
@@ -148,12 +155,7 @@ namespace Tests.Execution
 			foreach (var methodInfo in methods)
 			{
 				var originalMethod = methodInfo.Method;
-				var transformedMethod = transformedComponent
-					.GetType().GetMethods()
-					.Single(m => m.Name == originalMethod.Name &&
-								 m.ReturnType == originalMethod.ReturnType &&
-								 m.GetParameters().Select(p => p.ParameterType).SequenceEqual(originalMethod.GetParameters().Select(p => p.ParameterType)));
-
+				var transformedMethod = transformedComponent.GetType().GetMethods().Single(m => m.Name == originalMethod.Name);
 				methodInfo.Attribute.ExecuteTests(Output, originalComponent, transformedComponent, originalMethod, transformedMethod);
 			}
 		}

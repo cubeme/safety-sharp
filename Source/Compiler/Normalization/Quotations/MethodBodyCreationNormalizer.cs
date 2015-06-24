@@ -216,6 +216,9 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 				switch (memberSymbol.Kind)
 				{
 					case SymbolKind.Field:
+						if (memberSymbol.ContainingType.TypeKind == TypeKind.Enum)
+							return Create<EnumerationLiteralExpression>(memberAccess);
+
 						var fieldMetadata = ((IFieldSymbol)memberSymbol).GetFieldMetadataExpression(memberAccess.Expression, _syntax);
 						return Create<FieldExpression>(fieldMetadata);
 					default:

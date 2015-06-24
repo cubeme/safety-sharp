@@ -116,7 +116,7 @@ namespace SafetySharp.Compiler.Roslyn
 						var symbol = _semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
 						Assert.NotNull(symbol, "Expected a valid method symbol.");
 
-						if (symbol.IsBuiltInOperator(_semanticModel))
+						if (symbol.IsBuiltInOperator())
 							return Visit(node.Operand);
 
 						return false;
@@ -170,7 +170,7 @@ namespace SafetySharp.Compiler.Roslyn
 						var symbol = _semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
 						Assert.NotNull(symbol, "Expected a valid method symbol.");
 
-						if (symbol.IsBuiltInOperator(_semanticModel))
+						if (symbol.IsBuiltInOperator())
 							return Visit(node.Left) && Visit(node.Right);
 
 						return false;

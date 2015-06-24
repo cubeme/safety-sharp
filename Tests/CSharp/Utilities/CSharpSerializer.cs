@@ -23,6 +23,7 @@
 namespace Tests.Utilities
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Globalization;
 	using System.Linq;
 	using System.Reflection;
@@ -41,6 +42,7 @@ namespace Tests.Utilities
 
 		public CSharpSerializer()
 		{
+			_writer.AppendLine("using System;");
 			_writer.AppendLine("using SafetySharp.Modeling;");
 			_writer.AppendLine("using SafetySharp.Modeling.Faults;");
 			_writer.NewLine();
@@ -84,6 +86,12 @@ namespace Tests.Utilities
 					foreach (var binding in metadata.Bindings)
 						_writer.AppendLine("Bind(RequiredPorts.{0} = ProvidedPorts.{1});", binding.RequiredPort.Name, binding.ProvidedPort.Name);
 				});
+
+				foreach (var enumeration in statementWriter.Enums.Union(metadata.Fields.Where(f => f.Type.IsEnum).Select(f => f.Type)))
+				{
+					var values = String.Join(", ", Enum.GetValues(enumeration).Cast<object>().Select(v => v.ToString()));
+					_writer.AppendLine("public enum {0} {{ {1} }}", enumeration.Name, values);
+				}
 			});
 
 			return _writer.ToString();
@@ -94,16 +102,24 @@ namespace Tests.Utilities
 			if (type == typeof(void))
 				return "void";
 
+			return GetTypeName(type);
+		}
+
+		private static string GetTypeName(Type type)
+		{
+			if (type.IsEnum)
+				return type.Name;
+
 			return type.FullName;
 		}
 
 		private static string Parameter(ParameterInfo parameter)
 		{
-			var type = parameter.ParameterType.FullName;
+			var type = GetTypeName(parameter.ParameterType);
 			if (parameter.ParameterType.IsByRef && parameter.IsOut)
-				type = String.Format("out {0}", parameter.ParameterType.GetElementType().FullName);
+				type = String.Format("out {0}", GetTypeName(parameter.ParameterType.GetElementType()));
 			else if (parameter.ParameterType.IsByRef)
-				type = String.Format("ref {0}", parameter.ParameterType.GetElementType().FullName);
+				type = String.Format("ref {0}", GetTypeName(parameter.ParameterType.GetElementType()));
 
 			return String.Format("{0} {1}", type, parameter.Name);
 		}
@@ -112,6 +128,7 @@ namespace Tests.Utilities
 		{
 			private readonly ComponentMetadata _metadata;
 			private readonly CodeWriter _writer;
+			public readonly HashSet<Type> Enums = new HashSet<Type>();
 
 			public StatementWriter(ComponentMetadata metadata, CodeWriter writer)
 			{
@@ -132,7 +149,12 @@ namespace Tests.Utilities
 							defaultValue = "0.0";
 						if (variable.Type == typeof(bool))
 							defaultValue = "false";
-						_writer.AppendLine("{0} {1} = {2};", variable.Type.FullName, variable.Name, defaultValue);
+						if (variable.Type.IsEnum)
+						{
+							defaultValue = String.Format("{0}.{1}", variable.Type.Name, Enum.GetValues(variable.Type).Cast<object>().First());
+							Enums.Add(variable.Type);
+						}
+						_writer.AppendLine("{0} {1} = {2};", GetTypeName(variable.Type), variable.Name, defaultValue);
 					}
 
 					foreach (var s in metadata.Body.Statements)
@@ -216,6 +238,12 @@ namespace Tests.Utilities
 			protected internal override void VisitBooleanLiteralExpression(BooleanLiteralExpression expression)
 			{
 				_writer.Append("{0}", expression.Value.ToString().ToLower());
+			}
+
+			protected internal override void VisitEnumerationLiteralExpression(EnumerationLiteralExpression expression)
+			{
+				Enums.Add(expression.Value.GetType());
+				_writer.Append("{0}.{1}", expression.Value.GetType().Name, expression.Value);
 			}
 
 			protected internal override void VisitConditionalExpression(ConditionalExpression expression)

@@ -60,6 +60,7 @@
     <Compile Include="Runtime\Expressions\BooleanLiteralExpression.cs" />
     <Compile Include="Runtime\Expressions\ConditionalExpression.cs" />
     <Compile Include="Runtime\Expressions\DoubleLiteralExpression.cs" />
+    <Compile Include="Runtime\Expressions\EnumerationLiteralExpression.cs" />
     <Compile Include="Runtime\Expressions\Expression.cs" />
     <Compile Include="Runtime\Expressions\FieldExpression.cs" />
     <Compile Include="Runtime\Expressions\IntegerLiteralExpression.cs" />

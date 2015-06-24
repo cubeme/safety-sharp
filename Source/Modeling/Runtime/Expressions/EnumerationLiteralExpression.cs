@@ -20,71 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution.SemanticEquality.SideEffectsFree
+namespace SafetySharp.Runtime.Expressions
 {
 	using System;
+	using MetadataAnalyzers;
 
-	internal class C10 : SemanticEqualityComponent
+	/// <summary>
+	///     Represents an enumeration literal expression.
+	/// </summary>
+	public sealed class EnumerationLiteralExpression : Expression
 	{
-		public enum X
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="value">The value that should be represented by the expression.</param>
+		public EnumerationLiteralExpression(object value)
 		{
-			A,
-			B,
-			C
+			Value = value;
 		}
 
-		[Test(1)]
-		public int M1()
-		{
-			return 17;
-		}
+		/// <summary>
+		///     Gets the value represented by the expression.
+		/// </summary>
+		public object Value { get; private set; }
 
-		[Test(1)]
-		public int M2()
+		/// <summary>
+		///     Calls the <see cref="MethodBodyVisitor.VisitEnumerationLiteralExpression" /> method on the <paramref name="visitor" />.
+		/// </summary>
+		/// <param name="visitor">The visitor that should be accepted.</param>
+		internal override void Accept(MethodBodyVisitor visitor)
 		{
-			return -17;
-		}
-
-		[Test(1)]
-		public bool M3()
-		{
-			return true;
-		}
-
-		[Test(1)]
-		public bool M4()
-		{
-			return false;
-		}
-
-		[Test(1)]
-		public double M5()
-		{
-			return 17.25;
-		}
-
-		[Test(1)]
-		public double M6()
-		{
-			return -17.5;
-		}
-
-		[Test(1)]
-		public double M7()
-		{
-			return 17;
-		}
-
-		[Test(1)]
-		public double M8()
-		{
-			return -17;
-		}
-
-		[Test(1)]
-		public X M9()
-		{
-			return X.B;
+			visitor.VisitEnumerationLiteralExpression(this);
 		}
 	}
 }

@@ -37,6 +37,7 @@ namespace SafetySharp.Runtime.MetadataAnalyzers
 		protected internal abstract void VisitBooleanLiteralExpression(BooleanLiteralExpression expression);
 		protected internal abstract void VisitConditionalExpression(ConditionalExpression expression);
 		protected internal abstract void VisitDoubleLiteralExpression(DoubleLiteralExpression expression);
+		protected internal abstract void VisitEnumerationLiteralExpression(EnumerationLiteralExpression expression);
 		protected internal abstract void VisitFieldExpression(FieldExpression expression);
 		protected internal abstract void VisitMethodInvocationExpression(MethodInvocationExpression expression);
 		protected internal abstract void VisitIntegerLiteralExpression(IntegerLiteralExpression expression);

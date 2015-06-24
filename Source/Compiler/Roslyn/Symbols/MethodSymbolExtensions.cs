@@ -271,16 +271,15 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		///     <see cref="bool" />, or <see cref="decimal" /> types.
 		/// </summary>
 		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
-		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
-		public static bool IsBuiltInOperator([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
+		public static bool IsBuiltInOperator([NotNull] this IMethodSymbol methodSymbol)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
-			Requires.NotNull(semanticModel, () => semanticModel);
 
-			return methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<int>()) ||
-				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<bool>()) ||
-				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<double>());
+			return methodSymbol.ContainingType.SpecialType == SpecialType.System_Int32 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Double ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Boolean ||
+				   methodSymbol.ContainingType.TypeKind == TypeKind.Enum;
 		}
 
 		/// <summary>
