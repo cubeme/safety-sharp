@@ -65,7 +65,7 @@ type SpinModelChecker (model : Model) =
     let value60 = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.IntVal(60))
     let hazard = ScmVerificationElements.PropositionalExpr.BExpr( ScmVerificationElements.PropositionalExpr.ReadField(tankPressure),Scm.BOp.GreaterEqual, value60)
 
-    let ltlDcca = SafetySharp.Analysis.Techniques.AtDccaLtl.PerformDccaWithLtlFormulas(scm,hazard)
+    let ltlDcca = SafetySharp.AnalysisTechniques.AtDccaLtl.PerformDccaWithLtlFormulas(scm,hazard)
     let minimalCutSets = ltlDcca.checkWithPromela ()
     //let minimalCutSets  =
     //    let result : Set<ScmHelpers.FaultPath> list ref = ref ([])

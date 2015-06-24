@@ -42,11 +42,6 @@ module internal EngineOptionHelpers =
         let typeOfEngineOption = typeof<'engineOption>
         typeOfEngineOption.AssemblyQualifiedName
 
-    let createEngineOptionNameSettingTuple<'engineOption when 'engineOption :> IEngineOption> (engineOption:'engineOption) : string*IEngineOption=
-        let name = nameOfEngineOptionAsString<'engineOption> ()
-        (name,engineOption :> IEngineOption)
-        
-
 module internal TsamEngineOptions =
 
     [<RequireQualifiedAccessAttribute>]

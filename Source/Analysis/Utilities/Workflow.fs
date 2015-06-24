@@ -162,8 +162,11 @@ module internal Workflow =
         WorkflowFunction(behavior)
         
         
-    let setEngineOption_WithName<'state> (nameOfEngineOptionAsString:string) (engineOption:SafetySharp.EngineOptions.IEngineOption) : EndogenousWorkflowFunction<'state> =
+    let setIEngineOption<'state> (engineOption:SafetySharp.EngineOptions.IEngineOption) : EndogenousWorkflowFunction<'state> =
         let behavior (wfState:WorkflowState<'state>) =
+            let nameOfEngineOptionAsString =
+                let typeOfEngineOption = engineOption.GetType() // returns the exact type, not only the interface. Is resolved on runtime
+                typeOfEngineOption.AssemblyQualifiedName
             let newWfState =
                 { wfState with
                     WorkflowState.EngineOptions = wfState.EngineOptions.Add(nameOfEngineOptionAsString,engineOption);
@@ -288,6 +291,28 @@ module internal Workflow =
                     let (_,newIntermediateWfState) = functionToIterate intermediateWfState
                     iterate newIntermediateWfState listToIterate.Tail
             iterate wfState listToIterate
+        WorkflowFunction (behavior)
+
+        
+    // Allows the use of a workflow function on a list with an accumulator. Result is the same as execution the function sequentially on each element.
+    // Example:
+    //     let executeStatementsWf (acc:PreviousResult) (stmnts:Statement list) : WorkflowFunction<ExecutionState,ExecutionState,ExecutionResult> = ...
+    //     let! result : ExecutionResult = listFold executeStatementsWf PreviousResult.Good stmnts
+    let listFold<'state,'inputListType,'acc>
+                (workflowFunctionWithParameter : 'acc -> 'inputListType -> WorkflowFunction<'state,'state,'acc>)
+                (initialAcc:'acc)
+                (listToIterate:'inputListType list)
+                    : WorkflowFunction<'state,'state,'acc> =        
+        let behavior (wfState:WorkflowState<'state>) : ('acc*WorkflowState<'state>) =
+            let rec fold (intermediateWfState:WorkflowState<'state>) (intermediateAcc:'acc) (listToIterate:'inputListType list) =
+                if listToIterate.IsEmpty then
+                    (intermediateAcc,intermediateWfState)
+                else
+                    let element = listToIterate.Head
+                    let functionToFold = match workflowFunctionWithParameter intermediateAcc element with | WorkflowFunction(functionToFold) -> functionToFold
+                    let (newAcc,newIntermediateWfState) = functionToFold intermediateWfState
+                    fold newIntermediateWfState newAcc listToIterate.Tail
+            fold wfState initialAcc listToIterate
         WorkflowFunction (behavior)
                 
     
