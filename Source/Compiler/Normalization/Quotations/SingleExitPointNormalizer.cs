@@ -110,10 +110,11 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 			{
 				var returnValueLocal = Syntax.LocalDeclarationStatement(symbol.ReturnType, _returnValueVariable.Identifier.ValueText);
 				statements = statements.Insert(0, (StatementSyntax)returnValueLocal);
-			}
 
-			// Add the final return statement, which by now is the only one within the entire method body
-			statements = statements.Add((StatementSyntax)Syntax.ReturnStatement(_returnsValue ? _returnValueVariable : null));
+				// If the method returns a value, add the final return statement, which by now is the only one within the entire method body
+				statements = statements.Add((StatementSyntax)Syntax.ReturnStatement(_returnValueVariable));
+			}
+			
 			return methodDeclaration.WithBody(SyntaxFactory.Block(statements)).NormalizeWhitespace();
 		}
 

@@ -126,5 +126,31 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 
 			return 0;
 		}
+
+		
+		[Test(8)]
+		public void M10(bool b, ref int i)
+		{
+			if (!b || i > 0)
+			{
+				i = 17;
+				return;
+			}
+
+			++i;
+			return;
+		}
+
+		[Test(8)]
+		public void M11(bool b, ref int i)
+		{
+			if (!b || i > 0)
+			{
+				i = 17;
+				return;
+			}
+
+			++i;
+		}
 	}
 }

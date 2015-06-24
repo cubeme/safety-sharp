@@ -25,7 +25,7 @@
     <WarningLevel>4</WarningLevel>
     <WarningsAsErrors>
     </WarningsAsErrors>
-    <NoWarn>0626 0649 414 162</NoWarn>
+    <NoWarn>0626 0649 414 162 1522</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -273,6 +273,7 @@
     <Compile Include="Execution\RequiredPorts\non-inherited.cs" />
     <Compile Include="Execution\RequiredPorts\overridden.cs" />
     <Compile Include="Execution\RequiredPorts\replaced.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffectsFree\switch.cs" />
     <Compile Include="Utilities\TestTraceOutput.cs" />
     <None Include="Execution\SemanticEquality\SideEffectsFree\expression bodies.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffects\control flow.cs" />

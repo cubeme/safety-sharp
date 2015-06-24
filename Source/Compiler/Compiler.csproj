@@ -135,6 +135,7 @@
     <Compile Include="Normalization\Quotations\LocalVariablesNormalizer.cs" />
     <Compile Include="Normalization\Quotations\NamedArgumentNormalizer.cs" />
     <Compile Include="Normalization\Quotations\OptionalArgumentNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\SwitchStatementNormalizer.cs" />
     <Compile Include="Normalization\RootComponentsNormalizer.cs" />
     <Compile Include="Normalization\SafetySharpAttributeNormalizer.cs" />
     <Compile Include="Normalization\BindingNormalizer.cs" />
@@ -145,7 +146,6 @@
     <Compile Include="Compiler.cs" />
     <Compile Include="Normalization\Quotations\SingleExitPointNormalizer.cs" />
     <Compile Include="Normalization\Quotations\MethodBodyCreationNormalizer.cs" />
-    <Compile Include="Normalization\Quotations\UpdateInliningNormalizer.cs" />
     <Compile Include="Port.cs" />
     <Compile Include="PortCollection.cs" />
     <Compile Include="Program.cs" />

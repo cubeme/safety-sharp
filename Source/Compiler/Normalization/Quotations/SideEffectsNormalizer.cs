@@ -368,6 +368,14 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 			}
 
 			/// <summary>
+			///     Removes the <paramref name="statement" />.
+			/// </summary>
+			public override Result VisitEmptyStatement(EmptyStatementSyntax statement)
+			{
+				return Result.Default;
+			}
+
+			/// <summary>
 			///     Rewrites the <paramref name="returnStatement" />.
 			/// </summary>
 			public override Result VisitReturnStatement(ReturnStatementSyntax returnStatement)
