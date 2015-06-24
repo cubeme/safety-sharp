@@ -69,7 +69,6 @@
     <Compile Include="Models\Ssm\CilToSsm.Components.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Fields.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Methods.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.SemanticEquality.fs" />
     <Compile Include="Models\Ssm\SsmLowering.Signatures.fs" />
     <Compile Include="Models\Ssm\SsmLowering.LocalBindings.fs" />
     <Compile Include="Models\Ssm\SsmLowering.VirtualDispatch.fs" />

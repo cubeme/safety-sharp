@@ -276,7 +276,16 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 
-			return methodSymbol.ContainingType.SpecialType == SpecialType.System_Int32 ||
+			return methodSymbol.ContainingType.SpecialType == SpecialType.System_Byte ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Int16 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Int32 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Int64 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_SByte ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_UInt16 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_UInt32 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_UInt64 ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Decimal ||
+				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Single ||
 				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Double ||
 				   methodSymbol.ContainingType.SpecialType == SpecialType.System_Boolean ||
 				   methodSymbol.ContainingType.TypeKind == TypeKind.Enum;
