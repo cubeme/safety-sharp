@@ -44,7 +44,7 @@ module AtLtlFormulaTests =
         let inputFile = """../../Examples/SCM/exampleBackupRecovery1.scm"""
         let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
                        
-        let formulaAsString = "[] backupRecoverySystem.in.sourceValueField == backupRecoverySystem.out.result"
+        let formulaAsString = "[] (backupRecoverySystem.in.sourceValueField == backupRecoverySystem.out.result)"
         let formula = 
             let initialParserState = SafetySharp.Models.ScmVeParser.UserState.initialUserState scmExample            
             SafetySharp.Models.ScmVeParser.ltlExprParser_Result initialParserState formulaAsString
