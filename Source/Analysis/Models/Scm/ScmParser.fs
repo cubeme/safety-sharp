@@ -197,36 +197,40 @@ module internal ScmParser =
         pipe5 p1 p2 p3 p4 (tuple5 p5 p6 p7 p8 p9)
             (fun x1 x2 x3 x4 (x5, x6, x7, x8, x9) -> f x1 x2 x3 x4 x5 x6 x7 x8 x9)
 
-    let parseIdentifier = identifier (IdentifierOptions())
+    let isIdentifierStart (c:char) : bool =
+        (((c>'a')&&(c<'z')) || ((c>'A')&&(c<'Z')))
+        
+    let parseIdentifier<'us> : Parser<string,'us> = identifier (IdentifierOptions())
 
     // parses the Boolean constants true or false, yielding a Boolean AST node
-    let trueKeyword : Parser<_,UserState> =
+    let trueKeyword<'us> : Parser<_,'us> =
         stringReturn "true" (Val.BoolVal true)
-    let falseKeyword  : Parser<_,UserState> =
+    let falseKeyword<'us>  : Parser<_,'us> =
         stringReturn "false" (Val.BoolVal false)
 
     // parses the Boolean constants, but not, e.g., truee or false1, 
-    let boolVal : Parser<_,UserState> =
+    let boolVal<'us> : Parser<_,'us> =
         let isIdentifierChar c = isLetter c || isDigit c || c = '_'
         (trueKeyword <|> falseKeyword) .>>? (notFollowedBy (many1Satisfy isIdentifierChar))
 
     // parses a number
 
-    let numberVal : Parser<_,UserState> =
-        many1Satisfy isDigit |>> ( fun value -> (bigint.Parse value |> int32 |> Val.IntVal ))
+    let numberVal<'us> : Parser<_,'us> =
+        oldPipeTo (many1Satisfy isDigit)
+                  ( fun value -> (bigint.Parse value |> int32 |> Val.IntVal ))
         
-    let parseRealVal : Parser<_,UserState> =
+    let realVal<'us> : Parser<_,'us> =
         let decimalToVal (dec:string) =
             System.Convert.ToDouble(dec) |> Val.RealVal
-        parseDecimal |>> decimalToVal
+        oldPipeTo parseDecimal decimalToVal
         
-    let value : Parser<_,UserState> =
-        boolVal <|> parseRealVal <|> numberVal        
+    let value<'us> : Parser<_,'us> =
+        boolVal <|> realVal <|> numberVal        
         
-    let probVal : Parser<_,UserState> =
+    let probVal<'us> : Parser<_,'us> =
         let decimalToVal (dec:string) =
             System.Convert.ToDouble(dec,System.Globalization.CultureInfo.InvariantCulture) |> Val.ProbVal
-        parseDecimal |>> decimalToVal
+        oldPipeTo parseDecimal decimalToVal
 
     let parseIdentifierDecl (scope:Scope) (id_type:IdentifierType) : Parser<_,UserState> =
         fun stream ->
@@ -324,10 +328,10 @@ module internal ScmParser =
         pstring s .>> spaces
     let pstring_ws1 s : Parser<_,UserState> =
         pstring s .>> spaces1
-    let boolVal_ws = boolVal .>> spaces
-    let numberVal_ws = numberVal .>> spaces
-    let value_ws = value .>> spaces
-    let probVal_ws = probVal .>> spaces
+    let boolVal_ws<'us> = boolVal<'us> .>> spaces
+    let numberVal_ws<'us> = numberVal<'us> .>> spaces
+    let value_ws<'us> = value<'us> .>> spaces
+    let probVal_ws<'us> = probVal<'us> .>> spaces
     let parseIdentifier_ws = parseIdentifier .>> spaces
     let varIdDecl_ws = varIdDecl .>> spaces
     let varIdInst_ws = varIdInst .>> spaces
