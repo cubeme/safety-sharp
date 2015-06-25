@@ -50,6 +50,7 @@ module AtLtlFormulaTests =
             SafetySharp.Models.ScmVeParser.ltlExprParser_Result initialParserState formulaAsString
                 
         let analyzer = new AnalysisContext ()
+        do analyzer.setMainModelFromFile (inputFile)
             
         let result1 = analyzer.atAnalyseLtl (formulaAsString)
         let result2 = analyzer.atAnalyseLtl (formula)

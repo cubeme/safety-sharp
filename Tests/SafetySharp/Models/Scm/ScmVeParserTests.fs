@@ -56,7 +56,7 @@ type ExampleFormulas () =
         
         let initialParserState = SafetySharp.Models.ScmVeParser.UserState.initialUserState scmModel
                 
-        let formulaAsString = "[] backupRecoverySystem.in.sourceValueField == backupRecoverySystem.out.result"
+        let formulaAsString = "[] (backupRecoverySystem.in.sourceValueField == backupRecoverySystem.out.result)"
         let formula =
             let left = (Scm.Comp("in")::Scm.Comp("backupRecoverySystem")::[]),Scm.Field("sourceValueField")
             let right = (Scm.Comp("out")::Scm.Comp("backupRecoverySystem")::[]),Scm.Field("result")
