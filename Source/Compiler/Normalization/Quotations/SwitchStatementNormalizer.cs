@@ -28,7 +28,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Roslyn.Syntax;
-	using Runtime;
+	using Utilities;
 
 	/// <summary>
 	///     Replaces <c>switch</c> statements with the corresponding <c>if</c> statement.

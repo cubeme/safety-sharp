@@ -28,7 +28,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Roslyn.Syntax;
-	using Runtime;
+	using Utilities;
 
 	/// <summary>
 	///     Ensures that all names of local variables are unique within a method's scope, and renames them otherwise.
