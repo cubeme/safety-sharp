@@ -20,26 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.Expressions
+namespace SafetySharp.Analysis.Formulas
 {
 	using System;
-	using MetadataAnalyzers;
 
 	/// <summary>
-	///     Represents an expression within a S# method.
+	///     Represents the operator of a <see cref="BinaryFormula" />.
 	/// </summary>
-	public abstract class Expression
+	public enum BinaryFormulaOperator
 	{
-		/// <summary>
-		///     Calls the appropriate <c>Visit*</c> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal abstract void Accept(MethodBodyVisitor visitor);
+		// Non-temporal operators
+		And,
+		Or,
+		Implication,
+		Equivalence,
 
-		/// <summary>
-		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
-		internal abstract bool IsStructurallyEquivalent(Expression expression);
+		// Temporal operators
+		Until
 	}
 }

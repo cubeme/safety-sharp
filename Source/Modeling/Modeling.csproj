@@ -40,6 +40,20 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analysis\Ctl.cs" />
+    <Compile Include="Analysis\CtlFormula.cs" />
+    <Compile Include="Analysis\Formulas\BinaryFormula.cs" />
+    <Compile Include="Analysis\Formulas\BinaryFormulaOperator.cs" />
+    <Compile Include="Analysis\Formulas\CSharpTransformation.cs" />
+    <Compile Include="Analysis\Formulas\Formula.cs" />
+    <Compile Include="Analysis\Formulas\FormulaVisitor`1.cs" />
+    <Compile Include="Analysis\Formulas\FormulaVisitor.cs" />
+    <Compile Include="Analysis\Formulas\PathQuantifier.cs" />
+    <Compile Include="Analysis\Formulas\StateFormula.cs" />
+    <Compile Include="Analysis\Formulas\UnaryFormula.cs" />
+    <Compile Include="Analysis\Formulas\UnaryFormulaOperator.cs" />
+    <Compile Include="Analysis\Ltl.cs" />
+    <Compile Include="Analysis\LtlFormula.cs" />
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
     <Compile Include="CompilerServices\MetadataAttribute.cs" />
     <Compile Include="CompilerServices\MetadataBuilders.cs" />
@@ -54,6 +68,7 @@
     <Compile Include="Modeling\IMetadataObject.cs" />
     <Compile Include="Modeling\MetadataObject.cs" />
     <Compile Include="Modeling\PriorityAttribute.cs" />
+    <Compile Include="Runtime\CSharpSerializer.cs" />
     <Compile Include="Runtime\Expressions\ArgumentExpression.cs" />
     <Compile Include="Runtime\Expressions\BinaryExpression.cs" />
     <Compile Include="Runtime\Expressions\BinaryOperator.cs" />
@@ -108,6 +123,7 @@
     <Compile Include="Modeling\OverflowBehavior.cs" />
     <Compile Include="Modeling\ProvidedAttribute.cs" />
     <Compile Include="Modeling\RequiredAttribute.cs" />
+    <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="Utilities\NameScope.cs" />
     <Compile Include="Runtime\NondeterministicFaultInjection.cs" />
     <Compile Include="Runtime\ObjectMetadata.cs" />

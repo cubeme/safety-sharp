@@ -20,50 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.Expressions
+namespace SafetySharp.Analysis.Formulas
 {
 	using System;
-	using MetadataAnalyzers;
 
 	/// <summary>
-	///     Represents an enumeration literal expression.
+	///     Represents the path quantifier of a <see cref="UnaryFormula" /> or <see cref="BinaryFormula" />.
 	/// </summary>
-	public sealed class EnumerationLiteralExpression : Expression
+	public enum PathQuantifier
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     Indicates that no path quantifier is used by the formula's operator.
 		/// </summary>
-		/// <param name="value">The value that should be represented by the expression.</param>
-		public EnumerationLiteralExpression(object value)
-		{
-			Value = value;
-		}
+		None,
 
 		/// <summary>
-		///     Gets the value represented by the expression.
+		///     Indicates that the formula's operator applies to all paths.
 		/// </summary>
-		public object Value { get; private set; }
+		All,
 
 		/// <summary>
-		///     Calls the <see cref="MethodBodyVisitor.VisitEnumerationLiteralExpression" /> method on the <paramref name="visitor" />.
+		///     Indicates that the formula's operator requires the existence of at least a single path.
 		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override void Accept(MethodBodyVisitor visitor)
-		{
-			visitor.VisitEnumerationLiteralExpression(this);
-		}
-
-		/// <summary>
-		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
-		internal override bool IsStructurallyEquivalent(Expression expression)
-		{
-			var literalExpression = expression as EnumerationLiteralExpression;
-			if (literalExpression == null)
-				return false;
-
-			return Value.Equals(literalExpression.Value);
-		}
+		Exists
 	}
 }

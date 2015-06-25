@@ -24,13 +24,13 @@ namespace Tests.Execution
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
 	using System.Reflection;
 	using JetBrains.Annotations;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
 	using SafetySharp.Utilities;
 	using Shouldly;
 	using Utilities;
@@ -68,7 +68,7 @@ namespace Tests.Execution
 			}
 
 			output.Log("Testing '{0}'", originalMethod);
-			for (var i = 0; i < _testCount; ++i)
+			for (var i = 0; i < _testCount * 2; ++i)
 			{
 				output.Trace("----- Inputs -----");
 				for (var j = 0; j < originalArguments.Length; ++j)

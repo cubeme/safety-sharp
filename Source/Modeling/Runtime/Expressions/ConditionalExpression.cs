@@ -71,5 +71,20 @@ namespace SafetySharp.Runtime.Expressions
 		{
 			visitor.VisitConditionalExpression(this);
 		}
+
+		/// <summary>
+		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
+		/// </summary>
+		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
+		internal override bool IsStructurallyEquivalent(Expression expression)
+		{
+			var conditionalExpression = expression as ConditionalExpression;
+			if (conditionalExpression == null)
+				return false;
+
+			return Condition.IsStructurallyEquivalent(conditionalExpression.Condition) &&
+				   TrueBranch.IsStructurallyEquivalent(conditionalExpression.TrueBranch) &&
+				   FalseBranch.IsStructurallyEquivalent(conditionalExpression.FalseBranch);
+		}
 	}
 }

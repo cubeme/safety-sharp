@@ -20,26 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.Expressions
+namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
-	using MetadataAnalyzers;
+	using SafetySharp.Analysis;
+	using SafetySharp.Analysis.Formulas;
+	using SafetySharp.Runtime.Expressions;
 
-	/// <summary>
-	///     Represents an expression within a S# method.
-	/// </summary>
-	public abstract class Expression
+	internal class T1 : FormulaTestObject
 	{
-		/// <summary>
-		///     Calls the appropriate <c>Visit*</c> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal abstract void Accept(MethodBodyVisitor visitor);
+		protected override void Check()
+		{
+			var intValue = 7;
+			var enumValue = E.B;
 
-		/// <summary>
-		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
-		internal abstract bool IsStructurallyEquivalent(Expression expression);
+			var actual = Ctl.StateExpression(enumValue == E.C || ((intValue / 2) * 3) > 45 == false);
+			var expected = new StateFormula(
+				new BinaryExpression(BinaryOperator.Or,
+					new BinaryExpression(BinaryOperator.Equals, new EnumerationLiteralExpression(E.B), new EnumerationLiteralExpression(E.C)),
+					new BinaryExpression(BinaryOperator.Equals,
+						new BinaryExpression(BinaryOperator.Greater,
+							new BinaryExpression(BinaryOperator.Multiply,
+								new BinaryExpression(BinaryOperator.Divide,
+									new IntegerLiteralExpression(7),
+									new IntegerLiteralExpression(2)),
+								new IntegerLiteralExpression(3)),
+							new IntegerLiteralExpression(45)),
+						new BooleanLiteralExpression(false))
+					));
+
+			Check(actual, expected);
+		}
+
+		private enum E
+		{
+			A,
+			B,
+			C
+		}
 	}
 }

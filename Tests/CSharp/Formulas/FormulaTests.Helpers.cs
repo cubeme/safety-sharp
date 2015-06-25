@@ -20,26 +20,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.Expressions
+namespace Tests.Formulas
 {
 	using System;
-	using MetadataAnalyzers;
+	using System.Collections.Generic;
+	using System.IO;
+	using System.Text;
+	using JetBrains.Annotations;
+	using SafetySharp.Analysis.Formulas;
+	using Shouldly;
+	using Utilities;
+	using Xunit.Abstractions;
 
-	/// <summary>
-	///     Represents an expression within a S# method.
-	/// </summary>
-	public abstract class Expression
+	public abstract class FormulaTestObject : TestObject
 	{
-		/// <summary>
-		///     Calls the appropriate <c>Visit*</c> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal abstract void Accept(MethodBodyVisitor visitor);
+		protected void Check(Formula actual, Formula expected)
+		{
+			var builder = new StringBuilder();
+			builder.AppendLine("Actual:");
+			builder.AppendLine(actual.ToString());
+			builder.AppendLine();
 
-		/// <summary>
-		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
-		internal abstract bool IsStructurallyEquivalent(Expression expression);
+			builder.AppendLine("Expected:");
+			builder.AppendLine(expected.ToString());
+
+			Output.Log("{0}", builder.ToString());
+
+			actual.IsStructurallyEquivalent(expected).ShouldBe(true);
+		}
+	}
+
+	partial class FormulaTests : Tests
+	{
+		public FormulaTests(ITestOutputHelper output)
+			: base(output)
+		{
+		}
+
+		[UsedImplicitly]
+		public static IEnumerable<object[]> DiscoverTests(string directory)
+		{
+			return EnumerateTestCases(Path.Combine(Path.GetDirectoryName(GetFileName()), directory));
+		}
 	}
 }

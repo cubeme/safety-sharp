@@ -54,5 +54,18 @@ namespace SafetySharp.Runtime.Expressions
 		{
 			visitor.VisitVariableExpression(this);
 		}
+
+		/// <summary>
+		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
+		/// </summary>
+		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
+		internal override bool IsStructurallyEquivalent(Expression expression)
+		{
+			var variableExpression = expression as VariableExpression;
+			if (variableExpression == null)
+				return false;
+
+			return Variable == variableExpression.Variable;
+		}
 	}
 }

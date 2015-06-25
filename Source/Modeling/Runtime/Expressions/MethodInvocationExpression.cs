@@ -24,6 +24,7 @@ namespace SafetySharp.Runtime.Expressions
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 	using MetadataAnalyzers;
 	using Utilities;
 
@@ -63,6 +64,28 @@ namespace SafetySharp.Runtime.Expressions
 		internal override void Accept(MethodBodyVisitor visitor)
 		{
 			visitor.VisitMethodInvocationExpression(this);
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
+		/// </summary>
+		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
+		internal override bool IsStructurallyEquivalent(Expression expression)
+		{
+			var invocationExpression = expression as MethodInvocationExpression;
+			if (invocationExpression == null)
+				return false;
+
+			if (Method != invocationExpression.Method)
+				return false;
+
+			var arguments = Arguments.ToArray();
+			var otherArguments = invocationExpression.Arguments.ToArray();
+
+			if (arguments.Length != otherArguments.Length)
+				return false;
+
+			return !arguments.Where((t, i) => !t.IsStructurallyEquivalent(otherArguments[i])).Any();
 		}
 	}
 }

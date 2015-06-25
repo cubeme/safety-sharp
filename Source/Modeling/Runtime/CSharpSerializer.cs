@@ -20,40 +20,89 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Utilities
+namespace SafetySharp.Runtime
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Globalization;
 	using System.Linq;
 	using System.Reflection;
-	using SafetySharp.Runtime;
-	using SafetySharp.Runtime.Expressions;
-	using SafetySharp.Runtime.MetadataAnalyzers;
-	using SafetySharp.Runtime.Statements;
-	using SafetySharp.Utilities;
+	using Expressions;
+	using MetadataAnalyzers;
+	using Statements;
+	using Utilities;
 
 	/// <summary>
 	///     Serializes S# metadata to C# code.
 	/// </summary>
 	public sealed class CSharpSerializer
 	{
+		/// <summary>
+		///     The code writer that is used by the serializer.
+		/// </summary>
 		private readonly CodeWriter _writer = new CodeWriter();
 
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
 		public CSharpSerializer()
 		{
+		}
+
+		/// <summary>
+		///     Serializes the <paramref name="statement" />.
+		/// </summary>
+		/// <param name="statement">The statement that should be serialized.</param>
+		public string Serialize(Statement statement)
+		{
+			_writer.Clear();
+
+			var statementWriter = new StatementWriter(_writer);
+			statementWriter.Visit(statement);
+
+			return _writer.ToString();
+		}
+
+		/// <summary>
+		///     Serializes the <paramref name="expression" />.
+		/// </summary>
+		/// <param name="expression">The expression that should be serialized.</param>
+		public string Serialize(Expression expression)
+		{
+			_writer.Clear();
+
+			var statementWriter = new StatementWriter(_writer);
+			statementWriter.Visit(expression);
+
+			return _writer.ToString();
+		}
+
+		/// <summary>
+		///     Serializes the <paramref name="metadata" />.
+		/// </summary>
+		/// <param name="metadata">The metadata of the component that should be serialized.</param>
+		public string Serialize(ComponentMetadata metadata)
+		{
+			_writer.Clear();
+
 			_writer.AppendLine("using System;");
 			_writer.AppendLine("using SafetySharp.Modeling;");
 			_writer.AppendLine("using SafetySharp.Modeling.Faults;");
 			_writer.NewLine();
+
+			return SerializeRecursive(metadata);
 		}
 
-		public string Serialize(ComponentMetadata metadata)
+		/// <summary>
+		///     Serializes the <paramref name="metadata" />.
+		/// </summary>
+		/// <param name="metadata">The metadata of the component that should be serialized.</param>
+		private string SerializeRecursive(ComponentMetadata metadata)
 		{
 			_writer.AppendLine("public class {0} : Component", metadata.Name ?? "C");
 			_writer.AppendBlockStatement(() =>
 			{
-				var statementWriter = new StatementWriter(metadata, _writer);
+				var statementWriter = new StatementWriter(_writer, metadata);
 
 				foreach (var field in metadata.Fields)
 					_writer.AppendLine("public {0} {1};", field.Type.FullName, field.Name);
@@ -76,7 +125,7 @@ namespace Tests.Utilities
 
 				foreach (var subcomponent in metadata.Subcomponents)
 				{
-					Serialize(subcomponent);
+					SerializeRecursive(subcomponent);
 					_writer.AppendLine("public {0} _{0} = new {0}();", subcomponent.Name);
 				}
 
@@ -97,6 +146,9 @@ namespace Tests.Utilities
 			return _writer.ToString();
 		}
 
+		/// <summary>
+		///     Gets the string representation of the return <paramref name="type" />.
+		/// </summary>
 		private static string ReturnType(Type type)
 		{
 			if (type == typeof(void))
@@ -105,6 +157,9 @@ namespace Tests.Utilities
 			return GetTypeName(type);
 		}
 
+		/// <summary>
+		///     Gets the string representation of the <paramref name="type" />.
+		/// </summary>
 		private static string GetTypeName(Type type)
 		{
 			if (type.IsEnum)
@@ -113,6 +168,9 @@ namespace Tests.Utilities
 			return type.FullName;
 		}
 
+		/// <summary>
+		///     Gets the string representation of the <paramref name="parameter" />.
+		/// </summary>
 		private static string Parameter(ParameterInfo parameter)
 		{
 			var type = GetTypeName(parameter.ParameterType);
@@ -124,13 +182,16 @@ namespace Tests.Utilities
 			return String.Format("{0} {1}", type, parameter.Name);
 		}
 
+		/// <summary>
+		///     Serializes <see cref="Statement" /> and <see cref="Expression" /> instances to C#.
+		/// </summary>
 		private class StatementWriter : MethodBodyVisitor
 		{
 			private readonly ComponentMetadata _metadata;
 			private readonly CodeWriter _writer;
 			public readonly HashSet<Type> Enums = new HashSet<Type>();
 
-			public StatementWriter(ComponentMetadata metadata, CodeWriter writer)
+			public StatementWriter(CodeWriter writer, ComponentMetadata metadata = null)
 			{
 				_metadata = metadata;
 				_writer = writer;

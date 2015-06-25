@@ -20,14 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Utilities
+namespace SafetySharp.Utilities
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Text;
 	using JetBrains.Annotations;
-	using SafetySharp.Utilities;
 
 	/// <summary>
 	///     Writes code with a C-like syntax to an in-memory buffer.
@@ -227,6 +226,14 @@ namespace Tests.Utilities
 		public override string ToString()
 		{
 			return _buffer.ToString();
+		}
+
+		/// <summary>
+		///     Removes all generated code from the writer.
+		/// </summary>
+		public void Clear()
+		{
+			_buffer.Clear();
 		}
 	}
 }

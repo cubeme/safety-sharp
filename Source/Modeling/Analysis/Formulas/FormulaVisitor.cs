@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,52 +20,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.Expressions
+namespace SafetySharp.Analysis.Formulas
 {
 	using System;
-	using MetadataAnalyzers;
 	using Utilities;
 
 	/// <summary>
-	///     Represents an expression that references a field.
+	///     Represents the base class for a visitor that visits each subformula of a <see cref="Formula" />.
 	/// </summary>
-	public sealed class FieldExpression : Expression
+	public abstract class FormulaVisitor
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     Visits an element of type <see cref="Formula" />.
 		/// </summary>
-		/// <param name="field">The metadata of the field that should be referenced by the expression.</param>
-		public FieldExpression(FieldMetadata field)
+		/// <param name="element">The <see cref="Formula" /> instance that should be visited.</param>
+		public virtual void Visit(Formula element)
 		{
-			Requires.NotNull(field, () => field);
-			Field = field;
+			Requires.NotNull(element, () => element);
+			element.Accept(this);
 		}
 
 		/// <summary>
-		///     Gets the metadata of the field referenced by the expression.
+		///     Visits an element of type <see cref="StateFormula" />.
 		/// </summary>
-		public FieldMetadata Field { get; private set; }
-
-		/// <summary>
-		///     Calls the <see cref="MethodBodyVisitor.VisitFieldExpression" /> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override void Accept(MethodBodyVisitor visitor)
+		/// <param name="stateFormula">The <see cref="StateFormula" /> instance that should be visited.</param>
+		public virtual void VisitStateFormula(StateFormula stateFormula)
 		{
-			visitor.VisitFieldExpression(this);
+			Requires.NotNull(stateFormula, () => stateFormula);
 		}
 
 		/// <summary>
-		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
+		///     Visits an element of type <see cref="BinaryFormula" />.
 		/// </summary>
-		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
-		internal override bool IsStructurallyEquivalent(Expression expression)
+		/// <param name="binaryFormula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
+		public virtual void VisitBinaryFormula(BinaryFormula binaryFormula)
 		{
-			var fieldExpression = expression as FieldExpression;
-			if (fieldExpression == null)
-				return false;
+			Requires.NotNull(binaryFormula, () => binaryFormula);
+		}
 
-			return Field == fieldExpression.Field;
+		/// <summary>
+		///     Visits an element of type <see cref="UnaryFormula" />.
+		/// </summary>
+		/// <param name="unaryFormula">The <see cref="UnaryFormula" /> instance that should be visited.</param>
+		public virtual void VisitUnaryFormula(UnaryFormula unaryFormula)
+		{
+			Requires.NotNull(unaryFormula, () => unaryFormula);
 		}
 	}
 }

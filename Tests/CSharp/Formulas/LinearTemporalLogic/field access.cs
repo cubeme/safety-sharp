@@ -20,26 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.Expressions
+namespace Tests.Formulas.LinearTemporalLogic
 {
 	using System;
-	using MetadataAnalyzers;
+	using SafetySharp.Analysis;
+	using SafetySharp.Analysis.Formulas;
+	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.Expressions;
 
-	/// <summary>
-	///     Represents an expression within a S# method.
-	/// </summary>
-	public abstract class Expression
+	internal class T2 : FormulaTestObject
 	{
-		/// <summary>
-		///     Calls the appropriate <c>Visit*</c> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal abstract void Accept(MethodBodyVisitor visitor);
+		protected override void Check()
+		{
+			var c1 = new C1();
+			var c2 = new C2();
+			var m = new Model();
+			m.AddRootComponents(c1, c2);
+			m.Seal();
 
-		/// <summary>
-		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
-		internal abstract bool IsStructurallyEquivalent(Expression expression);
+			var actual = Ltl.StateExpression(c1.F && +c1.C2.F != -c2.F);
+			var expected = new StateFormula(
+				new BinaryExpression(BinaryOperator.And,
+					new FieldExpression(m.Metadata.RootComponent.Subcomponents[0].Fields[0]),
+					new BinaryExpression(BinaryOperator.NotEquals,
+						new FieldExpression(m.Metadata.RootComponent.Subcomponents[0].Subcomponents[0].Fields[0]),
+						new UnaryExpression(UnaryOperator.Minus, new FieldExpression(m.Metadata.RootComponent.Subcomponents[1].Fields[0])))
+					));
+
+			Check(actual, expected);
+		}
+
+		private class C1 : Component
+		{
+			public readonly C2 C2 = new C2();
+			public bool F;
+		}
+
+		private class C2 : Component
+		{
+			public int F;
+		}
 	}
 }

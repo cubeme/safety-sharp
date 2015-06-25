@@ -73,5 +73,20 @@ namespace SafetySharp.Runtime.Expressions
 		{
 			visitor.VisitBinaryExpression(this);
 		}
+
+		/// <summary>
+		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
+		/// </summary>
+		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
+		internal override bool IsStructurallyEquivalent(Expression expression)
+		{
+			var binaryExpression = expression as BinaryExpression;
+			if (binaryExpression == null)
+				return false;
+
+			return Operator == binaryExpression.Operator &&
+				   LeftOperand.IsStructurallyEquivalent(binaryExpression.LeftOperand) &&
+				   RightOperand.IsStructurallyEquivalent(binaryExpression.RightOperand);
+		}
 	}
 }
