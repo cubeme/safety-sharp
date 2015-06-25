@@ -67,7 +67,7 @@ module internal ScmRewriterFlattenModel =
             //do! checkConsistency
 
             //do! iscmToScmState
-            do! iscmToPlainModelState ()
+            do! iscmToSimpleScmTracer ()
         }
 
 

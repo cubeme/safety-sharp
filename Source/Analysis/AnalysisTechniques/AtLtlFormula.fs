@@ -26,9 +26,12 @@ module internal AtLtlFormula =
     open SafetySharp.Workflow
     open SafetySharp.Models
     open SafetySharp.ITracing
-    open SafetySharp.Analysis.Modelchecking.PromelaSpin.Typedefs
+    open SafetySharp.Analysis.Modelchecking.PromelaSpin
+    open SafetySharp.Ternary
 
-    type AnalyseLtlFormulas (untransformedModel:Scm.ScmModel) =
+    type AnalyseLtlFormulas () =
+    
+        let mutable cachedPromelaModel = Map.empty<Scm.ScmModel,SamToPromela.PromelaTracer<Scm.Traceable>>
     
         //let mutable formulasToVerify : ScmVerificationElements.LtlExpr list = []
         //member this.checkLtlFormulaLazy (formula: ScmVerificationElements.LtlExpr) =
@@ -40,28 +43,41 @@ module internal AtLtlFormula =
             // other formulas may be calculated in the same bunch.
           //  formulasToVerify <- formula :: formulasToVerify
 
-        member this.checkLtlFormula (formula: ScmVerificationElements.LtlExpr) =
-            ()
+          
+        let transformModelToPromelaAndCache () : ExogenousWorkflowFunction<Scm.ScmModel,SamToPromela.PromelaTracer<Scm.Traceable>> = workflow {
+            let! model = getState ()
+            if not(cachedPromelaModel.ContainsKey model) then
+                do! SafetySharp.Models.ScmTracer.scmToSimpleScmTracer ()
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
+                do! logForwardTracesOfOrigins ()
+                let! transformed = getState ()
+                cachedPromelaModel <- cachedPromelaModel.Add (model,transformed)
+                return ()
+            else
+                do! updateState (cachedPromelaModel.Item model)
+                return ()
+        }
 
-        member this.checkWithPromela () =        
-            let transformModelToPromela = workflow {
-                    do! SafetySharp.Models.ScmTracer.setInitialPlainModelState untransformedModel
-                    do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
-                    do! logForwardTracesOfOrigins ()
-                    let! forwardTracer = getForwardTracer ()
-                    let! promelaModel = getState ()
-                    return (promelaModel,forwardTracer)
-            }
-            let ((promelaModel,forwardTracer),wfState) = runWorkflow_getResultAndWfState transformModelToPromela            
+        member this.checkLtlFormulaWithPromela (formula: ScmVerificationElements.LtlExpr)
+                    : WorkflowFunction<Scm.ScmModel,_,Ternary> = workflow {                    
+            do! transformModelToPromelaAndCache ()
+            let! promelaTracer = getState ()
+            let transformedFormula = SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmVeToPromela.transformLtlExpression promelaTracer.ForwardTracer formula
             let promelaModelWithFormulas = 
-                { promelaModel.PrSpec with
-                    PrSpec.Formulas = formulasToVerify |> List.map (SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmVeToPromela.transformLtlExpression forwardTracer)
+                { promelaTracer.PrSpec with
+                    Typedefs.PrSpec.Formulas = [transformedFormula];
                 }
-            let executeModelWithFormulas = workflow {
-                do! updateState promelaModelWithFormulas
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnModel ()
-                do! printToStdout ()
-            }
-            let (_,wfState) = runWorkflowState executeModelWithFormulas wfState //must continue with resulting wfState to keep the tracing
-            ()
+            do! updateState promelaModelWithFormulas
+            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
+            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnModel ()
+            do! printToStdout ()
+            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.interpretWorkflow ()
+            let! panIntepretation = getState ()
+            match panIntepretation.Result with
+                | SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationResult.False ->
+                    return Ternary.False
+                | SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationResult.True ->
+                    return Ternary.True
+                | SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationResult.Maybe ->
+                    return Ternary.Unknown
+        }

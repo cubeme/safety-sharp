@@ -180,11 +180,13 @@ module internal ScmVeParser =
         opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.NotEquals, e2)))
         opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.GreaterEqual, e2)))
         opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.Greater, e2)))
-        opp.AddOperator(InfixOperator("<"   , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.Less, e2)))
+        opp.AddOperator(InfixOperator("<"   , (notFollowedBy (pchar '>')).>> spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.Less, e2)))
         opp.AddOperator(PrefixOperator("!", spaces, 3, true, fun e -> LtlExpr.UExpr(e,UOp.Not)))
         opp.AddOperator(PrefixOperator("X", (notFollowedBy parseIdStartCharOrDot) .>> spaces, 3, true, fun e -> LtlExpr.LuExpr(e,LuOp.Next)))
         opp.AddOperator(PrefixOperator("G", (notFollowedBy parseIdStartCharOrDot) .>> spaces, 3, true, fun e -> LtlExpr.LuExpr(e,LuOp.Globally)))
+        opp.AddOperator(PrefixOperator("[]", (notFollowedBy parseIdStartCharOrDot) .>> spaces, 3, true, fun e -> LtlExpr.LuExpr(e,LuOp.Globally)))
         opp.AddOperator(PrefixOperator("F", (notFollowedBy parseIdStartCharOrDot) .>> spaces, 3, true, fun e -> LtlExpr.LuExpr(e,LuOp.Eventually)))
+        opp.AddOperator(PrefixOperator("<>", (notFollowedBy parseIdStartCharOrDot) .>> spaces, 3, true, fun e -> LtlExpr.LuExpr(e,LuOp.Eventually)))
         //>
         opp.AddOperator(InfixOperator("&&"   , spaces , 2, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.And, e2)))
         //>

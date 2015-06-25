@@ -97,7 +97,7 @@ module internal AtDccaLtl =
         /////////////////////////////////////////////////
         member this.checkWithPromela () =
             let transformModelToPromela = workflow {
-                    do! SafetySharp.Models.ScmTracer.setInitialPlainModelState untransformedModel
+                    do! SafetySharp.Models.ScmTracer.setInitialSimpleScmTracer untransformedModel
                     do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
                     do! logForwardTracesOfOrigins ()
                     let! forwardTracer = getForwardTracer ()
@@ -150,7 +150,7 @@ module internal AtDccaLtl =
             let transformModelToNuSMV = workflow {
                     do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
 
-                    do! SafetySharp.Models.ScmTracer.setInitialPlainModelState untransformedModel
+                    do! SafetySharp.Models.ScmTracer.setInitialSimpleScmTracer untransformedModel
                     do! SafetySharp.ExternalTools.ScmToNuXmv.transformConfiguration ()
                     do! logForwardTracesOfOrigins ()
                     let! forwardTracer = getForwardTracer ()

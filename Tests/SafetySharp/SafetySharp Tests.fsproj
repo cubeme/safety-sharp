@@ -102,6 +102,7 @@
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterLevelUpTests.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />
+    <Compile Include="Models\Scm\ScmVeParserTests.fs" />
     <Compile Include="Models\Scm\ScmHelpersTests.fs" />
     <Compile Include="Models\Scm\ScmConsistencyCheckTests.fs" />
     <Compile Include="Models\Sam\SamParserTests.fs" />

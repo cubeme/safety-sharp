@@ -39,7 +39,7 @@ type private LoadedModelCache = {
             {
                 LoadedModelCache.PropositionalExprParser = SafetySharp.Models.ScmVeParser.propositionalExprParser_Result initialParserState;
                 LoadedModelCache.LtlExprParser = SafetySharp.Models.ScmVeParser.ltlExprParser_Result initialParserState;
-                LoadedModelCache.LazyAtLtlFormulas = lazy (new AtLtlFormula.AnalyseLtlFormulas(scmModel));
+                LoadedModelCache.LazyAtLtlFormulas = lazy (new AtLtlFormula.AnalyseLtlFormulas());
             }
         member this.AtLtlFormulas = this.LazyAtLtlFormulas.Force()
 
@@ -50,11 +50,11 @@ type private LoadedModelCache = {
 [<RequireQualifiedAccessAttribute>]
 type private AnalysisContextState =
     | Uninitialized of WorkflowState:WorkflowState<unit>
-    | ModelLoaded of LoadedModel:ScmTracer.SimpleScmTracer<Scm.Traceable> *
+    | ModelLoaded of LoadedModel:Scm.ScmModel *
                      LoadedModelCache:LoadedModelCache *
-                     WorkflowState:WorkflowState<ScmTracer.SimpleScmTracer<Scm.Traceable>>
+                     WorkflowState:WorkflowState<Scm.ScmModel>
     with
-        member this.getLoadedModel : ScmTracer.SimpleScmTracer<Scm.Traceable> =
+        member this.getLoadedModel : Scm.ScmModel =
             match this with
                 | AnalysisContextState.Uninitialized (_) ->
                     failwith "Unable to perform action on model because currently no model has been loaded."
@@ -76,7 +76,7 @@ type AnalysisContext () =
 
     // Every call may change every content (log/engineoption) of wfState except the inner state. The inner state is always the baseModel
     member private this.RunWorkflowOnModel_getResult<'returnType,'resultingState>
-                        (WorkflowFunction s:(WorkflowFunction<ScmTracer.SimpleScmTracer<Scm.Traceable>,'resultingState,'returnType>))
+                        (WorkflowFunction s:(WorkflowFunction<Scm.ScmModel,'resultingState,'returnType>))
                         : 'returnType =
         match currentState with
             | AnalysisContextState.Uninitialized (_) ->
@@ -99,7 +99,7 @@ type AnalysisContext () =
                 
     // Every call may change every content (log/engineoption) of wfState except the inner state. The inner state is always the baseModel
     member private this.RunWorkflowOnModel_getState<'returnType,'resultingState>
-                        (WorkflowFunction s:(WorkflowFunction<ScmTracer.SimpleScmTracer<Scm.Traceable>,'resultingState,'returnType>))
+                        (WorkflowFunction s:(WorkflowFunction<Scm.ScmModel,'resultingState,'returnType>))
                         : 'resultingState =
         match currentState with
             | AnalysisContextState.Uninitialized (_) ->
@@ -122,7 +122,7 @@ type AnalysisContext () =
                                 
     //////// Loading Main Model /////////////
 
-    member internal this.setMainModel (_baseModel:ScmTracer.SimpleScmTracer<Scm.Traceable>) : unit =
+    member internal this.setMainModel (_baseModel:Scm.ScmModel) : unit =
         match currentState with
             | AnalysisContextState.ModelLoaded (_,_,wfState) ->
                 let newWfState =
@@ -136,7 +136,7 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = wfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(_baseModel,LoadedModelCache.initial _baseModel.Model,newWfState)
+                currentState <- AnalysisContextState.ModelLoaded(_baseModel,LoadedModelCache.initial _baseModel,newWfState)
                 ()
             | AnalysisContextState.Uninitialized (wfState) ->
                 let newWfState =
@@ -150,24 +150,26 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = wfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(_baseModel,LoadedModelCache.initial _baseModel.Model,newWfState)
+                currentState <- AnalysisContextState.ModelLoaded(_baseModel,LoadedModelCache.initial _baseModel,newWfState)
                 ()
                 
     member internal this.setMainModelFromFile (filename:string) : unit =
         let readFromFileWorkflow (filename:string) = workflow {
             do! readFile filename
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
+            let! scmTracer = getState ()
+            do! updateState (scmTracer.Model)
         }
         match currentState with
             | AnalysisContextState.Uninitialized (wfState) ->
                 let s = match readFromFileWorkflow filename with | WorkflowFunction(s) -> s
                 let _,newWfStateAfterLoading = s wfState
-                currentState <- AnalysisContextState.ModelLoaded(newWfStateAfterLoading.State,LoadedModelCache.initial newWfStateAfterLoading.State.Model,newWfStateAfterLoading)
+                currentState <- AnalysisContextState.ModelLoaded(newWfStateAfterLoading.State,LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
                 ()
             | AnalysisContextState.ModelLoaded (_,_,wfState) ->
                 let s = match readFromFileWorkflow filename with | WorkflowFunction(s) -> s
                 let _,newWfStateAfterLoading = s wfState
-                currentState <- AnalysisContextState.ModelLoaded(newWfStateAfterLoading.State,LoadedModelCache.initial newWfStateAfterLoading.State.Model,newWfStateAfterLoading)
+                currentState <- AnalysisContextState.ModelLoaded(newWfStateAfterLoading.State,LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
                 ()
 
                 
@@ -189,10 +191,10 @@ type AnalysisContext () =
 
     // Analysis Techniques
     
-    member internal this.atAnalyseLtl (ltlExpr:LtlExpr) : SafetySharp.Ternary.Ternary = 
-        currentState.getLoadedModelCache.AtLtlFormulas.checkFormula(ltlExpr)
-
-        ()
+    member internal this.atAnalyseLtl (ltlExpr:LtlExpr) : SafetySharp.Ternary.Ternary =
+        let workflowToCalculateLtlResult =
+            currentState.getLoadedModelCache.AtLtlFormulas.checkLtlFormulaWithPromela(ltlExpr)
+        this.RunWorkflowOnModel_getResult workflowToCalculateLtlResult
 
     member this.atAnalyseLtl (formula:string) : SafetySharp.Ternary.Ternary = 
         let formulaAsLtlExpr = currentState.getLoadedModelCache.LtlExprParser formula

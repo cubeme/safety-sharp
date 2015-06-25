@@ -790,5 +790,5 @@ module internal ScmParser =
         let! model = SafetySharp.Workflow.getState ()
         let rootComp = parseWithParser (scmFile .>> eof) model
         let scmModel = ScmModel(rootComp)
-        do! setInitialPlainModelState scmModel
+        do! setInitialSimpleScmTracer scmModel
     }

@@ -140,30 +140,43 @@ module internal ScmTracer =
         WorkflowFunction<SimpleScmTracer<'traceableOfOrigin>,SimpleScmTracer<'traceableOfOrigin>,'returnType>
         
        
-    let setInitialPlainModelState<'oldIrrelevantState> (model:ScmModel)
+    let setInitialSimpleScmTracer<'oldIrrelevantState> (model:ScmModel)
             : WorkflowFunction<'oldIrrelevantState,SimpleScmTracer<Traceable>,unit> = workflow {
         let emptyUncommittedTracerMap = Map.empty<Traceable,Traceable>
-        let scmMutable =
+        let scmTracer =
             {
                 SimpleScmTracer.Model = model;
                 SimpleScmTracer.UncommitedForwardTracerMap = emptyUncommittedTracerMap;
                 SimpleScmTracer.TraceablesOfOrigin = model.getTraceables;
                 SimpleScmTracer.ForwardTracer = id;
             }
-        do! updateState scmMutable
+        do! updateState scmTracer
     }
         
-    let iscmToPlainModelState<'state,'traceableOfOrigin when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()
+    let iscmToSimpleScmTracer<'state,'traceableOfOrigin when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()
             : ExogenousWorkflowFunction<'state,SimpleScmTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
-        let scmMutable =
+        let scmTracer =
             {
                 SimpleScmTracer.Model = state.getModel;
                 SimpleScmTracer.UncommitedForwardTracerMap = state.getUncommittedForwardTracerMap;  //inherit uncommitted traces
                 SimpleScmTracer.TraceablesOfOrigin = state.getTraceablesOfOrigin;
                 SimpleScmTracer.ForwardTracer = state.getForwardTracer;
             }
-        do! updateState scmMutable
+        do! updateState scmTracer
+    }
+    
+    let scmToSimpleScmTracer () : ExogenousWorkflowFunction<ScmModel,SimpleScmTracer<Scm.Traceable>> = workflow {
+        let! model = getState ()        
+        let emptyUncommittedTracerMap = Map.empty<Traceable,Traceable>
+        let scmTracer =
+            {
+                SimpleScmTracer.Model = model;
+                SimpleScmTracer.UncommitedForwardTracerMap = emptyUncommittedTracerMap;
+                SimpleScmTracer.TraceablesOfOrigin = model.getTraceables;
+                SimpleScmTracer.ForwardTracer = id;
+            }
+        do! updateState scmTracer
     }
         
     let iscmToScmState<'state,'traceableOfOrigin when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()

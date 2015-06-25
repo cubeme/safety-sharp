@@ -47,7 +47,7 @@ type SpinModelChecker (model : Model) =
    
    (*
     let workflowToExecute : WorkflowFunction<_,_,unit> = workflow {
-            do! ScmTracer.setInitialPlainModelState scm
+            do! ScmTracer.setInitialSimpleScmTracer scm
             do! ScmToPromela.transformConfiguration ()
             do! SafetySharp.ITracing.logForwardTracesOfOrigins()
             return ()
