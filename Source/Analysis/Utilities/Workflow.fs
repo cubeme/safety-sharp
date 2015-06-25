@@ -100,22 +100,121 @@ module internal Workflow =
     let putWorkflowState s = WorkflowFunction (fun _ -> ((),s)) //Called in workflow: ignore state (_) from workflow; assign nothing () to the let!; and set wfState to the new wfState s
     let putWorkflowStateAndReturn s returnValue = WorkflowFunction (fun _ -> (returnValue,s))//Called in workflow: ignore wfState (_); assign returnValue to the let!; and set wfState to the new wfState s
     
-    (*
-    let updateStateAndReturn<'oldState,'newState,'returnType> (newState:'newState) (returnValue:'returnType) : WorkflowKTFunction<'oldState,'newState,_,_,'returnType> =
-        let behavior (wfState:WorkflowState<'oldState,_,_>) =
-            let newWfState =
+
+    /////////////////////////// Execution of SubWorkflows ///////////////////////////////
+    // runSubWorkflow restores the old state    
+
+
+    let runSubWorkflow_WithState_ReturnState<'mainState,'subStateStart,'subStateFinal,'returnType>
+                        (s:WorkflowFunction<'subStateStart,'subStateFinal,'returnType>)
+                        (subStateStart:'subStateStart)
+                    : WorkflowFunction<'mainState,'mainState,'subStateFinal> =
+        let behavior (wfState:WorkflowState<'mainState>) =
+            let subWfStateStart =
                 {
-                    WorkflowState.State = newState;
-                    WorkflowState.ForwardTracer = wfState.Tracer;
+                    WorkflowState.State = subStateStart;
                     WorkflowState.StepNumber = wfState.StepNumber;
                     WorkflowState.StepName = wfState.StepName;
                     WorkflowState.Log = wfState.Log;
+                    WorkflowState.LogEvent = wfState.LogEvent;
+                    WorkflowState.EngineOptions = wfState.EngineOptions;
                     WorkflowState.CancellationToken = wfState.CancellationToken;
-                    WorkflowState.Tainted = true;
+                    WorkflowState.Tainted = wfState.Tainted;
                 }
-            returnValue,newWfState
+            let functionToExecute = match s with | WorkflowFunction(s)->s
+            let subResult,subWfStateFinal = functionToExecute subWfStateStart
+            let newWfState =
+                {
+                    WorkflowState.State = wfState.State; // restore old State
+                    WorkflowState.StepNumber = subWfStateFinal.StepNumber;
+                    WorkflowState.StepName = subWfStateFinal.StepName;
+                    WorkflowState.Log = subWfStateFinal.Log;
+                    WorkflowState.LogEvent = subWfStateFinal.LogEvent;
+                    WorkflowState.EngineOptions = subWfStateFinal.EngineOptions;
+                    WorkflowState.CancellationToken = subWfStateFinal.CancellationToken;
+                    WorkflowState.Tainted = wfState.Tainted; // restore old Tainted
+                }
+            subWfStateFinal.State,newWfState
         WorkflowFunction(behavior)
-    *)
+        
+    let runSubWorkflow_WithState_ReturnResult<'mainState,'subStateStart,'subStateFinal,'returnType>
+                        (s:WorkflowFunction<'subStateStart,'subStateFinal,'returnType>)
+                        (subStateStart:'subStateStart)
+                    : WorkflowFunction<'mainState,'mainState,'returnType> =
+        let behavior (wfState:WorkflowState<'mainState>) =
+            let subWfStateStart =
+                {
+                    WorkflowState.State = subStateStart;
+                    WorkflowState.StepNumber = wfState.StepNumber;
+                    WorkflowState.StepName = wfState.StepName;
+                    WorkflowState.Log = wfState.Log;
+                    WorkflowState.LogEvent = wfState.LogEvent;
+                    WorkflowState.EngineOptions = wfState.EngineOptions;
+                    WorkflowState.CancellationToken = wfState.CancellationToken;
+                    WorkflowState.Tainted = wfState.Tainted;
+                }
+            let functionToExecute = match s with | WorkflowFunction(s)->s
+            let subResult,subWfStateFinal = functionToExecute subWfStateStart
+            let newWfState =
+                {
+                    WorkflowState.State = wfState.State; // restore old State
+                    WorkflowState.StepNumber = subWfStateFinal.StepNumber;
+                    WorkflowState.StepName = subWfStateFinal.StepName;
+                    WorkflowState.Log = subWfStateFinal.Log;
+                    WorkflowState.LogEvent = subWfStateFinal.LogEvent;
+                    WorkflowState.EngineOptions = subWfStateFinal.EngineOptions;
+                    WorkflowState.CancellationToken = subWfStateFinal.CancellationToken;
+                    WorkflowState.Tainted = wfState.Tainted; // restore old Tainted
+                }
+            subResult,newWfState
+        WorkflowFunction(behavior)
+        
+    let runSubWorkflow_WithEmptyState_ReturnState s = runSubWorkflow_WithState_ReturnState s ()
+
+    let runSubWorkflow_WithEmptyState_ReturnResult s = runSubWorkflow_WithState_ReturnResult s ()
+
+    
+    let runSubWorkflow_WithSameState_ReturnState<'state,'subStateFinal,'returnType>
+                        (s:WorkflowFunction<'state,'subStateFinal,'returnType>)
+                    : WorkflowFunction<'state,'state,'subStateFinal> =
+        let behavior (wfState:WorkflowState<'state>) =
+            let functionToExecute = match s with | WorkflowFunction(s)->s
+            let subResult,subWfStateFinal = functionToExecute wfState
+            let newWfState =
+                {
+                    WorkflowState.State = wfState.State; // restore old State
+                    WorkflowState.StepNumber = subWfStateFinal.StepNumber;
+                    WorkflowState.StepName = subWfStateFinal.StepName;
+                    WorkflowState.Log = subWfStateFinal.Log;
+                    WorkflowState.LogEvent = subWfStateFinal.LogEvent;
+                    WorkflowState.EngineOptions = subWfStateFinal.EngineOptions;
+                    WorkflowState.CancellationToken = subWfStateFinal.CancellationToken;
+                    WorkflowState.Tainted = wfState.Tainted; // restore old Tainted
+                }
+            subWfStateFinal.State,newWfState
+        WorkflowFunction(behavior)
+        
+    let runSubWorkflow_WithSameState_ReturnResult<'state,'subStateFinal,'returnType>
+                        (s:WorkflowFunction<'state,'subStateFinal,'returnType>)
+                    : WorkflowFunction<'state,'state,'returnType> =
+        let behavior (wfState:WorkflowState<'state>) =
+            let functionToExecute = match s with | WorkflowFunction(s)->s
+            let subResult,subWfStateFinal = functionToExecute wfState
+            let newWfState =
+                {
+                    WorkflowState.State = wfState.State; // restore old State
+                    WorkflowState.StepNumber = subWfStateFinal.StepNumber;
+                    WorkflowState.StepName = subWfStateFinal.StepName;
+                    WorkflowState.Log = subWfStateFinal.Log;
+                    WorkflowState.LogEvent = subWfStateFinal.LogEvent;
+                    WorkflowState.EngineOptions = subWfStateFinal.EngineOptions;
+                    WorkflowState.CancellationToken = subWfStateFinal.CancellationToken;
+                    WorkflowState.Tainted = wfState.Tainted; // restore old Tainted
+                }
+            subResult,newWfState
+        WorkflowFunction(behavior)
+        
+    /////////////////////////// Common Workflow functions ///////////////////////////////
 
     let updateState<'oldState,'newState>
             (newState:'newState)

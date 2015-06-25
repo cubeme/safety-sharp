@@ -30,10 +30,18 @@ module internal AtLtlFormula =
 
     type AnalyseLtlFormulas (untransformedModel:Scm.ScmModel) =
     
-        let mutable formulasToVerify : ScmVerificationElements.LtlExpr list = []
+        //let mutable formulasToVerify : ScmVerificationElements.LtlExpr list = []
+        //member this.checkLtlFormulaLazy (formula: ScmVerificationElements.LtlExpr) =
+            // TODO: Implementation
+            // Some engines (e.g. PromelaSpin) work most efficiently if formulas are evaluated in sequence other
+            // engines (e.g. NuSMV on CTL, Prism) work most efficiently if they can evaluate a bunch of formulas at the same time.
+            // This function allows to collect several formulas before evaluating them. It only ensures that
+            // when a _result_ of a formula is _accessed_ this formula will be calculated. Depending on the engine
+            // other formulas may be calculated in the same bunch.
+          //  formulasToVerify <- formula :: formulasToVerify
 
-        member this.addLtlFormula (formula: ScmVerificationElements.LtlExpr) =
-            formulasToVerify <- formula :: formulasToVerify
+        member this.checkLtlFormula (formula: ScmVerificationElements.LtlExpr) =
+            ()
 
         member this.checkWithPromela () =        
             let transformModelToPromela = workflow {

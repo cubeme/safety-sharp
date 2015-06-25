@@ -26,17 +26,26 @@ open SafetySharp.Workflow
 open SafetySharp.Models
 open SafetySharp.Models.ScmVerificationElements
 
-type private LoadedModelCache = {    
+// allows caching of analysis techniques to reduce lots of recalculations
+type private LoadedModelCache = {
     PropositionalExprParser : string -> ScmVerificationElements.PropositionalExpr;
     LtlExprParser : string -> ScmVerificationElements.LtlExpr;
+    // Lazy instantiated Analysis techniques. They are only instantiated, when needed
+    LazyAtLtlFormulas : Lazy<AtLtlFormula.AnalyseLtlFormulas>;
 }
     with
         static member initial (scmModel: Scm.ScmModel ) =
             let initialParserState = SafetySharp.Models.ScmVeParser.UserState.initialUserState scmModel
             {
-                LoadedModelCache.PropositionalExprParser = SafetySharp.Models.ScmVeParser.propositionalExprParser_Result initialParserState
-                LoadedModelCache.LtlExprParser = SafetySharp.Models.ScmVeParser.ltlExprParser_Result initialParserState
+                LoadedModelCache.PropositionalExprParser = SafetySharp.Models.ScmVeParser.propositionalExprParser_Result initialParserState;
+                LoadedModelCache.LtlExprParser = SafetySharp.Models.ScmVeParser.ltlExprParser_Result initialParserState;
+                LoadedModelCache.LazyAtLtlFormulas = lazy (new AtLtlFormula.AnalyseLtlFormulas(scmModel));
             }
+        member this.AtLtlFormulas = this.LazyAtLtlFormulas.Force()
+
+        //static member resetAnalysisTechniques
+        //  TODO: Replaces every instantiated Analysis Technique with an unevaluated "lazy" to allow the garbage
+        //  collection of the old instantiated Analysis Techniques
 
 [<RequireQualifiedAccessAttribute>]
 type private AnalysisContextState =
@@ -181,11 +190,13 @@ type AnalysisContext () =
     // Analysis Techniques
     
     member internal this.atAnalyseLtl (ltlExpr:LtlExpr) : SafetySharp.Ternary.Ternary = 
-        SafetySharp.Ternary.Unknown
+        currentState.getLoadedModelCache.AtLtlFormulas.checkFormula(ltlExpr)
+
+        ()
 
     member this.atAnalyseLtl (formula:string) : SafetySharp.Ternary.Ternary = 
         let formulaAsLtlExpr = currentState.getLoadedModelCache.LtlExprParser formula
-        this.atAnalyseLtl formulaAsLtlExpr                
+        this.atAnalyseLtl formulaAsLtlExpr 
     
     member internal this.atAnalyseDccaLtl (hazard:PropositionalExpr) : Set<ScmHelpers.FaultPath> list = 
         []
