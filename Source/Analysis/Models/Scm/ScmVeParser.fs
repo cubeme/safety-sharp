@@ -200,5 +200,18 @@ module internal ScmVeParser =
             (attempt locFieldInst_ws |>> (fun (loc,id) -> LtlExpr.ReadField(loc,Field.Field(id)) )) <|>
             (attempt locFaultInst_ws |>> (fun (loc,id) -> LtlExpr.ReadFault(loc,Fault.Fault(id)) ))<|> 
             (parenExpr_ws)
-
         opp.ExpressionParser
+
+    let propositionalExprParser_Result (us:UserState) (str:string) : PropositionalExpr =
+        let parser = spaces >>. propositionalExprParser .>> eof
+        let parsedString = runParserOnString parser us "" str
+        match parsedString with
+            | Success(result, _, _)   -> result
+            | Failure(errorMsg, a, b) -> failwith errorMsg
+
+    let ltlExprParser_Result (us:UserState) (str:string) : LtlExpr =
+        let parser = spaces >>. ltlExprParser .>> eof
+        let parsedString = runParserOnString parser us "" str
+        match parsedString with
+            | Success(result, _, _)   -> result
+            | Failure(errorMsg, a, b) -> failwith errorMsg
