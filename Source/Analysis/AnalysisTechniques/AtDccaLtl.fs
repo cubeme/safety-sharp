@@ -29,6 +29,7 @@ module internal AtDccaLtl =
     open SafetySharp.Models
     open SafetySharp.ITracing
     open SafetySharp.Analysis.Modelchecking.PromelaSpin.Typedefs
+    open SafetySharp.Analysis.Modelchecking.PromelaSpin
     open SafetySharp.Models.ScmHelpers
     
     type ElementToCheck = {
@@ -39,6 +40,23 @@ module internal AtDccaLtl =
 
     type PerformDccaWithLtlFormulas (untransformedModel:Scm.ScmModel,hazard:ScmVerificationElements.PropositionalExpr) =
         
+        let mutable cachedPromelaModel = Map.empty<Scm.ScmModel,SamToPromela.PromelaTracer<Scm.Traceable>>
+
+        
+        let transformModelToPromelaAndCache () : ExogenousWorkflowFunction<Scm.ScmModel,SamToPromela.PromelaTracer<Scm.Traceable>> = workflow {
+            let! model = getState ()
+            if not(cachedPromelaModel.ContainsKey model) then
+                do! SafetySharp.Models.ScmTracer.scmToSimpleScmTracer ()
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
+                do! logForwardTracesOfOrigins ()
+                let! transformed = getState ()
+                cachedPromelaModel <- cachedPromelaModel.Add (model,transformed)
+                return ()
+            else
+                do! updateState (cachedPromelaModel.Item model)
+                return ()
+        }
+        let transformModelToPromelaAndCache_asSubWorkflow () = runSubWorkflow_WithSameState_ReturnState (transformModelToPromelaAndCache ())
 
         /////////////////////////////////////////////////
         //              COMMON CODE
@@ -64,13 +82,13 @@ module internal AtDccaLtl =
                 CorrespondingFormula = correspondingFormula;
             }
 
-        member this.isAlreadyKnownThatUnsafe (knownUnsafe:Set<FaultPath> list) (toCheck:Set<FaultPath>) : bool =
+        member this.isAlreadyKnownThatUnsafe (knownUnsafe:Set<Set<FaultPath>>) (toCheck:Set<FaultPath>) : bool =
             let doesSetShowThatUnsafe (unsafeSet:Set<FaultPath>) =
                 Set.isSubset unsafeSet toCheck
-            knownUnsafe |> List.exists doesSetShowThatUnsafe
+            knownUnsafe |> Set.exists doesSetShowThatUnsafe
 
         
-        member this.formulasToVerify_CheckIfNumberOfFaultsIsSafe (exactNumberOfFaults:int) (knownUnsafe:Set<FaultPath> list) : ElementToCheck list =
+        member this.formulasToVerify_CheckIfNumberOfFaultsIsSafe (exactNumberOfFaults:int) (knownUnsafe:Set<Set<FaultPath>>) : ElementToCheck list =
             // we assume, that we increase the number of faults each step (the other direction is also possible and may be advantageous in several cases)
             // formulasToVerify_CheckIfNumberOfFaultsIsSafe (0) ...
             // formulasToVerify_CheckIfNumberOfFaultsIsSafe (...) ...
@@ -95,21 +113,15 @@ module internal AtDccaLtl =
         /////////////////////////////////////////////////
         //              PROMELA/SPIN CODE
         /////////////////////////////////////////////////
-        member this.checkWithPromela () =
-            let transformModelToPromela = workflow {
-                    do! SafetySharp.Models.ScmTracer.setInitialSimpleScmTracer untransformedModel
-                    do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
-                    do! logForwardTracesOfOrigins ()
-                    let! forwardTracer = getForwardTracer ()
-                    let! promelaModel = getState ()
-                    return (promelaModel,forwardTracer)
-            }
-            let ((promelaModel,forwardTracer),wfStateWithPromelaModel) = runWorkflow_getResultAndWfState transformModelToPromela            
-            
+
+
+        member this.checkWithPromela () : WorkflowFunction<Scm.ScmModel,Scm.ScmModel,Set<Set<FaultPath>>> = workflow {
+            let! promelaTracer = transformModelToPromelaAndCache_asSubWorkflow()
+
             let checkFormulaElement (formulaElement:ElementToCheck) = workflow {                    
                     let promelaModelWithFormula = 
-                        { promelaModel.PrSpec with
-                            PrSpec.Formulas = [SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmVeToPromela.transformLtlExpression forwardTracer (formulaElement.CorrespondingFormula)] 
+                        { promelaTracer.PrSpec with
+                            PrSpec.Formulas = [SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmVeToPromela.transformLtlExpression promelaTracer.ForwardTracer (formulaElement.CorrespondingFormula)] 
                         }
                     do! updateState promelaModelWithFormula
                     do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
@@ -119,32 +131,36 @@ module internal AtDccaLtl =
                     let! panIntepretation = getState ()
                     return (formulaElement.FaultsWhichMayAppear,panIntepretation)
             }
+            let checkFormulaElement_asSubWorkflow element = runSubWorkflow_WithSameState_ReturnResult (checkFormulaElement element)
 
-            let checkIfSizeIsSafe (knownUnsafe:Set<FaultPath> list) (size:int) : Set<FaultPath> list = //returns new knownUnsafe
+            let checkIfSizeIsSafe (knownUnsafe:Set<Set<FaultPath>>) (size:int) : WorkflowFunction<Scm.ScmModel,Scm.ScmModel,Set<Set<FaultPath>>> = workflow {
                 let formulasToCheck = this.formulasToVerify_CheckIfNumberOfFaultsIsSafe size knownUnsafe
-                let checkedFormulas =
-                    formulasToCheck |> List.map (fun formula -> runWorkflowState_getResult (checkFormulaElement formula) wfStateWithPromelaModel)
-                let calculateNewKnownUnsafe (acc:Set<FaultPath> list) (toProcess:(Set<FaultPath>*SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationLog)) =
+                let! checkedFormulas = listMap checkFormulaElement_asSubWorkflow formulasToCheck
+                let checkedFormulasSet = checkedFormulas |> Set.ofList
+
+                let calculateNewKnownUnsafe (acc:Set<Set<FaultPath>>) (toProcess:(Set<FaultPath>*SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationLog)) =
                     let faultyComponents,result = toProcess
                     match result.Result with
                         | SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationResult.False ->
-                            faultyComponents::acc // model checker finds counterexample. Formula is false. Combination is unsafe.
+                            acc.Add faultyComponents // model checker finds counterexample. Formula is false. Combination is unsafe.
                         | SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationResult.True ->
                             acc // model checker finds no counterexample. Formula is true. Combination is safe.
                         | SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationResult.Maybe ->
                             printf "%s" result.FullLog
                             failwith "Could not be checked with Spin. Possible reason: Search depth too small. Consult full log"
-                checkedFormulas |> List.fold calculateNewKnownUnsafe knownUnsafe
+                let unsafeSetsUntilSize = checkedFormulasSet |> Set.fold calculateNewKnownUnsafe knownUnsafe
+                return unsafeSetsUntilSize
+            }
             
-            let fullDcca : Set<FaultPath> list =
-                {0..numberOfAllFaults} |> Seq.toList |> List.fold checkIfSizeIsSafe ([]:Set<FaultPath> list)
-            fullDcca
-
+            let sizesToCheck = {0..numberOfAllFaults} |> Seq.toList
+            let! fullDcca = listFold checkIfSizeIsSafe (Set.empty<Set<FaultPath>>) sizesToCheck
+            return fullDcca
+        }
             
         /////////////////////////////////////////////////
         //              NuSMV-Code
         /////////////////////////////////////////////////
-        member this.checkWithNuSMV () =            
+        member this.checkWithNusmv ()  : WorkflowFunction<Scm.ScmModel,Scm.ScmModel,Set<Set<FaultPath>>> = workflow {
             let nusmvExecutor = new SafetySharp.ExternalTools.Smv.ExecuteNusmv2()
             
             let transformModelToNuSMV = workflow {
@@ -173,15 +189,15 @@ module internal AtDccaLtl =
                     let nuXmvInterpretation = SafetySharp.ExternalTools.Smv.SmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec nuXmvResult
                     (formulaElement.FaultsWhichMayAppear,nuXmvInterpretation)
 
-            let checkIfSizeIsSafe (knownUnsafe:Set<FaultPath> list) (size:int) : Set<FaultPath> list = //returns new knownUnsafe
+            let checkIfSizeIsSafe (knownUnsafe:Set<Set<FaultPath>>) (size:int) : Set<Set<FaultPath>> = //returns new knownUnsafe
                 let formulasToCheck = this.formulasToVerify_CheckIfNumberOfFaultsIsSafe size knownUnsafe
                 let checkedFormulas =
                     formulasToCheck |> List.map (fun formula -> checkFormulaElement formula)
-                let calculateNewKnownUnsafe (acc:Set<FaultPath> list) (toProcess:(Set<FaultPath>*SafetySharp.ExternalTools.Smv.NuXmvCommandResultInterpretedCheckOfSpecification)) =
+                let calculateNewKnownUnsafe (acc:Set<Set<FaultPath>>) (toProcess:(Set<FaultPath>*SafetySharp.ExternalTools.Smv.NuXmvCommandResultInterpretedCheckOfSpecification)) =
                     let faultyComponents,result = toProcess
                     match result.Result with
                         | SafetySharp.ExternalTools.Smv.CheckOfSpecificationDetailedResult.Invalid (trace)->
-                            faultyComponents::acc // model checker finds counterexample. Formula is false. Combination is unsafe.
+                            acc.Add faultyComponents // model checker finds counterexample. Formula is false. Combination is unsafe.
                         | SafetySharp.ExternalTools.Smv.CheckOfSpecificationDetailedResult.Valid ->
                             acc // model checker finds no counterexample. Formula is true. Combination is safe.
                         | SafetySharp.ExternalTools.Smv.CheckOfSpecificationDetailedResult.Undetermined ->
@@ -189,7 +205,8 @@ module internal AtDccaLtl =
                             failwith "Could not be checked with NuSMV. Consult full log"
                 checkedFormulas |> List.fold calculateNewKnownUnsafe knownUnsafe
             
-            let fullDcca : Set<FaultPath> list =
-                {0..numberOfAllFaults} |> Seq.toList |> List.fold checkIfSizeIsSafe ([]:Set<FaultPath> list)
+            let fullDcca : Set<Set<FaultPath>> =
+                {0..numberOfAllFaults} |> Seq.toList |> List.fold checkIfSizeIsSafe (Set.empty<Set<FaultPath>>)
             do nusmvExecutor.ForceShutdownSmv () 
-            fullDcca
+            return fullDcca
+        }

@@ -44,12 +44,13 @@ type ExampleFormulas () =
         | Failure(errorMsg, _, _) -> failwith errorMsg
         
     let parseScm str = parseWithParser (ScmParser.scmFile .>> eof) str
-    let parseScmVe us str = SafetySharp.Models.ScmVeParser.ltlExprParser_Result us str
+    let parseScmVeLtl us str = SafetySharp.Models.ScmVeParser.ltlExprParser_Result us str
+    let parseScmVeProp us str = SafetySharp.Models.ScmVeParser.propositionalExprParser_Result us str
         
     
-
+    
     [<Test>]
-    member this.``Formula in  exampleBackupRecovery1 parses successfully`` () =
+    member this.``Ltl Formula in  exampleBackupRecovery1 parses successfully`` () =
         let inputFile = """../../Examples/SCM/exampleBackupRecovery1.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let scmModel = ScmModel(parseScm input)
@@ -63,6 +64,26 @@ type ExampleFormulas () =
             let equals = ScmVerificationElements.LtlExpr.BExpr(ScmVerificationElements.LtlExpr.ReadField(left),Scm.BOp.Equals,ScmVerificationElements.LtlExpr.ReadField(right) )
             ScmVerificationElements.LtlExpr.LuExpr(equals,ScmVerificationElements.LuOp.Globally)
         
-        let parsedFormula = parseScmVe initialParserState formulaAsString
+        let parsedFormula = parseScmVeLtl initialParserState formulaAsString
         parsedFormula =? formula
         ()
+
+    [<Test>]
+    member this.``Propositional formula in dcca1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/dcca1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let scmModel = ScmModel(parseScm input)
+        
+        let initialParserState = SafetySharp.Models.ScmVeParser.UserState.initialUserState scmModel
+                
+        let formulaAsString = "simple.isHazard == true"
+        let formula = 
+            let readField = ScmVerificationElements.PropositionalExpr.ReadField( ( [Scm.Comp("simple")], Scm.Field("isHazard") ) )
+            let trueValue = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.BoolVal(true))
+            ScmVerificationElements.PropositionalExpr.BExpr(readField,Scm.BOp.Equals,trueValue)
+        
+        let parsedFormula = parseScmVeProp initialParserState formulaAsString
+        parsedFormula =? formula
+        ()
+
+        

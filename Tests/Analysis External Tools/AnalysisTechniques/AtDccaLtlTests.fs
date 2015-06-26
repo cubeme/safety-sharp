@@ -82,7 +82,7 @@ module AtDccaLtlTests =
         
         let analyzer = AtDccaLtl.PerformDccaWithLtlFormulas (scmExample.Model,hazard)
         
-        let known = [([faultNo1;faultNo4] |> Set.ofList)]
+        let known = [([faultNo1;faultNo4] |> Set.ofList)] |> Set.ofList
         
         (analyzer.isAlreadyKnownThatUnsafe known ([faultNo1;faultNo2;faultNo4] |> Set.ofList)) =? true
         (analyzer.isAlreadyKnownThatUnsafe known ([faultNo1;faultNo2;faultNo4;faultNo4] |> Set.ofList)) =? true
@@ -99,11 +99,11 @@ module AtDccaLtlTests =
         
         let elementOfSize2 = ([faultNo1;faultNo4] |> Set.ofList)
 
-        let formulas0 = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 0 ([])
-        let formulas1_if_formal_verification_successful = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 1 ([])
-        let formulas2_if_no_single_point_of_failure = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 2 ([])
-        let formulas3_if_one_element_of_size_2_failed = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 3 ([elementOfSize2])
-        let formulas4_if_formal_verification_failed = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 4 ([Set.empty])
+        let formulas0 = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 0 (Set.empty)
+        let formulas1_if_formal_verification_successful = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 1 (Set.empty)
+        let formulas2_if_no_single_point_of_failure = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 2 (Set.empty)
+        let formulas3_if_one_element_of_size_2_failed = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 3 ([elementOfSize2]|>Set.ofList)
+        let formulas4_if_formal_verification_failed = analyzer.formulasToVerify_CheckIfNumberOfFaultsIsSafe 4 (Set.empty.Add(Set.empty))
         formulas0.Length =? 1
         formulas1_if_formal_verification_successful.Length =? 4
         formulas2_if_no_single_point_of_failure.Length =? 6
@@ -114,46 +114,35 @@ module AtDccaLtlTests =
     [<Test>]
     let ``perform DCCA on callInstHierarchyWithFaults1 with Spin`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaults1.scm"""
-        let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
-        let hazard = ScmVerificationElements.PropositionalExpr.Literal(Scm.BoolVal(false))
+        let hazardAsString = "false"
         
-        let analyzer = AtDccaLtl.PerformDccaWithLtlFormulas (scmExample.Model,hazard)
-
-        let dccaResult = analyzer.checkWithPromela ()
-        ()
+        let analyzer = new AnalysisContext ()
+        do analyzer.setMainModelFromFile (inputFile)
+        let dccaResult = analyzer.atAnalyseDccaLtl_WithPromela (hazardAsString)
+        dccaResult.Count =? 0
     
     [<Test>]
     let ``perform DCCA on dcca1 with Spin`` () =
         let inputFile = """../../Examples/SCM/dcca1.scm"""
-        let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
-        let hazard = 
-            let readField = ScmVerificationElements.PropositionalExpr.ReadField( ( [Scm.Comp("simple")], Scm.Field("isHazard") ) )
-            let trueValue = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.BoolVal(true))
-            ScmVerificationElements.PropositionalExpr.BExpr(readField,Scm.BOp.Equals,trueValue)
+        let hazardAsString = "simple.isHazard == true"
         
-        let analyzer = AtDccaLtl.PerformDccaWithLtlFormulas (scmExample.Model,hazard)
-        
-
-        let dccaResult = analyzer.checkWithPromela ()
-        dccaResult.Length =? 3
-        (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo1;faultNo4] |> Set.ofList))) =? true
-        (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo2;faultNo3;faultNo4] |> Set.ofList))) =? true
-        (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo1;faultNo2] |> Set.ofList))) =? true
+        let analyzer = new AnalysisContext ()
+        do analyzer.setMainModelFromFile (inputFile)
+        let dccaResult = analyzer.atAnalyseDccaLtl_WithPromela (hazardAsString)
+        dccaResult.Count =? 3
+        (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo1;faultNo4] |> Set.ofList))) =? true
+        (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo2;faultNo3;faultNo4] |> Set.ofList))) =? true
+        (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo1;faultNo2] |> Set.ofList))) =? true
     
     [<Test>]
     let ``perform DCCA on dcca1 with NuSMV`` () =
         let inputFile = """../../Examples/SCM/dcca1.scm"""
-        let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
-        let hazard = 
-            let readField = ScmVerificationElements.PropositionalExpr.ReadField( ( [Scm.Comp("simple")], Scm.Field("isHazard") ) )
-            let trueValue = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.BoolVal(true))
-            ScmVerificationElements.PropositionalExpr.BExpr(readField,Scm.BOp.Equals,trueValue)
-        
-        let analyzer = AtDccaLtl.PerformDccaWithLtlFormulas (scmExample.Model,hazard)
-        
+        let hazardAsString = "simple.isHazard == true"
 
-        let dccaResult = analyzer.checkWithNuSMV ()
-        dccaResult.Length =? 3
-        (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo1;faultNo4] |> Set.ofList))) =? true
-        (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo2;faultNo3;faultNo4] |> Set.ofList))) =? true
-        (dccaResult |> List.exists (fun gamma -> gamma = ([faultNo1;faultNo2] |> Set.ofList))) =? true
+        let analyzer = new AnalysisContext ()
+        do analyzer.setMainModelFromFile (inputFile)
+        let dccaResult = analyzer.atAnalyseDccaLtl_WithNuSmv (hazardAsString)
+        dccaResult.Count =? 3
+        (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo1;faultNo4] |> Set.ofList))) =? true
+        (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo2;faultNo3;faultNo4] |> Set.ofList))) =? true
+        (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo1;faultNo2] |> Set.ofList))) =? true

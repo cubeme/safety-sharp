@@ -414,14 +414,39 @@ module internal Workflow =
             fold wfState initialAcc listToIterate
         WorkflowFunction (behavior)
                 
-    
+    // Allows the use of a workflow function on a list with a collection of the results. State is the same as executing the workflow on each
+    // element in sequence (original state is not preserved)
+    // Example 1:
+    //     let returnPlusOneWf (value:int) : WorkflowFunction<ExecutionState,ExecutionState,int> = ...
+    //     let! result : int list = listMap returnPlusOneWf elements
+    // Example 2:
+    //     let returnPlusOneWf (value:int) : WorkflowFunction<ExecutionState,int,unit> = ...
+    //     let returnPlusOneWf_asSubWorkflow element = runSubWorkflow_WithSameState_ReturnState (returnPlusOneWf element)
+    //     let! result : int list = listMap returnPlusOneWf_asSubWorkflow elements
+    // Example 3:
+    //     let returnPlusOneWf (value:int) : WorkflowFunction<ExecutionState,ExecutionState,int> = ...
+    //     let returnPlusOneWf_asSubWorkflow element = runSubWorkflow_WithSameState_ReturnResult (returnPlusOneWf element)
+    //     let! result : int list = listMap returnPlusOneWf_asSubWorkflow elements
+    let listMap<'state,'inputType,'resultType>
+                (workflowFunctionWithParameter : 'inputType -> WorkflowFunction<'state,'state,'resultType>)
+                (listToIterate:'inputType list)
+                    : WorkflowFunction<'state,'state,'resultType list> =
+        let behavior (wfState:WorkflowState<'state>) : ('resultType list * WorkflowState<'state>) =
+            let rec mapNext (intermediateWfState:WorkflowState<'state>) (alreadyMapped:'resultType list) (listToIterate:'inputType list) =
+                if listToIterate.IsEmpty then
+                    (alreadyMapped |> List.rev,intermediateWfState)
+                else
+                    let element = listToIterate.Head
+                    let functionToMap = match workflowFunctionWithParameter element with | WorkflowFunction(functionToMap) -> functionToMap
+                    let (newElement,newIntermediateWfState) = functionToMap intermediateWfState
+                    mapNext newIntermediateWfState (newElement::alreadyMapped) listToIterate.Tail
+            mapNext wfState [] listToIterate
+        WorkflowFunction (behavior)
+
     (* TODO            
     // Allows the use of a workflow function on a list. Result is the same as execution each function on the source state. Source state is preserved.
     // Can be used for "what if" analysis, where different checks are started and evaluated from the same source state. Executed independently.
     let listIter_srcState = ()
-    
-    // Allows the use of a workflow function on a list. Result is the same as execution the function sequentially on each element and collecting the results.
-    let listMap_seqState = ()
     
     // Allows the use of a workflow function on a list. Result is the same as execution each function on the source state. Source state is preserved.
     // Can be used for "what if" analysis, where different checks are started and evaluated from the same source state and collecting the results.

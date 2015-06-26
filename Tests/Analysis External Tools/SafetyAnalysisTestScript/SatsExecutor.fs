@@ -23,23 +23,22 @@
 namespace SafetySharp.SafetyAnalysisTestScript
 
 
-module internal SatsGenericExecutor =
-    open Sats
-
-module internal SatsSamExecutor =
-    open Sats
-
 module internal SatsScmExecutor =
     
     open Sats
+    open SafetySharp.Ternary
 
-    type VerificationResult = unit
+    [<RequireQualifiedAccessAttribute>]
+    type AnalysisResult = 
+        | FailureDuringAnalysis
+        | VerificationResult of Result:Ternary
     
     type SatsExecutionState = {
         AnalysisContext : SafetySharp.AnalysisTechniques.AnalysisContext;
-        VerificationResults : Map<LetIdentifier,VerificationResult>;
+        AnalysisResult : Map<LetIdentifier,AnalysisResult>; // TODO: lazy evaluation
     }
 
+    [<RequireQualifiedAccessAttribute>]
     type SatsExecutionResult =
         | FinishedSuccessful
         | InvalidInput
@@ -57,12 +56,11 @@ module internal SatsScmExecutor =
     let executeLetStatement (previousState:SatsExecutionState) (letStatement:LetStatement) : SatsExecutionState*SatsExecutionResult =
         match letStatement with
             | LetStatement.AtLtlFormula (letIdentifier,formula) ->
-                //let ltlAnalyzer = SafetySharp.AnalysisTechniques.AtLtlFormula.AnalyseLtlFormulas(model)
-                //do ltlAnalyzer.addLtlFormula ()
-                //do ltlAnalyzer.checkWithPromela()
+                let result = previousState.AnalysisContext.atAnalyseLtl_WithPromela(formula)
                 let newExecutionState =
+                    let result = AnalysisResult.VerificationResult(result)
                     { previousState with
-                        SatsExecutionState.VerificationResults = previousState.VerificationResults;
+                        SatsExecutionState.AnalysisResult = previousState.AnalysisResult.Add(letIdentifier,result)
                     }
                 (newExecutionState, SatsExecutionResult.FinishedSuccessful)
             | LetStatement.AtDccaLtl (letIdentifier,hazard) ->
@@ -71,7 +69,7 @@ module internal SatsScmExecutor =
                 //let result = dccaLtlAnalyzer.checkWithNuSMV()
                 let newExecutionState =
                     { previousState with
-                        SatsExecutionState.VerificationResults = previousState.VerificationResults;
+                        SatsExecutionState.AnalysisResult = previousState.AnalysisResult;
                     }
                 (newExecutionState, SatsExecutionResult.FinishedSuccessful)
 
@@ -80,7 +78,7 @@ module internal SatsScmExecutor =
 
     let executeSatsStatement (previousState:SatsExecutionState,previousResult:SatsExecutionResult) (satsStatement:SatsStatement) : SatsExecutionState*SatsExecutionResult =
         match previousResult with
-            | FinishedSuccessful ->
+            | SatsExecutionResult.FinishedSuccessful ->
                 match satsStatement with
                     | SatsStatement.DoStatement (doStatement) -> executeDoStatement previousState doStatement
                     | SatsStatement.LetStatement (letStatement) -> executeLetStatement previousState letStatement
@@ -92,7 +90,7 @@ module internal SatsScmExecutor =
         let initialExecutionState =
             {
                 SatsExecutionState.AnalysisContext = new SafetySharp.AnalysisTechniques.AnalysisContext();
-                SatsExecutionState.VerificationResults = Map.empty<LetIdentifier,VerificationResult>;
+                SatsExecutionState.AnalysisResult = Map.empty<LetIdentifier,AnalysisResult>;
             }
         do engineOptions |> List.iter (fun engineOption -> initialExecutionState.AnalysisContext.setEngineOption engineOption)
         let finalExecutionState,finalExecutionResult = (satsPgm.Pgm) |> List.fold executeSatsStatement (initialExecutionState,SatsExecutionResult.FinishedSuccessful) 

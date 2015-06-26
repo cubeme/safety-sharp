@@ -28,20 +28,31 @@ open SafetySharp.Models.ScmVerificationElements
 
 // allows caching of analysis techniques to reduce lots of recalculations
 type private LoadedModelCache = {
+    LoadedModel:Scm.ScmModel;
     PropositionalExprParser : string -> ScmVerificationElements.PropositionalExpr;
     LtlExprParser : string -> ScmVerificationElements.LtlExpr;
     // Lazy instantiated Analysis techniques. They are only instantiated, when needed
     LazyAtLtlFormulas : Lazy<AtLtlFormula.AnalyseLtlFormulas>;
+    LazyAtDccaLtl : Map<ScmVerificationElements.PropositionalExpr,AtDccaLtl.PerformDccaWithLtlFormulas> ref; //Hazard to At
 }
     with
         static member initial (scmModel: Scm.ScmModel ) =
             let initialParserState = SafetySharp.Models.ScmVeParser.UserState.initialUserState scmModel
             {
+                LoadedModelCache.LoadedModel=scmModel;
                 LoadedModelCache.PropositionalExprParser = SafetySharp.Models.ScmVeParser.propositionalExprParser_Result initialParserState;
                 LoadedModelCache.LtlExprParser = SafetySharp.Models.ScmVeParser.ltlExprParser_Result initialParserState;
                 LoadedModelCache.LazyAtLtlFormulas = lazy (new AtLtlFormula.AnalyseLtlFormulas());
+                LoadedModelCache.LazyAtDccaLtl = ref Map.empty<ScmVerificationElements.PropositionalExpr,AtDccaLtl.PerformDccaWithLtlFormulas>;
             }
         member this.AtLtlFormulas = this.LazyAtLtlFormulas.Force()
+        member this.AtDccaLtl (hazard) =
+            if this.LazyAtDccaLtl.Value.ContainsKey hazard then
+                this.LazyAtDccaLtl.Value.Item hazard
+            else
+                let newAt = AtDccaLtl.PerformDccaWithLtlFormulas(this.LoadedModel,hazard)
+                do this.LazyAtDccaLtl := this.LazyAtDccaLtl.Value.Add (hazard,newAt)
+                newAt
 
         //static member resetAnalysisTechniques
         //  TODO: Replaces every instantiated Analysis Technique with an unevaluated "lazy" to allow the garbage
@@ -50,21 +61,20 @@ type private LoadedModelCache = {
 [<RequireQualifiedAccessAttribute>]
 type private AnalysisContextState =
     | Uninitialized of WorkflowState:WorkflowState<unit>
-    | ModelLoaded of LoadedModel:Scm.ScmModel *
-                     LoadedModelCache:LoadedModelCache *
+    | ModelLoaded of LoadedModelCache:LoadedModelCache *
                      WorkflowState:WorkflowState<Scm.ScmModel>
     with
         member this.getLoadedModel : Scm.ScmModel =
             match this with
                 | AnalysisContextState.Uninitialized (_) ->
                     failwith "Unable to perform action on model because currently no model has been loaded."
-                | AnalysisContextState.ModelLoaded (currentModel,currentModelCache,wfState) ->
-                    currentModel
+                | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
+                    currentModelCache.LoadedModel
         member this.getLoadedModelCache : LoadedModelCache =
             match this with
                 | AnalysisContextState.Uninitialized (_) ->
                     failwith "Unable to perform action on model because currently no model has been loaded."
-                | AnalysisContextState.ModelLoaded (currentModel,currentModelCache,wfState) ->
+                | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
                     currentModelCache
 
 // Note: Not thread safe
@@ -81,11 +91,11 @@ type AnalysisContext () =
         match currentState with
             | AnalysisContextState.Uninitialized (_) ->
                 failwith "Unable to perform action on model because currently no model has been loaded."
-            | AnalysisContextState.ModelLoaded (currentModel,currentModelCache,wfState) ->
+            | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
                 let result,resultingWfState = s wfState
                 let resultingWfStateWithCurrentModel =
                     {
-                        WorkflowState.State = currentModel;
+                        WorkflowState.State = currentModelCache.LoadedModel;
                         WorkflowState.StepNumber = resultingWfState.StepNumber;
                         WorkflowState.StepName = resultingWfState.StepName;
                         WorkflowState.Log = resultingWfState.Log;
@@ -94,7 +104,7 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = resultingWfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(currentModel,currentModelCache,resultingWfStateWithCurrentModel)
+                currentState <- AnalysisContextState.ModelLoaded(currentModelCache,resultingWfStateWithCurrentModel)
                 result
                 
     // Every call may change every content (log/engineoption) of wfState except the inner state. The inner state is always the baseModel
@@ -104,11 +114,11 @@ type AnalysisContext () =
         match currentState with
             | AnalysisContextState.Uninitialized (_) ->
                 failwith "Unable to perform action on model because currently no model has been loaded."
-            | AnalysisContextState.ModelLoaded (currentModel,currentModelCache,wfState) ->
+            | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
                 let result,resultingWfState = s wfState
                 let resultingWfStateWithCurrentModel =
                     {
-                        WorkflowState.State = currentModel;
+                        WorkflowState.State = currentModelCache.LoadedModel;
                         WorkflowState.StepNumber = resultingWfState.StepNumber;
                         WorkflowState.StepName = resultingWfState.StepName;
                         WorkflowState.Log = resultingWfState.Log;
@@ -117,14 +127,14 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = resultingWfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(currentModel,currentModelCache,resultingWfStateWithCurrentModel)
+                currentState <- AnalysisContextState.ModelLoaded(currentModelCache,resultingWfStateWithCurrentModel)
                 resultingWfState.State
                                 
     //////// Loading Main Model /////////////
 
     member internal this.setMainModel (_baseModel:Scm.ScmModel) : unit =
         match currentState with
-            | AnalysisContextState.ModelLoaded (_,_,wfState) ->
+            | AnalysisContextState.ModelLoaded (_,wfState) ->
                 let newWfState =
                     {
                         WorkflowState.State = _baseModel
@@ -136,7 +146,7 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = wfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(_baseModel,LoadedModelCache.initial _baseModel,newWfState)
+                currentState <- AnalysisContextState.ModelLoaded(LoadedModelCache.initial _baseModel,newWfState)
                 ()
             | AnalysisContextState.Uninitialized (wfState) ->
                 let newWfState =
@@ -150,7 +160,7 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = wfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(_baseModel,LoadedModelCache.initial _baseModel,newWfState)
+                currentState <- AnalysisContextState.ModelLoaded(LoadedModelCache.initial _baseModel,newWfState)
                 ()
                 
     member internal this.setMainModelFromFile (filename:string) : unit =
@@ -164,12 +174,12 @@ type AnalysisContext () =
             | AnalysisContextState.Uninitialized (wfState) ->
                 let s = match readFromFileWorkflow filename with | WorkflowFunction(s) -> s
                 let _,newWfStateAfterLoading = s wfState
-                currentState <- AnalysisContextState.ModelLoaded(newWfStateAfterLoading.State,LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
+                currentState <- AnalysisContextState.ModelLoaded(LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
                 ()
-            | AnalysisContextState.ModelLoaded (_,_,wfState) ->
+            | AnalysisContextState.ModelLoaded (_,wfState) ->
                 let s = match readFromFileWorkflow filename with | WorkflowFunction(s) -> s
                 let _,newWfStateAfterLoading = s wfState
-                currentState <- AnalysisContextState.ModelLoaded(newWfStateAfterLoading.State,LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
+                currentState <- AnalysisContextState.ModelLoaded(LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
                 ()
 
                 
@@ -183,26 +193,37 @@ type AnalysisContext () =
                 let _,newWfState = s wfState
                 currentState <- AnalysisContextState.Uninitialized(newWfState)
                 ()
-            | AnalysisContextState.ModelLoaded (currentModel,currentModelCache,wfState) ->
+            | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
                 let s = match SafetySharp.Workflow.setIEngineOption engineOption with | WorkflowFunction(s) -> s
                 let _,newWfState = s wfState
-                currentState <- AnalysisContextState.ModelLoaded(currentModel,currentModelCache,newWfState)
+                currentState <- AnalysisContextState.ModelLoaded(currentModelCache,newWfState)
                 ()
 
     // Analysis Techniques
     
-    member internal this.atAnalyseLtl (ltlExpr:LtlExpr) : SafetySharp.Ternary.Ternary =
+    member internal this.atAnalyseLtl_WithPromela (ltlExpr:LtlExpr) : SafetySharp.Ternary.Ternary =
         let workflowToCalculateLtlResult =
             currentState.getLoadedModelCache.AtLtlFormulas.checkLtlFormulaWithPromela(ltlExpr)
         this.RunWorkflowOnModel_getResult workflowToCalculateLtlResult
 
-    member this.atAnalyseLtl (formula:string) : SafetySharp.Ternary.Ternary = 
+    member this.atAnalyseLtl_WithPromela (formula:string) : SafetySharp.Ternary.Ternary = 
         let formulaAsLtlExpr = currentState.getLoadedModelCache.LtlExprParser formula
-        this.atAnalyseLtl formulaAsLtlExpr 
+        this.atAnalyseLtl_WithPromela formulaAsLtlExpr 
     
-    member internal this.atAnalyseDccaLtl (hazard:PropositionalExpr) : Set<ScmHelpers.FaultPath> list = 
-        []
+    member internal this.atAnalyseDccaLtl_WithPromela (hazard:PropositionalExpr) : Set<Set<ScmHelpers.FaultPath>> = 
+        let workflowToCalculateDccaResult =
+            currentState.getLoadedModelCache.AtDccaLtl(hazard).checkWithPromela()
+        this.RunWorkflowOnModel_getResult workflowToCalculateDccaResult
 
-    member this.atAnalyseDccaLtl (hazard:string) : Set<ScmHelpers.FaultPath> list =  
+    member this.atAnalyseDccaLtl_WithPromela (hazard:string) : Set<Set<ScmHelpers.FaultPath>> =  
         let hazardAsPropExpr = currentState.getLoadedModelCache.PropositionalExprParser hazard
-        this.atAnalyseDccaLtl hazardAsPropExpr
+        this.atAnalyseDccaLtl_WithPromela hazardAsPropExpr
+    
+    member internal this.atAnalyseDccaLtl_WithNuSmv (hazard:PropositionalExpr) : Set<Set<ScmHelpers.FaultPath>> = 
+        let workflowToCalculateDccaResult =
+            currentState.getLoadedModelCache.AtDccaLtl(hazard).checkWithNusmv()
+        this.RunWorkflowOnModel_getResult workflowToCalculateDccaResult
+
+    member this.atAnalyseDccaLtl_WithNuSmv (hazard:string) : Set<Set<ScmHelpers.FaultPath>> =  
+        let hazardAsPropExpr = currentState.getLoadedModelCache.PropositionalExprParser hazard
+        this.atAnalyseDccaLtl_WithNuSmv hazardAsPropExpr
