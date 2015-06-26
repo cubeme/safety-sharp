@@ -52,7 +52,7 @@ namespace Tests.Normalization.Methods.Provided
 	internal partial class Out1 : Component
 	{
 		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private int __Behavior0__(int x)
+		private System.Int32 __Behavior0__(System.Int32 x)
 		{
 			return x;
 		}
@@ -61,7 +61,7 @@ namespace Tests.Normalization.Methods.Provided
 	internal partial class Out2 : Out1
 	{
 		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private int __Behavior1__(int x)
+		private System.Int32 __Behavior1__(System.Int32 x)
 		{
 			return base.M(x);
 		}
@@ -70,7 +70,7 @@ namespace Tests.Normalization.Methods.Provided
 	internal partial class Out3 : Out2
 	{
 		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private int __Behavior2__(int x)
+		private System.Int32 __Behavior2__(System.Int32 x)
 		{
 			return 1;
 		}

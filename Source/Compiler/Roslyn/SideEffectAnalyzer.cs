@@ -181,7 +181,7 @@ namespace SafetySharp.Compiler.Roslyn
 						var leftType = _semanticModel.GetTypeInfo(node.Left).Type;
 						var rightType = _semanticModel.GetTypeInfo(node.Left).Type;
 
-						if (leftType.IsBuiltInType(_semanticModel) && rightType.IsBuiltInType(_semanticModel))
+						if (leftType.IsSupportedFieldType() && rightType.IsSupportedFieldType())
 							return Visit(node.Left) && Visit(node.Right);
 
 						goto case SyntaxKind.AddExpression;

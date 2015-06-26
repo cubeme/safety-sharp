@@ -42,7 +42,7 @@ namespace Tests.Normalization.Methods.Required
 		public void M1() => this.__backingField0__();
 
 		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private int __Behavior1__(int x)
+		private System.Int32 __Behavior1__(System.Int32 x)
 		{
 			return x;
 		}

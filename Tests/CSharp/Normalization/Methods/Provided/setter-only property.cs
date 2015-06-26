@@ -25,54 +25,37 @@ namespace Tests.Normalization.Methods.Provided
 	using System;
 	using SafetySharp.Modeling;
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
 	internal partial class In1 : Component
 	{
-		// test
-		/// <summary>
-		/// Some documentation.
-		/// </summary>
-		// test
-		public int M1()
-		{
-			return 1;
-		} /* test */
+		public int M { set { var x = value; } }
 	}
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
 	internal partial class Out1 : Component
 	{
-		// test
-		/// <summary>
-		/// Some documentation.
-		/// </summary>
-		// test
 		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private System.Int32 __Behavior0__()
+		private void __Behavior0__(int value)
 		{
-			return 1;
-		} /* test */
-#line 40
+			var x = value;
+		}
 	}
 
 	partial class Out1
 	{
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate void __Delegate0__(int value);
+
 		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private __Delegate0__ __backingField0__;
 
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate int __Delegate0__();
-
-		// test
-		/// <summary>
-		/// Some documentation.
-		/// </summary>
-		// test
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
 		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public int M1() => this.__backingField0__(); /* test */
+		public int M
+		{
+			[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
+			[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
+			set { __backingField0__(value); }
+		}
+		
 	}
 }

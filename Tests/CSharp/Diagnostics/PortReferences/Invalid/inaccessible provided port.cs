@@ -38,8 +38,8 @@ namespace Tests.Diagnostics.PortReferences.Invalid
 		}
 	}
 
-	[Diagnostic(DiagnosticIdentifier.InaccessibleRequiredPort, 47, 37, 1, "Tests.Diagnostics.PortReferences.Invalid.X33", "M")]
-	[Diagnostic(DiagnosticIdentifier.InaccessibleRequiredPort, 48, 37, 1, "Tests.Diagnostics.PortReferences.Invalid.X33", "P")]
+	[Diagnostic(DiagnosticIdentifier.InaccessibleProvidedPort, 47, 37, 1, "Tests.Diagnostics.PortReferences.Invalid.Y6", "M")]
+	[Diagnostic(DiagnosticIdentifier.InaccessibleProvidedPort, 48, 37, 1, "Tests.Diagnostics.PortReferences.Invalid.Y6", "P")]
 	internal class X33 : Component
 	{
 		private X33(Y6 y)

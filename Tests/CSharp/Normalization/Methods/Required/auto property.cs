@@ -20,59 +20,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Normalization.Methods.Provided
+namespace Tests.Normalization.Methods.Required
 {
 	using System;
 	using SafetySharp.Modeling;
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
 	internal partial class In1 : Component
 	{
-		// test
-		/// <summary>
-		/// Some documentation.
-		/// </summary>
-		// test
-		public int M1()
-		{
-			return 1;
-		} /* test */
+		public extern int M { get; set; }
 	}
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
 	internal partial class Out1 : Component
 	{
-		// test
-		/// <summary>
-		/// Some documentation.
-		/// </summary>
-		// test
-		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private System.Int32 __Behavior0__()
+		[SafetySharp.Modeling.RequiredAttribute]
+		[System.Diagnostics.DebuggerHiddenAttribute]
+		public int M
 		{
-			return 1;
-		} /* test */
-#line 40
+			[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
+			get { return __backingField0__(); } 
+
+			[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField1__")]
+			set { __backingField1__(value);  }
+		}
 	}
 
 	partial class Out1
 	{
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private delegate int __Delegate0__();
+
 		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
 		private __Delegate0__ __backingField0__;
 
 		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate int __Delegate0__();
+		private delegate void __Delegate1__(int value);
 
-		// test
-		/// <summary>
-		/// Some documentation.
-		/// </summary>
-		// test
-		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public int M1() => this.__backingField0__(); /* test */
+		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
+		private __Delegate1__ __backingField1__;
 	}
 }

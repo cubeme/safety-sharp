@@ -117,10 +117,10 @@
     <Compile Include="CompilationException.cs" />
     <Compile Include="Normalization\Quotations\BlockNormalizer.cs" />
     <Compile Include="Normalization\Quotations\CompoundAssignmentNormalizer.cs" />
-    <Compile Include="Normalization\Quotations\ExpressionMethodNormalizer.cs" />
     <Compile Include="Normalization\InitialValuesNormalizer.cs" />
     <Compile Include="Normalization\MetadataNormalizer.cs" />
     <Compile Include="Normalization\MethodBodyNormalizer.cs" />
+    <Compile Include="Normalization\Quotations\ExpressionMethodNormalizer.cs" />
     <Compile Include="Normalization\Quotations\LocalVariablesNormalizer.cs" />
     <Compile Include="Normalization\Quotations\NamedArgumentNormalizer.cs" />
     <Compile Include="Normalization\Quotations\OptionalArgumentNormalizer.cs" />
@@ -143,6 +143,7 @@
     <Compile Include="Roslyn\Analyzer.cs" />
     <Compile Include="Roslyn\DiagnosticInfo.cs" />
     <Compile Include="Normalization\Quotations\SideEffectsNormalizer.cs" />
+    <Compile Include="Roslyn\Syntax\PropertyDeclarationExtensions.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxGeneratorExtensions.cs" />
     <Compile Include="Roslyn\Syntax\IdentifierExtensions.cs" />
     <Compile Include="Roslyn\SymbolNormalizer.cs" />

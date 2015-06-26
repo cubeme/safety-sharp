@@ -75,9 +75,9 @@ namespace Tests.Execution.RequiredPorts
 		}
 
 		private extern int B { get; }
-		private extern bool C{get;}
-		private extern int  D{get;}
-		private extern int  E{get;}
+		private extern bool C { get; }
+		private extern int D { get; }
+		private extern int E { get; }
 
 		[SuppressTransformation]
 		protected override void Check()

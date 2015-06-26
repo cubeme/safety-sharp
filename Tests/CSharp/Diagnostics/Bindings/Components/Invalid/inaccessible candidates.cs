@@ -47,16 +47,20 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		public extern void N(int i);
 	}
 
-	[Diagnostic(DiagnosticIdentifier.BindingFailure, 56, 18, 35, "'Tests.Diagnostics.Bindings.Components.Invalid.X11.N(int)'",
-		"'Tests.Diagnostics.Bindings.Components.Invalid.X10.M()'")]
+	internal class Y12 : X11
+	{
+		public extern double P { get; }
+	}
+
+	[Diagnostic(DiagnosticIdentifier.BindingFailure, 61, 18, 35, "'Tests.Diagnostics.Bindings.Components.Invalid.Y12.P.get'",
+		"'Tests.Diagnostics.Bindings.Components.Invalid.P10.Q.get', 'Tests.Diagnostics.Bindings.Components.Invalid.P10.Q.set'")]
 	internal class P10 : X11
 	{
-		private P10(X11 y)
+		private P10(Y12 y)
 		{
 			Bind(y.RequiredPorts.P = ProvidedPorts.Q);
 		}
 
-		private extern int P { get; }
-		private bool Q { get; set; }
+		private int Q { get; set; }
 	}
 }

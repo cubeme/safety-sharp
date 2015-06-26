@@ -49,7 +49,6 @@ namespace SafetySharp.Compiler
 			Requires.NotNull(declaringType, () => declaringType);
 			Requires.NotNull(portSymbols, () => portSymbols);
 			Requires.NotNullOrWhitespace(name, () => name);
-			Requires.That(portSymbols.All(p => p.Name == name), "Cannot have differently named ports in the same collection.");
 
 			DeclaringType = declaringType;
 			Name = name;

@@ -25,54 +25,20 @@ namespace Tests.Normalization.Methods.Provided
 	using System;
 	using SafetySharp.Modeling;
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class In1 : Component
+	internal abstract partial class In1 : Component
 	{
-		// test
-		/// <summary>
-		/// Some documentation.
-		/// </summary>
-		// test
-		public int M1()
-		{
-			return 1;
-		} /* test */
+		[Provided]
+		public abstract int M1 { get; set; }
+
+		public abstract int M2 { get; set; }
 	}
 
-	[CheckTrivia(TriviaType.DocCommentsAndDirectives)]
-	internal partial class Out1 : Component
+	internal abstract partial class Out1 : Component
 	{
-		// test
-		/// <summary>
-		/// Some documentation.
-		/// </summary>
-		// test
-		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private System.Int32 __Behavior0__()
-		{
-			return 1;
-		} /* test */
-#line 40
-	}
+		[global::SafetySharp.Modeling.ProvidedAttribute]
+		public abstract int M1 { get; set; }
 
-	partial class Out1
-	{
-		[System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private __Delegate0__ __backingField0__;
-
-		[System.Runtime.CompilerServices.CompilerGeneratedAttribute]
-		private delegate int __Delegate0__();
-
-		// test
-		/// <summary>
-		/// Some documentation.
-		/// </summary>
-		// test
 		[SafetySharp.Modeling.ProvidedAttribute]
-		[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
-		[System.Diagnostics.DebuggerHiddenAttribute]
-		[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
-		public int M1() => this.__backingField0__(); /* test */
+		public abstract int M2 { get; set; }
 	}
 }

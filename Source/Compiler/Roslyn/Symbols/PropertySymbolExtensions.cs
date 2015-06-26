@@ -30,6 +30,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Editing;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -99,6 +100,103 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			var reflectionHelpersType = SyntaxFactory.ParseTypeName(typeof(ReflectionHelpers).FullName);
 			var getFieldMethod = syntaxGenerator.MemberAccessExpression(reflectionHelpersType, "GetProperty");
 			return (ExpressionSyntax)syntaxGenerator.InvocationExpression(getFieldMethod, declaringTypeArg, propertyTypeArg, nameArg);
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="propertySymbol" /> represents a required port of a S# component or interface.
+		/// </summary>
+		/// <param name="propertySymbol">The property symbol that should be checked.</param>
+		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsRequiredPort([NotNull] this IPropertySymbol propertySymbol, [NotNull] Compilation compilation)
+		{
+			Requires.NotNull(propertySymbol, () => propertySymbol);
+			Requires.NotNull(compilation, () => compilation);
+
+			if (propertySymbol.IsStatic)
+				return false;
+
+			if (!propertySymbol.ContainingType.ImplementsIComponent(compilation))
+				return false;
+
+			if (!propertySymbol.Type.IsSupportedFieldType())
+				return false;
+
+			if (propertySymbol.HasAttribute<SuppressTransformationAttribute>(compilation))
+				return false;
+
+			switch (propertySymbol.ContainingType.TypeKind)
+			{
+				case TypeKind.Class:
+					return propertySymbol.IsExtern || propertySymbol.HasAttribute<RequiredAttribute>(compilation);
+				case TypeKind.Interface:
+					return propertySymbol.HasAttribute<RequiredAttribute>(compilation);
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="propertySymbol" /> represents a required port of a S# component or interface.
+		/// </summary>
+		/// <param name="propertySymbol">The property symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsRequiredPort([NotNull] this IPropertySymbol propertySymbol, [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(propertySymbol, () => propertySymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			return propertySymbol.IsRequiredPort(semanticModel.Compilation);
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="propertySymbol" /> represents a provided port of a S# component or interface.
+		/// </summary>
+		/// <param name="propertySymbol">The property symbol that should be checked.</param>
+		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsProvidedPort([NotNull] this IPropertySymbol propertySymbol, [NotNull] Compilation compilation)
+		{
+			Requires.NotNull(propertySymbol, () => propertySymbol);
+			Requires.NotNull(compilation, () => compilation);
+
+			if (propertySymbol.IsStatic)
+				return false;
+
+			if (!propertySymbol.ContainingType.ImplementsIComponent(compilation))
+				return false;
+
+			if (!propertySymbol.Type.IsSupportedFieldType())
+				return false;
+
+			if (propertySymbol.HasAttribute<SuppressTransformationAttribute>(compilation))
+				return false;
+
+			switch (propertySymbol.ContainingType.TypeKind)
+			{
+				case TypeKind.Class:
+					return !propertySymbol.IsExtern &&
+						   !propertySymbol.HasAttribute<RequiredAttribute>(compilation);
+				case TypeKind.Interface:
+					return propertySymbol.HasAttribute<ProvidedAttribute>(compilation);
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="propertySymbol" /> represents a provided port of a S# component or interface.
+		/// </summary>
+		/// <param name="propertySymbol">The property symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsProvidedPort([NotNull] this IPropertySymbol propertySymbol, [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(propertySymbol, () => propertySymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			return propertySymbol.IsProvidedPort(semanticModel.Compilation);
 		}
 	}
 }

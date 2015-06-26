@@ -47,7 +47,7 @@ namespace Tests.Diagnostics.PortReferences.Valid
 		}
 
 		private int Xyz { get { return 1; } }
-		private int Uvq { set { } }
+		private int Uvw { set { } }
 		private int Abc { get; set; }
 	}
 

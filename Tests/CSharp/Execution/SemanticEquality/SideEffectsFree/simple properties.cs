@@ -30,31 +30,48 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 		private readonly C _c = new C();
 		private int _f;
 
-		public int M1
+		public int P1
 		{
-			[Test(1)]
 			get { return 1; }
 		}
 
-		public int M2
+		public int P2
 		{
-			[Test(16)]
 			set { _f = value; }
 		}
 
-		public int M3
+		public int P3 { get; set; }
+
+		public int P4
 		{
-			[Test(1)]
-			get;
-			[Test(1)]
-			set;
+			get { return _f - 1; }
+			set { _f = value - 3; }
+		}
+
+		[Test(1)]
+		public int M1()
+		{
+			return P1;
+		}
+
+		[Test(16)]
+		public void M2(int value)
+		{
+			P2 = value;
+		}
+
+		[Test(16)]
+		public int M3(int value)
+		{
+			P3 = value;
+			return P3;
 		}
 
 		[Test(16)]
 		public int M4(int value)
 		{
-			M3 = value;
-			return M3;
+			P4 = value;
+			return P4;
 		}
 
 		[Test(16)]

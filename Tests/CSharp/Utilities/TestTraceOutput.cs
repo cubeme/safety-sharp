@@ -35,7 +35,7 @@ namespace Tests.Utilities
 		/// <summary>
 		///     Indicates whether test output tracing should be enabled.
 		/// </summary>
-		private readonly bool EnableTracing = false;
+		private readonly bool EnableTracing = true;
 
 		/// <summary>
 		///     Writes to the test output stream.

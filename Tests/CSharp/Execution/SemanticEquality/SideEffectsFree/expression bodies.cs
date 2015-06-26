@@ -28,6 +28,8 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 	{
 		private int _f;
 
+		public int F => _f;
+
 		[Test(16)]
 		public int M1(int i) => i;
 
@@ -39,5 +41,12 @@ namespace Tests.Execution.SemanticEquality.SideEffectsFree
 
 		[Test(16)]
 		public void M4(int a) => _f = a;
+
+		[Test(16)]
+		public int M5(int a)
+		{
+			_f = a;
+			return F;
+		}
 	}
 }
