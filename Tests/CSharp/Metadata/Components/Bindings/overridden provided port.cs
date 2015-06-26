@@ -33,6 +33,16 @@ namespace Tests.Metadata.Components.Bindings
 		protected X27()
 		{
 			Bind(RequiredPorts.Q = ProvidedPorts.M);
+			Bind(RequiredPorts.R1 = ProvidedPorts.P);
+		}
+
+		public extern int R1 { get; }
+		public extern int R2 { get; }
+		public extern int R3 { get; }
+
+		public virtual int P
+		{
+			get { return 1; }
 		}
 
 		public extern void Q();
@@ -46,10 +56,19 @@ namespace Tests.Metadata.Components.Bindings
 	{
 		public X28()
 		{
-			Bind(RequiredPorts.N = ProvidedPorts.M);
+			Bind(RequiredPorts.N1 = ProvidedPorts.M);
+			Bind(RequiredPorts.R2 = ProvidedPorts.P);
+			Bind(RequiredPorts.N2 = base.ProvidedPorts.M);
+			Bind(RequiredPorts.R3 = base.ProvidedPorts.P);
 		}
 
-		public extern void N();
+		public override int P
+		{
+			get { return base.P; }
+		}
+
+		public extern void N1();
+		public extern void N2();
 
 		public override void M()
 		{
@@ -58,21 +77,42 @@ namespace Tests.Metadata.Components.Bindings
 		[SuppressTransformation]
 		protected override void Check()
 		{
-			Metadata.Bindings.Length.ShouldBe(2);
+			Metadata.Bindings.Length.ShouldBe(6);
 
 			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[3]);
 			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
 
 			Metadata.Bindings[1].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Bindings[1].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
-			Metadata.Bindings[1].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
+			Metadata.Bindings[1].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.Bindings[1].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
 
-			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[1] });
-			Metadata.RequiredPorts[1].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[1] });
+			Metadata.Bindings[2].DeclaringComponent.ShouldBe(this.GetMetadata());
+			Metadata.Bindings[2].RequiredPort.ShouldBe(Metadata.RequiredPorts[3]);
+			Metadata.Bindings[2].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[3]);
 
-			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new RequiredPortMetadata[] { });
-			Metadata.ProvidedPorts[1].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[0], Metadata.RequiredPorts[1] });
+			Metadata.Bindings[3].DeclaringComponent.ShouldBe(this.GetMetadata());
+			Metadata.Bindings[3].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
+			Metadata.Bindings[3].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[2]);
+
+			Metadata.Bindings[4].DeclaringComponent.ShouldBe(this.GetMetadata());
+			Metadata.Bindings[4].RequiredPort.ShouldBe(Metadata.RequiredPorts[4]);
+			Metadata.Bindings[4].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
+
+			Metadata.Bindings[5].DeclaringComponent.ShouldBe(this.GetMetadata());
+			Metadata.Bindings[5].RequiredPort.ShouldBe(Metadata.RequiredPorts[2]);
+			Metadata.Bindings[5].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
+
+			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[0] });
+			Metadata.RequiredPorts[1].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[2] });
+			Metadata.RequiredPorts[2].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[1] });
+			Metadata.RequiredPorts[3].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[3] });
+			Metadata.RequiredPorts[4].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[0] });
+
+			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[0], Metadata.RequiredPorts[4] });
+			Metadata.ProvidedPorts[1].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[3], Metadata.RequiredPorts[2] });
+			Metadata.ProvidedPorts[2].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[3] });
+			Metadata.ProvidedPorts[3].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[3] });
 		}
 	}
 }

@@ -30,7 +30,6 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 		private X1()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
-			Bind(RequiredPorts.N = ProvidedPorts.M).Delayed();
 		}
 
 		private void M()
@@ -38,5 +37,16 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 		}
 
 		private extern void N();
+	}
+
+	internal class P1 : Component
+	{
+		private P1()
+		{
+			Bind(RequiredPorts.N = ProvidedPorts.M);
+		}
+
+		private int M { get; set; }
+		private extern int N { set; }
 	}
 }

@@ -85,4 +85,37 @@ namespace Tests.Metadata.Diagnostics.Bindings.Valid
 			}
 		}
 	}
+
+	internal class M2b : TestModel
+	{
+		public M2b()
+		{
+			AddRootComponents(new Y());
+		}
+
+		protected override void Check()
+		{
+			Metadata.RootComponent.Subcomponents[0].Bindings.Length.ShouldBe(1);
+		}
+
+		private class X : Component
+		{
+			public extern int M { get; }
+
+			public int N
+			{
+				get { return 1; }
+			}
+		}
+
+		private class Y : Component
+		{
+			private readonly X x = new X();
+
+			public Y()
+			{
+				Bind(x.RequiredPorts.M = x.ProvidedPorts.N);
+			}
+		}
+	}
 }

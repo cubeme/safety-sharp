@@ -51,4 +51,50 @@ namespace Tests.Metadata.Components.RequiredPorts
 			Metadata.RequiredPorts[0].ImplementedMethods.ShouldBeEmpty();
 		}
 	}
+
+	internal class X2b : TestComponent
+	{
+		private extern int M { get; }
+
+		[SuppressTransformation]
+		protected override void Check()
+		{
+			Metadata.RequiredPorts.Length.ShouldBe(1);
+
+			Metadata.RequiredPorts[0].MethodInfo.ShouldBe(typeof(X2b).GetMethod("get_M", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.RequiredPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
+			Metadata.RequiredPorts[0].IsOverridden.ShouldBe(false);
+			Metadata.RequiredPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
+			Metadata.RequiredPorts[0].HasImplementation.ShouldBe(false);
+			Metadata.RequiredPorts[0].IntendedBehavior.ShouldBe(null);
+			Metadata.RequiredPorts[0].VirtuallyInvokedMethod.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.RequiredPorts[0].Name.ShouldBe("get_M");
+			Metadata.RequiredPorts[0].ImplementedMethods.ShouldBeEmpty();
+		}
+	}
+
+	internal class X2c : TestComponent
+	{
+		private extern bool M { set; }
+
+		[SuppressTransformation]
+		protected override void Check()
+		{
+			Metadata.RequiredPorts.Length.ShouldBe(1);
+
+			Metadata.RequiredPorts[0].MethodInfo.ShouldBe(typeof(X2c).GetMethod("set_M", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.RequiredPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
+			Metadata.RequiredPorts[0].IsOverridden.ShouldBe(false);
+			Metadata.RequiredPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
+			Metadata.RequiredPorts[0].HasImplementation.ShouldBe(false);
+			Metadata.RequiredPorts[0].IntendedBehavior.ShouldBe(null);
+			Metadata.RequiredPorts[0].VirtuallyInvokedMethod.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.RequiredPorts[0].Name.ShouldBe("set_M");
+			Metadata.RequiredPorts[0].ImplementedMethods.ShouldBeEmpty();
+		}
+	}
 }

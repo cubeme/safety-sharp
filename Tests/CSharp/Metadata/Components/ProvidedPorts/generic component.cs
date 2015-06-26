@@ -38,26 +38,40 @@ namespace Tests.Metadata.Components.ProvidedPorts
 		{
 			return i;
 		}
-	}
 
-	internal class X7 : X6<int, bool>
-	{
-		[SuppressTransformation]
-		protected override void Check()
+		public int P { get; set; }
+
+		internal class X7 : X6<int, bool>
 		{
-			Metadata.ProvidedPorts.Length.ShouldBe(2);
+			[SuppressTransformation]
+			protected override void Check()
+			{
+				Metadata.ProvidedPorts.Length.ShouldBe(4);
 
-			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(X6<int, bool>).GetMethod("M"));
-			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
+				Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(X6<int, bool>).GetMethod("M"));
+				Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
+				Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
+				Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
+				Metadata.ProvidedPorts[0].Name.ShouldBe("M");
 
-			Metadata.ProvidedPorts[1].MethodInfo.ShouldBe(typeof(X6<int, bool>).GetMethod("N"));
-			Metadata.ProvidedPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[1].Name.ShouldBe("N");
+				Metadata.ProvidedPorts[1].MethodInfo.ShouldBe(typeof(X6<int, bool>).GetMethod("N"));
+				Metadata.ProvidedPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
+				Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
+				Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
+				Metadata.ProvidedPorts[1].Name.ShouldBe("N");
+
+				Metadata.ProvidedPorts[2].MethodInfo.ShouldBe(typeof(X6<int, bool>).GetProperty("P").SetMethod);
+				Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
+				Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
+				Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
+				Metadata.ProvidedPorts[2].Name.ShouldBe("get_P");
+
+				Metadata.ProvidedPorts[3].MethodInfo.ShouldBe(typeof(X6<int, bool>).GetProperty("P").SetMethod);
+				Metadata.ProvidedPorts[3].DeclaringObject.ShouldBe(this.GetMetadata());
+				Metadata.ProvidedPorts[3].BaseMethod.ShouldBe(null);
+				Metadata.ProvidedPorts[3].IsOverride.ShouldBe(false);
+				Metadata.ProvidedPorts[3].Name.ShouldBe("set_P");
+			}
 		}
 	}
 }

@@ -55,4 +55,32 @@ namespace Tests.Metadata.Components.RequiredPorts
 			Metadata.RequiredPorts[1].Name.ShouldBe("Q");
 		}
 	}
+
+	internal abstract class X4b : TestComponent
+	{
+		public extern bool M { get; }
+	}
+
+	internal class X5b : X4b
+	{
+		public extern bool Q { get; }
+
+		[SuppressTransformation]
+		protected override void Check()
+		{
+			Metadata.RequiredPorts.Length.ShouldBe(2);
+
+			Metadata.RequiredPorts[0].MethodInfo.ShouldBe(typeof(X4b).GetMethod("get_M"));
+			Metadata.RequiredPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
+			Metadata.RequiredPorts[0].Name.ShouldBe("get_M");
+
+			Metadata.RequiredPorts[1].MethodInfo.ShouldBe(typeof(X5b).GetMethod("get_Q"));
+			Metadata.RequiredPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.RequiredPorts[1].BaseMethod.ShouldBe(null);
+			Metadata.RequiredPorts[1].IsOverride.ShouldBe(false);
+			Metadata.RequiredPorts[1].Name.ShouldBe("get_Q");
+		}
+	}
 }

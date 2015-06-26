@@ -42,6 +42,12 @@ namespace Tests.Diagnostics
 			CheckDiagnostics<EnumAnalyzer>(code);
 		}
 
+		[Theory, MemberData("DiscoverTests", "PortReferences")]
+		public void PortReferences(string test, SyntaxTree code)
+		{
+			CheckDiagnostics<PortReferenceAnalyzer>(code);
+		}
+
 		[Theory, MemberData("DiscoverTests", "CustomComponents")]
 		public void CustomComponents(string test, SyntaxTree code)
 		{

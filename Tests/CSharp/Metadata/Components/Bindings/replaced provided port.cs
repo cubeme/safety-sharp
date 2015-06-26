@@ -81,4 +81,59 @@ namespace Tests.Metadata.Components.Bindings
 			Metadata.ProvidedPorts[3].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[2] });
 		}
 	}
+
+	internal abstract class P31 : TestComponent
+	{
+		public int M
+		{
+			get { return 1; }
+		}
+	}
+
+	internal class P32 : P31
+	{
+		public P32()
+		{
+			Bind(RequiredPorts.N1 = ProvidedPorts.M);
+			Bind(RequiredPorts.N2 = ((P31)this).ProvidedPorts.M);
+			Bind(RequiredPorts.N3 = base.ProvidedPorts.M);
+		}
+
+		private extern int N1 { get; }
+		private extern int N2 { get; }
+		private extern int N3 { get; }
+
+		public new int M
+		{
+			get { return 2; }
+		}
+
+		[SuppressTransformation]
+		protected override void Check()
+		{
+			Metadata.Bindings.Length.ShouldBe(3);
+
+			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
+			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
+
+			Metadata.Bindings[1].DeclaringComponent.ShouldBe(this.GetMetadata());
+			Metadata.Bindings[1].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
+			Metadata.Bindings[1].ProvidedPort.MethodInfo.ShouldBe(typeof(X32).GetMethod("__SynthesizedPort0__",
+				BindingFlags.Instance | BindingFlags.NonPublic));
+
+			Metadata.Bindings[2].DeclaringComponent.ShouldBe(this.GetMetadata());
+			Metadata.Bindings[2].RequiredPort.ShouldBe(Metadata.RequiredPorts[2]);
+			Metadata.Bindings[2].ProvidedPort.MethodInfo.ShouldBe(typeof(X32).GetMethod("__SynthesizedPort1__",
+				BindingFlags.Instance | BindingFlags.NonPublic));
+
+			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[1] });
+			Metadata.RequiredPorts[1].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[2] });
+			Metadata.RequiredPorts[2].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[3] });
+
+			Metadata.ProvidedPorts[1].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[0] });
+			Metadata.ProvidedPorts[2].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[1] });
+			Metadata.ProvidedPorts[3].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[2] });
+		}
+	}
 }

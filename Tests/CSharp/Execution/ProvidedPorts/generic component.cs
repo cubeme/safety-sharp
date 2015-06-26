@@ -33,6 +33,8 @@ namespace Tests.Execution.ProvidedPorts
 		{
 			return i;
 		}
+
+		protected T P { get; set; }
 	}
 
 	internal class X7 : X6<int>
@@ -42,6 +44,9 @@ namespace Tests.Execution.ProvidedPorts
 		{
 			M(2).ShouldBe(2);
 			M(10).ShouldBe(10);
+
+			P = 33;
+			P.ShouldBe(33);
 		}
 	}
 
@@ -52,6 +57,9 @@ namespace Tests.Execution.ProvidedPorts
 		{
 			M(false).ShouldBe(false);
 			M(true).ShouldBe(true);
+
+			P = true;
+			P.ShouldBe(true);
 		}
 	}
 }

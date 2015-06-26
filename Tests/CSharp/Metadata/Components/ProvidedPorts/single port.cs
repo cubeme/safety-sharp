@@ -53,4 +53,91 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
 		}
 	}
+
+	internal class P2a : TestComponent
+	{
+		private int P
+		{
+			get { return 1; }
+		}
+
+		[SuppressTransformation]
+		protected override void Check()
+		{
+			Metadata.ProvidedPorts.Length.ShouldBe(1);
+
+			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(P2a).GetMethod("get_P", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[0].IsOverridden.ShouldBe(false);
+			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
+			Metadata.ProvidedPorts[0].HasImplementation.ShouldBe(true);
+			Metadata.ProvidedPorts[0].VirtuallyInvokedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
+			Metadata.ProvidedPorts[0].IntendedBehavior.ShouldBe(typeof(P2a).GetMethod("__Behavior0__",
+				BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[0].Name.ShouldBe("get_P");
+		}
+	}
+
+	internal class P2b : TestComponent
+	{
+		private int P
+		{
+			set { }
+		}
+
+		[SuppressTransformation]
+		protected override void Check()
+		{
+			Metadata.ProvidedPorts.Length.ShouldBe(1);
+
+			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(P2b).GetMethod("set_P", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[0].IsOverridden.ShouldBe(false);
+			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
+			Metadata.ProvidedPorts[0].HasImplementation.ShouldBe(true);
+			Metadata.ProvidedPorts[0].VirtuallyInvokedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
+			Metadata.ProvidedPorts[0].IntendedBehavior.ShouldBe(typeof(P2b).GetMethod("__Behavior0__",
+				BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[0].Name.ShouldBe("set_P");
+		}
+	}
+
+	internal class P2c : TestComponent
+	{
+		private int P { get; set; }
+
+		[SuppressTransformation]
+		protected override void Check()
+		{
+			Metadata.ProvidedPorts.Length.ShouldBe(2);
+
+			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(P2a).GetMethod("get_P", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[0].IsOverridden.ShouldBe(false);
+			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[0].CanBeAffectedByFaultEffects.ShouldBe(true);
+			Metadata.ProvidedPorts[0].HasImplementation.ShouldBe(true);
+			Metadata.ProvidedPorts[0].VirtuallyInvokedMethod.ShouldBe(Metadata.ProvidedPorts[0]);
+			Metadata.ProvidedPorts[0].IntendedBehavior.ShouldBe(typeof(P2a).GetMethod("__Behavior0__",
+				BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[0].Name.ShouldBe("get_P");
+
+			Metadata.ProvidedPorts[1].MethodInfo.ShouldBe(typeof(P2b).GetMethod("set_P", BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
+			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
+			Metadata.ProvidedPorts[1].IsOverridden.ShouldBe(false);
+			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
+			Metadata.ProvidedPorts[1].CanBeAffectedByFaultEffects.ShouldBe(true);
+			Metadata.ProvidedPorts[1].HasImplementation.ShouldBe(true);
+			Metadata.ProvidedPorts[1].VirtuallyInvokedMethod.ShouldBe(Metadata.ProvidedPorts[1]);
+			Metadata.ProvidedPorts[1].IntendedBehavior.ShouldBe(typeof(P2b).GetMethod("__Behavior1__",
+				BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[1].Name.ShouldBe("set_P");
+		}
+	}
 }

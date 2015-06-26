@@ -30,8 +30,8 @@ namespace Tests.Diagnostics.Bindings.Models.Invalid
 		"'Tests.Diagnostics.Bindings.Models.Invalid.X3.N()', 'Tests.Diagnostics.Bindings.Models.Invalid.X3.N(int)'",
 		"'Tests.Diagnostics.Bindings.Models.Invalid.X3.M()', 'Tests.Diagnostics.Bindings.Models.Invalid.X3.M(int)'")]
 	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 42, 18, 37,
-		"'Tests.Diagnostics.Bindings.Models.Invalid.X3.N()', 'Tests.Diagnostics.Bindings.Models.Invalid.X3.N(int)'",
-		"'Tests.Diagnostics.Bindings.Models.Invalid.X3.M()', 'Tests.Diagnostics.Bindings.Models.Invalid.X3.M(int)'")]
+		"'Tests.Diagnostics.Bindings.Models.Invalid.X3.Q.get', 'Tests.Diagnostics.Bindings.Models.Invalid.X3.Q.set'",
+		"'Tests.Diagnostics.Bindings.Models.Invalid.X3.P.get', 'Tests.Diagnostics.Bindings.Models.Invalid.X3.P.set'")]
 	internal class M7 : Model
 	{
 		private X3 y;
@@ -39,12 +39,15 @@ namespace Tests.Diagnostics.Bindings.Models.Invalid
 		private M7()
 		{
 			Bind(y.RequiredPorts.N = y.ProvidedPorts.M);
-			Bind(y.RequiredPorts.N = y.ProvidedPorts.M).Delayed();
+			Bind(y.RequiredPorts.Q = y.ProvidedPorts.P);
 		}
 	}
 
 	internal class X3 : Component
 	{
+		public int P { get; set; }
+		public extern int Q { get; set; }
+
 		public void M()
 		{
 		}

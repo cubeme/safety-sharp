@@ -92,4 +92,20 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 		{
 		}
 	}
+
+	internal class P18 : Component
+	{
+		private P18()
+		{
+			Bind(RequiredPorts.N = (D1)ProvidedPorts.M);
+			Bind(RequiredPorts.N = (D2)ProvidedPorts.M);
+		}
+
+		private extern int N { get; set; }
+		private int M { get; set; }
+
+		private delegate void D1(int value);
+
+		private delegate int D2();
+	}
 }

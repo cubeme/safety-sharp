@@ -27,6 +27,11 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 
 	internal class X31 : Component
 	{
+		public int P
+		{
+			get { return 1; }
+		}
+
 		public void M()
 		{
 		}
@@ -43,6 +48,19 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 			Bind(RequiredPorts.N = base.ProvidedPorts.M);
 			Bind(RequiredPorts.N = ((X31)_x).ProvidedPorts.M);
 			Bind(RequiredPorts.N = ((X31)_x._x._x).ProvidedPorts.M);
+
+			Bind(RequiredPorts.Q = ProvidedPorts.P);
+			Bind(RequiredPorts.Q = ((X31)this).ProvidedPorts.P);
+			Bind(RequiredPorts.Q = base.ProvidedPorts.P);
+			Bind(RequiredPorts.Q = ((X31)_x).ProvidedPorts.P);
+			Bind(RequiredPorts.Q = ((X31)_x._x._x).ProvidedPorts.P);
+		}
+
+		private extern int Q { get; set; }
+
+		public new int P
+		{
+			get { return 0; }
 		}
 
 		private extern void N();

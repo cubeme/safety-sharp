@@ -35,7 +35,7 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private X3()
 		{
 			Bind(x = ProvidedPorts.X);
-			Bind(x = ProvidedPorts.X).Delayed();
+			Bind(x = ProvidedPorts.X);
 		}
 	}
 
@@ -48,7 +48,7 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private X4()
 		{
 			Bind(RequiredPorts.X = x);
-			Bind(RequiredPorts.X = x).Delayed();
+			Bind(RequiredPorts.X = x);
 		}
 	}
 
@@ -62,7 +62,7 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private X5()
 		{
 			Bind(x.y = ProvidedPorts.X);
-			Bind(x.y = ProvidedPorts.X).Delayed();
+			Bind(x.y = ProvidedPorts.X);
 		}
 	}
 
@@ -76,7 +76,7 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private X6()
 		{
 			Bind(RequiredPorts.X = x.y);
-			Bind(RequiredPorts.X = x.y).Delayed();
+			Bind(RequiredPorts.X = x.y);
 		}
 	}
 }

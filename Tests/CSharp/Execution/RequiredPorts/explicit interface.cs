@@ -31,6 +31,12 @@ namespace Tests.Execution.RequiredPorts
 	internal interface I1 : IComponent
 	{
 		[Required]
+		int P { get; }
+
+		[Provided]
+		int Q { get; }
+
+		[Required]
 		int N(int i);
 
 		[Provided]
@@ -42,6 +48,7 @@ namespace Tests.Execution.RequiredPorts
 		public X6()
 		{
 			Bind(((I1)this).RequiredPorts.N = ((I1)this).ProvidedPorts.M);
+			Bind(((I1)this).RequiredPorts.P = ((I1)this).ProvidedPorts.Q);
 		}
 
 		extern int I1.N(int i);
@@ -51,11 +58,20 @@ namespace Tests.Execution.RequiredPorts
 			return i * 3;
 		}
 
+		extern int I1.P { get; }
+
+		int I1.Q
+		{
+			get { return 22; }
+		}
+
 		[SuppressTransformation]
 		protected override void Check()
 		{
 			((I1)this).N(2).ShouldBe(6);
 			((I1)this).N(10).ShouldBe(30);
+
+			((I1)this).P.ShouldBe(22);
 		}
 	}
 }

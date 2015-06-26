@@ -27,6 +27,11 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 
 	internal class X27 : Component
 	{
+		public virtual int P
+		{
+			get { return 1; }
+		}
+
 		public virtual void M()
 		{
 		}
@@ -37,6 +42,14 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 		private X28()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
+			Bind(RequiredPorts.Q = ProvidedPorts.P);
+		}
+
+		private extern int Q { get; }
+
+		public override int P
+		{
+			get { return 2; }
 		}
 
 		private extern void N();

@@ -30,6 +30,11 @@ namespace Tests.Execution.Faults.ProvidedPorts
 
 	internal class X1 : TestComponent
 	{
+		private int Q
+		{
+			get { return 3; }
+		}
+
 		private int M()
 		{
 			return 1;
@@ -40,14 +45,21 @@ namespace Tests.Execution.Faults.ProvidedPorts
 		{
 			Metadata.Faults[0].Fault.IsOccurring = false;
 			M().ShouldBe(1);
+			Q.ShouldBe(3);
 
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			M().ShouldBe(2);
+			Q.ShouldBe(17);
 		}
 
 		[Persistent]
 		private class F : Fault
 		{
+			public int Q
+			{
+				get { return 17; }
+			}
+
 			public int M()
 			{
 				return 2;

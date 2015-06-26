@@ -30,6 +30,11 @@ namespace Tests.Execution.Faults.ProvidedPorts
 
 	internal class X10 : TestComponent
 	{
+		private int P
+		{
+			get { return 1; }
+		}
+
 		private int M()
 		{
 			return 1;
@@ -39,21 +44,32 @@ namespace Tests.Execution.Faults.ProvidedPorts
 		protected override void Check()
 		{
 			Metadata.Faults[0].Fault.IsOccurring = true;
-			M().ShouldBe(1);
+			M().ShouldBe(3);
+			P.ShouldBe(-9);
 		}
 
 		[Persistent]
 		private class F : Fault<X10>
 		{
+			public int P
+			{
+				get { return Component.P - 10; }
+			}
+
 			public int M()
 			{
-				return Component.M();
+				return Component.M() + 2;
 			}
 		}
 	}
 
 	internal class X11 : TestComponent
 	{
+		private int P
+		{
+			get { return 1; }
+		}
+
 		private int M()
 		{
 			return 1;
@@ -65,11 +81,17 @@ namespace Tests.Execution.Faults.ProvidedPorts
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 			M().ShouldBe(1);
+			P.ShouldBe(-9);
 		}
 
 		[Persistent]
 		private class F1 : Fault<X11>
 		{
+			public int P
+			{
+				get { return Component.P - 10; }
+			}
+
 			public int M()
 			{
 				return Component.M();
@@ -79,6 +101,11 @@ namespace Tests.Execution.Faults.ProvidedPorts
 		[Persistent]
 		private class F2 : Fault<X11>
 		{
+			public int P
+			{
+				get { return Component.P - 10; }
+			}
+
 			public int M()
 			{
 				return Component.M();

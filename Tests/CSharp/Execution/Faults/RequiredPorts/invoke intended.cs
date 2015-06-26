@@ -33,6 +33,14 @@ namespace Tests.Execution.Faults.RequiredPorts
 		public X11()
 		{
 			Bind(RequiredPorts.M = ProvidedPorts.N);
+			Bind(RequiredPorts.P = ProvidedPorts.Q);
+		}
+
+		private extern int P { get; }
+
+		private int Q
+		{
+			get { return 12; }
 		}
 
 		private extern int M();
@@ -47,11 +55,17 @@ namespace Tests.Execution.Faults.RequiredPorts
 		{
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			M().ShouldBe(1);
+			P.ShouldBe(5);
 		}
 
 		[Persistent]
 		private class F : Fault<X11>
 		{
+			public int P
+			{
+				get { return Component.P - 7; }
+			}
+
 			public int M()
 			{
 				return Component.M();
@@ -64,6 +78,14 @@ namespace Tests.Execution.Faults.RequiredPorts
 		public X12()
 		{
 			Bind(RequiredPorts.M = ProvidedPorts.N);
+			Bind(RequiredPorts.P = ProvidedPorts.Q);
+		}
+
+		private extern int P { get; }
+
+		private int Q
+		{
+			get { return 12; }
 		}
 
 		private extern int M();
@@ -78,12 +100,19 @@ namespace Tests.Execution.Faults.RequiredPorts
 		{
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = true;
+
 			M().ShouldBe(1);
+			P.ShouldBe(5);
 		}
 
 		[Persistent]
 		private class F1 : Fault<X12>
 		{
+			public int P
+			{
+				get { return Component.P - 7; }
+			}
+
 			public int M()
 			{
 				return Component.M();
@@ -93,6 +122,11 @@ namespace Tests.Execution.Faults.RequiredPorts
 		[Persistent]
 		private class F2 : Fault<X12>
 		{
+			public int P
+			{
+				get { return Component.P - 7; }
+			}
+
 			public int M()
 			{
 				return Component.M();

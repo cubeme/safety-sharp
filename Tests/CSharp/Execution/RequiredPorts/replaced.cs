@@ -29,6 +29,13 @@ namespace Tests.Execution.RequiredPorts
 
 	internal abstract class X4 : TestComponent
 	{
+		public int P
+		{
+			get { return 21; }
+		}
+
+		public extern int Q { get; }
+
 		public int M(int i)
 		{
 			return i * 2;
@@ -43,7 +50,17 @@ namespace Tests.Execution.RequiredPorts
 		{
 			Bind(RequiredPorts.N = base.ProvidedPorts.M);
 			Bind(base.RequiredPorts.N = ProvidedPorts.M);
+
+			Bind(RequiredPorts.Q = base.ProvidedPorts.P);
+			Bind(base.RequiredPorts.Q = ProvidedPorts.P);
 		}
+
+		private new int P
+		{
+			get { return 17; }
+		}
+
+		private new extern int Q { get; }
 
 		private new int M(int i)
 		{
@@ -63,6 +80,10 @@ namespace Tests.Execution.RequiredPorts
 
 			((X4)this).N(3).ShouldBe(9);
 			((X4)this).N(10).ShouldBe(100);
+
+			Q.ShouldBe(21);
+			base.Q.ShouldBe(17);
+			((X4)this).Q.ShouldBe(17);
 		}
 	}
 }
