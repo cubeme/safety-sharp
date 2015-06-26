@@ -186,7 +186,8 @@ type AnalysisContext () =
     //////// Engine Option /////////////
 
     member this.setEngineOption (engineOption:SafetySharp.EngineOptions.IEngineOption) : unit =
-        // may be set whether a model is loaded or not
+        // May be set whether a model is loaded or not
+        // TODO: Should invalidate the cache
         match currentState with
             | AnalysisContextState.Uninitialized (wfState) ->
                 let s = match SafetySharp.Workflow.setIEngineOption engineOption with | WorkflowFunction(s) -> s
@@ -223,7 +224,11 @@ type AnalysisContext () =
         let workflowToCalculateDccaResult =
             currentState.getLoadedModelCache.AtDccaLtl(hazard).checkWithNusmv()
         this.RunWorkflowOnModel_getResult workflowToCalculateDccaResult
-
+        
     member this.atAnalyseDccaLtl_WithNuSmv (hazard:string) : Set<Set<ScmHelpers.FaultPath>> =  
         let hazardAsPropExpr = currentState.getLoadedModelCache.PropositionalExprParser hazard
         this.atAnalyseDccaLtl_WithNuSmv hazardAsPropExpr
+
+    member this.removeTemporaryFiles () :unit =
+        //TODO. Or maybe implement IDisposable
+        ()

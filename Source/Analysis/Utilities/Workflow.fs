@@ -38,6 +38,7 @@ module internal Workflow =
         EngineOptions : Map<string,SafetySharp.EngineOptions.IEngineOption>;
         CancellationToken : System.Threading.CancellationToken option; //https://msdn.microsoft.com/de-de/library/dd997364(v=vs.110).aspx
         Tainted : bool; // Use tainted to indicate, if a function changed something. Do not compare states, because now it is obvious, what happens, when a mutable changes
+        // GeneratedFilesAndDirs
     }
 
     type WorkflowState with
@@ -572,6 +573,15 @@ module internal Workflow =
         //do FileSystem.WriteToAsciiFile outputFileName input
         do FileSystem.WriteToAsciiFile outputFileName input
         return ()
+    }
+
+    let printToRandomFile (fileExtension:string)
+            : WorkflowFunction<string,string,FileSystem.FileName> = workflow {
+        let! input = getState ()
+        let uuid = System.Guid.NewGuid ()
+        let outputFileName = sprintf "%s.%s" (uuid.ToString()) (fileExtension)
+        do FileSystem.WriteToAsciiFile outputFileName input
+        return (FileSystem.FileName(outputFileName))
     }
 
     let printToStdout ()

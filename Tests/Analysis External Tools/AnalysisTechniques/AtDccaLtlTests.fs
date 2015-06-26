@@ -28,6 +28,7 @@ open SafetySharp.Models
 open SafetySharp.Workflow
 open SafetySharp.AnalysisTechniques
 open SafetySharp.Models.ScmVerificationElements
+open SafetySharp.EngineOptions
 
 [<TestFixture>]
 module AtDccaLtlTests =
@@ -140,6 +141,7 @@ module AtDccaLtlTests =
         let hazardAsString = "simple.isHazard == true"
 
         let analyzer = new AnalysisContext ()
+        do analyzer.setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
         do analyzer.setMainModelFromFile (inputFile)
         let dccaResult = analyzer.atAnalyseDccaLtl_WithNuSmv (hazardAsString)
         dccaResult.Count =? 3

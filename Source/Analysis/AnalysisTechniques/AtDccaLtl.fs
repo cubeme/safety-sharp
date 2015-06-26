@@ -22,7 +22,6 @@
 
 namespace SafetySharp.AnalysisTechniques
 
-open SafetySharp.EngineOptions
 
 module internal AtDccaLtl =
     open SafetySharp.Workflow
@@ -163,24 +162,22 @@ module internal AtDccaLtl =
         member this.checkWithNusmv ()  : WorkflowFunction<Scm.ScmModel,Scm.ScmModel,Set<Set<FaultPath>>> = workflow {
             let nusmvExecutor = new SafetySharp.ExternalTools.Smv.ExecuteNusmv2()
             
-            let transformModelToNuSMV = workflow {
-                    do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
-
-                    do! SafetySharp.Models.ScmTracer.setInitialSimpleScmTracer untransformedModel
+            let transformModelToNuSMV = workflow {                    
+                    do! SafetySharp.Models.ScmTracer.scmToSimpleScmTracer ()
                     do! SafetySharp.ExternalTools.ScmToNuXmv.transformConfiguration ()
                     do! logForwardTracesOfOrigins ()
                     let! forwardTracer = getForwardTracer ()
                     let! nusmvModel = getState ()
                     do! SafetySharp.ITracing.removeTracing ()
                     do! SafetySharp.ExternalTools.SmvToString.workflow ()
-                    let filename = "verification.smv" |> SafetySharp.FileSystem.FileName
-                    do! saveToFile filename
-                    do nusmvExecutor.StartSmvInteractive (0) ("verification.smv.log") |> ignore
-                    let readmodel = nusmvExecutor.ExecuteAndIntepretCommandSequence(SafetySharp.ExternalTools.Smv.SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd "verification.smv")
+                    let! file = printToRandomFile "smv"
+                    let filename = match file with | SafetySharp.FileSystem.FileName(filename) -> filename
+                    do nusmvExecutor.StartSmvInteractive (0) (filename+".log") |> ignore
+                    let readmodel = nusmvExecutor.ExecuteAndIntepretCommandSequence(SafetySharp.ExternalTools.Smv.SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
                     assert readmodel.HasSucceeded
                     return (nusmvModel,forwardTracer)
             }
-            let ((nusmvModel,forwardTracer),wfStateWithNusmvModel) = runWorkflow_getResultAndWfState transformModelToNuSMV            
+            let! (nusmvModel,forwardTracer) = runSubWorkflow_WithSameState_ReturnResult transformModelToNuSMV            
             
 
             let checkFormulaElement (formulaElement:ElementToCheck) =
