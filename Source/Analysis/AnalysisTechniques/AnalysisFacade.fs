@@ -27,6 +27,7 @@ open SafetySharp.Models
 open SafetySharp.Models.ScmVerificationElements
 
 // allows caching of analysis techniques to reduce lots of recalculations
+//TODO: Refactor Cache, such that it is reusable in several Analysis Techniques at the same time
 type private LoadedModelCache = {
     LoadedModel:Scm.ScmModel;
     PropositionalExprParser : string -> ScmVerificationElements.PropositionalExpr;
