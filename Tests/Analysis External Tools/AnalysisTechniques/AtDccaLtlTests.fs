@@ -117,7 +117,7 @@ module AtDccaLtlTests =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaults1.scm"""
         let hazardAsString = "false"
         
-        let analyzer = new AnalysisContext ()
+        let analyzer = new AnalysisFacade ()
         do analyzer.setMainModelFromFile (inputFile)
         let dccaResult = analyzer.atAnalyseDccaLtl_WithPromela (hazardAsString)
         dccaResult.Count =? 0
@@ -127,7 +127,7 @@ module AtDccaLtlTests =
         let inputFile = """../../Examples/SCM/dcca1.scm"""
         let hazardAsString = "simple.isHazard == true"
         
-        let analyzer = new AnalysisContext ()
+        let analyzer = new AnalysisFacade ()
         do analyzer.setMainModelFromFile (inputFile)
         let dccaResult = analyzer.atAnalyseDccaLtl_WithPromela (hazardAsString)
         dccaResult.Count =? 3
@@ -140,7 +140,7 @@ module AtDccaLtlTests =
         let inputFile = """../../Examples/SCM/dcca1.scm"""
         let hazardAsString = "simple.isHazard == true"
 
-        let analyzer = new AnalysisContext ()
+        let analyzer = new AnalysisFacade ()
         do analyzer.setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
         do analyzer.setMainModelFromFile (inputFile)
         let dccaResult = analyzer.atAnalyseDccaLtl_WithNuSmv (hazardAsString)

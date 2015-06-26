@@ -178,7 +178,10 @@ module internal AtDccaLtl =
                     return (nusmvModel,forwardTracer)
             }
             let! (nusmvModel,forwardTracer) = runSubWorkflow_WithSameState_ReturnResult transformModelToNuSMV            
-            
+            //    let threadWithBiggerStack = new System.Threading.Thread( (fun () -> result := ltlDcca.checkWithNuSMV () ), 1024*1024*8) //HACK: for a bigger stack
+            //    do threadWithBiggerStack.Start ()
+            //    do threadWithBiggerStack.Join ()
+
 
             let checkFormulaElement (formulaElement:ElementToCheck) =
                     let nusmvLtl = SafetySharp.ExternalTools.ScmVeToNuXmv.transformLtlExpression forwardTracer formulaElement.CorrespondingFormula

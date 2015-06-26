@@ -34,7 +34,7 @@ module internal SatsScmExecutor =
         | VerificationResult of Result:Ternary
     
     type SatsExecutionState = {
-        AnalysisContext : SafetySharp.AnalysisTechniques.AnalysisContext;
+        AnalysisFacade : SafetySharp.AnalysisTechniques.AnalysisFacade;
         AnalysisResult : Map<LetIdentifier,AnalysisResult>; // TODO: lazy evaluation
     }
 
@@ -47,16 +47,16 @@ module internal SatsScmExecutor =
     let executeDoStatement (previousState:SatsExecutionState) (doStatement:DoStatement) : SatsExecutionState*SatsExecutionResult =
         match doStatement with
             | DoStatement.SetEngineOption (engineOption) ->
-                do previousState.AnalysisContext.setEngineOption (engineOption)
+                do previousState.AnalysisFacade.setEngineOption (engineOption)
                 (previousState,SatsExecutionResult.FinishedSuccessful)
             | DoStatement.SetMainModel(filename) ->
-                do previousState.AnalysisContext.setMainModelFromFile (filename)
+                do previousState.AnalysisFacade.setMainModelFromFile (filename)
                 (previousState,SatsExecutionResult.FinishedSuccessful)
 
     let executeLetStatement (previousState:SatsExecutionState) (letStatement:LetStatement) : SatsExecutionState*SatsExecutionResult =
         match letStatement with
             | LetStatement.AtLtlFormula (letIdentifier,formula) ->
-                let result = previousState.AnalysisContext.atAnalyseLtl_WithPromela(formula)
+                let result = previousState.AnalysisFacade.atAnalyseLtl_WithPromela(formula)
                 let newExecutionState =
                     let result = AnalysisResult.VerificationResult(result)
                     { previousState with
@@ -89,10 +89,10 @@ module internal SatsScmExecutor =
     let executeSatsPgm (satsPgm:SatsPgm) (engineOptions:SafetySharp.EngineOptions.IEngineOption list) : SatsExecutionState*SatsExecutionResult =
         let initialExecutionState =
             {
-                SatsExecutionState.AnalysisContext = new SafetySharp.AnalysisTechniques.AnalysisContext();
+                SatsExecutionState.AnalysisFacade = new SafetySharp.AnalysisTechniques.AnalysisFacade();
                 SatsExecutionState.AnalysisResult = Map.empty<LetIdentifier,AnalysisResult>;
             }
-        do engineOptions |> List.iter (fun engineOption -> initialExecutionState.AnalysisContext.setEngineOption engineOption)
+        do engineOptions |> List.iter (fun engineOption -> initialExecutionState.AnalysisFacade.setEngineOption engineOption)
         let finalExecutionState,finalExecutionResult = (satsPgm.Pgm) |> List.fold executeSatsStatement (initialExecutionState,SatsExecutionResult.FinishedSuccessful) 
         finalExecutionState,finalExecutionResult
 

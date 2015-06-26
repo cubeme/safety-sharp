@@ -59,28 +59,28 @@ type private LoadedModelCache = {
         //  collection of the old instantiated Analysis Techniques
 
 [<RequireQualifiedAccessAttribute>]
-type private AnalysisContextState =
+type private AnalysisFacadeState =
     | Uninitialized of WorkflowState:WorkflowState<unit>
     | ModelLoaded of LoadedModelCache:LoadedModelCache *
                      WorkflowState:WorkflowState<Scm.ScmModel>
     with
         member this.getLoadedModel : Scm.ScmModel =
             match this with
-                | AnalysisContextState.Uninitialized (_) ->
+                | AnalysisFacadeState.Uninitialized (_) ->
                     failwith "Unable to perform action on model because currently no model has been loaded."
-                | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
+                | AnalysisFacadeState.ModelLoaded (currentModelCache,wfState) ->
                     currentModelCache.LoadedModel
         member this.getLoadedModelCache : LoadedModelCache =
             match this with
-                | AnalysisContextState.Uninitialized (_) ->
+                | AnalysisFacadeState.Uninitialized (_) ->
                     failwith "Unable to perform action on model because currently no model has been loaded."
-                | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
+                | AnalysisFacadeState.ModelLoaded (currentModelCache,wfState) ->
                     currentModelCache
 
 // Note: Not thread safe
-type AnalysisContext () =
+type AnalysisFacade () =
     
-    let mutable currentState : AnalysisContextState = AnalysisContextState.Uninitialized(workflowState_emptyInit ())
+    let mutable currentState : AnalysisFacadeState = AnalysisFacadeState.Uninitialized(workflowState_emptyInit ())
 
     //////// Workflow /////////////
 
@@ -89,9 +89,9 @@ type AnalysisContext () =
                         (WorkflowFunction s:(WorkflowFunction<Scm.ScmModel,'resultingState,'returnType>))
                         : 'returnType =
         match currentState with
-            | AnalysisContextState.Uninitialized (_) ->
+            | AnalysisFacadeState.Uninitialized (_) ->
                 failwith "Unable to perform action on model because currently no model has been loaded."
-            | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
+            | AnalysisFacadeState.ModelLoaded (currentModelCache,wfState) ->
                 let result,resultingWfState = s wfState
                 let resultingWfStateWithCurrentModel =
                     {
@@ -104,7 +104,7 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = resultingWfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(currentModelCache,resultingWfStateWithCurrentModel)
+                currentState <- AnalysisFacadeState.ModelLoaded(currentModelCache,resultingWfStateWithCurrentModel)
                 result
                 
     // Every call may change every content (log/engineoption) of wfState except the inner state. The inner state is always the baseModel
@@ -112,9 +112,9 @@ type AnalysisContext () =
                         (WorkflowFunction s:(WorkflowFunction<Scm.ScmModel,'resultingState,'returnType>))
                         : 'resultingState =
         match currentState with
-            | AnalysisContextState.Uninitialized (_) ->
+            | AnalysisFacadeState.Uninitialized (_) ->
                 failwith "Unable to perform action on model because currently no model has been loaded."
-            | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
+            | AnalysisFacadeState.ModelLoaded (currentModelCache,wfState) ->
                 let result,resultingWfState = s wfState
                 let resultingWfStateWithCurrentModel =
                     {
@@ -127,14 +127,14 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = resultingWfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(currentModelCache,resultingWfStateWithCurrentModel)
+                currentState <- AnalysisFacadeState.ModelLoaded(currentModelCache,resultingWfStateWithCurrentModel)
                 resultingWfState.State
                                 
     //////// Loading Main Model /////////////
 
     member internal this.setMainModel (_baseModel:Scm.ScmModel) : unit =
         match currentState with
-            | AnalysisContextState.ModelLoaded (_,wfState) ->
+            | AnalysisFacadeState.ModelLoaded (_,wfState) ->
                 let newWfState =
                     {
                         WorkflowState.State = _baseModel
@@ -146,9 +146,9 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = wfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(LoadedModelCache.initial _baseModel,newWfState)
+                currentState <- AnalysisFacadeState.ModelLoaded(LoadedModelCache.initial _baseModel,newWfState)
                 ()
-            | AnalysisContextState.Uninitialized (wfState) ->
+            | AnalysisFacadeState.Uninitialized (wfState) ->
                 let newWfState =
                     {
                         WorkflowState.State = _baseModel;
@@ -160,7 +160,7 @@ type AnalysisContext () =
                         WorkflowState.CancellationToken = wfState.CancellationToken;
                         WorkflowState.Tainted = false;
                     }
-                currentState <- AnalysisContextState.ModelLoaded(LoadedModelCache.initial _baseModel,newWfState)
+                currentState <- AnalysisFacadeState.ModelLoaded(LoadedModelCache.initial _baseModel,newWfState)
                 ()
                 
     member internal this.setMainModelFromFile (filename:string) : unit =
@@ -171,15 +171,15 @@ type AnalysisContext () =
             do! updateState (scmTracer.Model)
         }
         match currentState with
-            | AnalysisContextState.Uninitialized (wfState) ->
+            | AnalysisFacadeState.Uninitialized (wfState) ->
                 let s = match readFromFileWorkflow filename with | WorkflowFunction(s) -> s
                 let _,newWfStateAfterLoading = s wfState
-                currentState <- AnalysisContextState.ModelLoaded(LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
+                currentState <- AnalysisFacadeState.ModelLoaded(LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
                 ()
-            | AnalysisContextState.ModelLoaded (_,wfState) ->
+            | AnalysisFacadeState.ModelLoaded (_,wfState) ->
                 let s = match readFromFileWorkflow filename with | WorkflowFunction(s) -> s
                 let _,newWfStateAfterLoading = s wfState
-                currentState <- AnalysisContextState.ModelLoaded(LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
+                currentState <- AnalysisFacadeState.ModelLoaded(LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
                 ()
 
                 
@@ -189,15 +189,15 @@ type AnalysisContext () =
         // May be set whether a model is loaded or not
         // TODO: Should invalidate the cache
         match currentState with
-            | AnalysisContextState.Uninitialized (wfState) ->
+            | AnalysisFacadeState.Uninitialized (wfState) ->
                 let s = match SafetySharp.Workflow.setIEngineOption engineOption with | WorkflowFunction(s) -> s
                 let _,newWfState = s wfState
-                currentState <- AnalysisContextState.Uninitialized(newWfState)
+                currentState <- AnalysisFacadeState.Uninitialized(newWfState)
                 ()
-            | AnalysisContextState.ModelLoaded (currentModelCache,wfState) ->
+            | AnalysisFacadeState.ModelLoaded (currentModelCache,wfState) ->
                 let s = match SafetySharp.Workflow.setIEngineOption engineOption with | WorkflowFunction(s) -> s
                 let _,newWfState = s wfState
-                currentState <- AnalysisContextState.ModelLoaded(currentModelCache,newWfState)
+                currentState <- AnalysisFacadeState.ModelLoaded(currentModelCache,newWfState)
                 ()
 
     // Analysis Techniques

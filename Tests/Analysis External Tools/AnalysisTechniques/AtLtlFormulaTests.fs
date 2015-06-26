@@ -50,7 +50,7 @@ module AtLtlFormulaTests =
             let equals = ScmVerificationElements.LtlExpr.BExpr(ScmVerificationElements.LtlExpr.ReadField(left),Scm.BOp.Equals,ScmVerificationElements.LtlExpr.ReadField(right) )
             ScmVerificationElements.LtlExpr.LuExpr(equals,ScmVerificationElements.LuOp.Globally)
                 
-        let analyzer = new AnalysisContext ()
+        let analyzer = new AnalysisFacade ()
         do analyzer.setMainModelFromFile (inputFile)
             
         let result1 = analyzer.atAnalyseLtl_WithPromela (formulaAsString)

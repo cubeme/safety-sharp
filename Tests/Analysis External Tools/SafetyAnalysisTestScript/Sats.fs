@@ -27,8 +27,9 @@ module internal Sats =
     type DoStatement =
         | SetEngineOption of Option:SafetySharp.EngineOptions.IEngineOption
         | SetMainModel of FileName:string
-        //| InjectSamModel of FileName:string
-        //| InjectLustreModel of FileName:string
+        //| InjectSamModel of FileName:string * Position:CompPath
+        //| InjectScmModel of FileName:string * Position:CompPath
+        //| InjectLustreModel of FileName:string * Position:CompPath
         // For reports        
         // | PrintHtmlReport
         // | SetChapterName

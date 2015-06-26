@@ -65,13 +65,14 @@ type SpinModelChecker (model : Model) =
     let value60 = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.IntVal(60))
     let hazard = ScmVerificationElements.PropositionalExpr.BExpr( ScmVerificationElements.PropositionalExpr.ReadField(tankPressure),Scm.BOp.GreaterEqual, value60)
 
-    let ltlDcca = SafetySharp.AnalysisTechniques.AtDccaLtl.PerformDccaWithLtlFormulas(scm,hazard)
-    let minimalCutSets = ltlDcca.checkWithPromela ()
+    let analysisFacade = new SafetySharp.AnalysisTechniques.AnalysisFacade()
+    do analysisFacade.setEngineOption (SafetySharp.EngineOptions.TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
+    do analysisFacade.setMainModel (scm)
+    let minimalCutSets = analysisFacade.atAnalyseDccaLtl_WithPromela (hazard)
+
     //let minimalCutSets  =
     //    let result : Set<ScmHelpers.FaultPath> list ref = ref ([])
-    //    let threadWithBiggerStack = new System.Threading.Thread( (fun () -> result := ltlDcca.checkWithNuSMV () ), 1024*1024*8) //HACK: for a bigger stack
-    //    do threadWithBiggerStack.Start ()
-    //    do threadWithBiggerStack.Join ()
+
     //    result.Value
 
     do printfn "%+A" minimalCutSets

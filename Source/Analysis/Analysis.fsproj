@@ -112,6 +112,7 @@
     <Compile Include="Models\Transformations\SsmToScm.fs" />
     <Compile Include="Models\Transformations\ScmToSam.fs" />
     <Compile Include="Models\Transformations\TsamToDot.fs" />
+    <Compile Include="Models\Transformations\InjectSamIntoScm.fs" />
     <Compile Include="Models\Gwam\GuardWithAssignmentModel.fs" />
     <Compile Include="Models\Gwam\GuardWithAssignmentModelFast.fs" />
     <Compile Include="Models\Tsare\TransitionSystemAsRelationExpr.fs" />
@@ -173,7 +174,7 @@
     <Compile Include="AnalysisTechniques\AtProbabilisticFullModel.fs" />
     <Compile Include="AnalysisTechniques\AtContract.fs" />
     <Compile Include="AnalysisTechniques\AtMethodsCalled.fs" />
-    <Compile Include="AnalysisTechniques\AnalysisContext.fs" />
+    <Compile Include="AnalysisTechniques\AnalysisFacade.fs" />
     <Compile Include="Analysis\SpinModelChecker.fs" />
     <Compile Include="Analysis\MemberAccess.fs" />
     <Compile Include="AssemblyInfo.fs" />
