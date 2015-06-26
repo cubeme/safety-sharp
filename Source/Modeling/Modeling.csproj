@@ -92,6 +92,7 @@
     <Compile Include="Runtime\MetadataAnalyzers\ModelAnalyzer.cs" />
     <Compile Include="Runtime\MetadataAnalyzers\RequiredPortBindingsAnalyzer.cs" />
     <Compile Include="Runtime\MetadataAnalyzers\UnboundRequiredPortException.cs" />
+    <Compile Include="Runtime\MetadataException.cs" />
     <Compile Include="Runtime\MethodBodyMetadata.cs" />
     <Compile Include="Runtime\ModelMetadata.Builder.cs" />
     <Compile Include="Runtime\ModelMetadata.cs" />

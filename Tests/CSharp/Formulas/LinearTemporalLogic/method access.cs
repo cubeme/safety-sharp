@@ -32,19 +32,20 @@ namespace Tests.Formulas.LinearTemporalLogic
 	{
 		protected override void Check()
 		{
-			var c = new C();
+			var c1 = new C1();
+			var c2 = new C2();
 			var m = new Model();
-			m.AddRootComponents(c);
+			m.AddRootComponents(c1, c2);
 			m.Seal();
 
 			{
-				var actual = Ltl.StateExpression(0 == c.M(17) - 2);
+				var actual = Ltl.StateExpression(0 == c1.M(17) - 2);
 				var expected = new StateFormula(
 					new BinaryExpression(BinaryOperator.Equals,
 						new IntegerLiteralExpression(0),
 						new BinaryExpression(BinaryOperator.Subtract,
 							new MethodInvocationExpression(
-								m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[0],
+								m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[1],
 								new ArgumentExpression(new IntegerLiteralExpression(17), RefKind.None)),
 							new IntegerLiteralExpression(2))
 						));
@@ -53,25 +54,62 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = c.F;
+				var actual = c1.F;
 				var expected = new StateFormula(
 					new BinaryExpression(BinaryOperator.Equals,
-						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[1]),
-						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[2],
+						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[2]),
+						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[3],
 							new ArgumentExpression(new IntegerLiteralExpression(1), RefKind.None),
 							new ArgumentExpression(new BooleanLiteralExpression(true), RefKind.None))));
 
 				Check(actual, expected);
 			}
+
+			{
+				var actual = Ltl.StateExpression(c2.M3());
+				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[5]));
+
+				Check(actual, expected);
+			}
+
+			{
+				var ic = c2;
+				var actual = Ltl.StateExpression(ic.M3());
+				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[5]));
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = Ltl.StateExpression(c2.M(1) == 1);
+				var expected = new StateFormula(
+					new BinaryExpression(BinaryOperator.Equals,
+						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[4],
+							new ArgumentExpression(new IntegerLiteralExpression(1), RefKind.None)),
+						new IntegerLiteralExpression(1)));
+
+				Check(actual, expected);
+			}
 		}
 
-		private class C : Component
+		private interface I : IComponent
+		{
+			[Provided]
+			bool M3();
+		}
+
+		private class C1 : Component, I
 		{
 			public readonly LtlFormula F;
 
-			public C()
+			public C1()
 			{
 				F = Ltl.StateExpression(M0() == M2(1, true));
+			}
+
+			public virtual bool M3()
+			{
+				return true;
 			}
 
 			public int M(int i)
@@ -87,6 +125,19 @@ namespace Tests.Formulas.LinearTemporalLogic
 			public int M2(int i, bool b)
 			{
 				return i + 3;
+			}
+		}
+
+		private class C2 : C1
+		{
+			public new int M(int i)
+			{
+				return i + 3;
+			}
+
+			public override bool M3()
+			{
+				return false;
 			}
 		}
 	}

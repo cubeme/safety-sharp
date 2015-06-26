@@ -40,11 +40,6 @@ namespace SafetySharp.Analysis.Formulas
 	internal class CSharpTransformation : ExpressionVisitor
 	{
 		/// <summary>
-		///     Represents the singleton instance of the type.
-		/// </summary>
-		private static readonly CSharpTransformation _transformation = new CSharpTransformation();
-
-		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		private CSharpTransformation()
@@ -74,8 +69,12 @@ namespace SafetySharp.Analysis.Formulas
 		{
 			Requires.NotNull(expression, () => expression);
 
-			_transformation.Visit(expression.Body);
-			return new StateFormula(_transformation.Expression);
+			return new StateFormula(new Lazy<Expression>(() =>
+			{
+				var transformation = new CSharpTransformation();
+				transformation.Visit(expression.Body);
+				return transformation.Expression;
+			}));
 		}
 
 		/// <summary>
@@ -234,7 +233,7 @@ namespace SafetySharp.Analysis.Formulas
 		/// </summary>
 		protected override System.Linq.Expressions.Expression VisitMethodCall(MethodCallExpression node)
 		{
-			var component = (Component)GetValue(node.Object);
+			var component = (IComponent)GetValue(node.Object);
 			var arguments = node.Arguments.Select(argument => new ArgumentExpression(Transform(argument), RefKind.None)).ToArray();
 			Expression = new MethodInvocationExpression(ReflectionHelpers.GetMethodMetadata(component, node.Method, true), arguments);
 

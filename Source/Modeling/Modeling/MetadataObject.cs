@@ -70,12 +70,16 @@ namespace SafetySharp.Modeling
 		{
 			get
 			{
-				Requires.That(_metadata != null, "The object's metadata has not yet been created.");
+				if (_metadata == null)
+					throw new MetadataException(this, "The object's metadata has not yet been created.");
+
 				return _metadata;
 			}
 			set
 			{
-				Requires.That(_metadata == null, "The object's metadata has already been set.");
+				if (_metadata != null)
+					throw new MetadataException(this, "The object's metadata has already been set.");
+
 				_metadata = value;
 				_metadataBuilder = null;
 			}
@@ -89,7 +93,9 @@ namespace SafetySharp.Modeling
 		{
 			get
 			{
-				Requires.That(_metadataBuilder != null, "The object's metadata has already been initialized.");
+				if (_metadataBuilder == null)
+					throw new MetadataException(this, "The object's metadata has already been initialized.");
+
 				return _metadataBuilder;
 			}
 		}

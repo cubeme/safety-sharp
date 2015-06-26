@@ -33,19 +33,38 @@ namespace SafetySharp.Analysis.Formulas
 	public sealed class StateFormula : Formula
 	{
 		/// <summary>
+		///     The lazily evaluated <see cref="Expression" /> that represents the state formula.
+		/// </summary>
+		private readonly Lazy<Expression> _expression;
+
+		/// <summary>
+		///     Initializes a new instance of the <see cref="StateFormula" /> class.
+		/// </summary>
+		/// <param name="expression">The lazily evaluated metamodel expression that represents the state formula.</param>
+		internal StateFormula(Lazy<Expression> expression)
+		{
+			Requires.NotNull(expression, () => expression);
+			_expression = expression;
+		}
+
+		/// <summary>
 		///     Initializes a new instance of the <see cref="StateFormula" /> class.
 		/// </summary>
 		/// <param name="expression">The metamodel expression that represents the state formula.</param>
+		/// <remarks>For testing purposes.</remarks>
 		internal StateFormula(Expression expression)
 		{
 			Requires.NotNull(expression, () => expression);
-			Expression = expression;
+			_expression = new Lazy<Expression>(() => expression);
 		}
 
 		/// <summary>
 		///     Gets the <see cref="Expression" /> that represents the state formula.
 		/// </summary>
-		public Expression Expression { get; private set; }
+		public Expression Expression
+		{
+			get { return _expression.Value; }
+		}
 
 		/// <summary>
 		///     Gets a value indicating whether the formula contains any temporal operators.

@@ -32,24 +32,80 @@ namespace Tests.Formulas.ComputationTreeLogic
 	{
 		protected override void Check()
 		{
-			var c = new C();
+			var c1 = new C1();
+			var c2 = new C2();
 			var m = new Model();
-			m.AddRootComponents(c);
+			m.AddRootComponents(c1);
 			m.Seal();
 
-			var actual = Ctl.StateExpression(!c.M == false);
-			var expected = new StateFormula(
-				new BinaryExpression(BinaryOperator.Equals,
-					new UnaryExpression(UnaryOperator.Not,
-						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[0])),
-					new BooleanLiteralExpression(false)));
+			{
+				var actual = Ctl.StateExpression(!c1.M == false);
+				var expected = new StateFormula(
+					new BinaryExpression(BinaryOperator.Equals,
+						new UnaryExpression(UnaryOperator.Not,
+							new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[0])),
+						new BooleanLiteralExpression(false)));
 
-			Check(actual, expected);
+				Check(actual, expected);
+			}
+
+			{
+				var actual = Ctl.StateExpression(c1.M2);
+				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[1]));
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = Ctl.StateExpression(c2.M2);
+				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[3]));
+
+				Check(actual, expected);
+			}
+
+			{
+				var ic = c2;
+				var actual = Ctl.StateExpression(ic.M2);
+				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[3]));
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = Ctl.StateExpression(c2.M);
+				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[2]));
+
+				Check(actual, expected);
+			}
 		}
 
-		private class C : Component
+		private interface I : IComponent
+		{
+			[Provided]
+			bool M2 { get; }
+		}
+
+		private class C1 : Component, I
 		{
 			public bool M
+			{
+				get { return false; }
+			}
+
+			public virtual bool M2
+			{
+				get { return true; }
+			}
+		}
+
+		private class C2 : C1
+		{
+			public new bool M
+			{
+				get { return false; }
+			}
+
+			public override bool M2
 			{
 				get { return false; }
 			}
