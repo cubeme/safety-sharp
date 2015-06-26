@@ -51,13 +51,16 @@ module internal SatsParser =
 
 
 
-    let str_ws1 (str:string)= (pstring str) .>> spaces1
-    let str_ws (str:string)= (pstring str) .>> spaces
+    let str_ws1 (str:string) = (pstring str) .>> spaces1
+    let str_ws (str:string) = (pstring str) .>> spaces
 
     let parseUntilSemicolon<'us> : Parser<string,'us> = manySatisfy (fun c -> c <> ';')    
     let parseInQuotations<'us> : Parser<string,'us> = between (pchar '"') (pchar '"') (manySatisfy (fun c -> c <> '"'))
     
     let pfilename = parseInQuotations
+    
+    let parseInQuotations_ws = parseInQuotations .>> spaces
+    let pfilename_ws = pfilename .>> spaces
 
     //////////////////////////////////////////////////////////
     //   DO
@@ -71,14 +74,22 @@ module internal SatsParser =
             (attempt standardVerifier)
         (str_ws1 "setEngineOption") >>. engineOptions
                 
-    let parseDoStatement_SetModel : Parser<DoStatement,UserState> =
-        (str_ws1 "setMainModel") >>.(pfilename |>> DoStatement.SetMainModel)
+    let parseDoStatement_SetMainModel : Parser<DoStatement,UserState> =
+        (str_ws1 "setMainModel") >>.(pfilename_ws |>> DoStatement.SetMainModel)
+
+    let parseDoStatement_SetEmptyMainModel : Parser<DoStatement,UserState> =
+        (str_ws1 "setEmptyMainModel") >>.(parseInQuotations_ws |>> DoStatement.SetEmptyMainModel)
         
+    let parseDoStatement_InjectSamModel : Parser<DoStatement,UserState> =
+        (str_ws1 "injectSamModel") >>.((pfilename_ws .>>. parseInQuotations_ws) |>> DoStatement.InjectSamModel)
+                  
 
     let parseDoStatement : Parser<DoStatement,UserState> =
         let doStatements =
             (attempt parseDoStatement_SetEngineOption) <|>
-            (attempt parseDoStatement_SetModel)
+            (attempt parseDoStatement_SetMainModel) <|>
+            (attempt parseDoStatement_SetEmptyMainModel) <|>
+            (attempt parseDoStatement_InjectSamModel)
         (str_ws1 "do") >>. doStatements
 
         
@@ -122,14 +133,14 @@ module internal SatsParser =
         let createLetStatement (letIdentifier:LetIdentifier) (formula:string) : LetStatement =
             LetStatement.AtLtlFormula(letIdentifier,formula)
         pipe2 ( (parseLetIdentifierOfTypeDecl LetType.LetTypePropertyResult) .>> spaces .>> (str_ws "=") .>> (str_ws1 "verifyLtl") )
-              (parseInQuotations)
+              (parseInQuotations_ws)
               createLetStatement
               
     let parseLetStatement_AtDccaLtl : Parser<LetStatement,UserState> =
         let createLetStatement (letIdentifier:LetIdentifier) (hazard:string) : LetStatement =
             LetStatement.AtDccaLtl(letIdentifier,hazard)
         pipe2 ( (parseLetIdentifierOfTypeDecl LetType.LetTypeDccaResult) .>> spaces .>> (str_ws "=") .>> (str_ws1 "verifyDccaLtl") )
-              (parseInQuotations)
+              (parseInQuotations_ws)
               createLetStatement
 
     let parseLetStatement : Parser<LetStatement,UserState> =        

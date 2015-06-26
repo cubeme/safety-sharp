@@ -110,8 +110,12 @@ module internal ScmVeParser =
                 Reply(locationIdentifierReply.Status,locationIdentifierReply.Error)
                 
                 
-    let locFieldInst: Parser<_,UserState> = parseLocatedIdentifierInst IdentifierType.Field
-    let locFaultInst: Parser<_,UserState> = parseLocatedIdentifierInst IdentifierType.Fault
+    let locFieldInst: Parser<_,UserState> =
+        (parseLocatedIdentifierInst IdentifierType.Field) |>> (fun (location,field) -> (location,Field.Field(field)) )
+    let locFaultInst: Parser<_,UserState> =
+        parseLocatedIdentifierInst IdentifierType.Fault |>> (fun (location,fault) -> (location,Fault.Fault(fault)) )
+    let locCompInst: Parser<_,UserState> =
+        parseLocatedIdentifierInst IdentifierType.Comp |>> (fun (location,comp) -> (Comp(comp)::location) )
     
     
     let str_ws a = (pstring a) .>> spaces
@@ -154,8 +158,8 @@ module internal ScmVeParser =
         opp.TermParser <-
             (boolVal_ws |>> PropositionalExpr.Literal) <|> 
             (numberVal_ws |>> PropositionalExpr.Literal) <|>
-            (attempt locFieldInst_ws |>> (fun (loc,id) -> PropositionalExpr.ReadField(loc,Field.Field(id)) )) <|>
-            (attempt locFaultInst_ws |>> (fun (loc,id) -> PropositionalExpr.ReadFault(loc,Fault.Fault(id)) ))<|> 
+            (attempt locFieldInst_ws |>> PropositionalExpr.ReadField) <|>
+            (attempt locFaultInst_ws |>> PropositionalExpr.ReadFault) <|> 
             (parenExpr_ws)
 
         opp.ExpressionParser
@@ -199,10 +203,17 @@ module internal ScmVeParser =
         opp.TermParser <-
             (boolVal_ws |>> LtlExpr.Literal) <|> 
             (numberVal_ws |>> LtlExpr.Literal) <|>
-            (attempt locFieldInst_ws |>> (fun (loc,id) -> LtlExpr.ReadField(loc,Field.Field(id)) )) <|>
-            (attempt locFaultInst_ws |>> (fun (loc,id) -> LtlExpr.ReadFault(loc,Fault.Fault(id)) ))<|> 
+            (attempt locFieldInst_ws |>> LtlExpr.ReadField) <|>
+            (attempt locFaultInst_ws |>> LtlExpr.ReadFault) <|> 
             (parenExpr_ws)
         opp.ExpressionParser
+
+    let locCompInst_Result (us:UserState) (str:string) : Comp list =
+        let parser = spaces >>. locCompInst .>> eof
+        let parsedString = runParserOnString parser us "" str
+        match parsedString with
+            | Success(result, _, _) -> result
+            | Failure(errorMsg, a, b) -> failwith errorMsg        
 
     let propositionalExprParser_Result (us:UserState) (str:string) : PropositionalExpr =
         let parser = spaces >>. propositionalExprParser .>> eof

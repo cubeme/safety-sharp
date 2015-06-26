@@ -51,7 +51,13 @@ module internal SatsScmExecutor =
                 (previousState,SatsExecutionResult.FinishedSuccessful)
             | DoStatement.SetMainModel(filename) ->
                 do previousState.AnalysisFacade.setMainModelFromFile (filename)
-                (previousState,SatsExecutionResult.FinishedSuccessful)
+                (previousState,SatsExecutionResult.FinishedSuccessful)                
+            | DoStatement.SetEmptyMainModel (modelName:string) ->
+                do previousState.AnalysisFacade.setEmptyMainModel modelName
+                (previousState,SatsExecutionResult.FinishedSuccessful)   
+            | DoStatement.InjectSamModel (filename:string, position:string) ->
+                do previousState.AnalysisFacade.injectSamModel (filename,position)
+                (previousState,SatsExecutionResult.FinishedSuccessful)   
 
     let executeLetStatement (previousState:SatsExecutionState) (letStatement:LetStatement) : SatsExecutionState*SatsExecutionResult =
         match letStatement with
