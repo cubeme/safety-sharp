@@ -49,6 +49,7 @@ globals {
 	true : bool = false;
 	U : bool = false;
 	W : bool = false;
+	globalVarsInitialized : bool = false;
 }
 locals {
 }
@@ -102,3 +103,4 @@ system := true;
 true := true;
 U := true;
 W := true;
+globalVarsInitialized := true;

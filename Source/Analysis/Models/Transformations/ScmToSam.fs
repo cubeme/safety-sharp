@@ -189,3 +189,27 @@ module internal ScmToSam =
         do! updateState transformed
     }
 
+module internal ScmVeToSam =
+    open ScmVerificationElements
+    
+    let rec transformScmVePropositionalExprToSamExpr (forwardTracer:Scm.Traceable-> Sam.Traceable) (expr:PropositionalExpr) : Sam.Expr =
+        match expr with            
+            | PropositionalExpr.Literal (_val) ->
+                Sam.Expr.Literal (ScmToSam.transformValToVal _val)
+            | PropositionalExpr.ReadFault (faultComp,fault) ->
+                let traced = forwardTracer (Scm.Traceable.TraceableFault(faultComp,fault))
+                match traced with
+                    | Sam.Traceable(_var) -> Sam.Expr.Read(_var)
+            | PropositionalExpr.ReadField (fieldComp,field) ->
+                let traced = forwardTracer (Scm.Traceable.TraceableField(fieldComp,field))
+                match traced with
+                    | Sam.Traceable(_var) -> Sam.Expr.Read(_var)
+            | PropositionalExpr.UExpr (expr, uop) ->
+                let operator = ScmToSam.transformUopToUop uop
+                let operand = transformScmVePropositionalExprToSamExpr forwardTracer expr
+                Sam.UExpr(operand,operator)
+            | PropositionalExpr.BExpr (leftExpr,bop,rightExpr) ->
+                let leftExpr = transformScmVePropositionalExprToSamExpr forwardTracer leftExpr
+                let bop = ScmToSam.transformBopToBop bop
+                let rightExpr = transformScmVePropositionalExprToSamExpr forwardTracer rightExpr
+                Sam.BExpr(leftExpr,bop,rightExpr)

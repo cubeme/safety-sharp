@@ -139,7 +139,7 @@ module internal ScmRewriterRemoveGivenFaults =
                 stepsToKeep |> List.map rewriteStep;
         }
 
-    let locatedFaultsToRemove (faultsToRemove:FaultPath list) : Map<CompPath,Set<Fault>> =
+    let locatedFaultsToRemove (faultsToRemove:Set<FaultPath>) : Map<CompPath,Set<Fault>> =
         let addToFaultsToRemoveMap (acc:Map<CompPath,Set<Fault>>) (faultToRemoveComp:CompPath,faultToRemoveFault:Fault) : Map<CompPath,Set<Fault>> =
             if acc.ContainsKey faultToRemoveComp then
                 let oldSet = acc.Item faultToRemoveComp
@@ -148,9 +148,9 @@ module internal ScmRewriterRemoveGivenFaults =
             else
                 let newSet = Set.empty<Fault>.Add(faultToRemoveFault)
                 acc.Add(faultToRemoveComp,newSet)
-        faultsToRemove |> List.fold addToFaultsToRemoveMap (Map.empty<CompPath,Set<Fault>>)
+        faultsToRemove |> Set.fold addToFaultsToRemoveMap (Map.empty<CompPath,Set<Fault>>)
     
-    let removeFaults<'traceableOfOrigin,'oldState when 'oldState :> IScmTracer<'traceableOfOrigin,'oldState>> (faultsToRemove:FaultPath list)  ()
+    let removeFaults<'traceableOfOrigin,'oldState when 'oldState :> IScmTracer<'traceableOfOrigin,'oldState>> (faultsToRemove:Set<FaultPath>)
                         : ExogenousWorkflowFunction<'oldState,SimpleScmTracer<'traceableOfOrigin>> = workflow {        
         do! iscmToSimpleScmTracer ()
         
@@ -164,7 +164,7 @@ module internal ScmRewriterRemoveGivenFaults =
 
         let iscmTraceFault (fault:FaultPath) =
             iscmTraceTraceable (Scm.Traceable.TraceableFault(fault)) (Scm.Traceable.TraceableRemoved("fault was removed with ScmRewriterRemoveGivenFaults") )
-        do! listIter_seqState iscmTraceFault faultsToRemove
+        do! listIter_seqState iscmTraceFault (faultsToRemove |> Set.toList)
     }
 
 

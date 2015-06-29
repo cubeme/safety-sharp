@@ -48,6 +48,8 @@ module internal SamToPromela =
 
     let forceExprToBeInRangeOfVar = SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.forceExprToBeInRangeOfVar
 
+    let promelaGlobalVarJustInitialized = "globalVarJustInitialized"
+
     let generateGlobalVarDeclarations (varDecls:Sam.GlobalVarDecl list) : PrOneDecl list =
         let generateDecl (varDecl:Sam.GlobalVarDecl) : PrOneDecl =
             let _type = match varDecl.Type with
@@ -60,7 +62,9 @@ module internal SamToPromela =
             let _varName = varDecl.Var.getName 
             let _variable = PrIvar.Ivar(_varName,None,None)
             PrOneDecl.OneDecl(None,_type,[_variable])
-        varDecls |> List.map generateDecl
+        let varDeclsFromSam = varDecls |> List.map generateDecl
+        let promelaGlobalVarJustInitializedDecl = PrOneDecl.OneDecl(None,PrTypename.Bool,[PrIvar.Ivar(promelaGlobalVarJustInitialized,None,None)])
+        varDeclsFromSam @ [promelaGlobalVarJustInitializedDecl]
                  
                  
     let generateLocalVarDeclarations (varDecls:Sam.LocalVarDecl list) : PrOneDecl list =
@@ -111,7 +115,7 @@ module internal SamToPromela =
             let assignExpr = transformSamVal (varDecl.Type.getDefaultValue)
             PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))
         varDecls |> List.map generateResetStatement
-                                        
+                                                
     let rec transformSamExpr (expression:Sam.Expr) : PrExpression =
         match expression with
             | Sam.Expr.Literal (value:Sam.Val) ->
@@ -165,6 +169,12 @@ module internal SamToPromela =
                 varDecls |> List.map forceVariableToBeInRange
             | _ ->
                 []
+        
+    let generateAssertInvariantStatements (invariants:Sam.Expr list) : PrStatement list =
+        let generateAssertInvariantStatement (invariant:Sam.Expr) : PrStatement =
+            let invariant = transformSamExpr invariant
+            PrStatement.AssertStmnt(Expr.AnyExpr invariant)
+        invariants |> List.map generateAssertInvariantStatement
 
     let rec transformSamStm (semanticsOfAssignmentToRangedVariables:TsamEngineOptions.SemanticsOfAssignmentToRangedVariables)
                             (varToType:Map<Sam.Var,Sam.Type>)
@@ -213,6 +223,7 @@ module internal SamToPromela =
                 
                 
     let transformConfiguration (semanticsOfAssignmentToRangedVariables:TsamEngineOptions.SemanticsOfAssignmentToRangedVariables)
+                               (invariants:Sam.Expr list)
                                (pgm:Sam.Pgm)
                         : (PrSpec*Map<Sam.Traceable,string>) = // returns new program * forward tracing map
         // remove unwanted chars and assure, that no unwanted characters are in the string
@@ -240,26 +251,36 @@ module internal SamToPromela =
         
         let resetLocalVars = generateResetLocalVarsStatements pgm.Locals
 
+        let assertInvariants = generateAssertInvariantStatements invariants
+
         // initialize globals
         let globalVarInitialisations =
             // cover initialization in atomic block. Example, why this is necessary.
             // If we have a formula "[] A==B" and the initialization ensures this property (by setting A to 1 and B to 1),
             // in a short moment, A is 1 and B is still 0. Atomic block ensures, that A and B are set in the same point of time.
-            // TODO: Actually we need a variable "initialized", otherwise "[] A==B+1" would not work.
             let globalVarsInitializations =  (generateGlobalVarInitialisations pgm.Globals)
             let initializations = globalVarsInitializations @ resetLocalVars
             if initializations.IsEmpty then
                 []
             else 
-                [coverInAtomicBlockStatement (initializations)]                        
+                [coverInAtomicBlockStatement (initializations)]    
+
+        let globalVarsJustInitializedToTrue =
+            // For the ltl-formula (drafted in the ltlTransformation) to work we need to set
+            // promelaGlobalVarJustInitialized to false after the first loop
+            // Otherwise the patch of "[] A==B+1" would not work. The patch is "F (globalVarInitialized && ([] A==B+1))". It might otherwise be
+            // valid even if the "[] ..." is only true beginning from the 20th step.
+            PrStatement.AssignStmnt(PrAssign.AssignExpr(PrVarref.Varref(promelaGlobalVarJustInitialized,None,None),PrExpression.Const(PrConst.True)))
+        let globalVarsJustInitializedToFalse =
+            PrStatement.AssignStmnt(PrAssign.AssignExpr(PrVarref.Varref(promelaGlobalVarJustInitialized,None,None),PrExpression.Const(PrConst.False)))
 
         let codeOfMetamodelInAtomicLoop =
             let stmWithoutNestedBlocks = pgm.Body.simplifyBlocks
             let codeOfMetamodel = transformSamStm semanticsOfAssignmentToRangedVariables varToType stmWithoutNestedBlocks
-            [coverStmInEndlessloop (coverInAtomicBlockStatement ([codeOfMetamodel]@resetLocalVars@rangeGlobalVars))]
+            [coverStmInEndlessloop (coverInAtomicBlockStatement ([codeOfMetamodel]@resetLocalVars@rangeGlobalVars @ [globalVarsJustInitializedToFalse] @ assertInvariants))]
         
         let systemModule =
-            let systemCode = globalVarInitialisations @  codeOfMetamodelInAtomicLoop
+            let systemCode = globalVarInitialisations @ [globalVarsJustInitializedToTrue] @ assertInvariants @ codeOfMetamodelInAtomicLoop
             let systemSequence : PrSequence = statementsToSequence (systemCode)
             let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
             [PrModule.ProcTypeModule(systemProctype)]
@@ -288,7 +309,7 @@ module internal SamToPromela =
                 member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> PrTraceable)) = {this with ForwardTracer=forwardTracer}
                 member this.getTraceables = []
     
-    let transformConfigurationWf<'traceableOfOrigin> () : ExogenousWorkflowFunction<SamTracer.SamTracer<'traceableOfOrigin>,PromelaTracer<'traceableOfOrigin>> = workflow {
+    let transformConfigurationWithInvariantsWf<'traceableOfOrigin> (invariants:Sam.Expr list) : ExogenousWorkflowFunction<SamTracer.SamTracer<'traceableOfOrigin>,PromelaTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()        
         let! semanticsOfAssignmentToRangedVariables =            
             getEngineOption<_,TsamEngineOptions.SemanticsOfAssignmentToRangedVariables> ()   
@@ -307,7 +328,7 @@ module internal SamToPromela =
         assert (isSemanticsOptionDoable)
 
         let samModel = state.Pgm
-        let (newPromelaSpec,forwardTraceInClosure) = transformConfiguration semanticsOfAssignmentToRangedVariables samModel
+        let (newPromelaSpec,forwardTraceInClosure) = transformConfiguration semanticsOfAssignmentToRangedVariables invariants samModel
         let tracer (oldValue:'traceableOfOrigin) =
             let beforeTransform = state.ForwardTracer oldValue
             forwardTraceInClosure.Item beforeTransform
@@ -319,20 +340,10 @@ module internal SamToPromela =
             }
         do! updateState transformed
     }
+    let transformConfigurationWf<'traceableOfOrigin> () : ExogenousWorkflowFunction<SamTracer.SamTracer<'traceableOfOrigin>,PromelaTracer<'traceableOfOrigin>> =
+        transformConfigurationWithInvariantsWf<'traceableOfOrigin> []
 
     
-module internal ScmToPromela =
-
-    open SafetySharp.Workflow
-    open SafetySharp.Models.ScmTracer
-    open SafetySharp.Analysis.VerificationCondition
-                
-    let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()
-                        : ExogenousWorkflowFunction<'state,SamToPromela.PromelaTracer<'traceableOfOrigin>> = workflow {
-        do! SafetySharp.Models.ScmToSam.transformIscmToSam
-        do! SamToPromela.transformConfigurationWf ()
-    }
-
 module internal ScmVeToPromela =
     
     open ScmVerificationElements
@@ -389,6 +400,9 @@ module internal ScmVeToPromela =
         let varName = tracer (Scm.TraceableFault(compPath,fault))
         PrVarref.Varref(varName,None,None)
 
+        
+    // TODO: Actually we need to add the variable "globalVarInitialized" to the ltl-formula.
+    // Otherwise "[] A==B+1" would not work. "F (globalVarInitialized && ([] A==B+1))".
     let rec transformLtlExpression (tracer:Scm.Traceable->string) (expression:LtlExpr) : PrLtlExpr =
         match expression with
             | LtlExpr.Literal  (value) ->
@@ -415,4 +429,24 @@ module internal ScmVeToPromela =
                 let transformedRight = (transformLtlExpression tracer) right
                 let transformedOperator = transformBinaryLtlOperator op
                 PrLtlExpr.BinaryLtlExpr(transformedLeft,transformedOperator,transformedRight)
+                                
+module internal ScmToPromela =
 
+    open SafetySharp.Workflow
+    open SafetySharp.Models.ScmTracer
+    open SafetySharp.Analysis.VerificationCondition
+                
+
+    let transformConfigurationWithInvariants<'state when 'state :> IScmTracer<Scm.Traceable,'state>> (invariants:ScmVerificationElements.PropositionalExpr list)
+                        : ExogenousWorkflowFunction<'state,SamToPromela.PromelaTracer<Scm.Traceable>> = workflow {
+        do! SafetySharp.Models.ScmToSam.transformIscmToSam
+        let! state = getState ()
+        let samInvariants = invariants |> List.map (ScmVeToSam.transformScmVePropositionalExprToSamExpr state.ForwardTracer)
+        do! SamToPromela.transformConfigurationWithInvariantsWf (samInvariants)
+    }
+               
+    let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()
+                        : ExogenousWorkflowFunction<'state,SamToPromela.PromelaTracer<'traceableOfOrigin>> = workflow {        
+        do! SafetySharp.Models.ScmToSam.transformIscmToSam
+        do! SamToPromela.transformConfigurationWf ()
+    }

@@ -25,3 +25,6 @@ namespace SafetySharp.AnalysisTechniques
 module internal AtStepInvariant =
     open SafetySharp.Workflow
 
+    
+    // Promela: TODO: Optimization: Just append an assertion with the invariant to the loop code. This should reduce the state space. 
+    //          Add this technique also to AtDccaPruning
