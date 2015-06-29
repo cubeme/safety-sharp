@@ -23,7 +23,6 @@
 namespace SafetySharp.Compiler.Normalization
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
@@ -51,7 +50,7 @@ namespace SafetySharp.Compiler.Normalization
 	///         [SafetySharp.Modeling.BackingFieldAttribute("f")] 
 	///         public void MyMethod(int a, double b) => f(a, b);
 	///    		
-	/// 		private extern bool MyProperty { get; set; }
+	/// 		private extern bool MyProperty { get; set; } // TODO!
 	///    		// becomes (on a single line with uniquely generated names):
 	///    		[CompilerGenerated] 
 	///         public delegate bool d1();
@@ -61,11 +60,12 @@ namespace SafetySharp.Compiler.Normalization
 	///         private d1 f1;
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] 
 	///         private d2 f2;
-	///         [SafetySharp.Modeling.RequiredAttribute()] 
 	///    		private bool MyProperty 
 	///         { 
+	///              [SafetySharp.Modeling.RequiredAttribute()] 
 	///              [SafetySharp.Modeling.BackingFieldAttribute("f1")]
 	///              get { return f1(); } 
+	///              [SafetySharp.Modeling.RequiredAttribute()] 
 	///              [SafetySharp.Modeling.BackingFieldAttribute("f2")] 
 	///              set { f2(value); } 
 	///         }
@@ -117,11 +117,6 @@ namespace SafetySharp.Compiler.Normalization
 		private AttributeListSyntax _requiredAttribute;
 
 		/// <summary>
-		///     Represents the [Provided] attribute syntax.
-		/// </summary>
-		private AttributeListSyntax _providedAttribute;
-
-		/// <summary>
 		///     Normalizes the syntax trees of the <see cref="Compilation" />.
 		/// </summary>
 		protected override Compilation Normalize()
@@ -129,7 +124,6 @@ namespace SafetySharp.Compiler.Normalization
 			_debuggerHiddenAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(DebuggerHiddenAttribute).FullName);
 			_compilerGeneratedAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(CompilerGeneratedAttribute).FullName);
 			_requiredAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(RequiredAttribute).FullName);
-			_providedAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(ProvidedAttribute).FullName);
 			_ignoreAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(SuppressTransformationAttribute).FullName);
 			_browsableAttribute = (AttributeListSyntax)Syntax.Attribute(typeof(DebuggerBrowsableAttribute).FullName,
 				Syntax.MemberAccessExpression(Syntax.TypeExpression(Compilation.GetTypeSymbol<DebuggerBrowsableState>()), "Never"));
@@ -165,248 +159,13 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes the <paramref name="propertyDeclaration" />.
-		/// </summary>
-		public override SyntaxNode VisitPropertyDeclaration(PropertyDeclarationSyntax propertyDeclaration)
-		{
-			var propertySymbol = propertyDeclaration.GetPropertySymbol(SemanticModel);
-
-			if (propertySymbol.IsRequiredPort(SemanticModel))
-				return NormalizeRequiredPort(propertyDeclaration);
-
-			if (propertySymbol.IsProvidedPort(SemanticModel))
-				return NormalizeProvidedPort(propertyDeclaration);
-
-			return propertyDeclaration;
-		}
-
-		/// <summary>
-		///     Normalizes the <paramref name="propertyDeclaration" /> and adds the generated members.
-		/// </summary>
-		/// <param name="propertyDeclaration">The method declaration that should be normalized.</param>
-		private PropertyDeclarationSyntax NormalizeRequiredPort(PropertyDeclarationSyntax propertyDeclaration)
-		{
-			var propertySymbol = propertyDeclaration.GetPropertySymbol(SemanticModel);
-			var generatedMembers = new List<MemberDeclarationSyntax>();
-
-			string getterFieldName = null;
-			string setterFieldName = null;
-
-			var originalDeclaration = propertyDeclaration;
-
-			// Generate the members for the getter, if any
-			if (propertySymbol.GetMethod != null)
-			{
-				var getterDelegate = CreateDelegate(propertySymbol.GetMethod);
-				var getterField = CreateField(getterDelegate);
-				getterFieldName = GetFieldName();
-
-				generatedMembers.Add(getterDelegate);
-				generatedMembers.Add(getterField);
-			}
-
-			// Generate the members for the setter, if any
-			if (propertySymbol.SetMethod != null)
-			{
-				if (propertySymbol.GetMethod != null)
-					++_portCount;
-
-				var setterDelegate = CreateDelegate(propertySymbol.SetMethod);
-				var setterField = CreateField(setterDelegate);
-				setterFieldName = GetFieldName();
-
-				generatedMembers.Add(setterDelegate);
-				generatedMembers.Add(setterField);
-			}
-
-			// Add the [Required] attribute if it is not already present
-			if (!originalDeclaration.HasAttribute<RequiredAttribute>(SemanticModel))
-			{
-				propertyDeclaration = propertyDeclaration.RemoveTrivia();
-				propertyDeclaration =
-					propertyDeclaration.WithAttributeLists(propertyDeclaration.AttributeLists.Add(_requiredAttribute.WithTrailingSpace()));
-			}
-
-			// Remove the 'extern' keyword from the property
-			var externIndex = propertyDeclaration.Modifiers.IndexOf(SyntaxKind.ExternKeyword);
-			propertyDeclaration = propertyDeclaration.WithModifiers(propertyDeclaration.Modifiers.RemoveAt(externIndex));
-
-			// Add the [DebuggerHidden] attribute if it is not already present
-			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))
-				propertyDeclaration = propertyDeclaration.WithAttributeLists(propertyDeclaration.AttributeLists.Add(_debuggerHiddenAttribute));
-
-			// Replace the property's accessors and ensure that we don't modify the line count
-			propertyDeclaration = propertyDeclaration.WithAccessorList(SyntaxFactory.AccessorList());
-			if (propertySymbol.GetMethod != null)
-			{
-				var getterStatement = Syntax.ReturnStatement(Syntax.InvocationExpression(Syntax.IdentifierName(getterFieldName)));
-				var block = SyntaxFactory.Block((StatementSyntax)getterStatement);
-				var backingFieldAttribute = Syntax.Attribute(typeof(BackingFieldAttribute).FullName, Syntax.LiteralExpression(getterFieldName));
-				var getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, block);
-				var originalAttributes =
-					originalDeclaration.AccessorList.Accessors.Single(a => a.Kind() == SyntaxKind.GetAccessorDeclaration).AttributeLists;
-				getter = getter.AddAttributeLists((AttributeListSyntax)backingFieldAttribute);
-				getter = getter.AddAttributeLists(originalAttributes.ToArray());
-				getter = getter.AddAttributeLists(_debuggerHiddenAttribute, _requiredAttribute);
-				propertyDeclaration = propertyDeclaration.WithAccessorList(propertyDeclaration.AccessorList.AddAccessors(getter));
-			}
-
-			if (propertySymbol.SetMethod != null)
-			{
-				var setterStatement = Syntax.ExpressionStatement(
-					Syntax.InvocationExpression(Syntax.IdentifierName(setterFieldName), Syntax.IdentifierName("value")));
-				var block = SyntaxFactory.Block((StatementSyntax)setterStatement);
-				var backingFieldAttribute = Syntax.Attribute(typeof(BackingFieldAttribute).FullName, Syntax.LiteralExpression(setterFieldName));
-				var setter = SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration, block);
-				var originalAttributes =
-					originalDeclaration.AccessorList.Accessors.Single(a => a.Kind() == SyntaxKind.SetAccessorDeclaration).AttributeLists;
-				setter = setter.AddAttributeLists((AttributeListSyntax)backingFieldAttribute);
-				setter = setter.AddAttributeLists(originalAttributes.ToArray());
-				setter = setter.AddAttributeLists(_debuggerHiddenAttribute, _requiredAttribute);
-				propertyDeclaration = propertyDeclaration.WithAccessorList(propertyDeclaration.AccessorList.AddAccessors(setter));
-			}
-
-			propertyDeclaration = propertyDeclaration.NormalizeWhitespace();
-			propertyDeclaration = propertyDeclaration.WithTrivia(originalDeclaration);
-
-			++_portCount;
-			AddMembers(propertySymbol.ContainingType, generatedMembers.ToArray());
-			return propertyDeclaration.EnsureLineCount(originalDeclaration);
-		}
-
-		/// <summary>
-		///     Normalizes the given <paramref name="propertyDeclaration" /> and adds the generated members.
-		/// </summary>
-		/// <param name="propertyDeclaration">The method declaration that should be normalized.</param>
-		private MemberDeclarationSyntax NormalizeProvidedPort(PropertyDeclarationSyntax propertyDeclaration)
-		{
-			var propertySymbol = propertyDeclaration.GetPropertySymbol(SemanticModel);
-			var generatedMembers = new List<MemberDeclarationSyntax>();
-
-			string getterFieldName = null;
-			string setterFieldName = null;
-			string getterBehaviorName = null;
-			string setterBehaviorName = null;
-			MethodDeclarationSyntax getterBehavior = null;
-
-			var originalDeclaration = propertyDeclaration;
-
-			// Generate the members for the getter, if any
-			if (propertySymbol.GetMethod != null)
-			{
-				var getterDelegate = CreateDelegate(propertySymbol.GetMethod);
-				var getterField = CreateField(getterDelegate);
-				var body = propertyDeclaration.AccessorList.Accessors.Single(a => a.Kind() == SyntaxKind.GetAccessorDeclaration);
-				getterBehavior = CreateBehaviorMethod(propertySymbol.GetMethod, body.Body);
-
-				getterFieldName = GetFieldName();
-				getterBehaviorName = ("Behavior" + _portCount).ToSynthesized();
-
-				generatedMembers.Add(getterDelegate);
-				generatedMembers.Add(getterField);
-			}
-
-			// Generate the members for the setter, if any
-			if (propertySymbol.SetMethod != null)
-			{
-				if (propertySymbol.GetMethod != null)
-					++_portCount;
-
-				var setterDelegate = CreateDelegate(propertySymbol.SetMethod);
-				var setterField = CreateField(setterDelegate);
-				setterFieldName = GetFieldName();
-				setterBehaviorName = ("Behavior" + _portCount).ToSynthesized();
-
-				generatedMembers.Add(setterDelegate);
-				generatedMembers.Add(setterField);
-			}
-
-			//// Remove all modifiers from the port implementation except for the 'private' keyword
-			//var modifiers = portImplementation.Modifiers;
-			//var privateKeyword = modifiers[modifiers.IndexOf(SyntaxKind.PrivateKeyword)];
-			//portImplementation = portImplementation.WithModifiers(SyntaxTokenList.Create(privateKeyword));
-
-			// Replace all original attributes with their global name, as the required 'usings' are not present in the generated file
-			var attributeSymbols = propertySymbol.GetAttributes();
-			if (attributeSymbols.Length != 0)
-			{
-				var attributes = attributeSymbols.Select(a => (AttributeListSyntax)Syntax.Attribute(a));
-				propertyDeclaration = propertyDeclaration.WithAttributeLists(SyntaxFactory.List(attributes));
-			}
-
-			// Add the requested attribute if it is not already present
-			if (!propertySymbol.HasAttribute<ProvidedAttribute>(SemanticModel))
-			{
-				var attributeSyntax = (AttributeListSyntax)Syntax.Attribute(typeof(ProvidedAttribute).FullName).WithTrailingSpace();
-				propertyDeclaration = propertyDeclaration.WithAttributeLists(propertyDeclaration.AttributeLists.Add(attributeSyntax));
-			}
-
-			//// Replace the method's body and ensure that we don't modify the line count of the containing type
-			//// We don't change abstract methods, however, except for adding the requested attribute, if necessary
-			//if (propertyDeclaration.Modifiers.IndexOf(SyntaxKind.AbstractKeyword) != -1)
-			//	return propertyDeclaration;
-
-			//// Add the [MethodBehavior] attribute
-			//var behaviorArgument = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", methodName));
-			//var behaviorAttribute = SyntaxBuilder.Attribute(typeof(IntendedBehaviorAttribute).FullName, behaviorArgument);
-			//propertyDeclaration = propertyDeclaration.WithAttributeLists(propertyDeclaration.AttributeLists.Add(behaviorAttribute));
-
-			// Add the [DebuggerHidden] attribute if not already present
-			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))
-				propertyDeclaration = propertyDeclaration.WithAttributeLists(propertyDeclaration.AttributeLists.Add(_debuggerHiddenAttribute));
-
-			//// Add the [Ignore] attribute if not already present
-			//if (!originalDeclaration.HasAttribute<SuppressTransformationAttribute>(SemanticModel))
-			//{
-			//	portImplementation = portImplementation.WithAttributeLists(portImplementation.AttributeLists.Add(_ignoreAttribute));
-			//	portImplementation = portImplementation.RemoveComments().WithTrivia(originalDeclaration);
-			//}
-
-			// Replace the property's accessors
-			propertyDeclaration = propertyDeclaration.WithAccessorList(SyntaxFactory.AccessorList());
-			if (propertySymbol.GetMethod != null)
-			{
-				var getterStatement = Syntax.ReturnStatement(Syntax.InvocationExpression(Syntax.IdentifierName(getterFieldName)));
-				var block = SyntaxFactory.Block((StatementSyntax)getterStatement);
-				var backingFieldAttribute = Syntax.Attribute(typeof(BackingFieldAttribute).FullName, Syntax.LiteralExpression(getterFieldName));
-				var behaviorAttribute = Syntax.Attribute(typeof(IntendedBehaviorAttribute).FullName, Syntax.LiteralExpression(getterBehaviorName));
-				var getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, block);
-				getter = getter.AddAttributeLists((AttributeListSyntax)behaviorAttribute, (AttributeListSyntax)backingFieldAttribute);
-				getter = getter.AddAttributeLists(_debuggerHiddenAttribute, _providedAttribute);
-				propertyDeclaration = propertyDeclaration.WithAccessorList(propertyDeclaration.AccessorList.AddAccessors(getter));
-			}
-
-			if (propertySymbol.SetMethod != null)
-			{
-				var setterStatement = Syntax.ExpressionStatement(
-					Syntax.InvocationExpression(Syntax.IdentifierName(setterFieldName), Syntax.IdentifierName("value")));
-				var block = SyntaxFactory.Block((StatementSyntax)setterStatement);
-				var backingFieldAttribute = Syntax.Attribute(typeof(BackingFieldAttribute).FullName, Syntax.LiteralExpression(setterFieldName));
-				var behaviorAttribute = Syntax.Attribute(typeof(IntendedBehaviorAttribute).FullName, Syntax.LiteralExpression(setterBehaviorName));
-				var setter = SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration, block);
-				setter = setter.AddAttributeLists((AttributeListSyntax)behaviorAttribute, (AttributeListSyntax)backingFieldAttribute);
-				setter = setter.AddAttributeLists(_debuggerHiddenAttribute, _providedAttribute);
-				propertyDeclaration = propertyDeclaration.WithAccessorList(propertyDeclaration.AccessorList.AddAccessors(setter));
-			}
-
-			propertyDeclaration = propertyDeclaration.RemoveComments().WithTrivia(originalDeclaration);
-			generatedMembers.Add(propertyDeclaration);
-
-			++_portCount;
-			AddMembers(propertySymbol.ContainingType, generatedMembers.ToArray());
-			//return portImplementation.EnsureLineCount(originalDeclaration);
-			return getterBehavior;
-		}
-
-		/// <summary>
 		///     Normalizes the <paramref name="methodDeclaration" /> and adds the generated members.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
 		private MethodDeclarationSyntax NormalizeExternMethod(MethodDeclarationSyntax methodDeclaration)
 		{
 			var originalDeclaration = methodDeclaration;
-			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
-			var methodDelegate = CreateDelegate(methodSymbol);
+			var methodDelegate = CreateDelegate(methodDeclaration);
 			var methodField = CreateField(methodDelegate);
 
 			// Add the [Required] attribute if it is not already present
@@ -431,7 +190,7 @@ namespace SafetySharp.Compiler.Normalization
 			methodDeclaration = methodDeclaration.WithTrivia(originalDeclaration);
 
 			++_portCount;
-			AddMembers(methodSymbol.ContainingType, methodField, methodDelegate);
+			AddMembers(originalDeclaration.GetMethodSymbol(SemanticModel).ContainingType, methodField, methodDelegate);
 			return methodDeclaration.EnsureLineCount(originalDeclaration);
 		}
 
@@ -444,12 +203,22 @@ namespace SafetySharp.Compiler.Normalization
 		private MethodDeclarationSyntax NormalizeMethod(MethodDeclarationSyntax methodDeclaration, Type attribute = null)
 		{
 			var originalDeclaration = methodDeclaration;
-			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
-			var methodDelegate = CreateDelegate(methodSymbol);
+			var methodDelegate = CreateDelegate(methodDeclaration);
 			var methodField = CreateField(methodDelegate);
 
+			// Create the private port implementation method
+			var methodName = ("Behavior" + _portCount).ToSynthesized();
+			var portImplementationName = SyntaxFactory.Identifier(methodName).WithTrivia(originalDeclaration.Identifier);
+			var portImplementation = originalDeclaration.WithIdentifier(portImplementationName);
+			portImplementation = portImplementation.WithAccessibility(Accessibility.Private).WithExplicitInterfaceSpecifier(null);
+
+			// Remove all modifiers from the port implementation except for the 'private' keyword
+			var modifiers = portImplementation.Modifiers;
+			var privateKeyword = modifiers[modifiers.IndexOf(SyntaxKind.PrivateKeyword)];
+			portImplementation = portImplementation.WithModifiers(SyntaxTokenList.Create(privateKeyword));
+
 			// Replace all original attributes with their global name, as the required 'usings' are not present in the generated file
-			var attributeSymbols = methodSymbol.GetAttributes();
+			var attributeSymbols = originalDeclaration.GetMethodSymbol(SemanticModel).GetAttributes();
 			if (attributeSymbols.Length != 0)
 			{
 				var attributes = attributeSymbols.Select(a => (AttributeListSyntax)Syntax.Attribute(a));
@@ -457,7 +226,7 @@ namespace SafetySharp.Compiler.Normalization
 			}
 
 			// Add the requested attribute if it is not already present
-			if (attribute != null && !methodSymbol.HasAttribute(SemanticModel.GetTypeSymbol(attribute)))
+			if (attribute != null && !originalDeclaration.HasAttribute(SemanticModel, attribute))
 			{
 				var attributeSyntax = (AttributeListSyntax)Syntax.Attribute(attribute.FullName).WithTrailingSpace();
 				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(attributeSyntax));
@@ -468,11 +237,8 @@ namespace SafetySharp.Compiler.Normalization
 			if (methodDeclaration.Modifiers.IndexOf(SyntaxKind.AbstractKeyword) != -1)
 				return methodDeclaration;
 
-			// Create the private port implementation method
-			var portImplementation = CreateBehaviorMethod(methodSymbol, originalDeclaration);
-
-			// Add the [IntendedBehavior] attribute
-			var behaviorArgument = (ExpressionSyntax)Syntax.LiteralExpression(portImplementation.Identifier.ValueText);
+			// Add the [MethodBehavior] attribute
+			var behaviorArgument = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", methodName));
 			var behaviorAttribute = SyntaxBuilder.Attribute(typeof(IntendedBehaviorAttribute).FullName, behaviorArgument);
 			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(behaviorAttribute));
 
@@ -480,60 +246,21 @@ namespace SafetySharp.Compiler.Normalization
 			if (!originalDeclaration.HasAttribute<DebuggerHiddenAttribute>(SemanticModel))
 				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(_debuggerHiddenAttribute));
 
+			// Add the [Ignore] attribute if not already present
+			if (!originalDeclaration.HasAttribute<SuppressTransformationAttribute>(SemanticModel))
+			{
+				portImplementation = portImplementation.WithAttributeLists(portImplementation.AttributeLists.Add(_ignoreAttribute));
+				portImplementation = portImplementation.RemoveComments().WithTrivia(originalDeclaration);
+			}
+
 			// Add the backing field attribute and replace the method body
 			methodDeclaration = AddBackingFieldAttribute(methodDeclaration);
 			methodDeclaration = ReplaceBodyWithDelegateInvocation(methodDeclaration);
 			methodDeclaration = methodDeclaration.RemoveComments().WithTrivia(originalDeclaration);
 
 			++_portCount;
-			AddMembers(methodSymbol.ContainingType, methodField, methodDelegate, methodDeclaration);
+			AddMembers(originalDeclaration.GetMethodSymbol(SemanticModel).ContainingType, methodField, methodDelegate, methodDeclaration);
 			return portImplementation.EnsureLineCount(originalDeclaration);
-		}
-
-		/// <summary>
-		///     Creates the behavior method for the <paramref name="methodSymbol" /> and the <paramref name="methodBody" />.
-		/// </summary>
-		private MethodDeclarationSyntax CreateBehaviorMethod(IMethodSymbol methodSymbol, BlockSyntax methodBody)
-		{
-			var behaviorMethod = (MethodDeclarationSyntax)Syntax.MethodDeclaration(methodSymbol);
-			behaviorMethod = behaviorMethod.WithBody(methodBody);
-			behaviorMethod = behaviorMethod.WithIdentifier(SyntaxFactory.Identifier(("Behavior" + _portCount).ToSynthesized()));
-			behaviorMethod = behaviorMethod.WithAccessibility(Accessibility.Private).WithExplicitInterfaceSpecifier(null);
-
-			// Remove all modifiers from the port implementation except for the 'private' keyword
-			var modifiers = behaviorMethod.Modifiers;
-			var privateKeyword = modifiers[modifiers.IndexOf(SyntaxKind.PrivateKeyword)];
-			behaviorMethod = behaviorMethod.WithModifiers(SyntaxTokenList.Create(privateKeyword));
-
-			// Add the [SuppressTransformation] attribute if not already present
-			if (!methodSymbol.HasAttribute<SuppressTransformationAttribute>(SemanticModel))
-				behaviorMethod = behaviorMethod.AddAttributeLists(_ignoreAttribute);
-
-			return behaviorMethod.NormalizeWhitespace().RemoveComments();
-		}
-
-		/// <summary>
-		///     Creates the behavior method for the <paramref name="methodSymbol" /> and the <paramref name="methodDeclaration" />.
-		/// </summary>
-		private MethodDeclarationSyntax CreateBehaviorMethod(IMethodSymbol methodSymbol, MethodDeclarationSyntax methodDeclaration)
-		{
-			var behaviorMethod = (MethodDeclarationSyntax)Syntax.MethodDeclaration(methodSymbol);
-			behaviorMethod = behaviorMethod.WithExpressionBody(methodDeclaration.ExpressionBody);
-			behaviorMethod = behaviorMethod.WithBody(methodDeclaration.Body);
-			behaviorMethod = behaviorMethod.WithIdentifier(SyntaxFactory.Identifier(("Behavior" + _portCount).ToSynthesized()));
-			behaviorMethod = behaviorMethod.WithAccessibility(Accessibility.Private).WithExplicitInterfaceSpecifier(null);
-			behaviorMethod = behaviorMethod.WithAttributeLists(methodDeclaration.AttributeLists);
-
-			// Remove all modifiers from the port implementation except for the 'private' keyword
-			var modifiers = behaviorMethod.Modifiers;
-			var privateKeyword = modifiers[modifiers.IndexOf(SyntaxKind.PrivateKeyword)];
-			behaviorMethod = behaviorMethod.WithModifiers(SyntaxTokenList.Create(privateKeyword));
-
-			// Add the [SuppressTransformation] attribute if not already present
-			if (!methodSymbol.HasAttribute<SuppressTransformationAttribute>(SemanticModel))
-				behaviorMethod = behaviorMethod.WithAttributeLists(behaviorMethod.AttributeLists.Add(_ignoreAttribute));
-
-			return behaviorMethod.NormalizeWhitespace().RemoveComments().WithTrivia(methodDeclaration);
 		}
 
 		/// <summary>
@@ -553,11 +280,12 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Creates a delegate declaration that is compatible with <paramref name="methodSymbol" />.
+		///     Creates a delegate declaration that is compatible with <paramref name="methodDeclaration" />.
 		/// </summary>
-		/// <param name="methodSymbol">The symbol of the method the delegate should be created for.</param>
-		private DelegateDeclarationSyntax CreateDelegate(IMethodSymbol methodSymbol)
+		/// <param name="methodDeclaration">The declaration of the method the delegate should be created for.</param>
+		private DelegateDeclarationSyntax CreateDelegate(MethodDeclarationSyntax methodDeclaration)
 		{
+			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
 			var methodDelegate = methodSymbol.GetSynthesizedDelegateDeclaration(GetDelegateName());
 			methodDelegate = methodDelegate.AddAttributeLists(_compilerGeneratedAttribute);
 

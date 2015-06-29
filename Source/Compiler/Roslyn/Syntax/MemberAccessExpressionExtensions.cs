@@ -60,6 +60,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 
 			if (!symbol.Overrides(requiredPortsSymbol) && !symbol.Overrides(providedPortsSymbol))
 			{
+				// Try the interface properties; thanks to F#, Component implements those properties explicitly...
 				requiredPortsSymbol = (IPropertySymbol)semanticModel.GetComponentInterfaceSymbol().GetMembers("RequiredPorts").Single();
 				providedPortsSymbol = (IPropertySymbol)semanticModel.GetComponentInterfaceSymbol().GetMembers("ProvidedPorts").Single();
 
@@ -98,12 +99,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 			Assert.NotNull(targetSymbol, "Failed to determine the target symbol.");
 
 			var portSymbols = isRequiredPort ? targetSymbol.GetRequiredPorts(semanticModel) : targetSymbol.GetProvidedPorts(semanticModel);
-			var ports = portSymbols.Where(p =>
-			{
-				var propertySymbol = p.AssociatedSymbol as IPropertySymbol;
-				return propertySymbol != null ? propertySymbol.Name == portName : p.Name == portName;
-			}).ToArray();
-
+			var ports = portSymbols.Where(p => p.Name == portName).ToArray();
 			return new PortCollection(targetSymbol, ports, portName, nonVirtualInvocation, isRequiredPort);
 		}
 	}

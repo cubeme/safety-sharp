@@ -52,13 +52,6 @@ namespace Tests.Execution.ProvidedPorts
 		{
 			return i / 2;
 		}
-
-		protected virtual int T
-		{
-			set { F = value; }
-		}
-
-		public int F;
 	}
 
 	internal class X3 : X2
@@ -93,11 +86,6 @@ namespace Tests.Execution.ProvidedPorts
 			return base.N(i) + 2;
 		}
 
-		protected override int T
-		{
-			set { base.T = value + 7; }
-		}
-
 		[SuppressTransformation]
 		protected override void Check()
 		{
@@ -123,12 +111,6 @@ namespace Tests.Execution.ProvidedPorts
 
 			base.R.ShouldBe(21);
 			R.ShouldBe(24);
-
-			T = 10;
-			F.ShouldBe(17);
-
-			base.T = 10;
-			F.ShouldBe(10);
 		}
 	}
 }

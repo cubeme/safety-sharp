@@ -48,7 +48,7 @@ namespace Tests.Normalization.Methods.Provided
 		/// </summary>
 		// test
 		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private System.Int32 __Behavior0__()
+		private int __Behavior0__()
 		{
 			return 1;
 		} /* test */

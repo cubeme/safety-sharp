@@ -305,15 +305,6 @@
     <Compile Include="Metadata\Components\Fields\property field.cs" />
     <Compile Include="Metadata\Faults\FaultEffects\property effects.cs" />
     <None Include="Metadata\Faults\FaultEffects\overridden port.cs" />
-    <None Include="Normalization\Methods\Provided\getter-only property.cs" />
-    <None Include="Normalization\Methods\Provided\setter-only property.cs" />
-    <None Include="Normalization\Methods\Provided\get-set property.cs" />
-    <None Include="Normalization\Methods\Provided\auto property.cs" />
-    <None Include="Normalization\Methods\Required\setter-only property.cs" />
-    <None Include="Normalization\Methods\Required\getter-only property.cs" />
-    <None Include="Normalization\Methods\Required\auto property.cs" />
-    <None Include="Normalization\Methods\Provided\abstract property.cs" />
-    <None Include="Normalization\Methods\Provided\expression bodies.cs" />
     <Compile Include="Utilities\TestTraceOutput.cs" />
     <None Include="Execution\SemanticEquality\SideEffectsFree\expression bodies.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffects\control flow.cs" />
@@ -444,7 +435,7 @@
     <None Include="Normalization\Methods\OtherMembers\provided and required.cs" />
     <None Include="Normalization\Methods\OtherMembers\static members.cs" />
     <None Include="Normalization\Methods\OtherMembers\update method.cs" />
-    <None Include="Normalization\Methods\Provided\abstract method.cs" />
+    <None Include="Normalization\Methods\Provided\abstract.cs" />
     <None Include="Normalization\Methods\Provided\attributes.cs" />
     <None Include="Normalization\Methods\Provided\documentation comments.cs" />
     <None Include="Normalization\Methods\Provided\explicit implementation.cs" />

@@ -32,8 +32,8 @@ namespace Tests.Diagnostics.PortReferences.Invalid
 		private extern void M();
 	}
 
-	[Diagnostic(DiagnosticIdentifier.InaccessibleRequiredPort, 41, 37, 1, "Tests.Diagnostics.PortReferences.Invalid.Y3", "M")]
-	[Diagnostic(DiagnosticIdentifier.InaccessibleRequiredPort, 42, 37, 1, "Tests.Diagnostics.PortReferences.Invalid.Y3", "P")]
+	[Diagnostic(DiagnosticIdentifier.InaccessibleRequiredPort, 41, 37, 1, "Tests.Diagnostics.PortReferences.Invalid.X14", "M")]
+	[Diagnostic(DiagnosticIdentifier.InaccessibleRequiredPort, 42, 37, 1, "Tests.Diagnostics.PortReferences.Invalid.X14", "P")]
 	internal class X14 : Component
 	{
 		private X14(Y3 y)

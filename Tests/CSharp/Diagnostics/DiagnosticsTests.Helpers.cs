@@ -100,7 +100,7 @@ namespace Tests.Diagnostics
 			}
 
 			foreach (var diagnostic in actualDiagnostics)
-				Output.Log("{0}\n", diagnostic);
+				Output.Trace("{0}\n", diagnostic);
 		}
 
 		private static IEnumerable<Diagnostic> GetExpectedDiagnostics(Analyzer analyzer, Compilation compilation)

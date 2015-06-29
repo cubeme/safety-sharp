@@ -82,8 +82,8 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="typeSymbol" /> is directly or indirectly derived from the
-		///     <see cref="Fault{TComponent}" /> class within the context of the <paramref name="compilation" />.
+		///     Checks whether <paramref name="typeSymbol" /> is directly or indirectly derived from the <see cref="Fault{T}" />
+		///     class within the context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
 		/// <param name="compilation">
@@ -150,19 +150,20 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="typeSymbol" /> represents <see cref="int" />,
-		///     <see cref="bool" />, <see cref="double" />, or an enumeration type, all of which are S# supports for component fields.
+		///     Checks whether <paramref name="typeSymbol" /> represents the <see cref="int" />,
+		///     <see cref="bool" />, or <see cref="decimal" /> types.
 		/// </summary>
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
-		public static bool IsSupportedFieldType([NotNull] this ITypeSymbol typeSymbol)
+		public static bool IsBuiltInType([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
 
-			return typeSymbol.SpecialType == SpecialType.System_Int32 ||
-				   typeSymbol.SpecialType == SpecialType.System_Double ||
-				   typeSymbol.SpecialType == SpecialType.System_Boolean ||
-				   typeSymbol.TypeKind == TypeKind.Enum;
+			return typeSymbol.Equals(semanticModel.GetTypeSymbol<int>()) ||
+				   typeSymbol.Equals(semanticModel.GetTypeSymbol<bool>()) ||
+				   typeSymbol.Equals(semanticModel.GetTypeSymbol<decimal>());
 		}
 
 		/// <summary>
@@ -173,7 +174,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <param name="filter">A filter that should be applied to filter the ports.</param>
 		[Pure]
 		private static IEnumerable<IMethodSymbol> GetPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel,
-														   Func<ITypeSymbol, IMethodSymbol, bool> filter)
+														   Func<ITypeSymbol, ISymbol, bool> filter)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -187,7 +188,21 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			var members = typeSymbol.GetMembers();
 			var ports = members
 				.OfType<IMethodSymbol>()
-				.Where(port => port.MethodKind != MethodKind.Constructor && filter(typeSymbol, port))
+				.Cast<ISymbol>()
+				.Union(members.OfType<IPropertySymbol>())
+				.Where(port => filter(typeSymbol, port))
+				.SelectMany(port =>
+				{
+					var method = port as IMethodSymbol;
+					if (method != null)
+						return new[] { method };
+
+					var property = port as IPropertySymbol;
+					if (property != null)
+						return new[] { property.GetMethod, property.SetMethod }.Where(symbol => symbol != null);
+
+					return Enumerable.Empty<IMethodSymbol>();
+				})
 				.Union(inheritedPorts)
 				.ToArray();
 
@@ -212,13 +227,18 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				if (portSymbol.HasAttribute<RequiredAttribute>(semanticModel))
 					return true;
 
-				if (portSymbol.AssociatedSymbol != null && portSymbol.AssociatedSymbol.HasAttribute<RequiredAttribute>(semanticModel))
-					return true;
-
 				if (type.TypeKind == TypeKind.Interface)
 					return false;
 
-				return portSymbol.IsExtern;
+				var methodSymbol = portSymbol as IMethodSymbol;
+				if (methodSymbol != null)
+					return methodSymbol.IsExtern;
+
+				var propertySymbol = portSymbol as IPropertySymbol;
+				if (propertySymbol != null)
+					return propertySymbol.IsExtern;
+
+				return false;
 			});
 		}
 
@@ -238,13 +258,18 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 				if (portSymbol.HasAttribute<ProvidedAttribute>(semanticModel))
 					return true;
 
-				if (portSymbol.AssociatedSymbol != null && portSymbol.AssociatedSymbol.HasAttribute<ProvidedAttribute>(semanticModel))
-					return true;
-
 				if (type.TypeKind == TypeKind.Interface)
 					return false;
 
-				return !portSymbol.IsExtern && !portSymbol.IsUpdateMethod(semanticModel);
+				var methodSymbol = portSymbol as IMethodSymbol;
+				if (methodSymbol != null)
+					return !methodSymbol.IsExtern && !methodSymbol.IsUpdateMethod(semanticModel);
+
+				var propertySymbol = portSymbol as IPropertySymbol;
+				if (propertySymbol != null)
+					return !propertySymbol.IsExtern;
+
+				return false;
 			});
 		}
 

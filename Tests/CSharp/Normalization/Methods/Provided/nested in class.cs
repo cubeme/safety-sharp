@@ -61,7 +61,7 @@ namespace Tests.Normalization.Methods.Provided
 
 			[SafetySharp.Modeling.ProvidedAttribute]
 			[SafetySharp.CompilerServices.IntendedBehaviorAttribute("__Behavior0__")]
-			[System.Diagnostics.DebuggerHiddenAttribute]
+		[System.Diagnostics.DebuggerHiddenAttribute]
 			[SafetySharp.CompilerServices.BackingFieldAttribute("__backingField0__")]
 			internal void M2() => this.__backingField0__();
 		}

@@ -42,7 +42,7 @@ namespace Tests.Normalization.Methods.Provided
 	internal partial class Out9 : Component, Tests.Normalization.Methods.Provided.I1
 	{
 		[SafetySharp.CompilerServices.SuppressTransformationAttribute]
-		private System.Int32 __Behavior0__()
+		private int __Behavior0__()
 		{
 			return 1;
 		}

@@ -74,11 +74,11 @@ namespace Tests.Metadata.Components.RequiredPorts
 			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
 			Metadata.RequiredPorts[0].Name.ShouldBe("get_M");
 
-			Metadata.RequiredPorts[1].MethodInfo.ShouldBe(typeof(X6b<int, bool>).GetMethod("set_N"));
+			Metadata.RequiredPorts[1].MethodInfo.ShouldBe(typeof(X6b<int, bool>).GetMethod("get_N"));
 			Metadata.RequiredPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.RequiredPorts[1].BaseMethod.ShouldBe(null);
 			Metadata.RequiredPorts[1].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[1].Name.ShouldBe("set_N");
+			Metadata.RequiredPorts[1].Name.ShouldBe("get_N");
 		}
 	}
 }
