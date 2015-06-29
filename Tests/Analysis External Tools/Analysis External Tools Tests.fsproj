@@ -57,6 +57,7 @@
     <Compile Include="SafetyAnalysisTestScript\Sats.fs" />
     <Compile Include="SafetyAnalysisTestScript\SatsParser.fs" />
     <Compile Include="SafetyAnalysisTestScript\SatsExecutor.fs" />
+    <Compile Include="SafetyAnalysisTestScript\SatsParserTests.fs" />
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
     </Compile>

@@ -161,7 +161,7 @@ module internal SatsParser =
             (str_ws "valid" >>% SafetySharp.Ternary.Ternary.True) <|>
             (str_ws "invalid" >>% SafetySharp.Ternary.Ternary.False) <|>
             (str_ws "unknown" >>% SafetySharp.Ternary.Ternary.Unknown)
-        pipe2 ( (parseLetIdentifierOfTypeInst LetType.LetTypePropertyResult) .>> (str_ws "result") .>> (str_ws "="))
+        pipe2 ( (parseLetIdentifierOfTypeInst LetType.LetTypePropertyResult) .>> (pstring ".") .>> (str_ws "result") .>> (str_ws "="))
               (parseResult)
               createLetStatement
     
