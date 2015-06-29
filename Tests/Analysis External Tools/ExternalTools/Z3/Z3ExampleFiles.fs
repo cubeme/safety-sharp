@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.ExternalTools
+namespace SafetySharp.ExternalTools.Z3
 
 module Z3ExamplesFiles =
 

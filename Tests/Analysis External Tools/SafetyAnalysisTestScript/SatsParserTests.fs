@@ -32,10 +32,7 @@ open SafetySharp.EngineOptions
 type ParserTests (xunitOutput:ITestOutputHelper) =
 
 
-    static member satsInjectSamTests =
-        [
-            "../../Examples/SAM/smokeTest1.sats";
-        ] |> Seq.map (fun (a) -> [|a|])
+    static member satsInjectSamTests = TestCases.SamSmokeTests.smokeTestsSatsInjectSamDeterministic
 
 
     [<Theory>]

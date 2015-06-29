@@ -21,7 +21,7 @@
 // THE SOFTWARE.
 
 
-namespace SafetySharp.ExternalTools
+namespace SafetySharp.ExternalTools.Boogie
     
 open Xunit
 open Xunit.Abstractions

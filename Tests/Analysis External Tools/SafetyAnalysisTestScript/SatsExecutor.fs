@@ -23,7 +23,7 @@
 namespace SafetySharp.SafetyAnalysisTestScript
 
 
-module internal SatsScmExecutor =
+module internal SatsExecutor =
     
     open Sats
     open SafetySharp.Ternary
