@@ -114,8 +114,22 @@ module internal ScmVeParser =
         (parseLocatedIdentifierInst IdentifierType.Field) |>> (fun (location,field) -> (location,Field.Field(field)) )
     let locFaultInst: Parser<_,UserState> =
         parseLocatedIdentifierInst IdentifierType.Fault |>> (fun (location,fault) -> (location,Fault.Fault(fault)) )
-    let locCompInst: Parser<_,UserState> =
-        parseLocatedIdentifierInst IdentifierType.Comp |>> (fun (location,comp) -> (Comp(comp)::location) )
+
+    let locCompInst: Parser<_,UserState> =         
+        let parseLocationOrNothing : Parser<_,UserState> =
+            (many (attempt (parseIdentifier |>> Comp.Comp .>> pstring "." ))) |>> List.rev       
+        fun stream ->
+            let locationIdentifierReply = (parseLocationOrNothing .>>. parseIdentifier) stream
+            if locationIdentifierReply.Status = ReplyStatus.Ok then
+                let (location,identifier) = locationIdentifierReply.Result
+                if stream.UserState.IsFullLocationOfType (location,identifier) IdentifierType.Comp then
+                    let resultToReturn = Comp(identifier)::location
+                    Reply(locationIdentifierReply.Status,resultToReturn,locationIdentifierReply.Error)
+                else
+                    let error = messageError (sprintf "Identifier '%s' has not been declared in path %s or the kind of access is wrong" identifier (location |> List.rev |> List.map (fun (Comp(c)) -> c) |> String.concat ".") )
+                    Reply(ReplyStatus.Error,mergeErrors locationIdentifierReply.Error error)
+            else
+                Reply(locationIdentifierReply.Status,locationIdentifierReply.Error)
     
     
     let str_ws a = (pstring a) .>> spaces

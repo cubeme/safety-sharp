@@ -50,3 +50,12 @@ module GenericParsers =
         
     let parseDecimal_ws<'u> : Parser<_,'u> = parseDecimal .>> spaces
     let parseBigint_ws<'u> : Parser<_,'u> = parseBigint .>> spaces
+
+    let pComment<'us> : Parser<unit,'us> =
+        pstring<'us> ("//") .>>. (restOfLine<'us> true) >>% ()
+    
+    let pCommentOrSpace<'us> =
+        spaces1<'us> <|> pComment<'us>
+
+    let spaces<'us> = skipMany<unit,'us> pCommentOrSpace<'us>
+    let spaces1<'us> = skipMany1<unit,'us> pCommentOrSpace<'us>
