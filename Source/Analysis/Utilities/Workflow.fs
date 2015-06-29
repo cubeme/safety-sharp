@@ -37,7 +37,7 @@ module internal Workflow =
         LogEvent : Event<string>;
         EngineOptions : Map<string,SafetySharp.EngineOptions.IEngineOption>;
         CancellationToken : System.Threading.CancellationToken option; //https://msdn.microsoft.com/de-de/library/dd997364(v=vs.110).aspx
-        Tainted : bool; // Use tainted to indicate, if a function changed something. Do not compare states, because now it is obvious, what happens, when a mutable changes
+        Tainted : bool; // Use tainted to indicate, if a function changed something. Do not compare states, because now it is obvious, what happens, when a mutable changes. TODO: move to iscmTracer/IIterateableWorkflow, because the use here changed.
         // GeneratedFilesAndDirs
     }
 
@@ -584,23 +584,23 @@ module internal Workflow =
         return (FileSystem.FileName(outputFileName))
     }
 
-    let printToStdout ()
+    let printToLog ()
             : EndogenousWorkflowFunction<string> = workflow {
         let! input = getState ()
-        printfn "%s" input
+        do! logEntry input
         return ()
     }    
 
-    let printObjectToStdout ()
+    let printObjectToLog ()
             : EndogenousWorkflowFunction<'a> = workflow {
         let! input = getState ()
-        printfn "%+A" input
+        do! logEntry (sprintf "%+A" input)
         return ()
     }    
 
-    let printNewParagraphToStdout<'a,'traceableOfOrigin,'traceableOfModel> ()
+    let printNewParagraphToLog<'a,'traceableOfOrigin,'traceableOfModel> ()
             : EndogenousWorkflowFunction<'a> = workflow {
-        printfn ""
-        printfn ""
+        do! logEntry ""
+        do! logEntry ""
         return ()
     }

@@ -27,10 +27,12 @@ open SafetySharp.Models
 open SafetySharp.Models.ScmVerificationElements
 
 // allows caching of analysis techniques to reduce lots of recalculations
+//TODO: Refactor Cache, such that it is reusable in several Analysis Techniques at the same time
 type private LoadedModelCache = {
     LoadedModel:Scm.ScmModel;
     PropositionalExprParser : string -> ScmVerificationElements.PropositionalExpr;
     LtlExprParser : string -> ScmVerificationElements.LtlExpr;
+    CompPathParser : string -> Scm.CompPath;
     // Lazy instantiated Analysis techniques. They are only instantiated, when needed
     LazyAtLtlFormulas : Lazy<AtLtlFormula.AnalyseLtlFormulas>;
     LazyAtDccaLtl : Map<ScmVerificationElements.PropositionalExpr,AtDccaLtl.PerformDccaWithLtlFormulas> ref; //Hazard to At
@@ -42,6 +44,7 @@ type private LoadedModelCache = {
                 LoadedModelCache.LoadedModel=scmModel;
                 LoadedModelCache.PropositionalExprParser = SafetySharp.Models.ScmVeParser.propositionalExprParser_Result initialParserState;
                 LoadedModelCache.LtlExprParser = SafetySharp.Models.ScmVeParser.ltlExprParser_Result initialParserState;
+                LoadedModelCache.CompPathParser = SafetySharp.Models.ScmVeParser.locCompInst_Result initialParserState;
                 LoadedModelCache.LazyAtLtlFormulas = lazy (new AtLtlFormula.AnalyseLtlFormulas());
                 LoadedModelCache.LazyAtDccaLtl = ref Map.empty<ScmVerificationElements.PropositionalExpr,AtDccaLtl.PerformDccaWithLtlFormulas>;
             }
@@ -181,7 +184,21 @@ type AnalysisFacade () =
                 let _,newWfStateAfterLoading = s wfState
                 currentState <- AnalysisFacadeState.ModelLoaded(LoadedModelCache.initial newWfStateAfterLoading.State,newWfStateAfterLoading)
                 ()
+                
+    member this.setEmptyMainModel (name:string) : unit =
+        let emptyModel = ScmHelpers.createEmptyScmModel (name)
+        this.setMainModel (emptyModel)        
 
+    member internal this.injectSamModel (modelToInject:Sam.Pgm, injectIntoPath:Scm.CompPath) : unit =
+        let injectIntoModel = currentState.getLoadedModel
+        let newModel = InjectSamIntoScm.injectSam injectIntoModel modelToInject injectIntoPath
+        this.setMainModel (newModel)
+
+    member this.injectSamModel (modelToInjectFilename:string, injectIntoPath:string) : unit =
+        let injectIntoPathParsed = currentState.getLoadedModelCache.CompPathParser injectIntoPath
+        let modelToInjectFile = System.IO.File.ReadAllText modelToInjectFilename
+        let samModel = SamParser.parseSamFile_Result modelToInjectFile
+        this.injectSamModel (samModel,injectIntoPathParsed)
                 
     //////// Engine Option /////////////
 
@@ -199,6 +216,7 @@ type AnalysisFacade () =
                 let _,newWfState = s wfState
                 currentState <- AnalysisFacadeState.ModelLoaded(currentModelCache,newWfState)
                 ()
+
 
     // Analysis Techniques
     
@@ -229,6 +247,12 @@ type AnalysisFacade () =
         let hazardAsPropExpr = currentState.getLoadedModelCache.PropositionalExprParser hazard
         this.atAnalyseDccaLtl_WithNuSmv hazardAsPropExpr
 
+    // Methods to organize state
+    
     member this.removeTemporaryFiles () :unit =
+        //TODO. Or maybe implement IDisposable
+        ()
+
+    member this.saveLogAsHtmlReport () :unit =
         //TODO. Or maybe implement IDisposable
         ()

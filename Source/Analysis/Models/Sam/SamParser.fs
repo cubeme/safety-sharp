@@ -235,9 +235,15 @@ module internal SamParser =
               createPgm              
     
     let samFile =
-        spaces >>. pgm_ws
+        spaces >>. pgm_ws .>> eof
 
 
+    let parseSamFile_Result (str:string) : Pgm =
+        let parser = samFile 
+        let parsedString = runParserOnString parser () "" str
+        match parsedString with
+            | Success(result, _, _)   -> result
+            | Failure(errorMsg, a, b) -> failwith errorMsg
 
         
     open SafetySharp.Workflow

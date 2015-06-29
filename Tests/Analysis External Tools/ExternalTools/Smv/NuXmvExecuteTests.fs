@@ -20,10 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.ExternalTools
+namespace SafetySharp.ExternalTools.Smv
 
 open NUnit.Framework
-open SafetySharp.Modelchecking
 open SafetySharp
 open SafetySharp.ExternalTools.Smv
 

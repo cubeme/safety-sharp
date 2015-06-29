@@ -41,7 +41,7 @@ module TsamToDotTests =
             do! SafetySharp.Models.TsamToDot.exportModelWorkflow ()
             do! SafetySharp.GraphVizDot.DotToString.exportDotPlainFile ()
 
-            do! SafetySharp.Workflow.printToStdout ()
+            do! SafetySharp.Workflow.printToLog ()
             let outputFile = inputFileNameToOutputFileName inputFile
             do! printToFile outputFile
     }

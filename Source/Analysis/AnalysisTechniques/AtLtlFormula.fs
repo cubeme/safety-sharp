@@ -70,7 +70,7 @@ module internal AtLtlFormula =
             do! updateState promelaModelWithFormulas
             do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
             do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnModel ()
-            do! printToStdout ()
+            do! printToLog ()
             do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.interpretWorkflow ()
             let! panIntepretation = getState ()
             match panIntepretation.Result with

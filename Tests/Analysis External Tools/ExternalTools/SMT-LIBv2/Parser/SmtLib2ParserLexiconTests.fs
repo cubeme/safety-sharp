@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.ExternalTools
+namespace SafetySharp.ExternalTools.SmtLib2
 
 open System
 open NUnit.Framework

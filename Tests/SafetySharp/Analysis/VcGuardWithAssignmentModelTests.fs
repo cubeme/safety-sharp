@@ -53,10 +53,10 @@ type VcGuardWithAssignmentModelTests(xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToTsamInGuardToAssignmentForm()
 
-                //do! SafetySharp.Workflow.printObjectToStdout ()
-                //do! SafetySharp.Workflow.printNewParagraphToStdout ()
+                //do! SafetySharp.Workflow.printObjectToLog ()
+                //do! SafetySharp.Workflow.printNewParagraphToLog ()
                 do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
-                //do! SafetySharp.Workflow.printToStdout ()
+                //do! SafetySharp.Workflow.printToLog ()
             }
         let runSmokeTest (inputFile) =
             SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
@@ -80,10 +80,10 @@ type VcGuardWithAssignmentModelTests(xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToTsamInGuardToAssignmentForm()
 
-                //do! SafetySharp.Workflow.printObjectToStdout ()
-                //do! SafetySharp.Workflow.printNewParagraphToStdout ()
+                //do! SafetySharp.Workflow.printObjectToLog ()
+                //do! SafetySharp.Workflow.printNewParagraphToLog ()
                 do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
-                //do! SafetySharp.Workflow.printToStdout ()
+                //do! SafetySharp.Workflow.printToLog ()
             }
         let runSmokeTest (inputFile) =
             SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
@@ -109,8 +109,8 @@ type VcGuardWithAssignmentModelTests(xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.modelToStringWorkflow ()
 
-                //do! SafetySharp.Workflow.printObjectToStdout ()
-                //do! SafetySharp.Workflow.printNewParagraphToStdout ()
+                //do! SafetySharp.Workflow.printObjectToLog ()
+                //do! SafetySharp.Workflow.printNewParagraphToLog ()
                 //do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.guardWithAssignmentModelToString ()
             }
         let runSmokeTest (inputFile) =
@@ -136,8 +136,8 @@ type VcGuardWithAssignmentModelTests(xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformTsamToGwaModelWorkflow()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.modelToStringWorkflow ()
 
-                //do! SafetySharp.Workflow.printObjectToStdout ()
-                //do! SafetySharp.Workflow.printNewParagraphToStdout ()
+                //do! SafetySharp.Workflow.printObjectToLog ()
+                //do! SafetySharp.Workflow.printNewParagraphToLog ()
                 //do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.guardWithAssignmentModelToString ()
             }
         let runSmokeTest (inputFile) =

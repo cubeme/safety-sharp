@@ -218,6 +218,31 @@ module internal ScmHelpers =
                 (faultsFromHere@faultsFromSubs)
             let rootComponent = model.getRootComp
             collectFaults []  (rootComponent)
+
+    let createEmptyScmModel (nameOfRoot:string) : ScmModel = 
+        let emptyStepBehavior =
+            {
+                Scm.BehaviorDecl.Locals = [];
+                Scm.BehaviorDecl.Body = Scm.Stm.Block([])
+            }
+        let emptyStep =
+            {
+                Scm.StepDecl.Contract = Scm.Contract.None;
+                Scm.StepDecl.FaultExpr = None;
+                Scm.StepDecl.Behavior = emptyStepBehavior;
+            }
+        let emptyCompDecl =
+            {
+                CompDecl.Comp = Comp.Comp(nameOfRoot);
+                CompDecl.Subs = [];
+                CompDecl.Fields = [];
+                CompDecl.Faults = [];
+                CompDecl.ReqPorts = [];
+                CompDecl.ProvPorts = [];
+                CompDecl.Bindings = [];
+                CompDecl.Steps = [emptyStep];
+            }
+        ScmModel.ScmModel(emptyCompDecl)
     
     // Extension methods
     type CompDecl with

@@ -46,10 +46,10 @@ type CompleteRewriteTests () =
             do! ScmTracer.iscmCommitForwardTracerMap ()
             let! model = getState ()
             do printf "%s" (SafetySharp.Models.ScmToString.toString model.Model.getRootComp)
-            do! SafetySharp.Workflow.printNewParagraphToStdout ()
+            do! SafetySharp.Workflow.printNewParagraphToLog ()
             do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
-            do! SafetySharp.Workflow.printNewParagraphToStdout ()
-            do! SafetySharp.Workflow.printObjectToStdout () 
+            do! SafetySharp.Workflow.printNewParagraphToLog ()
+            do! SafetySharp.Workflow.printObjectToLog () 
             let! allTraceablesExist = ScmConsistencyCheck.``check if all traced traceables from origin actually exists`` ()
             allTraceablesExist =? true
         }

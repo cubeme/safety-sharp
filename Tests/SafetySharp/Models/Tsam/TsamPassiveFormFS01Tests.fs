@@ -37,10 +37,10 @@ module TsamPassiveFormFS01Tests =
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
             do! SafetySharp.Models.TsamPassiveFormFS01.passifyPgm ()
 
-            do! SafetySharp.Workflow.printObjectToStdout ()
-            do! SafetySharp.Workflow.printNewParagraphToStdout ()
+            do! SafetySharp.Workflow.printObjectToLog ()
+            do! SafetySharp.Workflow.printNewParagraphToLog ()
             do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
-            do! SafetySharp.Workflow.printToStdout ()
+            do! SafetySharp.Workflow.printToLog ()
     }
 
             

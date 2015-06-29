@@ -125,7 +125,7 @@ module internal AtDccaLtl =
                     do! updateState promelaModelWithFormula
                     do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
                     do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnModel ()
-                    do! printToStdout ()
+                    do! printToLog ()
                     do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.interpretWorkflow ()
                     let! panIntepretation = getState ()
                     return (formulaElement.FaultsWhichMayAppear,panIntepretation)

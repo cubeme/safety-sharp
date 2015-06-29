@@ -54,9 +54,6 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
-    <Compile Include="SafetyAnalysisTestScript\Sats.fs" />
-    <Compile Include="SafetyAnalysisTestScript\SatsParser.fs" />
-    <Compile Include="SafetyAnalysisTestScript\SatsExecutor.fs" />
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
     </Compile>
@@ -69,6 +66,10 @@
     <Compile Include="..\TestCases\ScmSmokeTests.fs">
       <Link>ScmSmokeTests.fs</Link>
     </Compile>
+    <Compile Include="SafetyAnalysisTestScript\Sats.fs" />
+    <Compile Include="SafetyAnalysisTestScript\SatsParser.fs" />
+    <Compile Include="SafetyAnalysisTestScript\SatsExecutor.fs" />
+    <Compile Include="SafetyAnalysisTestScript\SatsParserTests.fs" />
     <Compile Include="ExternalTools\Smv\SmvModels.fs" />
     <Compile Include="ExternalTools\Smv\SmvToStringTests.fs" />
     <Compile Include="ExternalTools\Smv\SmvTransformSamTests.fs" />

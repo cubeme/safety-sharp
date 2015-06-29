@@ -70,3 +70,9 @@ module internal SamSmokeTests =
 
     let smoketestsAll =
         Seq.append smoketestsStochastic smoketestsDeterministic
+
+        
+    let smokeTestsSatsInjectSamDeterministic =
+        [
+            "../../Examples/SAM/smokeTest1.sats";
+        ] |> Seq.map (fun (a) -> [|a|])

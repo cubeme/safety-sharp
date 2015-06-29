@@ -20,7 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.ExternalTools.Boogie
+namespace SafetySharp.SafetyAnalysisTestScript
 
-module BoogieExecuteTests =
-    open SafetySharp.Models
+open Xunit
+open Xunit.Abstractions
+
+open SafetySharp.Models
+open SafetySharp.Workflow
+open SafetySharp.EngineOptions
+
+type ParserTests (xunitOutput:ITestOutputHelper) =
+
+
+    static member satsInjectSamTests = TestCases.SamSmokeTests.smokeTestsSatsInjectSamDeterministic
+
+
+    [<Theory>]
+    [<MemberData("satsInjectSamTests")>]
+    member this.``check if a satsInjectSamTest file gets parsed`` (inputFile:string) =
+        let input = System.IO.File.ReadAllText inputFile
+        let result = SatsParser.parseSatsFile input
+        //do xunitOutput.WriteLine (sprintf "%s" output)
+        ()

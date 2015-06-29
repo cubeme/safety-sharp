@@ -44,8 +44,10 @@ type ExampleFormulas () =
         | Failure(errorMsg, _, _) -> failwith errorMsg
         
     let parseScm str = parseWithParser (ScmParser.scmFile .>> eof) str
+
     let parseScmVeLtl us str = SafetySharp.Models.ScmVeParser.ltlExprParser_Result us str
     let parseScmVeProp us str = SafetySharp.Models.ScmVeParser.propositionalExprParser_Result us str
+    let parseScmVeLocatedComponent us str = SafetySharp.Models.ScmVeParser.locCompInst_Result us str
         
     
     
@@ -84,6 +86,18 @@ type ExampleFormulas () =
         
         let parsedFormula = parseScmVeProp initialParserState formulaAsString
         parsedFormula =? formula
+        ()
+
+        
+    [<Test>]
+    member this.``Located component in default model parses successful`` () =
+        let scmModel = ScmHelpers.createEmptyScmModel "simple"        
+        let initialParserState = SafetySharp.Models.ScmVeParser.UserState.initialUserState scmModel
+                
+        let componentLocationAsString = "simple"
+        
+        let componentLocation = parseScmVeLocatedComponent initialParserState componentLocationAsString
+        componentLocation =? [Comp.Comp("simple")]
         ()
 
         
