@@ -40,6 +40,7 @@ namespace SafetySharp.Runtime
 			: base(String.Format("{0} The 'Object' property contains the metadata object the exception was raised for.", message))
 		{
 			Requires.NotNull(obj, () => obj);
+			Object = obj;
 		}
 
 		/// <summary>

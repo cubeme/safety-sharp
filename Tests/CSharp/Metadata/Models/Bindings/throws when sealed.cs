@@ -24,6 +24,8 @@ namespace Tests.Metadata.Models.Bindings
 {
 	using System;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
+	using Shouldly;
 	using Utilities;
 
 	internal class X : Component
@@ -43,7 +45,7 @@ namespace Tests.Metadata.Models.Bindings
 			var m = new Model();
 			m.Seal();
 
-			Tests.RaisesInvalidOpException(() => Bind(m, x));
+			Tests.RaisesWith<MetadataException>(() => Bind(m, x), e => e.Object.ShouldBe(m));
 		}
 
 		private static void Bind(Model m, X x)

@@ -24,6 +24,8 @@ namespace Tests.Metadata.Models.Components
 {
 	using System;
 	using SafetySharp.Modeling;
+	using SafetySharp.Runtime;
+	using Shouldly;
 	using Utilities;
 
 	internal class X : Component
@@ -37,8 +39,8 @@ namespace Tests.Metadata.Models.Components
 			var m = new Model();
 			m.Seal();
 
-			Tests.RaisesInvalidOpException(() => AddRootComponent(m, new X()));
-			Tests.RaisesInvalidOpException(() => AddRootComponents(m, new X()));
+			Tests.RaisesWith<MetadataException>(() => AddRootComponent(m, new X()), e => e.Object.ShouldBe(m));
+			Tests.RaisesWith<MetadataException>(() => AddRootComponents(m, new X()), e => e.Object.ShouldBe(m));
 		}
 
 		private static void AddRootComponent(Model m, Component c)
