@@ -85,6 +85,7 @@
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterConvertDelayedBindings.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterInlineBehavior.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterFlattenModel.fs" />
+    <Compile Include="Models\Scm\ScmRewriter\ScmRewriterRemoveGivenFaults.fs" />
     <Compile Include="Models\Sam\Sam.fs" />
     <Compile Include="Models\Sam\SamHelpers.fs" />
     <Compile Include="Models\Sam\SamTracer.fs" />
