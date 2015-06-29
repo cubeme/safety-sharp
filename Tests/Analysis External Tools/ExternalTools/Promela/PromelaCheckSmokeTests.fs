@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.ExternalTools
+namespace SafetySharp.ExternalTools.PromelaSpin
     
 open Xunit
 open Xunit.Abstractions
@@ -32,92 +32,39 @@ open SafetySharp.EngineOptions
 type PromelaCheckSmokeTests (xunitOutput:ITestOutputHelper) =
     
 
-    static member testdataAll = TestCases.SamSmokeTests.smoketestsAll
-    static member testdataDeterministic = TestCases.SamSmokeTests.smoketestsDeterministic        
+    static member testdataDeterministic = TestCases.SamSmokeTests.smokeTestsSatsInjectSamDeterministic
         
     [<Theory>]
     [<MemberData("testdataDeterministic")>]
-    member this.``check smoke tests with EngineOption IgnoreRanges`` (testname:string) =    
-        let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
-            let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Promela/TransformedSam_IgnoreRanges.Generated"
-            SafetySharp.FileSystem.FileName (sprintf "%s/%s.pml" newDirectory filenameWithoutPath)
+    member this.``check smoke tests with EngineOption IgnoreRanges`` (filename:string) =    
+        let engineOptions : IEngineOption list = [
+                TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.IgnoreRanges;
+            ]        
+        let finalExecutionState,finalExecutionResult = SafetySharp.SafetyAnalysisTestScript.SatsExecutor.executeSatsPgmFile filename engineOptions
+        finalExecutionResult =? SafetySharp.SafetyAnalysisTestScript.SatsExecutor.SatsExecutionResult.FinishedSuccessful
 
-        let inputFile = """../../Examples/SAM/""" + testname
-        
-        let smokeTestWithGwamWorkflow = workflow {
-                do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
-                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.IgnoreRanges)
-                do! readFile inputFile
-                do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigurationWf ()
-                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
-                do! SafetySharp.ITracing.removeTracing ()
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
-                let outputFile = inputFileNameToOutputFileName inputFile
-                do! saveToFile outputFile
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnFile ()
-            }
-        let runSmokeTest (inputFile) =
-            SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
-        let output = runSmokeTest inputFile
-        do xunitOutput.WriteLine (sprintf "%s" output)
         ()
         
     [<Theory>]
     [<MemberData("testdataDeterministic")>]
-    member this.``check smoke tests with EngineOption ForceRangesAfterStep`` (testname:string) =    
-        let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
-            let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Promela/TransformedSam_ForceRangesAfterStep.Generated"
-            SafetySharp.FileSystem.FileName (sprintf "%s/%s.pml" newDirectory filenameWithoutPath)
+    member this.``check smoke tests with EngineOption ForceRangesAfterStep`` (filename:string) =
+      
+        let engineOptions : IEngineOption list = [
+                TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep;
+            ]        
+        let finalExecutionState,finalExecutionResult = SafetySharp.SafetyAnalysisTestScript.SatsExecutor.executeSatsPgmFile filename engineOptions
+        finalExecutionResult =? SafetySharp.SafetyAnalysisTestScript.SatsExecutor.SatsExecutionResult.FinishedSuccessful
 
-        let inputFile = """../../Examples/SAM/""" + testname
-        
-        let smokeTestWithGwamWorkflow = workflow {
-                do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
-                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
-                do! readFile inputFile
-                do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigurationWf ()
-                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
-                do! SafetySharp.ITracing.removeTracing ()
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
-                let outputFile = inputFileNameToOutputFileName inputFile
-                do! saveToFile outputFile
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnFile ()
-            }
-        let runSmokeTest (inputFile) =
-            SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
-        let output = runSmokeTest inputFile
-        do xunitOutput.WriteLine (sprintf "%s" output)
         ()
 
     [<Theory>]
     [<MemberData("testdataDeterministic")>]
-    member this.``check smoke tests with EngineOption ForceRangeAfterEveryAssignmentToAGlobalVar`` (testname:string) =    
-        let inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
-            let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-            let newDirectory = "../../Examples/Promela/TransformedSam_ForceRangeAfterEveryAssignmentToAGlobalVar.Generated"
-            SafetySharp.FileSystem.FileName (sprintf "%s/%s.pml" newDirectory filenameWithoutPath)
+    member this.``check smoke tests with EngineOption ForceRangeAfterEveryAssignmentToAGlobalVar`` (filename:string) = 
+      
+        let engineOptions : IEngineOption list = [
+                TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar;
+            ]        
+        let finalExecutionState,finalExecutionResult = SafetySharp.SafetyAnalysisTestScript.SatsExecutor.executeSatsPgmFile filename engineOptions
+        finalExecutionResult =? SafetySharp.SafetyAnalysisTestScript.SatsExecutor.SatsExecutionResult.FinishedSuccessful
 
-        let inputFile = """../../Examples/SAM/""" + testname
-        
-        let smokeTestWithGwamWorkflow = workflow {
-                do! TestHelpers.addLogEventHandlerForXUnit (xunitOutput)
-                do! setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar)
-                do! readFile inputFile
-                do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigurationWf ()
-                do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
-                do! SafetySharp.ITracing.removeTracing ()
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
-                let outputFile = inputFileNameToOutputFileName inputFile
-                do! saveToFile outputFile
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnFile ()
-            }
-        let runSmokeTest (inputFile) =
-            SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
-        let output = runSmokeTest inputFile
-        do xunitOutput.WriteLine (sprintf "%s" output)
-        ()
+        () 

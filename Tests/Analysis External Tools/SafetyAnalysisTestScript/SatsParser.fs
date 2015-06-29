@@ -48,8 +48,10 @@ module internal SatsParser =
                 { us with
                     LetBindings = us.LetBindings.Add(letIdentifier,letType)
                 }                
-
-
+          
+                
+    let spaces = SafetySharp.GenericParsers.spaces
+    let spaces1 = SafetySharp.GenericParsers.spaces1
 
     let str_ws1 (str:string) = (pstring str) .>> spaces1
     let str_ws (str:string) = (pstring str) .>> spaces
@@ -61,6 +63,7 @@ module internal SatsParser =
     
     let parseInQuotations_ws = parseInQuotations .>> spaces
     let pfilename_ws = pfilename .>> spaces
+
 
     //////////////////////////////////////////////////////////
     //   DO
