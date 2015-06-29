@@ -229,16 +229,6 @@
     <Compile Include="Diagnostics\PortKinds\Valid\non-extern with Required attribute outside of component.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\replaced update method.cs" />
     <Compile Include="Diagnostics\PortKinds\Valid\unmarked update methods.cs" />
-    <Compile Include="Diagnostics\PortReferences\Invalid\inaccessible provided port.cs" />
-    <Compile Include="Diagnostics\PortReferences\Invalid\inaccessible required port.cs" />
-    <Compile Include="Diagnostics\PortReferences\Invalid\non-existent provided ports.cs" />
-    <Compile Include="Diagnostics\PortReferences\Invalid\non-existent required ports.cs" />
-    <Compile Include="Diagnostics\PortReferences\Invalid\provided instead of required.cs" />
-    <Compile Include="Diagnostics\PortReferences\Invalid\required instead of provided.cs" />
-    <Compile Include="Diagnostics\PortReferences\Valid\inherited ports.cs" />
-    <Compile Include="Diagnostics\PortReferences\Valid\prefer accessible ports.cs" />
-    <Compile Include="Diagnostics\PortReferences\Valid\provided ports.cs" />
-    <Compile Include="Diagnostics\PortReferences\Valid\required ports.cs" />
     <Compile Include="Execution\ExecutionTests.Helpers.cs">
       <DependentUpon>ExecutionTests.cs</DependentUpon>
     </Compile>
@@ -262,14 +252,9 @@
     <Compile Include="Execution\RequiredPorts\generic component.cs" />
     <Compile Include="Execution\RequiredPorts\explicit interface.cs" />
     <Compile Include="Execution\RequiredPorts\non-inherited.cs" />
-    <Compile Include="Execution\RequiredPorts\overridden properties.cs" />
-    <Compile Include="Execution\RequiredPorts\overridden methods.cs" />
+    <Compile Include="Execution\RequiredPorts\overridden.cs" />
     <Compile Include="Execution\RequiredPorts\replaced.cs" />
-    <Compile Include="Execution\SemanticEquality\SideEffectsFree\explicit interface properties.cs" />
-    <Compile Include="Execution\SemanticEquality\SideEffectsFree\implicit interface properties.cs" />
-    <Compile Include="Execution\SemanticEquality\SideEffectsFree\simple properties.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffectsFree\switch.cs" />
-    <Compile Include="Execution\SemanticEquality\SideEffectsFree\virtual invocation.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\and.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\equivalence.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\expression operators.cs" />
@@ -302,9 +287,6 @@
     <Compile Include="Formulas\LinearTemporalLogic\finally.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\next.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\state expression.cs" />
-    <Compile Include="Metadata\Components\Fields\property field.cs" />
-    <Compile Include="Metadata\Faults\FaultEffects\property effects.cs" />
-    <None Include="Metadata\Faults\FaultEffects\overridden port.cs" />
     <Compile Include="Utilities\TestTraceOutput.cs" />
     <None Include="Execution\SemanticEquality\SideEffectsFree\expression bodies.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffects\control flow.cs" />

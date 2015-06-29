@@ -61,36 +61,4 @@ namespace Tests.Metadata.Components.RequiredPorts
 			Metadata.RequiredPorts[2].Name.ShouldBe("M2");
 		}
 	}
-
-	internal class X3b : TestComponent
-	{
-		[Required]
-		internal extern int P { get; set; }
-
-		private extern int Q { get; }
-
-		[SuppressTransformation]
-		protected override void Check()
-		{
-			Metadata.RequiredPorts.Length.ShouldBe(3);
-
-			Metadata.RequiredPorts[0].MethodInfo.ShouldBe(typeof(X3b).GetMethod("get_P"));
-			Metadata.RequiredPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.RequiredPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[0].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[0].Name.ShouldBe("get_P");
-
-			Metadata.RequiredPorts[1].MethodInfo.ShouldBe(typeof(X3b).GetMethod("set_P"));
-			Metadata.RequiredPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.RequiredPorts[1].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[1].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[1].Name.ShouldBe("set_P");
-
-			Metadata.RequiredPorts[2].MethodInfo.ShouldBe(typeof(X3b).GetMethod("get_Q"));
-			Metadata.RequiredPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.RequiredPorts[2].BaseMethod.ShouldBe(null);
-			Metadata.RequiredPorts[2].IsOverride.ShouldBe(false);
-			Metadata.RequiredPorts[2].Name.ShouldBe("get_Q");
-		}
-	}
 }

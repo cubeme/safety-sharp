@@ -32,14 +32,6 @@ namespace Tests.Execution.RequiredPorts
 		public X1()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
-			Bind(RequiredPorts.P = ProvidedPorts.Q);
-		}
-
-		private extern int P { get; }
-
-		private int Q
-		{
-			get { return 334; }
 		}
 
 		private int M(int i)
@@ -54,7 +46,6 @@ namespace Tests.Execution.RequiredPorts
 		{
 			N(2).ShouldBe(4);
 			N(10).ShouldBe(20);
-			P.ShouldBe(334);
 		}
 	}
 }

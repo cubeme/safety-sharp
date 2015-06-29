@@ -38,15 +38,15 @@ namespace Tests.Metadata.Components.ProvidedPorts
 
 	internal class X11 : X10
 	{
-		public X11()
-		{
-			Bind(RequiredPorts.N = base.ProvidedPorts.M);
-		}
-
 		private extern void N();
 
 		public override void M()
 		{
+		}
+
+		public X11()
+		{
+			Bind(RequiredPorts.N = base.ProvidedPorts.M);
 		}
 
 		[SuppressTransformation]
@@ -66,8 +66,7 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(true);
 			Metadata.ProvidedPorts[1].Name.ShouldBe("M1");
 
-			Metadata.ProvidedPorts[2].MethodInfo.ShouldBe(typeof(X11).GetMethod("__SynthesizedPort0__",
-				BindingFlags.Instance | BindingFlags.NonPublic));
+			Metadata.ProvidedPorts[2].MethodInfo.ShouldBe(typeof(X11).GetMethod("__SynthesizedPort0__", BindingFlags.Instance | BindingFlags.NonPublic));
 			Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
@@ -75,110 +74,6 @@ namespace Tests.Metadata.Components.ProvidedPorts
 			Metadata.ProvidedPorts[2].CanBeAffectedByFaultEffects.ShouldBe(true);
 			Metadata.ProvidedPorts[2].HasImplementation.ShouldBe(true);
 			Metadata.ProvidedPorts[2].IntendedBehavior.ShouldBe(typeof(X11).GetMethod("__Behavior3__",
-				BindingFlags.Instance | BindingFlags.NonPublic));
-		}
-	}
-
-	internal abstract class P10a : TestComponent
-	{
-		public virtual int P
-		{
-			get { return 1; }
-		}
-	}
-
-	internal class P11a : P10a
-	{
-		public P11a()
-		{
-			Bind(RequiredPorts.N = base.ProvidedPorts.M);
-		}
-
-		public override int P
-		{
-			get { return 2; }
-		}
-
-		private extern int N { get; }
-
-		[SuppressTransformation]
-		protected override void Check()
-		{
-			Metadata.ProvidedPorts.Length.ShouldBe(3);
-
-			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(P10a).GetMethod("get_P"));
-			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[0].Name.ShouldBe("get_P");
-
-			Metadata.ProvidedPorts[1].MethodInfo.ShouldBe(typeof(P11a).GetMethod("get_P"));
-			Metadata.ProvidedPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[1].BaseMethod.MethodInfo.ShouldBe(typeof(P10a).GetMethod("get_P"));
-			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(true);
-			Metadata.ProvidedPorts[1].Name.ShouldBe("get_P1");
-
-			Metadata.ProvidedPorts[2].MethodInfo.ShouldBe(typeof(P11a).GetMethod("__SynthesizedPort0__",
-				BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[2].Name.ShouldBe("__SynthesizedPort0__");
-			Metadata.ProvidedPorts[2].CanBeAffectedByFaultEffects.ShouldBe(true);
-			Metadata.ProvidedPorts[2].HasImplementation.ShouldBe(true);
-			Metadata.ProvidedPorts[2].IntendedBehavior.ShouldBe(typeof(P11a).GetMethod("__Behavior3__",
-				BindingFlags.Instance | BindingFlags.NonPublic));
-		}
-	}
-
-	internal abstract class P10b : TestComponent
-	{
-		public virtual int P
-		{
-			set { }
-		}
-	}
-
-	internal class P11b : P10b
-	{
-		public P11b()
-		{
-			Bind(RequiredPorts.N = base.ProvidedPorts.M);
-		}
-
-		public override int P
-		{
-			set { }
-		}
-
-		private extern int N { set; }
-
-		[SuppressTransformation]
-		protected override void Check()
-		{
-			Metadata.ProvidedPorts.Length.ShouldBe(3);
-
-			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(P10b).GetMethod("set_P"));
-			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[0].Name.ShouldBe("get_P");
-
-			Metadata.ProvidedPorts[1].MethodInfo.ShouldBe(typeof(P11b).GetMethod("set_P"));
-			Metadata.ProvidedPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[1].BaseMethod.MethodInfo.ShouldBe(typeof(P10b).GetMethod("set_P"));
-			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(true);
-			Metadata.ProvidedPorts[1].Name.ShouldBe("get_P1");
-
-			Metadata.ProvidedPorts[2].MethodInfo.ShouldBe(typeof(P11b).GetMethod("__SynthesizedPort0__",
-				BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[2].Name.ShouldBe("__SynthesizedPort0__");
-			Metadata.ProvidedPorts[2].CanBeAffectedByFaultEffects.ShouldBe(true);
-			Metadata.ProvidedPorts[2].HasImplementation.ShouldBe(true);
-			Metadata.ProvidedPorts[2].IntendedBehavior.ShouldBe(typeof(P11b).GetMethod("__Behavior3__",
 				BindingFlags.Instance | BindingFlags.NonPublic));
 		}
 	}

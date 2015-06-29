@@ -31,8 +31,6 @@ namespace Tests.Metadata.Components.ProvidedPorts
 
 	internal class X3 : TestComponent
 	{
-		public int P { get; set; }
-
 		[Provided]
 		internal void M()
 		{
@@ -51,37 +49,25 @@ namespace Tests.Metadata.Components.ProvidedPorts
 		[SuppressTransformation]
 		protected override void Check()
 		{
-			Metadata.ProvidedPorts.Length.ShouldBe(5);
+			Metadata.ProvidedPorts.Length.ShouldBe(3);
 
-			Metadata.ProvidedPorts[0].MethodInfo.ShouldBe(typeof(X3).GetMethod("get_P"));
+			Metadata.ProvidedPorts[0].MethodInfo.ReturnType.ShouldBe(typeof(void));
 			Metadata.ProvidedPorts[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[0].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[0].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[0].Name.ShouldBe("get_P");
+			Metadata.ProvidedPorts[0].Name.ShouldBe("M");
 
-			Metadata.ProvidedPorts[1].MethodInfo.ShouldBe(typeof(X3).GetMethod("set_P"));
+			Metadata.ProvidedPorts[1].MethodInfo.ReturnType.ShouldBe(typeof(int));
 			Metadata.ProvidedPorts[1].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[1].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[1].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[1].Name.ShouldBe("set_P");
+			Metadata.ProvidedPorts[1].Name.ShouldBe("M1");
 
-			Metadata.ProvidedPorts[2].MethodInfo.ReturnType.ShouldBe(typeof(void));
+			Metadata.ProvidedPorts[2].MethodInfo.ReturnType.ShouldBe(typeof(bool));
 			Metadata.ProvidedPorts[2].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.ProvidedPorts[2].BaseMethod.ShouldBe(null);
 			Metadata.ProvidedPorts[2].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[2].Name.ShouldBe("M");
-
-			Metadata.ProvidedPorts[3].MethodInfo.ReturnType.ShouldBe(typeof(int));
-			Metadata.ProvidedPorts[3].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[3].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[3].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[3].Name.ShouldBe("M1");
-
-			Metadata.ProvidedPorts[4].MethodInfo.ReturnType.ShouldBe(typeof(bool));
-			Metadata.ProvidedPorts[4].DeclaringObject.ShouldBe(this.GetMetadata());
-			Metadata.ProvidedPorts[4].BaseMethod.ShouldBe(null);
-			Metadata.ProvidedPorts[4].IsOverride.ShouldBe(false);
-			Metadata.ProvidedPorts[4].Name.ShouldBe("M2");
+			Metadata.ProvidedPorts[2].Name.ShouldBe("M2");
 		}
 	}
 }

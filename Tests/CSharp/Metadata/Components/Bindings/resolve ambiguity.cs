@@ -134,36 +134,4 @@ namespace Tests.Metadata.Components.Bindings
 			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[1] });
 		}
 	}
-
-	internal class P18 : TestComponent
-	{
-		public P18()
-		{
-			Bind(RequiredPorts.P = (Action<int>)ProvidedPorts.Q);
-			Bind(RequiredPorts.P = (Func<int>)ProvidedPorts.Q);
-		}
-
-		private extern int P { get; set; }
-		private int Q { get; set; }
-
-		[SuppressTransformation]
-		protected override void Check()
-		{
-			Metadata.Bindings.Length.ShouldBe(2);
-
-			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[0]);
-			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
-
-			Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[0] });
-			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[0] });
-
-			Metadata.Bindings[1].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Bindings[1].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
-			Metadata.Bindings[1].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
-
-			Metadata.RequiredPorts[1].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[1] });
-			Metadata.ProvidedPorts[1].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[1] });
-		}
-	}
 }

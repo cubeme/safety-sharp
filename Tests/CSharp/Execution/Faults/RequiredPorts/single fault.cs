@@ -33,14 +33,6 @@ namespace Tests.Execution.Faults.RequiredPorts
 		public X3()
 		{
 			Bind(RequiredPorts.M = ProvidedPorts.N);
-			Bind(RequiredPorts.P = ProvidedPorts.Q);
-		}
-
-		private extern int P { get; }
-
-		private int Q
-		{
-			get { return 12; }
 		}
 
 		private extern int M();
@@ -55,21 +47,14 @@ namespace Tests.Execution.Faults.RequiredPorts
 		{
 			Metadata.Faults[0].Fault.IsOccurring = false;
 			M().ShouldBe(1);
-			P.ShouldBe(12);
 
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			M().ShouldBe(2);
-			P.ShouldBe(33);
 		}
 
 		[Persistent]
 		private class F : Fault
 		{
-			public int P
-			{
-				get { return 33; }
-			}
-
 			public int M()
 			{
 				return 2;

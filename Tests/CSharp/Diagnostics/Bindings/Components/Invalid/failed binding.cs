@@ -26,13 +26,16 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
 
-	[Diagnostic(DiagnosticIdentifier.BindingFailure, 35, 18, 33, "'Tests.Diagnostics.Bindings.Components.Invalid.X7.N(int)'",
+	[Diagnostic(DiagnosticIdentifier.BindingFailure, 37, 18, 33, "'Tests.Diagnostics.Bindings.Components.Invalid.X7.N(int)'",
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X7.M()'")]
+	[Diagnostic(DiagnosticIdentifier.BindingFailure, 38, 18, 33, "'Tests.Diagnostics.Bindings.Components.Invalid.X7.N(int)'",
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X7.M()'")]
 	internal class X7 : Component
 	{
 		private X7()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
+			Bind(RequiredPorts.N = ProvidedPorts.M).Delayed();
 		}
 
 		private void M()

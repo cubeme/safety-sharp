@@ -34,14 +34,6 @@ namespace Tests.Execution.Faults.RequiredPorts
 		public X4()
 		{
 			Bind(RequiredPorts.M = ProvidedPorts.N);
-			Bind(RequiredPorts.P = ProvidedPorts.Q);
-		}
-
-		private extern int P { get; }
-
-		private int Q
-		{
-			get { return 12; }
 		}
 
 		private extern int M();
@@ -58,36 +50,26 @@ namespace Tests.Execution.Faults.RequiredPorts
 			Metadata.Faults[1].Fault.IsOccurring = false;
 
 			M().ShouldBe(1);
-			P.ShouldBe(12);
 
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = false;
 
 			M().ShouldBe(2);
-			P.ShouldBe(33);
 
 			Metadata.Faults[0].Fault.IsOccurring = false;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
 			M().ShouldBe(3);
-			P.ShouldBe(133);
 
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
 			M().ShouldBe(3);
-			P.ShouldBe(33);
 		}
 
 		[Persistent]
 		private class F1 : Fault<X4>
 		{
-			[Priority(17)]
-			public int P
-			{
-				get { return 33; }
-			}
-
 			[Priority(1)]
 			public int M()
 			{
@@ -98,12 +80,6 @@ namespace Tests.Execution.Faults.RequiredPorts
 		[Persistent]
 		private class F2 : Fault
 		{
-			[Priority(1)]
-			public int P
-			{
-				get { return 133; }
-			}
-
 			[Priority(17)]
 			public int M()
 			{

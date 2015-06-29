@@ -31,11 +31,6 @@ namespace Tests.Execution.Faults.ProvidedPorts
 
 	internal class X2 : TestComponent
 	{
-		private int Q
-		{
-			get { return 3; }
-		}
-
 		private int M()
 		{
 			return 1;
@@ -48,36 +43,26 @@ namespace Tests.Execution.Faults.ProvidedPorts
 			Metadata.Faults[1].Fault.IsOccurring = false;
 
 			M().ShouldBe(1);
-			Q.ShouldBe(3);
 
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = false;
 
 			M().ShouldBe(2);
-			Q.ShouldBe(127);
 
 			Metadata.Faults[0].Fault.IsOccurring = false;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
 			M().ShouldBe(3);
-			Q.ShouldBe(1117);
 
 			Metadata.Faults[0].Fault.IsOccurring = true;
 			Metadata.Faults[1].Fault.IsOccurring = true;
 
 			M().ShouldBe(3);
-			Q.ShouldBe(127);
 		}
 
 		[Persistent]
 		private class F1 : Fault
 		{
-			[Priority(17)]
-			public int Q
-			{
-				get { return 127; }
-			}
-
 			[Priority(1)]
 			public int M()
 			{
@@ -88,12 +73,6 @@ namespace Tests.Execution.Faults.ProvidedPorts
 		[Persistent]
 		private class F2 : Fault<X2>
 		{
-			[Priority(1)]
-			public int Q
-			{
-				get { return 1117; }
-			}
-
 			[Priority(17)]
 			public int M()
 			{

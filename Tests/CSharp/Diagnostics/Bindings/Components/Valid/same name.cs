@@ -41,19 +41,4 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 		{
 		}
 	}
-
-	internal class P19 : Component
-	{
-		public extern int M { get; }
-	}
-
-	internal class P20 : Component
-	{
-		private P20(P19 y)
-		{
-			Bind(y.RequiredPorts.M = ProvidedPorts.M).Delayed();
-		}
-
-		private int M { get; set; }
-	}
 }

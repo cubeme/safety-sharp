@@ -29,18 +29,6 @@ namespace Tests.Execution.ProvidedPorts
 
 	internal abstract class X2 : TestComponent
 	{
-		protected virtual int P
-		{
-			get { return 17; }
-		}
-
-		protected virtual int R
-		{
-			get { return 21; }
-		}
-
-		protected abstract int S { get; }
-
 		protected virtual int M(int i)
 		{
 			return i * 2;
@@ -56,21 +44,6 @@ namespace Tests.Execution.ProvidedPorts
 
 	internal class X3 : X2
 	{
-		protected override int P
-		{
-			get { return 22; }
-		}
-
-		protected override int R
-		{
-			get { return base.R + 3; }
-		}
-
-		protected override int S
-		{
-			get { return 99; }
-		}
-
 		protected override int M(int i)
 		{
 			return i * i;
@@ -92,25 +65,11 @@ namespace Tests.Execution.ProvidedPorts
 			M(4).ShouldBe(16);
 			M(10).ShouldBe(100);
 
-			base.M(4).ShouldBe(8);
-			base.M(10).ShouldBe(20);
-
 			Q(2).ShouldBe(true);
 			Q(3).ShouldBe(false);
 
 			N(10).ShouldBe(7);
 			N(100).ShouldBe(52);
-
-			base.N(10).ShouldBe(5);
-			base.N(100).ShouldBe(50);
-
-			S.ShouldBe(99);
-
-			base.P.ShouldBe(17);
-			P.ShouldBe(22);
-
-			base.R.ShouldBe(21);
-			R.ShouldBe(24);
 		}
 	}
 }

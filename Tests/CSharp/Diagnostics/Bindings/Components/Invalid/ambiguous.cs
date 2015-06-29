@@ -26,13 +26,17 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
 
-	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 36, 18, 33,
+	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 39, 18, 33,
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X12.N()', 'Tests.Diagnostics.Bindings.Components.Invalid.X12.N(int)'",
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X12.M()', 'Tests.Diagnostics.Bindings.Components.Invalid.X12.M(int)'")]
+	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 40, 18, 33,
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X12.N()', 'Tests.Diagnostics.Bindings.Components.Invalid.X12.N(int)'",
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X12.M()', 'Tests.Diagnostics.Bindings.Components.Invalid.X12.M(int)'")]
 	internal class X12 : Component
 	{
 		private X12()
 		{
+			Bind(RequiredPorts.N = ProvidedPorts.M).Delayed();
 			Bind(RequiredPorts.N = ProvidedPorts.M);
 		}
 
@@ -48,13 +52,17 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private extern void N(int i);
 	}
 
-	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 58, 18, 33,
+	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 65, 18, 33,
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X13.N(int)', 'Tests.Diagnostics.Bindings.Components.Invalid.X13.N(ref int)'",
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X13.M(int)', 'Tests.Diagnostics.Bindings.Components.Invalid.X13.M(ref int)'")]
+	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 66, 18, 33,
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X13.N(int)', 'Tests.Diagnostics.Bindings.Components.Invalid.X13.N(ref int)'",
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X13.M(int)', 'Tests.Diagnostics.Bindings.Components.Invalid.X13.M(ref int)'")]
 	internal class X13 : Component
 	{
 		private X13()
 		{
+			Bind(RequiredPorts.N = ProvidedPorts.M).Delayed();
 			Bind(RequiredPorts.N = ProvidedPorts.M);
 		}
 
@@ -70,7 +78,10 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private extern void N(ref int i);
 	}
 
-	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 80, 18, 33,
+	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 91, 18, 33,
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X14.N(int)', 'Tests.Diagnostics.Bindings.Components.Invalid.X14.N(ref int)'",
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X14.M(int)', 'Tests.Diagnostics.Bindings.Components.Invalid.X14.M(ref int)'")]
+	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 92, 18, 33,
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X14.N(int)', 'Tests.Diagnostics.Bindings.Components.Invalid.X14.N(ref int)'",
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X14.M(int)', 'Tests.Diagnostics.Bindings.Components.Invalid.X14.M(ref int)'")]
 	internal class X14 : Component
@@ -78,6 +89,7 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private X14()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
+			Bind(RequiredPorts.N = ProvidedPorts.M).Delayed();
 		}
 
 		private void M(int i)
@@ -97,7 +109,12 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private extern void N(ref int i);
 	}
 
-	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 109, 18, 33,
+	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 126, 18, 33,
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X15.N(out bool)', 'Tests.Diagnostics.Bindings.Components.Invalid.X15.N(int)', " +
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X15.N(ref int)'",
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X15.M(out bool)', 'Tests.Diagnostics.Bindings.Components.Invalid.X15.M(int)', " +
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X15.M(ref int)'")]
+	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 127, 18, 33,
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X15.N(out bool)', 'Tests.Diagnostics.Bindings.Components.Invalid.X15.N(int)', " +
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X15.N(ref int)'",
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X15.M(out bool)', 'Tests.Diagnostics.Bindings.Components.Invalid.X15.M(int)', " +
@@ -107,6 +124,7 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private X15()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
+			Bind(RequiredPorts.N = ProvidedPorts.M).Delayed();
 		}
 
 		private void M(int i)
@@ -125,19 +143,5 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 		private extern void N(out bool b);
 		private extern void N(int i);
 		private extern void N(ref int i);
-	}
-
-	[Diagnostic(DiagnosticIdentifier.AmbiguousBinding, 137, 18, 33,
-		"'Tests.Diagnostics.Bindings.Components.Invalid.P15.Q.get', 'Tests.Diagnostics.Bindings.Components.Invalid.P15.Q.set'",
-		"'Tests.Diagnostics.Bindings.Components.Invalid.P15.P.get', 'Tests.Diagnostics.Bindings.Components.Invalid.P15.P.set'")]
-	internal class P15 : Component
-	{
-		private P15()
-		{
-			Bind(RequiredPorts.Q = ProvidedPorts.P);
-		}
-
-		private extern int Q { get; set; }
-		private int P { get; set; }
 	}
 }

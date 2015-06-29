@@ -107,23 +107,4 @@ namespace Tests.Diagnostics.Bindings.Models.Valid
 			Bind(x.RequiredPorts.N = (D1)x.ProvidedPorts.M);
 		}
 	}
-
-	
-
-	internal class P7 : Component
-	{
-		public int P { get; set; }
-		public extern int Q { get; set; }
-	}
-
-	internal class P4 : Model
-	{
-		private P7 x;
-
-		private P4()
-		{
-			Bind(x.RequiredPorts.Q = (Action<int>)x.ProvidedPorts.P);
-			Bind(x.RequiredPorts.Q = (Func<int>)x.ProvidedPorts.P);
-		}
-	}
 }

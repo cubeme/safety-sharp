@@ -26,18 +26,13 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
 
-	[Diagnostic(DiagnosticIdentifier.BindingFailure, 35, 18, 46, "'Tests.Diagnostics.Bindings.Components.Invalid.X8.N()'", "<none>")]
-	[Diagnostic(DiagnosticIdentifier.BindingFailure, 36, 18, 47, "'Tests.Diagnostics.Bindings.Components.Invalid.X8.Q.get'", "<none>")]
+	[Diagnostic(DiagnosticIdentifier.BindingFailure, 34, 18, 46, "'Tests.Diagnostics.Bindings.Components.Invalid.X8.N()'", "<none>")]
 	internal class X8 : Component
 	{
 		private X8()
 		{
-			Bind(RequiredPorts.N = (Action<int>)ProvidedPorts.M);
-			Bind(RequiredPorts.Q = (Action<bool>)ProvidedPorts.P);
+			Bind(RequiredPorts.N = (Action<int>)ProvidedPorts.M).Delayed();
 		}
-
-		private extern int Q { get; }
-		private int P { get; set; }
 
 		private void M()
 		{

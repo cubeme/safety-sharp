@@ -29,11 +29,6 @@ namespace Tests.Execution.ProvidedPorts
 
 	internal abstract class X4 : TestComponent
 	{
-		public int P
-		{
-			get { return 2; }
-		}
-
 		public int M(int i)
 		{
 			return i * 2;
@@ -42,11 +37,6 @@ namespace Tests.Execution.ProvidedPorts
 
 	internal class X5 : X4
 	{
-		private new int P
-		{
-			get { return 17; }
-		}
-
 		private new int M(int i)
 		{
 			return i * i;
@@ -60,13 +50,6 @@ namespace Tests.Execution.ProvidedPorts
 
 			((X4)this).M(3).ShouldBe(6);
 			((X4)this).M(10).ShouldBe(20);
-
-			base.M(3).ShouldBe(6);
-			base.M(10).ShouldBe(20);
-
-			P.ShouldBe(17);
-			base.P.ShouldBe(2);
-			((X4)this).P.ShouldBe(2);
 		}
 	}
 }

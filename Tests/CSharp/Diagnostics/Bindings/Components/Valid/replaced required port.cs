@@ -27,7 +27,6 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 
 	internal class X33 : Component
 	{
-		public extern int Q { get; }
 		public extern void M();
 	}
 
@@ -38,14 +37,7 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 			Bind(RequiredPorts.M = ProvidedPorts.N);
 			Bind(((X33)this).RequiredPorts.M = ProvidedPorts.N);
 			Bind(base.RequiredPorts.M = ProvidedPorts.N);
-
-			Bind(RequiredPorts.Q = ProvidedPorts.P);
-			Bind(((X33)this).RequiredPorts.Q = ProvidedPorts.P);
-			Bind(base.RequiredPorts.Q = ProvidedPorts.P);
 		}
-
-		private int P { get; set; }
-		public new extern int Q { get; }
 
 		private void N()
 		{

@@ -26,12 +26,15 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 	using SafetySharp.Compiler.Analyzers;
 	using SafetySharp.Modeling;
 
-	[Diagnostic(DiagnosticIdentifier.BindingFailure, 35, 18, 35, "'Tests.Diagnostics.Bindings.Components.Invalid.X11.N(int)'",
+	[Diagnostic(DiagnosticIdentifier.BindingFailure, 37, 18, 35, "'Tests.Diagnostics.Bindings.Components.Invalid.X11.N(int)'",
+		"'Tests.Diagnostics.Bindings.Components.Invalid.X10.M()'")]
+	[Diagnostic(DiagnosticIdentifier.BindingFailure, 38, 18, 35, "'Tests.Diagnostics.Bindings.Components.Invalid.X11.N(int)'",
 		"'Tests.Diagnostics.Bindings.Components.Invalid.X10.M()'")]
 	internal class X10 : Component
 	{
 		private X10(X11 y)
 		{
+			Bind(y.RequiredPorts.N = ProvidedPorts.M).Delayed();
 			Bind(y.RequiredPorts.N = ProvidedPorts.M);
 		}
 
@@ -42,21 +45,7 @@ namespace Tests.Diagnostics.Bindings.Components.Invalid
 
 	internal class X11 : Component
 	{
-		private extern bool P { get; }
 		private extern void N();
 		public extern void N(int i);
-	}
-
-	[Diagnostic(DiagnosticIdentifier.BindingFailure, 56, 18, 35, "'Tests.Diagnostics.Bindings.Components.Invalid.X11.N(int)'",
-		"'Tests.Diagnostics.Bindings.Components.Invalid.X10.M()'")]
-	internal class P10 : X11
-	{
-		private P10(X11 y)
-		{
-			Bind(y.RequiredPorts.P = ProvidedPorts.Q);
-		}
-
-		private extern int P { get; }
-		private bool Q { get; set; }
 	}
 }

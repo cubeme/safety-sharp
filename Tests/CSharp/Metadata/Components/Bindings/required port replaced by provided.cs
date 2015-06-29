@@ -59,37 +59,4 @@ namespace Tests.Metadata.Components.Bindings
 			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[1] });
 		}
 	}
-
-	internal abstract class P37 : TestComponent
-	{
-		public extern int M { get; }
-	}
-
-	internal class P38 : P37
-	{
-		public P38()
-		{
-			Bind(RequiredPorts.N = ProvidedPorts.M);
-		}
-
-		private extern int N { get; }
-
-		public new int M
-		{
-			get { return 1; }
-		}
-
-		[SuppressTransformation]
-		protected override void Check()
-		{
-			Metadata.Bindings.Length.ShouldBe(1);
-
-			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Bindings[0].RequiredPort.ShouldBe(Metadata.RequiredPorts[1]);
-			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
-
-			Metadata.RequiredPorts[1].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[0] });
-			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new[] { Metadata.RequiredPorts[1] });
-		}
-	}
 }

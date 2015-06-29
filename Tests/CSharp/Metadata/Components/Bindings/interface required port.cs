@@ -32,15 +32,11 @@ namespace Tests.Metadata.Components.Bindings
 	internal interface I2 : IComponent
 	{
 		[Required]
-		int P { get; }
-
-		[Required]
 		void M();
 	}
 
 	internal class X43 : Component, I2
 	{
-		public extern int P { get; }
 		public extern void M();
 	}
 
@@ -51,12 +47,6 @@ namespace Tests.Metadata.Components.Bindings
 		public X44()
 		{
 			Bind(_i.RequiredPorts.M = ProvidedPorts.N);
-			Bind(_i.RequiredPorts.P = ProvidedPorts.Q);
-		}
-
-		private int Q
-		{
-			get { return 1; }
 		}
 
 		public void N()
@@ -66,18 +56,11 @@ namespace Tests.Metadata.Components.Bindings
 		[SuppressTransformation]
 		protected override void Check()
 		{
-			Metadata.Bindings.Length.ShouldBe(2);
+			Metadata.Bindings.Length.ShouldBe(1);
 
 			Metadata.Bindings[0].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Bindings[0].RequiredPort.ShouldBe(((Component)_i).Metadata.RequiredPorts[1]);
-			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[1]);
-
-			((Component)_i).Metadata.RequiredPorts[1].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[1] });
-			Metadata.ProvidedPorts[1].BoundRequiredPorts.ShouldBe(new[] { ((Component)_i).Metadata.RequiredPorts[1] });
-
-			Metadata.Bindings[1].DeclaringComponent.ShouldBe(this.GetMetadata());
-			Metadata.Bindings[1].RequiredPort.ShouldBe(((Component)_i).Metadata.RequiredPorts[0]);
-			Metadata.Bindings[1].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
+			Metadata.Bindings[0].RequiredPort.ShouldBe(((Component)_i).Metadata.RequiredPorts[0]);
+			Metadata.Bindings[0].ProvidedPort.ShouldBe(Metadata.ProvidedPorts[0]);
 
 			((Component)_i).Metadata.RequiredPorts[0].BoundProvidedPorts.ShouldBe(new[] { Metadata.ProvidedPorts[0] });
 			Metadata.ProvidedPorts[0].BoundRequiredPorts.ShouldBe(new[] { ((Component)_i).Metadata.RequiredPorts[0] });

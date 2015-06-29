@@ -43,20 +43,4 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 		{
 		}
 	}
-
-	internal class P37 : Component
-	{
-		public extern int M { get; set; }
-	}
-
-	internal class P38 : P37
-	{
-		private P38()
-		{
-			Bind(RequiredPorts.N = ProvidedPorts.M);
-		}
-
-		private extern int N { set; }
-		public new int M { get; set; }
-	}
 }

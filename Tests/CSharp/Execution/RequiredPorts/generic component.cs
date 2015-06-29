@@ -32,11 +32,7 @@ namespace Tests.Execution.RequiredPorts
 		protected X6()
 		{
 			Bind(RequiredPorts.N = ProvidedPorts.M);
-			Bind(RequiredPorts.P = ProvidedPorts.Q);
 		}
-
-		protected extern T P { get; set; }
-		protected T Q { get; set; }
 
 		protected T M(T i)
 		{
@@ -44,31 +40,25 @@ namespace Tests.Execution.RequiredPorts
 		}
 
 		protected extern T N(T i);
+	}
 
-		internal class X7 : X6<int>
+	internal class X7 : X6<int>
+	{
+		[SuppressTransformation]
+		protected override void Check()
 		{
-			[SuppressTransformation]
-			protected override void Check()
-			{
-				N(2).ShouldBe(2);
-				N(10).ShouldBe(10);
-
-				P = 77;
-				P.ShouldBe(77);
-			}
+			N(2).ShouldBe(2);
+			N(10).ShouldBe(10);
 		}
+	}
 
-		internal class X8 : X6<bool>
+	internal class X8 : X6<bool>
+	{
+		[SuppressTransformation]
+		protected override void Check()
 		{
-			[SuppressTransformation]
-			protected override void Check()
-			{
-				N(false).ShouldBe(false);
-				N(true).ShouldBe(true);
-
-				P = true;
-				P.ShouldBe(true);
-			}
+			N(false).ShouldBe(false);
+			N(true).ShouldBe(true);
 		}
 	}
 }

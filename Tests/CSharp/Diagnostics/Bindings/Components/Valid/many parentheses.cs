@@ -34,7 +34,7 @@ namespace Tests.Diagnostics.Bindings.Components.Valid
 	{
 		private X22(X21 y)
 		{
-			Bind(((((y).RequiredPorts).M) = (ProvidedPorts.M)));
+			Bind(((((y).RequiredPorts).M) = (ProvidedPorts.M))).Delayed();
 		}
 
 		private void M()

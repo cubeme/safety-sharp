@@ -33,11 +33,6 @@ namespace Tests.Metadata.Diagnostics.RequiredPorts
 		private extern void M();
 	}
 
-	internal class C1b : Component
-	{
-		private extern int M { get; }
-	}
-
 	internal class C3 : Component
 	{
 	}
@@ -54,18 +49,6 @@ namespace Tests.Metadata.Diagnostics.RequiredPorts
 		{
 			var m = new Model();
 			m.AddRootComponent(new C1());
-
-			Tests.RaisesWith<UnboundRequiredPortException>(() => m.Seal(),
-				e => e.RequiredPort.ShouldBe(m.Metadata.RootComponent.Subcomponents[0].RequiredPorts[0]));
-		}
-	}
-
-	internal class T1b : TestObject
-	{
-		protected override void Check()
-		{
-			var m = new Model();
-			m.AddRootComponent(new C1b());
 
 			Tests.RaisesWith<UnboundRequiredPortException>(() => m.Seal(),
 				e => e.RequiredPort.ShouldBe(m.Metadata.RootComponent.Subcomponents[0].RequiredPorts[0]));

@@ -68,47 +68,6 @@ namespace Tests.Metadata.Diagnostics.Bindings.Invalid
 		}
 	}
 
-	internal class T1b : TestObject
-	{
-		protected override void Check()
-		{
-			var z = new Z();
-			var m = new Model();
-			m.AddRootComponents(new X(z), new Y(z));
-
-			Tests.RaisesWith<InvalidBindingException>(() => m.Seal(),
-				e => e.Binding.ShouldBe(m.Metadata.RootComponent.Subcomponents[1].Bindings[0]));
-		}
-
-		private class Z : Component
-		{
-			public int N
-			{
-				set { }
-			}
-		}
-
-		private class X : Component
-		{
-			private Z z;
-
-			public X(Z z)
-			{
-				this.z = z;
-			}
-		}
-
-		private class Y : Component
-		{
-			public Y(Z z)
-			{
-				Bind(RequiredPorts.M = z.ProvidedPorts.N);
-			}
-
-			private extern int M { set; }
-		}
-	}
-
 	internal class T2 : TestObject
 	{
 		protected override void Check()

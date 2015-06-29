@@ -29,8 +29,6 @@ namespace Tests.Execution.ProvidedPorts
 
 	internal class X1 : TestComponent
 	{
-		private int P { get; set; }
-
 		private int M(int i)
 		{
 			return i * 2;
@@ -41,9 +39,6 @@ namespace Tests.Execution.ProvidedPorts
 		{
 			M(2).ShouldBe(4);
 			M(10).ShouldBe(20);
-
-			P = 17;
-			P.ShouldBe(17);
 		}
 	}
 }
