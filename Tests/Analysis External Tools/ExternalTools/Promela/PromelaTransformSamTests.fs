@@ -83,14 +83,13 @@ type SamToPromelaTests (xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
                 do! SafetySharp.ITracing.removeTracing ()
                 do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
+                do! printToLog ()
                 let outputFile = inputFileNameToOutputFileName inputFile
                 do! saveToFile outputFile
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnFile ()
             }
         let runSmokeTest (inputFile) =
             SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
         let output = runSmokeTest inputFile
-        do xunitOutput.WriteLine (sprintf "%s" output)
         ()
 
     [<Theory>]
@@ -112,12 +111,11 @@ type SamToPromelaTests (xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
                 do! SafetySharp.ITracing.removeTracing ()
                 do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
+                do! printToLog ()
                 let outputFile = inputFileNameToOutputFileName inputFile
                 do! saveToFile outputFile
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPanOnFile ()
             }
         let runSmokeTest (inputFile) =
             SafetySharp.Workflow.runWorkflow_getState smokeTestWithGwamWorkflow
         let output = runSmokeTest inputFile
-        do xunitOutput.WriteLine (sprintf "%s" output)
         ()

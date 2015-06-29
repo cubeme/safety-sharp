@@ -54,8 +54,8 @@ type VcGuardWithAssignmentModelFastTests(xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.modelToStringWorkflow ()
 
-                //do! SafetySharp.Workflow.printObjectToStdout ()
-                //do! SafetySharp.Workflow.printNewParagraphToStdout ()
+                //do! SafetySharp.Workflow.printObjectToLog ()
+                //do! SafetySharp.Workflow.printNewParagraphToLog ()
                 //do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.guardWithAssignmentModelToString ()
             }
         let runSmokeTest (inputFile) =
@@ -81,8 +81,8 @@ type VcGuardWithAssignmentModelFastTests(xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow()
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.modelToStringWorkflow ()
 
-                //do! SafetySharp.Workflow.printObjectToStdout ()
-                //do! SafetySharp.Workflow.printNewParagraphToStdout ()
+                //do! SafetySharp.Workflow.printObjectToLog ()
+                //do! SafetySharp.Workflow.printNewParagraphToLog ()
                 //do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.guardWithAssignmentModelToString ()
             }
         let runSmokeTest (inputFile) =

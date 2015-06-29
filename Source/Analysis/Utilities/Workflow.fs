@@ -584,23 +584,23 @@ module internal Workflow =
         return (FileSystem.FileName(outputFileName))
     }
 
-    let printToStdout ()
+    let printToLog ()
             : EndogenousWorkflowFunction<string> = workflow {
         let! input = getState ()
-        printfn "%s" input
+        do! logEntry input
         return ()
     }    
 
-    let printObjectToStdout ()
+    let printObjectToLog ()
             : EndogenousWorkflowFunction<'a> = workflow {
         let! input = getState ()
-        printfn "%+A" input
+        do! logEntry (sprintf "%+A" input)
         return ()
     }    
 
-    let printNewParagraphToStdout<'a,'traceableOfOrigin,'traceableOfModel> ()
+    let printNewParagraphToLog<'a,'traceableOfOrigin,'traceableOfModel> ()
             : EndogenousWorkflowFunction<'a> = workflow {
-        printfn ""
-        printfn ""
+        do! logEntry ""
+        do! logEntry ""
         return ()
     }

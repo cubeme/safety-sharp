@@ -55,10 +55,10 @@ type ScmToPromelaTests (xunitOutput:ITestOutputHelper) =
                 do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
                 do! SafetySharp.ITracing.removeTracing ()
                 do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
-                //let outputFile = inputFileNameToOutputFileName inputFile
-                //do! saveToFile outputFile
+                do! printToLog ()
+                let outputFile = inputFileNameToOutputFileName inputFile
+                do! saveToFile outputFile
             }
 
         let output = SafetySharp.Workflow.runWorkflow_getState smokeTestWorkflow
-        do xunitOutput.WriteLine (sprintf "%s" output)
         ()
