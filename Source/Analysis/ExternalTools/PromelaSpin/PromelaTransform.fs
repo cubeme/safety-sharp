@@ -277,10 +277,10 @@ module internal SamToPromela =
         let codeOfMetamodelInAtomicLoop =
             let stmWithoutNestedBlocks = pgm.Body.simplifyBlocks
             let codeOfMetamodel = transformSamStm semanticsOfAssignmentToRangedVariables varToType stmWithoutNestedBlocks
-            [coverStmInEndlessloop (coverInAtomicBlockStatement ([codeOfMetamodel]@resetLocalVars@rangeGlobalVars @ [globalVarsJustInitializedToFalse] @ assertInvariants))]
+            [coverStmInEndlessloop (coverInAtomicBlockStatement (assertInvariants @ [codeOfMetamodel]@resetLocalVars@rangeGlobalVars @ [globalVarsJustInitializedToFalse]))]
         
         let systemModule =
-            let systemCode = globalVarInitialisations @ [globalVarsJustInitializedToTrue] @ assertInvariants @ codeOfMetamodelInAtomicLoop
+            let systemCode = globalVarInitialisations @ [globalVarsJustInitializedToTrue] @ codeOfMetamodelInAtomicLoop
             let systemSequence : PrSequence = statementsToSequence (systemCode)
             let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
             [PrModule.ProcTypeModule(systemProctype)]
@@ -439,6 +439,9 @@ module internal ScmToPromela =
 
     let transformConfigurationWithInvariants<'state when 'state :> IScmTracer<Scm.Traceable,'state>> (invariants:ScmVerificationElements.PropositionalExpr list)
                         : ExogenousWorkflowFunction<'state,SamToPromela.PromelaTracer<Scm.Traceable>> = workflow {
+        // TODO: After backmerging Tsam into Sam this hack is not necessary anymore! We could get rid of this transformation. Assertions could just be prepended to a loop
+        
+        
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         let! state = getState ()
         let samInvariants = invariants |> List.map (ScmVeToSam.transformScmVePropositionalExprToSamExpr state.ForwardTracer)
