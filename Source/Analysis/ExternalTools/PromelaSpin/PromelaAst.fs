@@ -161,4 +161,13 @@ type internal Spec = {
     Formulas : LtlExpr list;
 }
 
-type internal Traceable = string
+type internal Traceable =
+    | Traceable of string
+    | TraceableRemoved of Reason:string 
+            with
+                override traceable.ToString() =
+                    match traceable with
+                        | Traceable(name) ->
+                            sprintf "promela variable '%s'" name
+                        | TraceableRemoved(reason) ->
+                            sprintf "removed (reason:%s)" (reason)

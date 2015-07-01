@@ -162,7 +162,7 @@ module internal GwamToPrism =
                             else
                                 None
                     }
-                (variableDeclaration,(Tsam.Traceable.Traceable(globalVarDecl.Var),variableDeclaration.Name.Name))
+                (variableDeclaration,(Tsam.Traceable.Traceable(globalVarDecl.Var),Prism.Traceable(variableDeclaration.Name.Name)))
             gwam.Globals |> List.map transformGlobalVar
                          |> List.unzip
                          
@@ -227,7 +227,12 @@ module internal GwamToPrism =
         let (transformedModel,forwardTraceInClosure) = transformGwamToPrism model
         let tracer (oldValue:'traceableOfOrigin) =
             let beforeTransform = state.ForwardTracer oldValue
-            forwardTraceInClosure.Item beforeTransform
+            let intermediateTracer (oldValue:Sam.Traceable) =
+                match oldValue with
+                    | Sam.TraceableRemoved(reason) -> Prism.TraceableRemoved(reason)
+                    | _ -> forwardTraceInClosure.Item oldValue
+
+            intermediateTracer beforeTransform
         let transformed =
             {
                 PrismModelTracer.PrismModel = transformedModel;
@@ -286,7 +291,7 @@ module internal StochasticProgramGraphToPrism =
                             else
                                 None
                     }
-                (variableDeclaration,(Tsam.Traceable.Traceable(varDecl.Var),variableDeclaration.Name.Name))
+                (variableDeclaration,(Tsam.Traceable.Traceable(varDecl.Var),Prism.Traceable (variableDeclaration.Name.Name)))
             let globalVariables,forwardTrace =
                 spg.Variables |> List.map transformVarDecl
                               |> List.unzip
@@ -386,7 +391,12 @@ module internal StochasticProgramGraphToPrism =
         let (transformedModel,forwardTraceInClosure) = transformSpgToPrism model
         let tracer (oldValue:'traceableOfOrigin) =
             let beforeTransform = state.ForwardTracer oldValue
-            forwardTraceInClosure.Item beforeTransform
+            let intermediateTracer (oldValue:Sam.Traceable) =
+                match oldValue with
+                    | Sam.TraceableRemoved(reason) -> Prism.TraceableRemoved(reason)
+                    | _ -> forwardTraceInClosure.Item oldValue
+
+            intermediateTracer beforeTransform
         let transformed =
             {
                 PrismModelTracer.PrismModel = transformedModel;

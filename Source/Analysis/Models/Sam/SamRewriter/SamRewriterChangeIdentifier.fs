@@ -76,38 +76,38 @@ module internal SamChangeIdentifier =
         based_on
     *)
     
-    let rec transformExpr (state:ChangeIdentifierState) (expr:Expr) : Expr =
+    let rec transformExpr (oldToNew : Map<Var,Var>) (expr:Expr) : Expr =
         match expr with
             | Literal (_)->
                 expr
             | UExpr (operand,operator) ->
-                Expr.UExpr(transformExpr state operand,operator)
+                Expr.UExpr(transformExpr oldToNew operand,operator)
             | BExpr (leftExpression,operator,rightExpression ) ->
-                Expr.BExpr(transformExpr state leftExpression,operator,transformExpr state rightExpression)
+                Expr.BExpr(transformExpr oldToNew leftExpression,operator,transformExpr oldToNew rightExpression)
             | Read (variable) ->
-                Expr.Read(state.OldToNew.Item variable)
+                Expr.Read(oldToNew.Item variable)
             | ReadOld (variable) ->
-                Expr.ReadOld(state.OldToNew.Item variable)
+                Expr.ReadOld(oldToNew.Item variable)
             | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
-                Expr.IfThenElseExpr(transformExpr state guardExpr,transformExpr state thenExpr,transformExpr state elseExpr)
+                Expr.IfThenElseExpr(transformExpr oldToNew guardExpr,transformExpr oldToNew thenExpr,transformExpr oldToNew elseExpr)
 
-    let rec transformStm (state:ChangeIdentifierState) (stm:Stm) : Stm =
+    let rec transformStm (oldToNew : Map<Var,Var>) (stm:Stm) : Stm =
         match stm with
             | Block (statements) ->
-                Stm.Block(statements |> List.map (transformStm state) )
+                Stm.Block(statements |> List.map (transformStm oldToNew) )
             | Choice (clauses : Clause list) ->
                 let transformClause (clause:Clause) : Clause =
                     {
-                        Clause.Guard = transformExpr state clause.Guard;
-                        Clause.Statement = transformStm state clause.Statement
+                        Clause.Guard = transformExpr oldToNew clause.Guard;
+                        Clause.Statement = transformStm oldToNew clause.Statement
                     }
                 Stm.Choice(clauses |> List.map transformClause)
             | Stochastic (stochasticChoice: (Expr*Stm) list) ->
                 let transformStochasticChoice (prob,stm) : Expr*Stm=
-                    (transformExpr state prob, transformStm state stm)
+                    (transformExpr oldToNew prob, transformStm oldToNew stm)
                 Stm.Stochastic(stochasticChoice |> List.map transformStochasticChoice)
             | Write (variable:Var, expression:Expr) ->
-                Stm.Write(state.OldToNew.Item variable,transformExpr state expression)
+                Stm.Write(oldToNew.Item variable,transformExpr oldToNew expression)
     
     let changeNamesPgm (state:ChangeIdentifierState) (samPgm:Pgm) : (Pgm*Map<Var,Var>) = // returns new program * forward tracing map
         let currentVars = seq {
@@ -142,7 +142,7 @@ module internal SamChangeIdentifier =
             {
                 Pgm.Globals = newGlobals;
                 Pgm.Locals = newLocals;
-                Pgm.Body = transformStm newState samPgm.Body;
+                Pgm.Body = transformStm newState.OldToNew samPgm.Body;
             }
         (samPgm,newState.OldToNew)
 

@@ -228,4 +228,13 @@ and internal Specification =
 
 // ADDED
 
-type internal Traceable = ComplexIdentifier
+type internal Traceable =
+    | Traceable of ComplexIdentifier
+    | TraceableRemoved of Reason:string    
+            with
+                override traceable.ToString() =
+                    match traceable with
+                        | Traceable(name) ->
+                            sprintf "smv variable '%+A'" name
+                        | TraceableRemoved(reason) ->
+                            sprintf "removed (reason:%s)" (reason)

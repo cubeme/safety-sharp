@@ -229,7 +229,7 @@ module internal VcTransitionRelationToNuXmv =
         let tracing =
             nuXmvVariables.VarToSmvIdentifier
                 |> Map.toList
-                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) ))
+                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),Smv.Traceable( Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) )))
                 |> Map.ofList
         (transformedConfiguration,tracing)
 
@@ -243,7 +243,12 @@ module internal VcTransitionRelationToNuXmv =
         let (transformedTs,forwardTraceInClosure) = transformConfiguration transitionSystem
         let tracer (oldValue:'traceableOfOrigin) =
             let beforeTransform = state.ForwardTracer oldValue
-            forwardTraceInClosure.Item beforeTransform
+            let intermediateTracer (oldValue:Sam.Traceable) =
+                match oldValue with
+                    | Sam.TraceableRemoved(reason) -> Smv.TraceableRemoved(reason)
+                    | _ -> forwardTraceInClosure.Item oldValue
+
+            intermediateTracer beforeTransform
         let transformed =
             {
                 SmvTracer.SmvProgram= transformedTs;
@@ -417,7 +422,7 @@ module internal StochasticProgramGraphToNuXmv =
         let tracing =
             nuXmvVariables.VarToSmvIdentifier
                 |> Map.toList
-                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) ))
+                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),Smv.Traceable( Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) )))
                 |> Map.ofList
         (transformedConfiguration,tracing)
 
@@ -431,7 +436,12 @@ module internal StochasticProgramGraphToNuXmv =
         let (transformedTs,forwardTraceInClosure) = transformConfiguration (state.ProgramGraph)
         let tracer (oldValue:'traceableOfOrigin) =
             let beforeTransform = state.ForwardTracer oldValue
-            forwardTraceInClosure.Item beforeTransform
+            let intermediateTracer (oldValue:Sam.Traceable) =
+                match oldValue with
+                    | Sam.TraceableRemoved(reason) -> Smv.TraceableRemoved(reason)
+                    | _ -> forwardTraceInClosure.Item oldValue
+
+            intermediateTracer beforeTransform
         let transformed =
             {
                 SmvTracer.SmvProgram = transformedTs;
@@ -507,13 +517,17 @@ module internal ScmVeToNuXmv =
             
 
     let transformScmFieldToVarref (tracer:Scm.Traceable->Smv.Traceable) (compPath:Scm.CompPath,field:Scm.Field) : Smv.ComplexIdentifier =
-        let identifier = tracer (Scm.TraceableField(compPath,field))
-        identifier
+        let traced = tracer (Scm.TraceableField(compPath,field))
+        match traced with
+            | Smv.Traceable (identifier) -> identifier
+            | Smv.TraceableRemoved (reason) -> failwith ("variable you talk about was removed because " + reason)
 
     let transformScmFaultToVarref (tracer:Scm.Traceable->Smv.Traceable) (compPath:Scm.CompPath,fault:Scm.Fault) : Smv.ComplexIdentifier =
-        let identifier = tracer (Scm.TraceableFault(compPath,fault))
-        identifier
-        
+        let traced = tracer (Scm.TraceableFault(compPath,fault))
+        match traced with
+            | Smv.Traceable (identifier) -> identifier
+            | Smv.TraceableRemoved (reason) -> failwith ("variable you talk about was removed because " + reason)
+
 
     let transformBinaryLtlOperator (operator:LbOp) =
         match operator with

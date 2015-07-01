@@ -150,9 +150,10 @@ module internal AtDccaPruning =
         //              NuSMV-Code
         /////////////////////////////////////////////////
         member this.checkWithNusmv ()  : WorkflowFunction<Scm.ScmModel,Scm.ScmModel,Set<Set<FaultPath>>> = workflow {
-            let nusmvExecutor = new SafetySharp.ExternalTools.Smv.ExecuteNusmv2()
                         
-            let checkFormulaElement (formulaElement:ElementToCheck)  = workflow {                    
+            let checkFormulaElement (formulaElement:ElementToCheck)  = workflow {       
+                    let nusmvExecutor = new SafetySharp.ExternalTools.Smv.ExecuteNusmv2()             
+
                     do! SafetySharp.Models.ScmTracer.scmToSimpleScmTracer ()
                     do! SafetySharp.Models.ScmRewriterRemoveGivenFaults.removeFaults formulaElement.FaultsWhichMustNotAppear
                     do! SafetySharp.ExternalTools.ScmToNuXmv.transformConfiguration ()
@@ -169,7 +170,7 @@ module internal AtDccaPruning =
                     
                     let nusmvInvariant = SafetySharp.ExternalTools.ScmVeToNuXmv.transformPropositionalExpr forwardTracer invariant_NotHazard
                     let nuXmvResult = nusmvExecutor.ExecuteCommand(SafetySharp.ExternalTools.Smv.NuSMVCommand.CheckInvar nusmvInvariant)
-                    let nuXmvInterpretation = SafetySharp.ExternalTools.Smv.SmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec nuXmvResult
+                    let nuXmvInterpretation = SafetySharp.ExternalTools.Smv.SmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar nuXmvResult
                     do nusmvExecutor.ForceShutdownSmv () 
                     return (formulaElement.FaultsWhichMayAppear,nuXmvInterpretation)
             }

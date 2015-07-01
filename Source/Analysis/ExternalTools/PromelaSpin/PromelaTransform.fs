@@ -225,17 +225,23 @@ module internal SamToPromela =
     let transformConfiguration (semanticsOfAssignmentToRangedVariables:TsamEngineOptions.SemanticsOfAssignmentToRangedVariables)
                                (invariants:Sam.Expr list)
                                (pgm:Sam.Pgm)
-                        : (PrSpec*Map<Sam.Traceable,string>) = // returns new program * forward tracing map
+                        : (PrSpec*Map<Sam.Traceable,PrTraceable>) = // returns new program * forward tracing map
         // remove unwanted chars and assure, that no unwanted characters are in the string
-        let changeIdsState = ChangeIdentifierState.initial Set.empty<string> SafetySharp.FreshNameGenerator.namegenerator_c_like
-        let (pgm,forwardTrace) = changeNamesPgm changeIdsState pgm
+        let (pgm,forwardTrace,invariants) =
+            let changeIdsState = ChangeIdentifierState.initial Set.empty<string> SafetySharp.FreshNameGenerator.namegenerator_c_like
+            let pgm,forwardTrace = changeNamesPgm changeIdsState pgm
+            let invariants = invariants |> List.map (SamChangeIdentifier.transformExpr forwardTrace)
+            (pgm,forwardTrace,invariants)
         
         let varToType =
             let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Sam.Var,Sam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Sam.Var,Sam.Type>)
             let varToTypeWithGlobalsAndLocals = pgm.Locals |> List.fold (fun (acc:Map<Sam.Var,Sam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
             varToTypeWithGlobalsAndLocals
 
-        let forwardTrace = forwardTrace |> Map.toList |> List.map (fun (samVar,promelaVar) -> (Sam.Traceable(samVar),promelaVar.getName) ) |> Map.ofList
+        let forwardTrace =
+            forwardTrace |> Map.toList
+                         |> List.map (fun (samVar,promelaVar) -> (Sam.Traceable(samVar),PrTraceable.Traceable(promelaVar.getName)) )
+                         |> Map.ofList
 
         // declare both locals and globals
         let globalVarModule = generateGlobalVarDeclarations pgm.Globals
@@ -331,7 +337,11 @@ module internal SamToPromela =
         let (newPromelaSpec,forwardTraceInClosure) = transformConfiguration semanticsOfAssignmentToRangedVariables invariants samModel
         let tracer (oldValue:'traceableOfOrigin) =
             let beforeTransform = state.ForwardTracer oldValue
-            forwardTraceInClosure.Item beforeTransform
+            let intermediateTracer (oldValue:Sam.Traceable) =
+                match oldValue with
+                    | Sam.TraceableRemoved(reason) -> PrTraceable.TraceableRemoved(reason)
+                    | _ -> forwardTraceInClosure.Item beforeTransform
+            intermediateTracer beforeTransform
         let transformed =
             {
                 PromelaTracer.PrSpec = newPromelaSpec;
@@ -392,18 +402,26 @@ module internal ScmVeToPromela =
             | LuOp.Eventually -> UnaryLtlOperator.Eventually
 
 
-    let transformScmFieldToVarref (tracer:Scm.Traceable->string) (compPath:Scm.CompPath,field:Scm.Field) : PrVarref =
-        let varName = tracer (Scm.TraceableField(compPath,field))
+    let transformScmFieldToVarref (tracer:Scm.Traceable->PrTraceable) (compPath:Scm.CompPath,field:Scm.Field) : PrVarref =
+        let varName =
+            let traced = tracer (Scm.TraceableField(compPath,field))
+            match traced with
+                | Traceable (varName) -> varName
+                | TraceableRemoved (reason) -> failwith ("variable you talk about was removed because " + reason)
         PrVarref.Varref(varName,None,None)
 
-    let transformScmFaultToVarref (tracer:Scm.Traceable->string) (compPath:Scm.CompPath,fault:Scm.Fault) : PrVarref =
-        let varName = tracer (Scm.TraceableFault(compPath,fault))
+    let transformScmFaultToVarref (tracer:Scm.Traceable->PrTraceable) (compPath:Scm.CompPath,fault:Scm.Fault) : PrVarref =
+        let varName =
+            let traced = tracer (Scm.TraceableFault(compPath,fault))
+            match traced with
+                | Traceable (varName) -> varName
+                | TraceableRemoved (reason) -> failwith ("variable you talk about was removed because " + reason)
         PrVarref.Varref(varName,None,None)
 
         
     // TODO: Actually we need to add the variable "globalVarInitialized" to the ltl-formula.
     // Otherwise "[] A==B+1" would not work. "F (globalVarInitialized && ([] A==B+1))".
-    let rec transformLtlExpression (tracer:Scm.Traceable->string) (expression:LtlExpr) : PrLtlExpr =
+    let rec transformLtlExpression (tracer:Scm.Traceable->PrTraceable) (expression:LtlExpr) : PrLtlExpr =
         match expression with
             | LtlExpr.Literal  (value) ->
                 transformScmVal value
