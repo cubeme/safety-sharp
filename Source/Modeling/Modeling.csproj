@@ -124,6 +124,11 @@
     <Compile Include="Modeling\OverflowBehavior.cs" />
     <Compile Include="Modeling\ProvidedAttribute.cs" />
     <Compile Include="Modeling\RequiredAttribute.cs" />
+    <Compile Include="Simulation\ComponentExtensions.cs" />
+    <Compile Include="Simulation\ModelExtensions.cs" />
+    <Compile Include="Simulation\RealTimeSimulator.cs" />
+    <Compile Include="Simulation\SimulationState.cs" />
+    <Compile Include="Simulation\Simulator.cs" />
     <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="Utilities\NameScope.cs" />
     <Compile Include="Runtime\NondeterministicFaultInjection.cs" />

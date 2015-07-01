@@ -67,10 +67,6 @@
       <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
       <Name>Modeling</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Source\Simulation\Simulation.csproj">
-      <Project>{1b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
-      <Name>Simulation</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\..\Binaries\Debug\SafetySharp.Compiler.exe" />

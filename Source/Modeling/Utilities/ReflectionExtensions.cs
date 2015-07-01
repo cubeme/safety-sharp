@@ -37,7 +37,7 @@ namespace SafetySharp.Utilities
 		/// </summary>
 		/// <remarks>
 		///     Unfortunately, the reflection APIs do not return private members of base classes, even with
-		///     <c>BindingFlags.FlattenHierarchy</c>, hence this helper method.
+		///     <see cref="BindingFlags.FlattenHierarchy" />, hence this helper method.
 		/// </remarks>
 		/// <param name="type">The type the members should be retrieved from.</param>
 		/// <param name="inheritanceRoot">The first base type of <paramref name="type" /> whose members should be ignored.</param>
