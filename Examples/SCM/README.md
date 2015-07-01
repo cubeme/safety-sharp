@@ -42,6 +42,9 @@
 * beh3.scm: Like beh2. Additionally  the behaviours of both components make local variable assignments
 * beh3.verification: invariant-formulas for beh3.scm
 * beh4.scm: Like beh3. But stops during the execution (for better introspection)
+* beh5.scm: Shows the reason for higher order statement "foreach" and expression "forall" and "exists". In short: How arrays are flattened for model checkers like prism is really inefficient.
+* beh6.scm: Experiments with arrays
+* beh7.scm: Experiments with nested arrays
 
 
 ## (call)-Tests (instantaneous)
