@@ -4,7 +4,10 @@ component simple {
 		
 	boolArrayInArrayField1 : Array<4,Array<2,bool>> = [[true;true];[true;false];[false;false];[false;false]];
 	
-	step {		
+	step {	
+		Array<_,bool> boolArrayLocal;
+		bool boolLocal;
+		
 		foreach i in boolArrayInArrayField1 {
 			foreach j in i {
 				choose {
@@ -14,6 +17,9 @@ component simple {
 			}
 		}		
 		boolField1 := exists i in boolArrayInArrayField1 ( forall j in i (j==true));
+		
+		boolArrayLocal := boolArrayInArrayField1[0];
+		boolLocal := boolArrayLocal[0];
 	}
 }
 
