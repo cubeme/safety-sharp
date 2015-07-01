@@ -68,6 +68,13 @@
 * callInstHierarchy8.scm: tests hierarchical case: parent(parent(parent(RequiredPortComponent))) = ProvidedPortComponent; Binding declared in ProvidedPortComponent (short: in root (source=root;target=great-grandchild))
 * callInstHierarchy9.scm: tests hierarchical case: parent(parent(RequiredPortComponent))) = ProvidedPortComponent; Binding declared in ProvidedPortComponent, which is not the root (short: in non-root (source=component;target=grandchild))
 
+## Array-Tests 
+* callWithArrayParameterFromBeh1.scm: like callInstFromBeh4, input-parameters (which is an array)
+* callWithArrayParameterFromBeh2.scm: like callInstFromBeh5, inout-parameter (which is an array), which was preassigned (field) and gets a value
+* callWithArrayParameterFromBeh3.scm: like callInstFromBeh6, inout-parameter (which is an array), which was preassigned (local) and gets a value
+* callWithArrayParameterFromBeh4.scm: like callInstFromBeh7, inout-parameter (which is an array), which was not preassigned and gets no value
+* callWithArrayParameterFromBeh5.scm: like callInstFromBeh8, inout-parameter (which is an array), which was not preassigned and gets a value
+* callWithArrayParameterFromProv1.scm: like callInstFromProv1, tests, if inout- reading/writing of arrays works with Required Ports, if called within an provided port
 
 ## (call)-Tests (delayed)
 * callDelayedCaution1.scm: example, which demonstrates following issue: Simply calculating the outputs of a delayed port in the beginning of a step is not enough, because the step might be nested. For more details consult the file "ScmRewriterConvertDelayedBindings.fs"
