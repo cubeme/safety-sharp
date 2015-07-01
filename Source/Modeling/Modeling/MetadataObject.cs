@@ -30,7 +30,7 @@ namespace SafetySharp.Modeling
 	using Utilities;
 
 	/// <summary>
-	///     Represents a base class for all S# objects that provide S# metadata.
+	///   Represents a base class for all S# objects that provide S# metadata.
 	/// </summary>
 	/// <typeparam name="TMetadata">The type of the object's metadata.</typeparam>
 	/// <typeparam name="TMetadataBuilder">The type of the object's metadata builder.</typeparam>
@@ -39,19 +39,19 @@ namespace SafetySharp.Modeling
 		where TMetadataBuilder : class
 	{
 		/// <summary>
-		///     The object's metadata.
+		///   The object's metadata.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private TMetadata _metadata;
 
 		/// <summary>
-		///     The object's metadata builder.
+		///   The object's metadata builder.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private TMetadataBuilder _metadataBuilder;
 
 		/// <summary>
-		///     Initializes a new instance.
+		///   Initializes a new instance.
 		/// </summary>
 		/// <param name="createBuilder">The function that should be used to initialize the object's metadata builder.</param>
 		protected MetadataObject(Func<object, TMetadataBuilder> createBuilder)
@@ -63,7 +63,7 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets or sets the object's metadata. Once the metadata has been set, all future metadata modifications are disallowed.
+		///   Gets or sets the object's metadata. Once the metadata has been set, all future metadata modifications are disallowed.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		internal TMetadata Metadata
@@ -86,7 +86,7 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets the object's metadata builder.
+		///   Gets the object's metadata builder.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		internal TMetadataBuilder MetadataBuilder
@@ -101,7 +101,7 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets a value indicating whether the object's metadata has been finalized.
+		///   Gets a value indicating whether the object's metadata has been finalized.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		internal bool IsMetadataFinalized
@@ -110,7 +110,7 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets a value indicating whether the object's metadata has been finalized.
+		///   Gets a value indicating whether the object's metadata has been finalized.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		bool IMetadataObject.IsMetadataFinalized
@@ -119,7 +119,7 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets the object's metadata.
+		///   Gets the object's metadata.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		ObjectMetadata IMetadataObject.Metadata
@@ -128,8 +128,8 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Initializes the object's metadata by invoking the method indicated by the <see cref="MetadataAttribute" /> at each level
-		///     of the object's inheritance hierarchy.
+		///   Initializes the object's metadata by invoking the method indicated by the <see cref="MetadataAttribute" /> at each level
+		///   of the object's inheritance hierarchy.
 		/// </summary>
 		private void InitializeMetadata()
 		{
@@ -148,6 +148,30 @@ namespace SafetySharp.Modeling
 			};
 
 			initialize(GetType());
+		}
+
+		/// <summary>
+		///   Returns a string that represents the current object.
+		/// </summary>
+		public override sealed string ToString()
+		{
+			return base.ToString();
+		}
+
+		/// <summary>
+		///   Determines whether the specified object is equal to the current object.
+		/// </summary>
+		public override sealed bool Equals(object obj)
+		{
+			return base.Equals(obj);
+		}
+
+		/// <summary>
+		///   Serves as the default hash function.
+		/// </summary>
+		public override sealed int GetHashCode()
+		{
+			return base.GetHashCode();
 		}
 	}
 }

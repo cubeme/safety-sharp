@@ -30,6 +30,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "..\Source\Model
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simulation", "..\Source\Simulation\Simulation.csproj", "{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobotCell", "RobotCell\RobotCell.csproj", "{C5B017F2-599F-48DA-B133-5C20535788A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LandingGear", "LandingGear\LandingGear.csproj", "{2C357026-5FCB-480E-8EF1-000E494A9964}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -68,6 +72,14 @@ Global
 		{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5B017F2-599F-48DA-B133-5C20535788A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5B017F2-599F-48DA-B133-5C20535788A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5B017F2-599F-48DA-B133-5C20535788A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5B017F2-599F-48DA-B133-5C20535788A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C357026-5FCB-480E-8EF1-000E494A9964}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C357026-5FCB-480E-8EF1-000E494A9964}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C357026-5FCB-480E-8EF1-000E494A9964}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C357026-5FCB-480E-8EF1-000E494A9964}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

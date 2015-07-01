@@ -27,8 +27,8 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("PressureTank")]
-[assembly: AssemblyDescription("Model of the FTA handbook case study 'Pressure Tank'")]
+[assembly: AssemblyTitle("LandingGear")]
+[assembly: AssemblyDescription("Model of the ABZ case study 'Landing Gear'")]
 [assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
 [assembly: AssemblyProduct("SafetySharp")]
 [assembly: AssemblyCopyright("Copyright (c) 2015 Institute for Software & Systems Engineering")]
