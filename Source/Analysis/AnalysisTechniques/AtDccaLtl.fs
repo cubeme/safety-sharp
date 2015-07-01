@@ -30,6 +30,7 @@ module internal AtDccaLtl =
     open SafetySharp.Analysis.Modelchecking.PromelaSpin.Typedefs
     open SafetySharp.Analysis.Modelchecking.PromelaSpin
     open SafetySharp.Models.ScmHelpers
+    open SafetySharp.EngineOptions
     
     type ElementToCheck = {
         FaultsWhichMayAppear:Set<FaultPath>; //faultyComponents
@@ -209,4 +210,14 @@ module internal AtDccaLtl =
                 {0..numberOfAllFaults} |> Seq.toList |> List.fold checkIfSizeIsSafe (Set.empty<Set<FaultPath>>)
             do nusmvExecutor.ForceShutdownSmv () 
             return fullDcca
+        }
+
+        member this.check ()
+                : WorkflowFunction<Scm.ScmModel,_,Set<Set<FaultPath>>> = workflow {
+            let! preferedEngine = getEngineOption<_,AtEngineOptions.StandardVerifier> ()
+            match preferedEngine with
+                | AtEngineOptions.StandardVerifier.NuSMV ->
+                    return! this.checkWithNusmv ()
+                | AtEngineOptions.StandardVerifier.Promela ->
+                    return! this.checkWithPromela ()
         }

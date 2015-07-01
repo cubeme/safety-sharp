@@ -28,6 +28,7 @@ module internal AtLtlFormula =
     open SafetySharp.ITracing
     open SafetySharp.Analysis.Modelchecking.PromelaSpin
     open SafetySharp.Ternary
+    open SafetySharp.EngineOptions
 
     type AnalyseLtlFormulas () =
     
@@ -81,3 +82,15 @@ module internal AtLtlFormula =
                 | SafetySharp.Analysis.Modelchecking.PromelaSpin.PanInterpretResult.PanVerificationResult.Maybe ->
                     return Ternary.Unknown
         }
+        
+        member this.checkLtlFormula (formula: ScmVerificationElements.LtlExpr)
+                : WorkflowFunction<Scm.ScmModel,_,Ternary> = workflow {
+            let! preferedEngine = getEngineOption<_,AtEngineOptions.StandardVerifier> ()
+            match preferedEngine with
+                | AtEngineOptions.StandardVerifier.NuSMV ->
+                    failwith "Currently not supported"
+                    return Ternary.Unknown
+                | AtEngineOptions.StandardVerifier.Promela ->
+                    return! (runSubWorkflow_WithSameState_ReturnResult (this.checkLtlFormulaWithPromela formula))
+        }
+            

@@ -77,11 +77,12 @@ module internal AtEngineOptions =
     [<RequireQualifiedAccessAttribute>]
     type StandardVerifier =
         | NuSMV
+        | Promela
         with
             interface IEngineOption
 
     let standardValues : (string*IEngineOption) list =
-            [] |> EngineOptionHelpers.addStandardToList (StandardVerifier.NuSMV)
+            [] |> EngineOptionHelpers.addStandardToList (StandardVerifier.Promela)
 
 
 module DefaultEngineOptions = 

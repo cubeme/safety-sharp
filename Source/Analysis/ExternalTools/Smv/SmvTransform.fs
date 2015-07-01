@@ -666,3 +666,24 @@ module internal ScmVeToNuXmv =
                 let transformedRight = (transformCtlExpression tracer) right
                 let transformedOperator = transformBinaryCtlOperator op
                 Smv.CtlExpression.CtlBinaryExpression(transformedLeft,transformedOperator,transformedRight)
+
+                
+    let rec transformPropositionalExpr (tracer:Scm.Traceable->Smv.Traceable) (expression:PropositionalExpr) : Smv.NextExpression =
+        match expression with
+            | PropositionalExpr.Literal  (value) ->
+                transformScmVal value
+            | PropositionalExpr.ReadField (compPath,field) ->
+                Smv.NextExpression.ComplexIdentifierExpression ( transformScmFieldToVarref tracer (compPath,field))
+            | PropositionalExpr.ReadFault (compPath,fault) ->
+                Smv.NextExpression.ComplexIdentifierExpression ( transformScmFaultToVarref tracer (compPath,fault))
+            | PropositionalExpr.UExpr (expr,op) ->
+                let transformedOperand = (transformPropositionalExpr tracer) expr
+                match op with
+                    | Scm.UOp.Not -> Smv.BasicExpression.UnaryExpression(Smv.UnaryOperator.LogicalNot,transformedOperand)
+                    | _ -> failwith  "NotImplementedYet"
+            | PropositionalExpr.BExpr  (left,op,right) ->
+                let transformedLeft = (transformPropositionalExpr tracer) left
+                let transformedRight = (transformPropositionalExpr tracer) right
+                let transformedOperator = transformBinaryOperator op
+                Smv.BasicExpression.BinaryExpression(transformedLeft,transformedOperator,transformedRight)
+                    

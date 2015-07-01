@@ -154,7 +154,7 @@ module internal ScmToSam =
             let scmTraceable =
                 Scm.TraceableField( [scmModel.Comp] , field.Field)
             let samTraceable =
-               Sam.Traceable(gl.Var)
+                Sam.Traceable(gl.Var)
             (scmTraceable,samTraceable)        
         List.zip (scmModel.Fields) (samModel.Globals)
             |> List.map toTraceable
@@ -178,7 +178,10 @@ module internal ScmToSam =
         let tracer (oldValue:'traceableOfOrigin) =
             let beforeTransform = state.ForwardTracer oldValue
             let mapInClosure = createForwardTracingMap oldModel.getRootComp newModel
-            let intermediateTracer (oldValue:Scm.Traceable) = mapInClosure.Item oldValue
+            let intermediateTracer (oldValue:Scm.Traceable) =
+                match oldValue with
+                    | Scm.Traceable.TraceableRemoved(reason) -> Sam.TraceableRemoved(reason)
+                    | _ -> mapInClosure.Item oldValue
             intermediateTracer beforeTransform
         let transformed =
             {
@@ -200,10 +203,12 @@ module internal ScmVeToSam =
                 let traced = forwardTracer (Scm.Traceable.TraceableFault(faultComp,fault))
                 match traced with
                     | Sam.Traceable(_var) -> Sam.Expr.Read(_var)
+                    | Sam.TraceableRemoved (reason) -> failwith ("variable you talk about was removed because " + reason)
             | PropositionalExpr.ReadField (fieldComp,field) ->
                 let traced = forwardTracer (Scm.Traceable.TraceableField(fieldComp,field))
                 match traced with
                     | Sam.Traceable(_var) -> Sam.Expr.Read(_var)
+                    | Sam.TraceableRemoved (reason) -> failwith ("variable you talk about was removed because " + reason)
             | PropositionalExpr.UExpr (expr, uop) ->
                 let operator = ScmToSam.transformUopToUop uop
                 let operand = transformScmVePropositionalExprToSamExpr forwardTracer expr

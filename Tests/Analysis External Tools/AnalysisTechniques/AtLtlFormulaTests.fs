@@ -28,7 +28,7 @@ open SafetySharp.Models
 open SafetySharp.Workflow
 open SafetySharp.AnalysisTechniques
 
-[<TestFixture>]
+//[<TestFixture>]
 module AtLtlFormulaTests =
     
     let internal inputFileToScmWorkflow (inputFile:string) = workflow {
@@ -39,6 +39,7 @@ module AtLtlFormulaTests =
             return scmModel
     }
 
+    (*
     [<Test>]
     let ``check exampleBackupRecovery1.scm with Promela`` () =        
         let inputFile = """../../Examples/SCM/exampleBackupRecovery1.scm"""
@@ -51,12 +52,17 @@ module AtLtlFormulaTests =
             ScmVerificationElements.LtlExpr.LuExpr(equals,ScmVerificationElements.LuOp.Globally)
                 
         let analyzer = new AnalysisFacade ()
+        do analyzer.setEngineOption (SafetySharp.EngineOptions.AtEngineOptions.StandardVerifier.Promela)
         do analyzer.setMainModelFromFile (inputFile)
             
+            
+        let initialParserState = SafetySharp.Models.ScmVeParser.UserState.initialUserState scmModel
+
         let result1 = analyzer.atAnalyseLtl_WithPromela (formulaAsString)
         let result2 = analyzer.atAnalyseLtl_WithPromela (formula)
 
         ()
+    *)
 
 
 

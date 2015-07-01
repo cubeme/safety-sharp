@@ -90,10 +90,33 @@ module internal ScmRewriterRemoveGivenFaults =
             | Some(faultExpr) -> decideOnSimpleStructure faultExpr
                 
 
-    let rec removeFaultsFromFaultExpr (faultsToRemoveInCurrentComponent:Set<Fault>) (faultExpr:FaultExpr option) : FaultExpr option =
-        failwith "NotImplementedYet"
-        // TODO: Here we have to replace every faultsToRemoveInCurrentComponent by a virtual "False". The difficulty is that
-        // we need to propagate the changes up, because we have no "False"
+    let rec removeFaultsFromFaultExpr (faultsToRemoveInCurrentComponent:Set<Fault>) (oFaultExpr:FaultExpr option) : FaultExpr option =
+        let rec collectFaultsContainedInFaultExpr (faultExpr:FaultExpr) : Set<Fault> =
+            match faultExpr with
+                | FaultExpr.Fault (fault) ->
+                    Set.empty.Add fault
+                | FaultExpr.NotFault (faultExpr) ->
+                    collectFaultsContainedInFaultExpr faultExpr
+                | FaultExpr.AndFault (faultExprLeft,(faultExprRight)) ->
+                    let resultForLeft = collectFaultsContainedInFaultExpr faultExprLeft
+                    let resultForRight = collectFaultsContainedInFaultExpr faultExprRight
+                    Set.union resultForLeft resultForRight
+                | FaultExpr.OrFault (faultExprLeft,(faultExprRight)) ->
+                    let resultForLeft = collectFaultsContainedInFaultExpr faultExprLeft
+                    let resultForRight = collectFaultsContainedInFaultExpr faultExprRight
+                    Set.union resultForLeft resultForRight
+        match oFaultExpr with
+            | None ->
+                oFaultExpr // nothing to be done
+            | Some (faultExpr) ->
+                let faultsInExpr = collectFaultsContainedInFaultExpr faultExpr
+                let toRemove = Set.intersect faultsInExpr faultsToRemoveInCurrentComponent
+                if toRemove.IsEmpty then
+                    oFaultExpr // nothing to be done
+                else
+                    failwith "NotImplementedYet"
+                    // TODO: Here we have to replace every faultsToRemoveInCurrentComponent by a virtual "False". The difficulty is that
+                    // we need to propagate the changes up, because we have no "False"
         
     let rec removeFaultsFromContract (faultsToRemoveInCurrentComponent:Set<Fault>) (contract:Contract) : Contract =
         match contract with

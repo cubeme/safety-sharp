@@ -167,6 +167,7 @@
     <Compile Include="AnalysisTechniques\AtStepInvariant.fs" />
     <Compile Include="AnalysisTechniques\AtReachable.fs" />
     <Compile Include="AnalysisTechniques\AtLtlFormula.fs" />
+    <Compile Include="AnalysisTechniques\AtDccaGeneric.fs" />
     <Compile Include="AnalysisTechniques\AtDccaLtl.fs" />
     <Compile Include="AnalysisTechniques\AtDccaCtl.fs" />
     <Compile Include="AnalysisTechniques\AtDccaPruning.fs" />

@@ -31,7 +31,7 @@ open SafetySharp.Models.ScmVerificationElements
 open SafetySharp.EngineOptions
 
 [<TestFixture>]
-module AtDccaLtlTests =
+module AtDccaPruningTests =
     let internal inputFileToScmWorkflow (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
@@ -50,7 +50,7 @@ module AtDccaLtlTests =
         let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
         let hazard = ScmVerificationElements.PropositionalExpr.Literal(Scm.BoolVal(false))
         
-        let analyzer = AtDccaLtl.PerformDccaWithLtlFormulas (scmExample.Model,hazard)
+        let analyzer = AtDccaPruning.PerformDccaByPruningModels (scmExample.Model,hazard)
         
         let elementToCheck1 = analyzer.``even when these faults appear, system is safe`` ([faultNo1;faultNo4] |> Set.ofList)
         let elementToCheck2 = analyzer.``even when these faults appear, system is safe`` ([] |> Set.ofList)
@@ -59,20 +59,17 @@ module AtDccaLtlTests =
             {
                 FaultsWhichMayAppear = ([([Scm.Comp "simple"], Scm.Fault "faultNo1"); ([Scm.Comp "simple"], Scm.Fault "faultNo4")] |> Set.ofList);
                 FaultsWhichMustNotAppear = ([([Scm.Comp "simple"], Scm.Fault "faultNo2"); ([Scm.Comp "simple"], Scm.Fault "faultNo3")] |> Set.ofList);
-                CorrespondingFormula = LtlExpr.UExpr(LtlExpr.LbExpr(LtlExpr.BExpr(LtlExpr.UExpr (LtlExpr.ReadFault ([Scm.Comp "simple"],Scm.Fault "faultNo2"),Scm.Not),Scm.And,LtlExpr.UExpr (LtlExpr.ReadFault ([Scm.Comp "simple"],Scm.Fault "faultNo3"),Scm.Not)),LbOp.Until,LtlExpr.Literal (Scm.BoolVal false)),Scm.Not);
             }
 
         elementToCheck2 =?
             {
                 FaultsWhichMayAppear = set [];
                 FaultsWhichMustNotAppear =set[([Scm.Comp "simple"], Scm.Fault "faultNo1"); ([Scm.Comp "simple"], Scm.Fault "faultNo2");([Scm.Comp "simple"], Scm.Fault "faultNo3"); ([Scm.Comp "simple"], Scm.Fault "faultNo4")];
-                CorrespondingFormula = LtlExpr.UExpr(LtlExpr.LbExpr(LtlExpr.BExpr(LtlExpr.UExpr (LtlExpr.ReadFault ([Scm.Comp "simple"],Scm.Fault "faultNo1"),Scm.Not),Scm.And,LtlExpr.BExpr(LtlExpr.UExpr (LtlExpr.ReadFault ([Scm.Comp "simple"],Scm.Fault "faultNo2"),Scm.Not),Scm.And,LtlExpr.BExpr(LtlExpr.UExpr (LtlExpr.ReadFault ([Scm.Comp "simple"],Scm.Fault "faultNo3"),Scm.Not),Scm.And,LtlExpr.UExpr (LtlExpr.ReadFault ([Scm.Comp "simple"],Scm.Fault "faultNo4"),Scm.Not)))),LbOp.Until,LtlExpr.Literal (Scm.BoolVal false)),Scm.Not);
             }
         elementToCheck3 =?
             {
                 FaultsWhichMayAppear = set[([Scm.Comp "simple"], Scm.Fault "faultNo1"); ([Scm.Comp "simple"], Scm.Fault "faultNo2");([Scm.Comp "simple"], Scm.Fault "faultNo3"); ([Scm.Comp "simple"], Scm.Fault "faultNo4")];
                 FaultsWhichMustNotAppear = set [];
-                CorrespondingFormula = LtlExpr.UExpr (LtlExpr.LbExpr (LtlExpr.Literal (Scm.BoolVal true),LbOp.Until,LtlExpr.Literal (Scm.BoolVal false)),Scm.Not);
             }
 
     [<Test>]
@@ -81,7 +78,7 @@ module AtDccaLtlTests =
         let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
         let hazard = ScmVerificationElements.PropositionalExpr.Literal(Scm.BoolVal(false))
         
-        let analyzer = AtDccaLtl.PerformDccaWithLtlFormulas (scmExample.Model,hazard)
+        let analyzer = AtDccaPruning.PerformDccaByPruningModels (scmExample.Model,hazard)
         
         let known = [([faultNo1;faultNo4] |> Set.ofList)] |> Set.ofList
         
@@ -96,7 +93,7 @@ module AtDccaLtlTests =
         let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
         let hazard = ScmVerificationElements.PropositionalExpr.Literal(Scm.BoolVal(false))
         
-        let analyzer = AtDccaLtl.PerformDccaWithLtlFormulas (scmExample.Model,hazard)
+        let analyzer = AtDccaPruning.PerformDccaByPruningModels (scmExample.Model,hazard)
         
         let elementOfSize2 = ([faultNo1;faultNo4] |> Set.ofList)
 
@@ -110,18 +107,9 @@ module AtDccaLtlTests =
         formulas2_if_no_single_point_of_failure.Length =? 6
         formulas3_if_one_element_of_size_2_failed.Length =? 2
         formulas4_if_formal_verification_failed.Length =? 0
-
-    (*
-    [<Test>]
-    let ``perform DCCA on callInstHierarchyWithFaults1 with Spin`` () =
-        let inputFile = """../../Examples/SCM/callInstHierarchyWithFaults1.scm"""
-        let hazardAsString = "false"
         
-        let analyzer = new AnalysisFacade ()
-        do analyzer.setMainModelFromFile (inputFile)
-        let dccaResult = analyzer.atAnalyseDccaLtl_WithPromela (hazardAsString)
-        dccaResult.Count =? 0
-    
+    (*
+            
     [<Test>]
     let ``perform DCCA on dcca1 with Spin`` () =
         let inputFile = """../../Examples/SCM/dcca1.scm"""
@@ -129,12 +117,12 @@ module AtDccaLtlTests =
         
         let analyzer = new AnalysisFacade ()
         do analyzer.setMainModelFromFile (inputFile)
-        let dccaResult = analyzer.atAnalyseDccaLtl_WithPromela (hazardAsString)
+        let dccaResult = analyzer.atAnalyseDccaPruning_WithPromela (hazardAsString)
         dccaResult.Count =? 3
         (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo1;faultNo4] |> Set.ofList))) =? true
         (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo2;faultNo3;faultNo4] |> Set.ofList))) =? true
         (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo1;faultNo2] |> Set.ofList))) =? true
-    
+
     [<Test>]
     let ``perform DCCA on dcca1 with NuSMV`` () =
         let inputFile = """../../Examples/SCM/dcca1.scm"""
@@ -143,7 +131,7 @@ module AtDccaLtlTests =
         let analyzer = new AnalysisFacade ()
         do analyzer.setEngineOption(TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
         do analyzer.setMainModelFromFile (inputFile)
-        let dccaResult = analyzer.atAnalyseDccaLtl_WithNuSmv (hazardAsString)
+        let dccaResult = analyzer.atAnalyseDccaPruning_WithNuSmv (hazardAsString)
         dccaResult.Count =? 3
         (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo1;faultNo4] |> Set.ofList))) =? true
         (dccaResult |> Set.exists (fun gamma -> gamma = ([faultNo2;faultNo3;faultNo4] |> Set.ofList))) =? true

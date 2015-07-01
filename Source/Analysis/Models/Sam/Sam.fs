@@ -136,11 +136,16 @@ module internal Sam =
     }
 
     type internal Traceable =
-        Traceable of Var
+        | Traceable of Var
+        | TraceableRemoved of Reason:string
             with
                 override traceable.ToString() =
-                    let (Traceable(Var(name))) = traceable
-                    sprintf "global variable '%s'" name
+                    match traceable with
+                        | Traceable(Var(name)) ->
+                            sprintf "global variable '%s'" name
+                        | TraceableRemoved(reason) ->
+                            sprintf "removed (reason:%s)" (reason)
+                    
 
     type internal Pgm = {
         Globals : GlobalVarDecl list

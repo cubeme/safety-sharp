@@ -106,7 +106,12 @@
     <Compile Include="ExternalTools\Z3\Z3InteractiveModeTests.fs" />
     <Compile Include="ExternalTools\Z3\Z3ParserTests.fs" />
     <Compile Include="AnalysisTechniques\AtLtlFormulaTests.fs" />
+    <Compile Include="AnalysisTechniques\AtDccaGenericTests.fs" />
     <Compile Include="AnalysisTechniques\AtDccaLtlTests.fs" />
+    <Compile Include="AnalysisTechniques\AtDccaCtlTests.fs" />
+    <Compile Include="AnalysisTechniques\AtDccaPruningTests.fs" />
+    <Compile Include="AnalysisTechniques\AtDccaFastBdd.fs" />
+    <Compile Include="AnalysisTechniques\AnalysisFacadeTests.fs" />
     <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>

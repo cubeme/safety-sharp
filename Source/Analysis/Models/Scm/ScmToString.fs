@@ -276,6 +276,12 @@ module internal ScmToString =
 
         compDecl c
         writer.ToString ()
+    
+    let compPathToString (compPath:CompPath) : string =
+        compPath |> List.rev |> List.map (fun comp -> match comp with | Comp.Comp(comp) -> comp) |> String.concat "."
+
+    let faultPathToString (faultPathComp:CompPath,fault:Fault) : string =
+        sprintf "%s.%s" (compPathToString faultPathComp) (match fault with | Fault.Fault(fault) -> fault) 
         
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmTracer

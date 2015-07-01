@@ -36,6 +36,7 @@ type private LoadedModelCache = {
     // Lazy instantiated Analysis techniques. They are only instantiated, when needed
     LazyAtLtlFormulas : Lazy<AtLtlFormula.AnalyseLtlFormulas>;
     LazyAtDccaLtl : Map<ScmVerificationElements.PropositionalExpr,AtDccaLtl.PerformDccaWithLtlFormulas> ref; //Hazard to At
+    LazyAtDccaPruning : Map<ScmVerificationElements.PropositionalExpr,AtDccaPruning.PerformDccaByPruningModels> ref; //Hazard to At
 }
     with
         static member initial (scmModel: Scm.ScmModel ) =
@@ -47,6 +48,7 @@ type private LoadedModelCache = {
                 LoadedModelCache.CompPathParser = SafetySharp.Models.ScmVeParser.locCompInst_Result initialParserState;
                 LoadedModelCache.LazyAtLtlFormulas = lazy (new AtLtlFormula.AnalyseLtlFormulas());
                 LoadedModelCache.LazyAtDccaLtl = ref Map.empty<ScmVerificationElements.PropositionalExpr,AtDccaLtl.PerformDccaWithLtlFormulas>;
+                LoadedModelCache.LazyAtDccaPruning = ref Map.empty<ScmVerificationElements.PropositionalExpr,AtDccaPruning.PerformDccaByPruningModels>;
             }
         member this.AtLtlFormulas = this.LazyAtLtlFormulas.Force()
         member this.AtDccaLtl (hazard) =
@@ -55,6 +57,13 @@ type private LoadedModelCache = {
             else
                 let newAt = AtDccaLtl.PerformDccaWithLtlFormulas(this.LoadedModel,hazard)
                 do this.LazyAtDccaLtl := this.LazyAtDccaLtl.Value.Add (hazard,newAt)
+                newAt
+        member this.AtDccaPruning (hazard) =
+            if this.LazyAtDccaPruning.Value.ContainsKey hazard then
+                this.LazyAtDccaPruning.Value.Item hazard
+            else
+                let newAt = AtDccaPruning.PerformDccaByPruningModels(this.LoadedModel,hazard)
+                do this.LazyAtDccaPruning := this.LazyAtDccaPruning.Value.Add (hazard,newAt)
                 newAt
 
         //static member resetAnalysisTechniques
@@ -217,35 +226,65 @@ type AnalysisFacade () =
                 currentState <- AnalysisFacadeState.ModelLoaded(currentModelCache,newWfState)
                 ()
 
-
     // Analysis Techniques
     
     member internal this.atAnalyseLtl_WithPromela (ltlExpr:LtlExpr) : SafetySharp.Ternary.Ternary =
         let workflowToCalculateLtlResult =
             currentState.getLoadedModelCache.AtLtlFormulas.checkLtlFormulaWithPromela(ltlExpr)
         this.RunWorkflowOnModel_getResult workflowToCalculateLtlResult
+                        
+    member internal this.atAnalyseLtl (ltlExpr:LtlExpr) : SafetySharp.Ternary.Ternary =
+        let workflowToCalculateLtlResult =
+            currentState.getLoadedModelCache.AtLtlFormulas.checkLtlFormula(ltlExpr)
+        this.RunWorkflowOnModel_getResult workflowToCalculateLtlResult
 
-    member this.atAnalyseLtl_WithPromela (formula:string) : SafetySharp.Ternary.Ternary = 
+    member this.atAnalyseLtl (formula:string) : SafetySharp.Ternary.Ternary = 
         let formulaAsLtlExpr = currentState.getLoadedModelCache.LtlExprParser formula
-        this.atAnalyseLtl_WithPromela formulaAsLtlExpr 
-    
+        this.atAnalyseLtl formulaAsLtlExpr 
+
+        
+        
+    member internal this.atAnalyseDccaLtl_WithNuSmv (hazard:PropositionalExpr) : Set<Set<ScmHelpers.FaultPath>> = 
+        let workflowToCalculateDccaResult =
+            currentState.getLoadedModelCache.AtDccaLtl(hazard).checkWithNusmv()
+        this.RunWorkflowOnModel_getResult workflowToCalculateDccaResult
+
     member internal this.atAnalyseDccaLtl_WithPromela (hazard:PropositionalExpr) : Set<Set<ScmHelpers.FaultPath>> = 
         let workflowToCalculateDccaResult =
             currentState.getLoadedModelCache.AtDccaLtl(hazard).checkWithPromela()
         this.RunWorkflowOnModel_getResult workflowToCalculateDccaResult
 
-    member this.atAnalyseDccaLtl_WithPromela (hazard:string) : Set<Set<ScmHelpers.FaultPath>> =  
-        let hazardAsPropExpr = currentState.getLoadedModelCache.PropositionalExprParser hazard
-        this.atAnalyseDccaLtl_WithPromela hazardAsPropExpr
-    
-    member internal this.atAnalyseDccaLtl_WithNuSmv (hazard:PropositionalExpr) : Set<Set<ScmHelpers.FaultPath>> = 
+    member internal this.atAnalyseDccaLtl (hazard:PropositionalExpr) : Set<Set<ScmHelpers.FaultPath>> =  
         let workflowToCalculateDccaResult =
-            currentState.getLoadedModelCache.AtDccaLtl(hazard).checkWithNusmv()
+            currentState.getLoadedModelCache.AtDccaLtl(hazard).check()
+        this.RunWorkflowOnModel_getResult workflowToCalculateDccaResult
+    
+    member this.atAnalyseDccaLtl (hazard:string) : Set<Set<string>> =  
+        let hazardAsPropExpr = currentState.getLoadedModelCache.PropositionalExprParser hazard
+        let result = this.atAnalyseDccaLtl hazardAsPropExpr
+        result |> Set.map (fun s -> s |> Set.map (fun elem -> ScmToString.faultPathToString elem))
+
+    
+                
+    member internal this.atAnalyseDccaPruning_WithPromela (hazard:PropositionalExpr) : Set<Set<ScmHelpers.FaultPath>> = 
+        let workflowToCalculateDccaResult =
+            currentState.getLoadedModelCache.AtDccaPruning(hazard).checkWithPromela()
+        this.RunWorkflowOnModel_getResult workflowToCalculateDccaResult
+
+    member internal this.atAnalyseDccaPruning_WithNuSmv (hazard:PropositionalExpr) : Set<Set<ScmHelpers.FaultPath>> = 
+        let workflowToCalculateDccaResult =
+            currentState.getLoadedModelCache.AtDccaPruning(hazard).checkWithNusmv()
+        this.RunWorkflowOnModel_getResult workflowToCalculateDccaResult
+
+    member internal this.atAnalyseDccaPruning (hazard:PropositionalExpr) : Set<Set<ScmHelpers.FaultPath>> = 
+        let workflowToCalculateDccaResult =
+            currentState.getLoadedModelCache.AtDccaPruning(hazard).check()
         this.RunWorkflowOnModel_getResult workflowToCalculateDccaResult
         
-    member this.atAnalyseDccaLtl_WithNuSmv (hazard:string) : Set<Set<ScmHelpers.FaultPath>> =  
+    member this.atAnalyseDccaPruning (hazard:string) : Set<Set<string>> =  
         let hazardAsPropExpr = currentState.getLoadedModelCache.PropositionalExprParser hazard
-        this.atAnalyseDccaLtl_WithNuSmv hazardAsPropExpr
+        let result = this.atAnalyseDccaPruning hazardAsPropExpr
+        result |> Set.map (fun s -> s |> Set.map (fun elem -> ScmToString.faultPathToString elem))
 
     // Methods to organize state
     

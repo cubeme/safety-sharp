@@ -155,6 +155,9 @@ module internal TsamChangeIdentifier =
             match beforeTransform with
                 | Traceable(_var) ->
                     Traceable.Traceable(forwardTrace.Item _var)
+                | TraceableRemoved(reason) ->
+                    Traceable.TraceableRemoved(reason)
+
 
         let newTsamTracer =
             { mutablePgm with

@@ -30,8 +30,14 @@ module internal FileSystem =
 
     /// Writes the given text to the file indicated by the path, using the given text encoding. If the file or some directories of
     /// the path do not exist, they are created. Otherwise, the contents of the file are overwritten.
-    let WriteToFile path text encoding =    
-        Directory.CreateDirectory (Path.GetDirectoryName path) |> ignore
+    let WriteToFile path text encoding =
+        let createPathOfFilename () =
+            let pathToCreate = System.IO.Path.GetDirectoryName(path)
+            if pathToCreate <> "" then
+                do System.IO.Directory.CreateDirectory pathToCreate |> ignore
+            else
+                ()
+        do createPathOfFilename ()
         File.WriteAllText (path, text, encoding)
 
     /// Writes the given text to the file indicated by the path, using the ASCII encoding. If the file or some directories of

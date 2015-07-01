@@ -32,6 +32,7 @@ module internal SatsExecutor =
     type AnalysisResult = 
         | FailureDuringAnalysis
         | VerificationResult of Result:Ternary
+        | DccaResult of Result:Set<Set<string>>
     
     type SatsExecutionState = {
         AnalysisFacade : SafetySharp.AnalysisTechniques.AnalysisFacade;
@@ -62,20 +63,17 @@ module internal SatsExecutor =
     let executeLetStatement (previousState:SatsExecutionState) (letStatement:LetStatement) : SatsExecutionState*SatsExecutionResult =
         match letStatement with
             | LetStatement.AtLtlFormula (letIdentifier,formula) ->
-                let result = previousState.AnalysisFacade.atAnalyseLtl_WithPromela(formula)
+                let result = previousState.AnalysisFacade.atAnalyseLtl(formula) |> AnalysisResult.VerificationResult
                 let newExecutionState =
-                    let result = AnalysisResult.VerificationResult(result)
                     { previousState with
                         SatsExecutionState.AnalysisResult = previousState.AnalysisResult.Add(letIdentifier,result)
                     }
                 (newExecutionState, SatsExecutionResult.FinishedSuccessful)
             | LetStatement.AtDccaLtl (letIdentifier,hazard) ->
-                //let hazard = SafetySharp.Models.ScmParser.
-                //let dccaLtlAnalyzer = SafetySharp.AnalysisTechniques.AtDccaLtl.PerformDccaWithLtlFormulas (model,hazard)
-                //let result = dccaLtlAnalyzer.checkWithNuSMV()
+                let result = previousState.AnalysisFacade.atAnalyseDccaLtl(hazard) |> AnalysisResult.DccaResult
                 let newExecutionState =
                     { previousState with
-                        SatsExecutionState.AnalysisResult = previousState.AnalysisResult;
+                        SatsExecutionState.AnalysisResult = previousState.AnalysisResult.Add(letIdentifier,result);
                     }
                 (newExecutionState, SatsExecutionResult.FinishedSuccessful)
 

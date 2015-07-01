@@ -32,6 +32,7 @@ module internal AtDccaPruning =
     open SafetySharp.Analysis.Modelchecking.PromelaSpin.Typedefs
     open SafetySharp.Analysis.Modelchecking.PromelaSpin
     open SafetySharp.Models.ScmHelpers
+    open SafetySharp.EngineOptions
     
     type ElementToCheck = {
         FaultsWhichMayAppear:Set<FaultPath>; //faultyComponents
@@ -42,11 +43,13 @@ module internal AtDccaPruning =
         
         let mutable cachedPromelaModel = Map.empty<Scm.ScmModel,SamToPromela.PromelaTracer<Scm.Traceable>>
 
+        let invariant_NotHazard = ScmVerificationElements.PropositionalExpr.UExpr(hazard,Scm.UOp.Not)
+
         
         let transformModelToPromelaAndCache () : ExogenousWorkflowFunction<ScmTracer.SimpleScmTracer<Scm.Traceable>,SamToPromela.PromelaTracer<Scm.Traceable>> = workflow {
             let! model = ScmTracer.iscmGetModel ()
             if not(cachedPromelaModel.ContainsKey model) then
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfigurationWithInvariants [hazard]
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfigurationWithInvariants [invariant_NotHazard]
                 do! logForwardTracesOfOrigins ()
                 let! transformed = getState ()
                 cachedPromelaModel <- cachedPromelaModel.Add (model,transformed)
@@ -141,4 +144,71 @@ module internal AtDccaPruning =
             let sizesToCheck = {0..numberOfAllFaults} |> Seq.toList
             let! fullDcca = listFold checkIfSizeIsSafe (Set.empty<Set<FaultPath>>) sizesToCheck
             return fullDcca
+        }
+        
+        /////////////////////////////////////////////////
+        //              NuSMV-Code
+        /////////////////////////////////////////////////
+        member this.checkWithNusmv ()  : WorkflowFunction<Scm.ScmModel,Scm.ScmModel,Set<Set<FaultPath>>> = workflow {
+            let nusmvExecutor = new SafetySharp.ExternalTools.Smv.ExecuteNusmv2()
+                        
+            let checkFormulaElement (formulaElement:ElementToCheck)  = workflow {                    
+                    do! SafetySharp.Models.ScmTracer.scmToSimpleScmTracer ()
+                    do! SafetySharp.Models.ScmRewriterRemoveGivenFaults.removeFaults formulaElement.FaultsWhichMustNotAppear
+                    do! SafetySharp.ExternalTools.ScmToNuXmv.transformConfiguration ()
+                    do! logForwardTracesOfOrigins ()
+                    let! forwardTracer = getForwardTracer ()
+                    let! nusmvModel = getState ()
+                    do! SafetySharp.ITracing.removeTracing ()
+                    do! SafetySharp.ExternalTools.SmvToString.workflow ()
+                    let! file = printToRandomFile "smv"
+                    let filename = match file with | SafetySharp.FileSystem.FileName(filename) -> filename
+                    do nusmvExecutor.StartSmvInteractive (0) (filename+".log") |> ignore
+                    let readmodel = nusmvExecutor.ExecuteAndIntepretCommandSequence(SafetySharp.ExternalTools.Smv.SmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+                    assert readmodel.HasSucceeded
+                    
+                    let nusmvInvariant = SafetySharp.ExternalTools.ScmVeToNuXmv.transformPropositionalExpr forwardTracer invariant_NotHazard
+                    let nuXmvResult = nusmvExecutor.ExecuteCommand(SafetySharp.ExternalTools.Smv.NuSMVCommand.CheckInvar nusmvInvariant)
+                    let nuXmvInterpretation = SafetySharp.ExternalTools.Smv.SmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec nuXmvResult
+                    do nusmvExecutor.ForceShutdownSmv () 
+                    return (formulaElement.FaultsWhichMayAppear,nuXmvInterpretation)
+            }
+
+            let checkFormulaElement_asSubWorkflow element = runSubWorkflow_WithSameState_ReturnResult (checkFormulaElement element)
+                       
+            //    let threadWithBiggerStack = new System.Threading.Thread( (fun () -> result := ltlDcca.checkWithNuSMV () ), 1024*1024*8) //HACK: for a bigger stack
+            //    do threadWithBiggerStack.Start ()
+            //    do threadWithBiggerStack.Join ()
+
+            
+            let checkIfSizeIsSafe (knownUnsafe:Set<Set<FaultPath>>) (size:int) : WorkflowFunction<Scm.ScmModel,Scm.ScmModel,Set<Set<FaultPath>>> = workflow { //returns new knownUnsafe
+                let formulasToCheck = this.formulasToVerify_CheckIfNumberOfFaultsIsSafe size knownUnsafe
+                let! checkedFormulas = listMap  checkFormulaElement_asSubWorkflow formulasToCheck
+                let calculateNewKnownUnsafe (acc:Set<Set<FaultPath>>) (toProcess:(Set<FaultPath>*SafetySharp.ExternalTools.Smv.NuXmvCommandResultInterpretedCheckOfSpecification)) =
+                    let faultyComponents,result = toProcess
+                    match result.Result with
+                        | SafetySharp.ExternalTools.Smv.CheckOfSpecificationDetailedResult.Invalid (trace)->
+                            acc.Add faultyComponents // model checker finds counterexample. Formula is false. Combination is unsafe.
+                        | SafetySharp.ExternalTools.Smv.CheckOfSpecificationDetailedResult.Valid ->
+                            acc // model checker finds no counterexample. Formula is true. Combination is safe.
+                        | SafetySharp.ExternalTools.Smv.CheckOfSpecificationDetailedResult.Undetermined ->
+                            printfn "stdout: %s\n stderr: %s" (result.Basic.Stdout) (result.Basic.Stderr)
+                            failwith "Could not be checked with NuSMV. Consult full log"
+                let unsafeSetsUntilSize = checkedFormulas |> List.fold calculateNewKnownUnsafe knownUnsafe
+                return unsafeSetsUntilSize
+            }
+            
+            let sizesToCheck = {0..numberOfAllFaults} |> Seq.toList
+            let! fullDcca = listFold checkIfSizeIsSafe (Set.empty<Set<FaultPath>>) sizesToCheck
+            return fullDcca
+        }
+        
+        member this.check ()
+                : WorkflowFunction<Scm.ScmModel,_,Set<Set<FaultPath>>> = workflow {
+            let! preferedEngine = getEngineOption<_,AtEngineOptions.StandardVerifier> ()
+            match preferedEngine with
+                | AtEngineOptions.StandardVerifier.NuSMV ->
+                    return! this.checkWithNusmv ()
+                | AtEngineOptions.StandardVerifier.Promela ->
+                    return! this.checkWithPromela ()
         }
