@@ -45,6 +45,7 @@
 * beh5.scm: Shows the reason for higher order statement "foreach" and expression "forall" and "exists". In short: How arrays are flattened for model checkers like prism is really inefficient.
 * beh6.scm: Experiments with arrays
 * beh7.scm: Experiments with nested arrays
+* beh8.scm: portcall in foreach
 
 
 ## (call)-Tests (instantaneous)

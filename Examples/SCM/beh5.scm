@@ -1,14 +1,15 @@
 component simple {	
-	intBoolArray1 : Array<3,int<0..100>> = [0;0;0];
+	boolField1 : bool = false;
+	intArrayField1 : Array<3,int<0..100>> = [0;0;0];
 	
-	intBoolArray1_0 : int<0..100> = 0;
-	intBoolArray1_1 : int<0..100> = 0;
-	intBoolArray1_2 : int<0..100> = 0;
+	intArrayField1_0 : int<0..100> = 0;
+	intArrayField1_1 : int<0..100> = 0;
+	intArrayField1_2 : int<0..100> = 0;
 	
-	rport_BoolArray ( );
+	rport_IntArray ( );
 	
-	pport_BoolArray () {		
-		boolField1 := intBoolArray1[intLocal0] || intBoolArray1[intLocal1] || intBoolArray1[intLocal2];
+	pport_IntArray () {		
+		boolField1 := intArrayField1[intLocal0] || intArrayField1[intLocal1] || intArrayField1[intLocal2];
 	}
 		
 	pport_BoolArrayFlattened () {		
@@ -17,15 +18,15 @@ component simple {
 		int intLocal2;
 		
 		boolField1 :=
-			( intLocal0==0 ? intBoolArray1_0 : ( intLocal0==1 ? intBoolArray1_1 : intBoolArray1_2 ) ) ||
-			( intLocal1==0 ? intBoolArray1_0 : ( intLocal1==1 ? intBoolArray1_1 : intBoolArray1_2 ) ) ||
-			( intLocal2==0 ? intBoolArray1_0 : ( intLocal2==1 ? intBoolArray1_1 : intBoolArray1_2 ) );
+			( intLocal0==0 ? intArrayField1_0 : ( intLocal0==1 ? intArrayField1_1 : intArrayField1_2 ) ) ||
+			( intLocal1==0 ? intArrayField1_0 : ( intLocal1==1 ? intArrayField1_1 : intArrayField1_2 ) ) ||
+			( intLocal2==0 ? intArrayField1_0 : ( intLocal2==1 ? intArrayField1_1 : intArrayField1_2 ) );
 	}
 	
-	simple.rport_BoolArray = instantly simple.pport_BoolArray
+	simple.rport_IntArray = instantly simple.pport_IntArray
 	
 	step {
-		rport_BoolArray ( );
+		rport_IntArray ( );
 	}
 }
 

@@ -20,7 +20,7 @@ component simple {
 		
 		boolField2 := forall i in intArrayField1 (i == 3);
 		
-		boolField3 := forall i,j in intArrayField1,boolArrayField1 ( i <= 30 && j == false)
+		boolField3 := forall i,j in intArrayField1,boolArrayField1 ( i <= 30 && j == false); // TODO: maybe introduce tuple type zip(intArrayField1,boolArrayField1)???
 		
 		foreach i,j in intArrayField1,intArrayField2 {
 			i := j + 1;
