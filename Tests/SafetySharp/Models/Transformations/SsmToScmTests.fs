@@ -135,14 +135,14 @@ module ``SsmToScm Transformation`` =
                 SourcePort = "A"
                 TargetComp = "X.z.w"
                 TargetPort = "B"
-                Kind = BindingKind.Instantaneous
+                Kind = Ssm.Instantaneous
             }
             {
                 SourceComp = "X.x"
                 SourcePort = "A"
                 TargetComp = "X"
                 TargetPort = "B"
-                Kind = BindingKind.Delayed
+                Kind = Ssm.Delayed
             }
         ]
 
@@ -167,7 +167,7 @@ module ``SsmToScm Transformation`` =
                 SourcePort = "A"
                 TargetComp = "Root0.X"
                 TargetPort = "B"
-                Kind = BindingKind.Instantaneous
+                Kind = Ssm.Instantaneous
             }
         ]
 

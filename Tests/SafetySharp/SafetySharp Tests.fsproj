@@ -89,16 +89,6 @@
     <Compile Include="..\TestCases\ScmSmokeTests.fs">
       <Link>ScmSmokeTests.fs</Link>
     </Compile>
-    <Compile Include="Models\Ssm\CilToSsm.Assemblies.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.Bindings.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.Components.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.Fields.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.Methods.fs" />
-    <Compile Include="Models\Ssm\SsmLowering.Signatures.fs" />
-    <Compile Include="Models\Ssm\SsmLowering.LocalBindings.fs" />
-    <Compile Include="Models\Ssm\SsmLowering.VirtualDispatch.fs" />
-    <Compile Include="Models\Ssm\SsmLowering.Scheduling.fs" />
-    <Compile Include="Models\Ssm\SsmLowering.StepInlining.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterLevelUpTests.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />
@@ -137,6 +127,7 @@
     <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.fs" />
     <None Include="app.config" />
+    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Modeling\Modeling.csproj">
@@ -157,14 +148,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Mono.Cecil">
-      <HintPath>..\..\Dependencies\Packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Mono.Cecil.Rocks">
-      <HintPath>..\..\Dependencies\Packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.Rocks.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System.Collections.Immutable, Version=1.1.36.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>..\..\Dependencies\Packages\System.Collections.Immutable.1.1.36\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
       <Private>True</Private>
