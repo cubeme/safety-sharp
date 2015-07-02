@@ -26,8 +26,6 @@ namespace SafetySharp.Models
 module internal SsmLowering =
     open System.Collections.Generic
     open SafetySharp
-    open SafetySharp.Modeling
-    open SafetySharp.Reflection
     open Ssm
 
     /// Makes the given name variable unique within the given method of the given component.
@@ -46,41 +44,15 @@ module internal SsmLowering =
 
     /// Creates a unique synthesized port name based on the given synthesized port index and the given original name.
     let makeSynPortName originalName synIndex =
-        sprintf "%s!!%d" originalName synIndex
+        sprintf "%s@%d" originalName synIndex
 
     /// Gets the given component's subcomponent with the given name.
     let getSub (c : Comp) subName =
-        c.Subs |> Seq.filter (fun sub -> sub.Name = subName) |> Seq.exactlyOne
+        c.Subs |> Seq.filter (fun sub -> sub.Name.EndsWith(sprintf ".%s" subName)) |> Seq.exactlyOne
 
     /// Gets the given component's method with the given name.
     let getMethod (c : Comp) methodName = 
         c.Methods |> Seq.filter (fun m -> m.Name = methodName) |> Seq.exactlyOne
-
-    /// Lowers virtual method calls and bindings. Replaces all calls to virtual methods or interface methods with the most derived 
-    /// implementation of the target type.
-    let rec lowerVirtualCalls (model : Model) (metadataProvider : MetadataProvider) (c : Comp) =
-        let replaceVirtualCall componentType methodName t p d r e =
-            let declaringType = metadataProvider.GetImplementedType componentType t
-            let mutable targetMethod = metadataProvider.UnmapMethod declaringType methodName
-            if not targetMethod.IsVirtual then CallExpr (methodName, t, p, d, r, e, false)
-            else 
-                let targetMethod = Reflection.getMostDerivedMethod componentType targetMethod
-                let methodName = metadataProvider.Resolve targetMethod |> Renaming.getUniqueMethodName
-                let declaringType = metadataProvider.GetTypeReference(targetMethod.DeclaringType).FullName
-                CallExpr (methodName, declaringType, p, d, r, e, false)
-
-        let componentType = model.GetTypeOfComponent c.Name
-        let rec lower = function
-            | CallExpr (m, t, p, d, r, e, true) -> replaceVirtualCall componentType m t p d r e
-            | MemberExpr (Field (f, t), CallExpr (m, dt, p, d, r, e, true)) -> 
-                MemberExpr (Field (f, t), replaceVirtualCall (model.GetTypeOfComponent f) m dt p d r e)
-            | UExpr (op, e) -> UExpr (op, lower e)
-            | BExpr (e1, op, e2) -> BExpr (lower e1, op, lower e2)
-            | e -> e
-
-        { c with
-            Methods = c.Methods |> List.map (fun m -> { m with Body = Ssm.mapExprsInStm lower m.Body })
-            Subs = c.Subs |> List.map (lowerVirtualCalls model metadataProvider) }
 
     /// Lowers the signatures of ports: Ports returning a value are transformed to void-returning ports 
     /// with an additional out parameter.
@@ -124,6 +96,9 @@ module internal SsmLowering =
         let synPorts = List<_> ()
         let synBindings = List<_> ()
 
+        let name c' =
+            c'.Name
+
         let callSynthesized c' (m : Method) t p d r e =
             match m.Kind with
             | ProvPort ->
@@ -134,7 +109,7 @@ module internal SsmLowering =
                       Body = NopStm 
                       Locals = [] }
                 synPorts.Add syn
-                synBindings.Add { SourceComp = c'.Name; SourcePort = m.Name; TargetComp = c.Name; TargetPort = syn.Name; Kind = BindingKind.Instantaneous }
+                synBindings.Add { SourceComp = name c'; SourcePort = m.Name; TargetComp = name c; TargetPort = syn.Name; Kind = BindingKind.Instantaneous }
                 CallExpr (syn.Name, t, p, d, r, e, false)
             | _ -> CallExpr (m.Name, t, p, d, r, e, false)
 
@@ -210,10 +185,6 @@ module internal SsmLowering =
             Subs = c.Subs |> List.map lowerBaseSteps
         }
 
-    /// Applies all lowerings to the given components before SSM model validation.
-    let lowerPreValidation (model : Model) (root : Comp) : Comp =
-        root |> lowerVirtualCalls model (model.GetMetadataProvider ())
-
     /// Applies all lowerings to the given components after SSM model validation.
-    let lowerPostValidation (model : Model) (root : Comp) : Comp =
+    let lower (root : Comp) : Comp =
         root |> lowerSignatures |> lowerLocalBindings |> lowerScheduling |> lowerBaseSteps

@@ -20,26 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp
+namespace SafetySharp.Analysis
+{
+	using System;
+	using Modeling;
+	using Models;
+	using Utilities;
 
-module internal AssemblyInfo =
+	/// <summary>
+	///   Represents the SPIN model checker that can be used to check properties of a model.
+	/// </summary>
+	public class Spin
+	{
+		private readonly Scm.CompDecl _model;
 
-    open System.Reflection
-    open System.Runtime.CompilerServices
-    open System.Runtime.InteropServices
+		/// <summary>
+		///   Initializes a new instance.
+		/// </summary>
+		/// <param name="model">The model that should be checked.</param>
+		public Spin(Model model)
+		{
+			Requires.NotNull(model, () => model);
 
-    [<assembly: AssemblyTitle("S# Library")>]
-    [<assembly: AssemblyDescription("S# Library")>]
-    [<assembly: AssemblyCompany("Institute for Software & Systems Engineering")>]
-    [<assembly: AssemblyProduct("S#")>]
-    [<assembly: AssemblyCopyright("Copyright (c) 2014-2015, Institute for Software & Systems Engineering")>]
-    [<assembly: AssemblyCulture("")>]
-    [<assembly: AssemblyVersion("0.1.0.0")>]
-    [<assembly: AssemblyFileVersion("0.1.0.0")>]
-    [<assembly: ComVisible(false)>]
-    [<assembly: InternalsVisibleTo("SafetySharp.Modeling")>]
-    [<assembly: InternalsVisibleTo("SafetySharp.Tests")>]
-    [<assembly: InternalsVisibleTo("SafetySharp.ModelChecking.Tests")>]
-    [<assembly: InternalsVisibleTo("SafetySharp.Documentation.Scripts")>]
+			model.Seal();
+			_model = ModelTransformation.Transform(model);
+		}
 
-    do ()
+		/// <summary>
+		///   Checks whether the <paramref name="formula" /> holds.
+		/// </summary>
+		/// <param name="formula">The formula that should be checked.</param>
+		public void Check(LtlFormula formula)
+		{
+			Requires.NotNull(formula, () => formula);
+
+			Console.WriteLine(ScmToString.toString(_model));
+			SpinModelChecker.check(_model);
+		}
+	}
+}

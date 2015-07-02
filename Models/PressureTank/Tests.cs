@@ -44,7 +44,10 @@ namespace PressureTank
 		{
 			var watch = new Stopwatch();
 			watch.Start();
-			var spin = new SpinModelChecker(new PressureTankModel());
+
+			var model = new PressureTankModel();
+			var spin = new Spin(model);
+			spin.Check(Ltl.Next(true));
 
 			Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
 		}

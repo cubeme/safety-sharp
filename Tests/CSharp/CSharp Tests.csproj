@@ -288,6 +288,7 @@
     <Compile Include="Formulas\LinearTemporalLogic\next.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\state expression.cs" />
     <Compile Include="Utilities\TestTraceOutput.cs" />
+    <None Include="app.config" />
     <None Include="Execution\SemanticEquality\SideEffectsFree\expression bodies.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffects\control flow.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffects\variables.cs" />

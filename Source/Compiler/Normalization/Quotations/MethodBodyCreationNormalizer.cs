@@ -93,7 +93,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 				foreach (var parameter in methodSymbol.Parameters)
 				{
 					var type = _syntax.TypeOfExpression(parameter.Type);
-					var parameterObject = Create<VariableMetadata>(_syntax.LiteralExpression(parameter.Name), type);
+					var parameterObject = Create<VariableMetadata>(_syntax.LiteralExpression(parameter.Name), type, _syntax.TrueLiteralExpression());
 					statements.Add(_syntax.LocalDeclarationStatement(parameter.Name, parameterObject));
 				}
 
@@ -106,7 +106,7 @@ namespace SafetySharp.Compiler.Normalization.Quotations
 				{
 					var localSymbol = local.GetDeclaredSymbol<ILocalSymbol>(_semanticModel);
 					var type = _syntax.TypeOfExpression(localSymbol.Type);
-					var parameterObject = Create<VariableMetadata>(_syntax.LiteralExpression(localSymbol.Name), type);
+					var parameterObject = Create<VariableMetadata>(_syntax.LiteralExpression(localSymbol.Name), type, _syntax.FalseLiteralExpression());
 					statements.Add(_syntax.LocalDeclarationStatement(localSymbol.Name, parameterObject));
 				}
 

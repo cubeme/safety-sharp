@@ -62,6 +62,14 @@ namespace SafetySharp.Runtime.Statements
 		public IReadOnlyList<Statement> Statements { get; private set; }
 
 		/// <summary>
+		///     Gets the number of choices.
+		/// </summary>
+		public int ChoiceCount
+		{
+			get { return Guards.Count; }
+		}
+
+		/// <summary>
 		///     Gets a value indicating whether the choice is deterministic.
 		/// </summary>
 		public bool IsDeterministic { get; private set; }

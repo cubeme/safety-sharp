@@ -122,7 +122,7 @@ namespace SafetySharp.Analysis
 		public CtlFormula Implies(Expression<Func<bool>> expression)
 		{
 			Requires.NotNull(expression, () => expression);
-			return Implies(CSharpTransformation.Transform(expression));
+			return Implies(StateFormulaTransformation.Transform(expression));
 		}
 
 		/// <summary>
@@ -133,7 +133,7 @@ namespace SafetySharp.Analysis
 		public CtlFormula EquivalentTo(Expression<Func<bool>> expression)
 		{
 			Requires.NotNull(expression, () => expression);
-			return EquivalentTo(CSharpTransformation.Transform(expression));
+			return EquivalentTo(StateFormulaTransformation.Transform(expression));
 		}
 
 		/// <summary>
@@ -144,7 +144,7 @@ namespace SafetySharp.Analysis
 		public CtlFormula And(Expression<Func<bool>> expression)
 		{
 			Requires.NotNull(expression, () => expression);
-			return And(CSharpTransformation.Transform(expression));
+			return And(StateFormulaTransformation.Transform(expression));
 		}
 
 		/// <summary>
@@ -155,7 +155,7 @@ namespace SafetySharp.Analysis
 		public CtlFormula Or(Expression<Func<bool>> expression)
 		{
 			Requires.NotNull(expression, () => expression);
-			return Or(CSharpTransformation.Transform(expression));
+			return Or(StateFormulaTransformation.Transform(expression));
 		}
 
 		#endregion

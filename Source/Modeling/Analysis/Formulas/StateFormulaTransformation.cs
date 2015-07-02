@@ -37,12 +37,12 @@ namespace SafetySharp.Analysis.Formulas
 	/// <summary>
 	///     Transforms an <see cref="Expression{TDelegate}" /> to a <see cref="StateFormula" />.
 	/// </summary>
-	internal class CSharpTransformation : ExpressionVisitor
+	internal class StateFormulaTransformation : ExpressionVisitor
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		private CSharpTransformation()
+		private StateFormulaTransformation()
 		{
 		}
 
@@ -71,7 +71,7 @@ namespace SafetySharp.Analysis.Formulas
 
 			return new StateFormula(new Lazy<Expression>(() =>
 			{
-				var transformation = new CSharpTransformation();
+				var transformation = new StateFormulaTransformation();
 				transformation.Visit(expression.Body);
 				return transformation.Expression;
 			}));

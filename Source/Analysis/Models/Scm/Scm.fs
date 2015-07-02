@@ -113,7 +113,10 @@ module internal Scm =
         | StepFault of Fault
         | Foreach of Elements:Tuple * NewVarsInSubExpr:(Var list) * SubStm:Stm
         
-    type internal OverflowBehavior = SafetySharp.Modeling.OverflowBehavior
+    type internal OverflowBehavior =
+        | Clamp = 0
+        | WrapAround = 1
+        | Error = 2
 
     type internal Type =
         | BoolType

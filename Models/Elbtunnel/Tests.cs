@@ -92,7 +92,8 @@ namespace Elbtunnel
 		{
 			var watch = new Stopwatch();
 			watch.Start();
-			var spin = new SpinModelChecker(_model);
+			var spin = new Spin(_model);
+			spin.Check(Ltl.Next(true));
 			Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
 		}
 	}

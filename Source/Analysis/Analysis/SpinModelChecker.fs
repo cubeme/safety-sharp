@@ -24,25 +24,13 @@ namespace SafetySharp.Analysis
 
 open System
 open SafetySharp
-open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Analysis.Modelchecking.PromelaSpin
 open SafetySharp.Workflow
 
 [<Sealed>]
-type SpinModelChecker (model : Model) =
-    do nullArg model "model"
-    do model.FinalizeMetadata ()
+module internal SpinModelChecker =
 
-    let scmRootComp = 
-        model 
-        |> CilToSsm.transformModel 
-        |> SsmLowering.lowerPreValidation model
-        |> SsmLowering.lowerPostValidation model 
-        |> SsmToScm.transform
-
-    do printf "%s" (ScmToString.toString scmRootComp)
-    let scm = scmRootComp |> Scm.ScmModel
    // do printf "======================================="
    
    (*
@@ -60,22 +48,23 @@ type SpinModelChecker (model : Model) =
     do printf "%s" spincode
     *)
 
-    let tankComp = [Scm.Comp("Tank0@0");Scm.Comp("R")]
-    let tankPressure = tankComp,Scm.Field("_pressureLevel$$")
-    let value60 = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.IntVal(60))
-    let hazard = ScmVerificationElements.PropositionalExpr.BExpr( ScmVerificationElements.PropositionalExpr.ReadField(tankPressure),Scm.BOp.GreaterEqual, value60)
+    let internal check scm =
+        let tankComp = [Scm.Comp("Tank");Scm.Comp("R")]
+        let tankPressure = tankComp,Scm.Field("_pressureLevel")
+        let value60 = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.IntVal(60))
+        let hazard = ScmVerificationElements.PropositionalExpr.BExpr( ScmVerificationElements.PropositionalExpr.ReadField(tankPressure),Scm.BOp.GreaterEqual, value60)
 
-    let analysisFacade = new SafetySharp.AnalysisTechniques.AnalysisFacade()
-    do analysisFacade.setEngineOption (SafetySharp.EngineOptions.TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
-    do analysisFacade.setMainModel (scm)
-    let minimalCutSets = analysisFacade.atAnalyseDccaLtl_WithPromela (hazard)
+        let analysisFacade = new SafetySharp.AnalysisTechniques.AnalysisFacade()
+        do analysisFacade.setEngineOption (SafetySharp.EngineOptions.TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep)
+        do analysisFacade.setMainModel (scm |> Scm.ScmModel)
+        let minimalCutSets = analysisFacade.atAnalyseDccaLtl_WithPromela (hazard)
 
-    //let minimalCutSets  =
-    //    let result : Set<ScmHelpers.FaultPath> list ref = ref ([])
+        //let minimalCutSets  =
+        //    let result : Set<ScmHelpers.FaultPath> list ref = ref ([])
 
-    //    result.Value
+        //    result.Value
 
-    do printfn "%+A" minimalCutSets
+        do printfn "%+A" minimalCutSets
 
 //    member this.Check (formula : LtlFormula) =
 //        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)

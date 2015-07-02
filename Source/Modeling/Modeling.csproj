@@ -44,7 +44,7 @@
     <Compile Include="Analysis\CtlFormula.cs" />
     <Compile Include="Analysis\Formulas\BinaryFormula.cs" />
     <Compile Include="Analysis\Formulas\BinaryFormulaOperator.cs" />
-    <Compile Include="Analysis\Formulas\CSharpTransformation.cs" />
+    <Compile Include="Analysis\Formulas\StateFormulaTransformation.cs" />
     <Compile Include="Analysis\Formulas\Formula.cs" />
     <Compile Include="Analysis\Formulas\FormulaVisitor`1.cs" />
     <Compile Include="Analysis\Formulas\FormulaVisitor.cs" />
@@ -54,6 +54,8 @@
     <Compile Include="Analysis\Formulas\UnaryFormulaOperator.cs" />
     <Compile Include="Analysis\Ltl.cs" />
     <Compile Include="Analysis\LtlFormula.cs" />
+    <Compile Include="Analysis\ModelTransformation.cs" />
+    <Compile Include="Analysis\Spin.cs" />
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
     <Compile Include="CompilerServices\MetadataAttribute.cs" />
     <Compile Include="CompilerServices\MetadataBuilders.cs" />
@@ -153,7 +155,15 @@
     <Compile Include="Utilities\ReflectionExtensions.cs" />
     <Compile Include="Utilities\Requires.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Analysis\Analysis.fsproj">
+      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
+      <Name>Analysis</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

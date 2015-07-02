@@ -52,7 +52,7 @@ namespace SafetySharp.Analysis
 		public static LtlFormula StateExpression(Expression<Func<bool>> expression)
 		{
 			Requires.NotNull(expression, () => expression);
-			return CSharpTransformation.Transform(expression);
+			return StateFormulaTransformation.Transform(expression);
 		}
 
 		#endregion
@@ -76,7 +76,7 @@ namespace SafetySharp.Analysis
 		public static LtlFormula Not(Expression<Func<bool>> operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return Not(CSharpTransformation.Transform(operand));
+			return Not(StateFormulaTransformation.Transform(operand));
 		}
 
 		#endregion
@@ -100,7 +100,7 @@ namespace SafetySharp.Analysis
 		public static LtlFormula Next(Expression<Func<bool>> operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return Next(CSharpTransformation.Transform(operand));
+			return Next(StateFormulaTransformation.Transform(operand));
 		}
 
 		#endregion
@@ -124,7 +124,7 @@ namespace SafetySharp.Analysis
 		public static LtlFormula Finally(Expression<Func<bool>> operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return Finally(CSharpTransformation.Transform(operand));
+			return Finally(StateFormulaTransformation.Transform(operand));
 		}
 
 		#endregion
@@ -148,7 +148,7 @@ namespace SafetySharp.Analysis
 		public static LtlFormula Globally(Expression<Func<bool>> operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return Globally(CSharpTransformation.Transform(operand));
+			return Globally(StateFormulaTransformation.Transform(operand));
 		}
 
 		#endregion
@@ -166,7 +166,7 @@ namespace SafetySharp.Analysis
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
 
-			return Until(CSharpTransformation.Transform(leftOperand), CSharpTransformation.Transform(rightOperand));
+			return Until(StateFormulaTransformation.Transform(leftOperand), StateFormulaTransformation.Transform(rightOperand));
 		}
 
 		/// <summary>
@@ -194,7 +194,7 @@ namespace SafetySharp.Analysis
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
 
-			return Until(CSharpTransformation.Transform(leftOperand), rightOperand);
+			return Until(StateFormulaTransformation.Transform(leftOperand), rightOperand);
 		}
 
 		/// <summary>
@@ -208,7 +208,7 @@ namespace SafetySharp.Analysis
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
 
-			return Until(leftOperand, CSharpTransformation.Transform(rightOperand));
+			return Until(leftOperand, StateFormulaTransformation.Transform(rightOperand));
 		}
 
 		#endregion

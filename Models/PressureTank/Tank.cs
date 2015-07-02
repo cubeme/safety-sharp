@@ -80,8 +80,11 @@ namespace PressureTank
 			_pressureLevel -= 1;
 
 			// TODO: Remove the following two lines once S# supports explicit overflow behaviors
-			_pressureLevel = _pressureLevel > _maxPressure ? _maxPressure : _pressureLevel;
-			_pressureLevel = _pressureLevel < 0 ? 0 : _pressureLevel;
+			if (_pressureLevel > _maxPressure)
+				_pressureLevel = _maxPressure;
+
+			if (_pressureLevel < 0)
+				_pressureLevel = 0;
 		}
 	}
 }

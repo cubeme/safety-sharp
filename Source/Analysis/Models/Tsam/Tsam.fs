@@ -40,7 +40,7 @@ module internal Tsam =
     type UOp = SafetySharp.Models.Sam.UOp
     type BOp = SafetySharp.Models.Sam.BOp
     type Var = SafetySharp.Models.Sam.Var
-    type OverflowBehavior = SafetySharp.Modeling.OverflowBehavior
+    type OverflowBehavior = SafetySharp.Models.Scm.OverflowBehavior
     type Val = SafetySharp.Models.Sam.Val
     type Expr = SafetySharp.Models.Sam.Expr
         

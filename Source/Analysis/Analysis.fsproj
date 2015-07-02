@@ -55,7 +55,6 @@
     <Compile Include="Utilities\Exceptions.fs" />
     <Compile Include="Utilities\FileSystem.fs" />
     <Compile Include="Utilities\StructuredWriter.fs" />
-    <Compile Include="Utilities\Reflection.fs" />
     <Compile Include="Utilities\FreshNameGenerator.fs" />
     <Compile Include="Utilities\EngineOptions.fs" />
     <Compile Include="Utilities\Workflow.fs" />
@@ -64,12 +63,8 @@
     <Compile Include="Utilities\GraphvizDot\DotAst.fs" />
     <Compile Include="Utilities\GraphvizDot\DotToString.fs" />
     <Compile Include="Utilities\Ternary.fs" />
-    <Compile Include="Models\Ssm\Modeling.fs" />
-    <Compile Include="Models\Ssm\Cil.fs" />
     <Compile Include="Models\Ssm\Ssm.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.fs" />
     <Compile Include="Models\Ssm\SsmLowering.fs" />
-    <Compile Include="Models\Ssm\SsmToCSharp.fs" />
     <Compile Include="Models\Scm\Scm.fs" />
     <Compile Include="Models\Scm\ScmVerificationElements.fs" />
     <Compile Include="Models\Scm\ScmHelpers.fs" />
@@ -178,7 +173,6 @@
     <Compile Include="AnalysisTechniques\AtMethodsCalled.fs" />
     <Compile Include="AnalysisTechniques\AnalysisFacade.fs" />
     <Compile Include="Analysis\SpinModelChecker.fs" />
-    <Compile Include="Analysis\MemberAccess.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Content Include="app.config" />
   </ItemGroup>
@@ -195,14 +189,6 @@
       <HintPath>..\..\Dependencies\Packages\FSharp.Core.3.1.2.1\lib\net40\FSharp.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Mono.Cecil">
-      <HintPath>..\..\Dependencies\Packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Mono.Cecil.Rocks">
-      <HintPath>..\..\Dependencies\Packages\Mono.Cecil.0.9.6.1\lib\net45\Mono.Cecil.Rocks.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="QuickGraph">
       <HintPath>..\..\Dependencies\QuickGraph.dll</HintPath>
@@ -215,13 +201,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Modeling\Modeling.csproj">
-      <Name>Modeling</Name>
-      <Project>{9b6c1fb4-3f1b-43ac-a0e0-eaed4088bf37}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

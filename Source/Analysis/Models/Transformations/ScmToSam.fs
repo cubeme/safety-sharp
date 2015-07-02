@@ -96,9 +96,14 @@ module internal ScmToSam =
             | Scm.ReadVar (_var) -> Sam.Expr.Read(transformVarToVar _var)
             | Scm.ReadField (field) -> Sam.Expr.Read(transformFieldToVar field)
             | Scm.UExpr (expr, uop) ->
-                let operator = transformUopToUop uop
                 let operand = transformExprToExpr expr
-                Sam.UExpr(operand,operator)
+                match uop with
+                | Scm.Not ->
+                    Sam.UExpr(operand,Sam.Not)
+                | Scm.Minus ->
+                    // TODO: That's stupid -- for whatever reason, SAM doesn't support unary minus
+                    Sam.BExpr(operand,Sam.Multiply,Sam.Literal(Sam.NumbVal (bigint 1)))
+                    
             | Scm.BExpr (leftExpr,bop,rightExpr) ->
                 let leftExpr = transformExprToExpr leftExpr
                 let bop = transformBopToBop bop
