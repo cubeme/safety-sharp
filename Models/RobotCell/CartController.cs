@@ -24,81 +24,46 @@ namespace ProductionCell
 {
 	using SafetySharp.Modeling;
 
-	public class Robot : Component
+	public class CartController : Component
 	{
-		private readonly Tool _drillTool;
-		private readonly Tool _insertTool;
-		private readonly WorkpieceSensor _sensor;
-		private readonly Tool _tightenTool;
-		private Position _position;
+		private readonly CartEngine _engine;
+		private Position _destination;
+		private Position _pointOfOrigin;
 		private State _state = State.AwaitingReconfiguration;
-		private RobotTask _task;
 
-		public Robot(Position position, WorkpieceSensor sensor, Tool drillTool, Tool insertTool, Tool tightenTool)
+		public CartController(CartEngine engine)
 		{
-			_position = position;
-			_sensor = sensor;
-			_drillTool = drillTool;
-			_insertTool = insertTool;
-			_tightenTool = tightenTool;
+			_engine = engine;
 		}
 
-		public void Reconfigure(RobotTask task)
+		public void Reconfigure(Position pointOfOrigin, Position destination)
 		{
-			_task = task;
-			_state = State.Ready;
+			_pointOfOrigin = pointOfOrigin;
+			_destination = destination;
+
+			_state = State.GetWorkpiece;
 		}
 
 		public bool RequiresReconfiguration()
 		{
-			return _state == State.AwaitingReconfiguration || IsCurrentToolBroken();
+			return _state == State.AwaitingReconfiguration;
 		}
 
-		private bool IsCurrentToolBroken()
-		{
-			switch (_task)
-			{
-				case RobotTask.Drill:
-					return _drillTool.IsBroken();
-				case RobotTask.Insert:
-					return _insertTool.IsBroken();
-				case RobotTask.Tighten:
-					return _tightenTool.IsBroken();
-				default:
-					return true;
-			}
-		}
+		public extern bool IsDone();
 
 		public override void Update()
 		{
 			switch (_state)
 			{
-				case State.Done:
-					_state = State.Ready;
+				case State.GetWorkpiece:
+					_engine.MoveTo(_pointOfOrigin);
 					return;
-				case State.Ready:
-					if (_sensor.WorkpieceDetected())
-						_state = State.Working;
+				case State.GoToDestination:
+					_engine.MoveTo(_destination);
 					return;
-				case State.Working:
-					UseTool();
-					_state = IsCurrentToolBroken() ? State.AwaitingReconfiguration : State.Done;
-					return;
-			}
-		}
-
-		private void UseTool()
-		{
-			switch (_task)
-			{
-				case RobotTask.Drill:
-					_drillTool.UseTool();
-					return;
-				case RobotTask.Insert:
-					_insertTool.UseTool();
-					return;
-				case RobotTask.Tighten:
-					_tightenTool.UseTool();
+				case State.AwaitCompletion:
+					if (IsDone())
+						_state = State.GoToDestination;
 					return;
 			}
 		}
@@ -106,8 +71,9 @@ namespace ProductionCell
 		private enum State
 		{
 			AwaitingReconfiguration,
-			Ready,
-			Working,
+			GetWorkpiece,
+			GoToDestination,
+			AwaitCompletion,
 			Done
 		}
 	}
