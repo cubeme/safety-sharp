@@ -30,7 +30,7 @@ module internal Scm =
     type internal ProvPort = ProvPort of string
     type internal Fault = Fault of string
     type internal Comp = Comp of string
-
+    
     type CompPath = Comp list // index1::index2::root::[]
 
     type internal UOp =
@@ -58,24 +58,37 @@ module internal Scm =
         | RealVal of double
         | ProbVal of double
 
-    type internal Expr =
+        
+    [<RequireQualifiedAccessAttribute>]
+    type internal ComplexElementAccess =
+        | Field of Field
+        | Var of Var
+        | SubContainer of Container:ComplexElementAccess * Index:Expr
+        // Example 1: "fieldArray : Array<2,bool>". Access "fieldArray[1]"
+        //            let field = Field.Field("fieldArray")
+        //            let expr1 = Expr.Literal(Val.IntVal(1))
+        //            ComplexElementAccess.SubContainer( ComplexElementAccess.Field(field),expr1)
+        // Example 2: "fieldArray : Array<2,bool>". Access "fieldArray[expr]". "expr" may be the current value of a field.
+        //            let field = Field.Field("fieldArray")
+        //            ComplexElementAccess.SubContainer( ComplexElementAccess.Field(field),expr))
+        // Example 3: "fieldArray : Array<1,Array<2,bool>>". Access "fieldArray[0][1]".
+        //            let field = Field.Field("fieldArray")
+        //            let expr0 = Expr.Literal(Val.IntVal(0))
+        //            let expr1 = Expr.Literal(Val.IntVal(1))
+        //            ComplexElementAccess.SubContainer(ComplexElementAccess.SubContainer( ComplexElementAccess.Field(field),expr0),expr1)
+
+    and internal Tuple = ComplexElementAccess list
+
+    and internal Expr =
         | Literal of Val
         | ReadVar of Var
         | ReadField of Field
+        | ReadComplexElementAccess of ComplexElementAccess //Arrays of Fields, Arrays of Arrays of Vars...
         | UExpr of Expr * UOp
         | BExpr of Expr * BOp * Expr
-
-    [<RequireQualifiedAccessAttribute>]
-    type internal LocExpr = // expression with location //TODO: Maybe split into LocAtom and LocExpr. Makes LTL and CTL easier
-        | Literal of Val
-        | ReadField of CompPath * Field
-        | ReadFault of CompPath * Fault
-        | ReadOldField of CompPath * Field
-        | ReadOldFault of CompPath * Fault
-        | ReadVar of Var // no path here, because only local! Also we do not assume a previous valuation!
-        | UExpr of LocExpr * UOp
-        | BExpr of LocExpr * BOp * LocExpr
-
+        | ForallExpr of Elements:Tuple * NewVarsInSubExpr:(Var list) * SubExpr:Expr
+        | ExistsExpr of Elements:Tuple * NewVarsInSubExpr:(Var list) * SubExpr:Expr
+        
     type internal FaultExpr =
         | Fault of Fault
         | NotFault of FaultExpr
@@ -86,10 +99,11 @@ module internal Scm =
         | ExprParam of Expr
         | InOutVarParam of Var
         | InOutFieldParam of Field
-
+        
     type internal Stm =
         | AssignVar of Var * Expr
         | AssignField of Field * Expr
+        | AssignComplexElementAccess of ComplexElementAccess:ComplexElementAccess * Expr
         | AssignFault of Fault * Expr
         | Block of Stm list
         | Choice of (Expr * Stm) list
@@ -97,18 +111,39 @@ module internal Scm =
         | CallPort of ReqPort * Param list
         | StepComp of Comp
         | StepFault of Fault
+        | Foreach of Elements:Tuple * NewVarsInSubExpr:(Var list) * SubStm:Stm
         
     type internal OverflowBehavior = SafetySharp.Modeling.OverflowBehavior
 
     type internal Type =
         | BoolType
-        | IntType // for local variables, which get inlined
-        | RealType // for local variables, which get inlined
+        | IntType // When used as type of a field it shows that the value is unrestricted. Model checker must support this. But may also be used in local variables/parameters, which get inlined, and thus may also be replaced by a RangedIntType during the inlining.
+        | RealType // Same restrictions as for IntType
         | RangedIntType of From:int * To:int * Overflow:OverflowBehavior // "intValue1: int<0..100>; intValue2: int<0..100,clamp on overrun>; intValue3: int<0..100,wrap around on overrun>; intValue4: int<0..100,error on overrun>"
         | RangedRealType of From:double  * To:double * Overflow:OverflowBehavior
         // | RangedMeasure of Unit:DerivedSiType * From:double * To:double "length1: measure<m><0..100>; speed1: measure<m/s><0..4>; acc1:measure<m/s²>"
         // | DerivedMeasures (may be given an initial value. assignments may only be reseted) "time1: measure<s,auto tick>; speed2: measure<m/s,based on acc1>; position1: measure<m,based on speed 2>"
+        | ArrayType of Size:int * SubType:Type // May be used for field, local vars and parameters. 0-based.
+        | ArrayOfUnspecifiedSizeType of SubType:Type // May be used in parameters only.  Are replaced by a ArrayType with a defined size during the inlining. Thus they are not usable for field or local vars.
         
+    [<RequireQualifiedAccessAttribute>]
+    type internal LocComplexElementAccess = // Extension of ComplexElementAccess with Location. For detailed examples of the idea see description of ComplexElementAccess
+        | Field of Field
+        | Var of Var
+        | SubContainer of Container:LocComplexElementAccess * Index:LocExpr
+
+     //TODO: Maybe split into LocAtom and LocExpr. Makes LTL and CTL in ScmVe easier and less redundant
+    and [<RequireQualifiedAccessAttribute>] internal LocExpr = // expression with location
+        | Literal of Val
+        | ReadField of CompPath * Field
+        | ReadFault of CompPath * Fault
+        | ReadComplexElementAccess of LocComplexElementAccess //Arrays of Fields, Arrays of Arrays of Vars...
+        | ReadOldField of CompPath * Field
+        | ReadOldFault of CompPath * Fault
+        | ReadVar of Var // no path here, because only local! Also we do not assume a previous valuation!
+        | UExpr of LocExpr * UOp
+        | BExpr of LocExpr * BOp * LocExpr
+    
     [<RequireQualifiedAccessAttribute>]
     type internal Contract = 
         | None
