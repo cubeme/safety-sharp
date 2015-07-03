@@ -242,46 +242,6 @@ namespace SafetySharp.Analysis
 			return null;
 		}
 
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'conjunction' operator to <paramref name="left" /> and
-		///     <paramref name="right" />.
-		/// </summary>
-		public static CtlFormula operator &([LiftExpression] bool left, CtlFormula right)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'conjunction' operator to <paramref name="left" /> and
-		///     <paramref name="right" />.
-		/// </summary>
-		public static LtlFormula operator &(CtlFormula left, [LiftExpression] bool right)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'disjunction' operator to <paramref name="left" /> and
-		///     <paramref name="right" />.
-		/// </summary>
-		public static LtlFormula operator |([LiftExpression] bool left, CtlFormula right)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'disjunction' operator to <paramref name="left" /> and
-		///     <paramref name="right" />.
-		/// </summary>
-		public static LtlFormula operator |(CtlFormula left, [LiftExpression] bool right)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
 		#endregion
 	}
 }

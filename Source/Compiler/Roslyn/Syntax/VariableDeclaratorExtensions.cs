@@ -49,13 +49,35 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var symbol = semanticModel.GetDeclaredSymbol(variableDeclarator);
-			Requires.That(symbol != null, "Unable to determine symbol of method declaration '{0}'.", variableDeclarator);
+			Requires.That(symbol != null, "Unable to determine symbol of variable declaration '{0}'.", variableDeclarator);
 
 			var typedSymbol = symbol as T;
 			Requires.That(typedSymbol != null, "Expected a symbol of type '{0}'. However, the actual symbol type for syntax node '{1}' is '{2}'.",
 				typeof(T).FullName, variableDeclarator, symbol.GetType().FullName);
 
 			return typedSymbol;
+		}
+
+		/// <summary>
+		///     Gets the <see cref="ITypeSymbol" /> of the variable declared by the <see cref="variableDeclarator" />.
+		/// </summary>
+		/// <param name="variableDeclarator">The variable declarator the type symbol should be returned for.</param>
+		/// <param name="semanticModel">The semantic model that should be used to determine the declared symbol.</param>
+		[Pure]
+		public static ITypeSymbol GetVariableType([NotNull] this VariableDeclaratorSyntax variableDeclarator,
+												  [NotNull] SemanticModel semanticModel)
+		{
+			var declaredSymbol = variableDeclarator.GetDeclaredSymbol<ISymbol>(semanticModel);
+			var fieldSymbol = declaredSymbol as IFieldSymbol;
+			if (fieldSymbol != null)
+				return fieldSymbol.Type;
+
+			var localSymbol = declaredSymbol as ILocalSymbol;
+			if (localSymbol != null)
+				return localSymbol.Type;
+
+			Assert.NotReached("Unable to determine the type of the declared variable.");
+			return null;
 		}
 	}
 }

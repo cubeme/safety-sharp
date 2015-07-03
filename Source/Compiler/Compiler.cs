@@ -302,6 +302,7 @@ namespace SafetySharp.Compiler
 			compilation = Normalizer.ApplyNormalizer<SafetySharpAttributeNormalizer>(compilation, syntaxGenerator);
 			compilation = Normalizer.ApplyNormalizer<PartialNormalizer>(compilation, syntaxGenerator);
 			compilation = Normalizer.ApplyNormalizer<MethodBodyNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<FormulaNormalizer>(compilation, syntaxGenerator);
 			compilation = Normalizer.ApplyNormalizer<LiftedExpressionNormalizer>(compilation, syntaxGenerator);
 			compilation = Normalizer.ApplyNormalizer<InitialValuesNormalizer>(compilation, syntaxGenerator);
 			compilation = Normalizer.ApplyNormalizer<RootComponentsNormalizer>(compilation, syntaxGenerator);

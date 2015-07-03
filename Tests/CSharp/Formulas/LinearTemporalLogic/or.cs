@@ -91,6 +91,22 @@ namespace Tests.Formulas.LinearTemporalLogic
 
 				Check(actual, expected);
 			}
+
+			{
+				var actual = Ltl.StateExpression(false) | Ltl.F(intValue < 7 | Ltl.X(true));
+				var expected = new BinaryFormula(
+					new StateFormula(new BooleanLiteralExpression(false)),
+					BinaryFormulaOperator.Or,
+					PathQuantifier.None,
+					new UnaryFormula(
+						new BinaryFormula(
+							new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
+							BinaryFormulaOperator.Or, PathQuantifier.None,
+							new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.None)),
+						UnaryFormulaOperator.Finally, PathQuantifier.None));
+
+				Check(actual, expected);
+			}
 		}
 	}
 }

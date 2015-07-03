@@ -115,6 +115,7 @@
     <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.cs" />
     <Compile Include="CompilationException.cs" />
+    <Compile Include="Normalization\FormulaNormalizer.cs" />
     <Compile Include="Normalization\Quotations\BlockNormalizer.cs" />
     <Compile Include="Normalization\Quotations\CompoundAssignmentNormalizer.cs" />
     <Compile Include="Normalization\Quotations\ExpressionMethodNormalizer.cs" />

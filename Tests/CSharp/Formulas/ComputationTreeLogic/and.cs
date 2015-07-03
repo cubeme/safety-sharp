@@ -61,7 +61,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 					new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
 					BinaryFormulaOperator.And,
 					PathQuantifier.None,
-					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.All));
+					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Finally, PathQuantifier.All));
 
 				Check(actual, expected);
 			}

@@ -61,7 +61,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 					new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
 					BinaryFormulaOperator.Or,
 					PathQuantifier.None,
-					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.All));
+					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Finally, PathQuantifier.All));
 
 				Check(actual, expected);
 			}
@@ -87,6 +87,22 @@ namespace Tests.Formulas.ComputationTreeLogic
 					PathQuantifier.None,
 					new UnaryFormula(
 						new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
+						UnaryFormulaOperator.Finally, PathQuantifier.Exists));
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = Ctl.StateExpression(false) | Ctl.EF(intValue < 7 | Ctl.AX(true));
+				var expected = new BinaryFormula(
+					new StateFormula(new BooleanLiteralExpression(false)),
+					BinaryFormulaOperator.Or,
+					PathQuantifier.None,
+					new UnaryFormula(
+						new BinaryFormula(
+							new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
+							BinaryFormulaOperator.Or, PathQuantifier.None,
+							new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.All)),
 						UnaryFormulaOperator.Finally, PathQuantifier.Exists));
 
 				Check(actual, expected);

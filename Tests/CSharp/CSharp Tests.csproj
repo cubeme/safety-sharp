@@ -261,6 +261,7 @@
     <Compile Include="Formulas\ComputationTreeLogic\field access.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\finally.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\globally.cs" />
+    <Compile Include="Formulas\ComputationTreeLogic\implicit conversion.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\implies.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\method access.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\next.cs" />
@@ -274,6 +275,7 @@
     </Compile>
     <Compile Include="Formulas\FormulaTests.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\equivalence.cs" />
+    <Compile Include="Formulas\LinearTemporalLogic\implicit conversion.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\not.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\or.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\and.cs" />

@@ -27,55 +27,30 @@ namespace Tests.Formulas.ComputationTreeLogic
 	using SafetySharp.Analysis.Formulas;
 	using SafetySharp.Runtime.Expressions;
 
-	internal class T1 : FormulaTestObject
+	internal class T14 : FormulaTestObject
 	{
+		private readonly CtlFormula _f1 = true;
+		private readonly CtlFormula _f2 = Ctl.StateExpression(true);
+		private readonly CtlFormula _f3 = (CtlFormula)true;
+
 		protected override void Check()
 		{
-			var intValue = 7;
-			var enumValue = E.B;
+			var expected = new StateFormula(new BooleanLiteralExpression(true));
+			CtlFormula f1 = true;
+			var f2 = Ctl.StateExpression(true);
+			var f3 = (CtlFormula)true;
 
-			var expected = new StateFormula(
-				new BinaryExpression(BinaryOperator.Or,
-					new BinaryExpression(BinaryOperator.Equals, new EnumerationLiteralExpression(E.B), new EnumerationLiteralExpression(E.C)),
-					new BinaryExpression(BinaryOperator.Equals,
-						new BinaryExpression(BinaryOperator.Greater,
-							new BinaryExpression(BinaryOperator.Multiply,
-								new BinaryExpression(BinaryOperator.Divide,
-									new IntegerLiteralExpression(7),
-									new IntegerLiteralExpression(2)),
-								new IntegerLiteralExpression(3)),
-							new IntegerLiteralExpression(45)),
-						new BooleanLiteralExpression(false))
-					));
+			Check(_f1, expected);
+			Check(_f2, expected);
+			Check(_f3, expected);
 
-			{
-				var actual = Ctl.StateExpression(enumValue == E.C || ((intValue / 2) * 3) > 45 == false);
-				Check(actual, expected);
-			}
-
-			{
-				var actual = (CtlFormula)(enumValue == E.C || ((intValue / 2) * 3) > 45 == false);
-				Check(actual, expected);
-			}
-
-			{
-				// ReSharper disable once JoinDeclarationAndInitializer
-				CtlFormula actual;
-				actual = enumValue == E.C || ((intValue / 2) * 3) > 45 == false;
-				Check(actual, expected);
-			}
-
-			{
-				CtlFormula actual = enumValue == E.C || ((intValue / 2) * 3) > 45 == false;
-				Check(actual, expected);
-			}
+			CheckArgumentConversion(true, expected);
+			CheckArgumentConversion((CtlFormula)true, expected);
 		}
 
-		private enum E
+		private void CheckArgumentConversion(CtlFormula actual, CtlFormula expected)
 		{
-			A,
-			B,
-			C
+			Check(actual, expected);
 		}
 	}
 }
