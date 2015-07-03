@@ -45,7 +45,42 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = Ltl.StateExpression(false).Or(Ltl.Finally(intValue < 7));
+				var actual = Ltl.X(true) | intValue < 7;
+				var expected = new BinaryFormula(
+					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.None),
+					BinaryFormulaOperator.Or,
+					PathQuantifier.None,
+					new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))));
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = intValue < 7 | Ltl.X(true);
+				var expected = new BinaryFormula(
+					new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
+					BinaryFormulaOperator.Or,
+					PathQuantifier.None,
+					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.None));
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = Ltl.StateExpression(false).Or(Ltl.F(intValue < 7));
+				var expected = new BinaryFormula(
+					new StateFormula(new BooleanLiteralExpression(false)),
+					BinaryFormulaOperator.Or,
+					PathQuantifier.None,
+					new UnaryFormula(
+						new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
+						UnaryFormulaOperator.Finally, PathQuantifier.None));
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = Ltl.StateExpression(false) | Ltl.F(intValue < 7);
 				var expected = new BinaryFormula(
 					new StateFormula(new BooleanLiteralExpression(false)),
 					BinaryFormulaOperator.Or,

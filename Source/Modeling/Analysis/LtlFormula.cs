@@ -64,6 +64,16 @@ namespace SafetySharp.Analysis
 			return new LtlFormula { _formula = formula };
 		}
 
+		/// <summary>
+		///     Converts the <paramref name="expression" /> to an instance of <see cref="LtlFormula" />.
+		/// </summary>
+		/// <param name="expression">The expression that should be converted.</param>
+		public static implicit operator LtlFormula(bool expression)
+		{
+			Requires.CompilationTransformation();
+			return null;
+		}
+
 		#region Formula
 
 		/// <summary>
@@ -108,6 +118,32 @@ namespace SafetySharp.Analysis
 		{
 			Requires.NotNull(formula, () => formula);
 			return new BinaryFormula(_formula, BinaryFormulaOperator.Or, PathQuantifier.None, formula);
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that applies the 'not' operator to the <paramref name="formula" />.
+		/// </summary>
+		public static LtlFormula operator !(LtlFormula formula)
+		{
+			return Ltl.Not(formula);
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that applies the 'conjunction' operator to <paramref name="left" /> and
+		///     <paramref name="right" />.
+		/// </summary>
+		public static LtlFormula operator &(LtlFormula left, LtlFormula right)
+		{
+			return left.And(right);
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that applies the 'disjunction' operator to <paramref name="left" /> and
+		///     <paramref name="right" />.
+		/// </summary>
+		public static LtlFormula operator |(LtlFormula left, LtlFormula right)
+		{
+			return left.Or(right);
 		}
 
 		#endregion
@@ -201,6 +237,46 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		/// <param name="expression">[LiftExpression] The second operator of the disjunction.</param>
 		public LtlFormula Or([LiftExpression] bool expression)
+		{
+			Requires.CompilationTransformation();
+			return null;
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that applies the 'conjunction' operator to <paramref name="left" /> and
+		///     <paramref name="right" />.
+		/// </summary>
+		public static LtlFormula operator &([LiftExpression] bool left, LtlFormula right)
+		{
+			Requires.CompilationTransformation();
+			return null;
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that applies the 'conjunction' operator to <paramref name="left" /> and
+		///     <paramref name="right" />.
+		/// </summary>
+		public static LtlFormula operator &(LtlFormula left, [LiftExpression] bool right)
+		{
+			Requires.CompilationTransformation();
+			return null;
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that applies the 'disjunction' operator to <paramref name="left" /> and
+		///     <paramref name="right" />.
+		/// </summary>
+		public static LtlFormula operator |([LiftExpression] bool left, LtlFormula right)
+		{
+			Requires.CompilationTransformation();
+			return null;
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that applies the 'disjunction' operator to <paramref name="left" /> and
+		///     <paramref name="right" />.
+		/// </summary>
+		public static LtlFormula operator |(LtlFormula left, [LiftExpression] bool right)
 		{
 			Requires.CompilationTransformation();
 			return null;

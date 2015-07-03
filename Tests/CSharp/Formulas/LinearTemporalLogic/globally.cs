@@ -34,7 +34,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			var intValue = 7;
 
 			{
-				var actual = Ltl.Globally(intValue < 7);
+				var actual = Ltl.G(intValue < 7);
 				var expected = new UnaryFormula(
 					new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
 					UnaryFormulaOperator.Globally, PathQuantifier.None);
@@ -43,7 +43,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = Ltl.Globally(Ltl.Globally(intValue >= 7));
+				var actual = Ltl.G(Ltl.G(intValue >= 7));
 				var expected = new UnaryFormula(
 					new UnaryFormula(
 						new StateFormula(new BinaryExpression(BinaryOperator.GreaterEqual, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),

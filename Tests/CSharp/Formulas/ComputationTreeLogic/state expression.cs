@@ -34,7 +34,6 @@ namespace Tests.Formulas.ComputationTreeLogic
 			var intValue = 7;
 			var enumValue = E.B;
 
-			var actual = Ctl.StateExpression(enumValue == E.C || ((intValue / 2) * 3) > 45 == false);
 			var expected = new StateFormula(
 				new BinaryExpression(BinaryOperator.Or,
 					new BinaryExpression(BinaryOperator.Equals, new EnumerationLiteralExpression(E.B), new EnumerationLiteralExpression(E.C)),
@@ -49,7 +48,15 @@ namespace Tests.Formulas.ComputationTreeLogic
 						new BooleanLiteralExpression(false))
 					));
 
-			Check(actual, expected);
+			{
+				var actual = Ctl.StateExpression(enumValue == E.C || ((intValue / 2) * 3) > 45 == false);
+				Check(actual, expected);
+			}
+
+			{
+				CtlFormula actual = enumValue == E.C || ((intValue / 2) * 3) > 45 == false;
+				Check(actual, expected);
+			}
 		}
 
 		private enum E

@@ -45,7 +45,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = Ltl.StateExpression(false).Implies(Ltl.Finally(intValue < 7));
+				var actual = Ltl.StateExpression(false).Implies(Ltl.F(intValue < 7));
 				var expected = new BinaryFormula(
 					new StateFormula(new BooleanLiteralExpression(false)),
 					BinaryFormulaOperator.Implication,

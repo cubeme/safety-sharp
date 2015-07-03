@@ -34,7 +34,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			var intValue = 7;
 
 			{
-				var actual = Ltl.Until(intValue < 7, false);
+				var actual = Ltl.U(intValue < 7, false);
 				var expected = new BinaryFormula(
 					new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
 					BinaryFormulaOperator.Until,
@@ -45,7 +45,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = Ltl.Until(Ltl.Globally(intValue >= 7), false);
+				var actual = Ltl.U(Ltl.G(intValue >= 7), false);
 				var expected = new BinaryFormula(
 					new UnaryFormula(
 						new StateFormula(new BinaryExpression(BinaryOperator.GreaterEqual, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
@@ -58,7 +58,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = Ltl.Until(intValue >= 7, Ltl.Finally(false));
+				var actual = Ltl.U(intValue >= 7, Ltl.F(false));
 				var expected = new BinaryFormula(
 					new StateFormula(new BinaryExpression(BinaryOperator.GreaterEqual, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
 					BinaryFormulaOperator.Until,
@@ -69,7 +69,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = Ltl.Until(Ltl.Globally(intValue >= 7), Ltl.Finally(false));
+				var actual = Ltl.U(Ltl.G(intValue >= 7), Ltl.F(false));
 				var expected = new BinaryFormula(
 					new UnaryFormula(
 						new StateFormula(new BinaryExpression(BinaryOperator.GreaterEqual, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),

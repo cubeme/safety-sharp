@@ -34,7 +34,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			var intValue = 7;
 
 			{
-				var actual = Ctl.AllPaths.Next(intValue < 7);
+				var actual = Ctl.AX(intValue < 7);
 				var expected = new UnaryFormula(
 					new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
 					UnaryFormulaOperator.Next, PathQuantifier.All);
@@ -43,7 +43,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			}
 
 			{
-				var actual = Ctl.AllPaths.Next(Ctl.AllPaths.Next(intValue <= 7));
+				var actual = Ctl.AX(Ctl.AX(intValue <= 7));
 				var expected = new UnaryFormula(
 					new UnaryFormula(
 						new StateFormula(new BinaryExpression(BinaryOperator.LessEqual, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
@@ -54,7 +54,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			}
 
 			{
-				var actual = Ctl.ExistsPath.Next(intValue < 7);
+				var actual = Ctl.EX(intValue < 7);
 				var expected = new UnaryFormula(
 					new StateFormula(new BinaryExpression(BinaryOperator.Less, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),
 					UnaryFormulaOperator.Next, PathQuantifier.Exists);
@@ -63,7 +63,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			}
 
 			{
-				var actual = Ctl.ExistsPath.Next(Ctl.ExistsPath.Next(intValue <= 7));
+				var actual = Ctl.EX(Ctl.EX(intValue <= 7));
 				var expected = new UnaryFormula(
 					new UnaryFormula(
 						new StateFormula(new BinaryExpression(BinaryOperator.LessEqual, new IntegerLiteralExpression(7), new IntegerLiteralExpression(7))),

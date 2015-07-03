@@ -87,7 +87,7 @@ namespace SafetySharp.Analysis
 		///     Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
-		public static LtlFormula Next(LtlFormula operand)
+		public static LtlFormula X(LtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
 			return new UnaryFormula(operand, UnaryFormulaOperator.Next, PathQuantifier.None);
@@ -97,10 +97,10 @@ namespace SafetySharp.Analysis
 		///     Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
-		public static LtlFormula Next(Expression<Func<bool>> operand)
+		public static LtlFormula X(Expression<Func<bool>> operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return Next(StateFormulaTransformation.Transform(operand));
+			return X(StateFormulaTransformation.Transform(operand));
 		}
 
 		#endregion
@@ -111,7 +111,7 @@ namespace SafetySharp.Analysis
 		///     Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
-		public static LtlFormula Finally(LtlFormula operand)
+		public static LtlFormula F(LtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
 			return new UnaryFormula(operand, UnaryFormulaOperator.Finally, PathQuantifier.None);
@@ -121,10 +121,10 @@ namespace SafetySharp.Analysis
 		///     Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
-		public static LtlFormula Finally(Expression<Func<bool>> operand)
+		public static LtlFormula F(Expression<Func<bool>> operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return Finally(StateFormulaTransformation.Transform(operand));
+			return F(StateFormulaTransformation.Transform(operand));
 		}
 
 		#endregion
@@ -135,7 +135,7 @@ namespace SafetySharp.Analysis
 		///     Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
-		public static LtlFormula Globally(LtlFormula operand)
+		public static LtlFormula G(LtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
 			return new UnaryFormula(operand, UnaryFormulaOperator.Globally, PathQuantifier.None);
@@ -145,10 +145,10 @@ namespace SafetySharp.Analysis
 		///     Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
-		public static LtlFormula Globally(Expression<Func<bool>> operand)
+		public static LtlFormula G(Expression<Func<bool>> operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return Globally(StateFormulaTransformation.Transform(operand));
+			return G(StateFormulaTransformation.Transform(operand));
 		}
 
 		#endregion
@@ -161,12 +161,12 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(Expression<Func<bool>> leftOperand, Expression<Func<bool>> rightOperand)
+		public static LtlFormula U(Expression<Func<bool>> leftOperand, Expression<Func<bool>> rightOperand)
 		{
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
 
-			return Until(StateFormulaTransformation.Transform(leftOperand), StateFormulaTransformation.Transform(rightOperand));
+			return U(StateFormulaTransformation.Transform(leftOperand), StateFormulaTransformation.Transform(rightOperand));
 		}
 
 		/// <summary>
@@ -175,7 +175,7 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(LtlFormula leftOperand, LtlFormula rightOperand)
+		public static LtlFormula U(LtlFormula leftOperand, LtlFormula rightOperand)
 		{
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
@@ -189,12 +189,12 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(Expression<Func<bool>> leftOperand, LtlFormula rightOperand)
+		public static LtlFormula U(Expression<Func<bool>> leftOperand, LtlFormula rightOperand)
 		{
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
 
-			return Until(StateFormulaTransformation.Transform(leftOperand), rightOperand);
+			return U(StateFormulaTransformation.Transform(leftOperand), rightOperand);
 		}
 
 		/// <summary>
@@ -203,12 +203,12 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(LtlFormula leftOperand, Expression<Func<bool>> rightOperand)
+		public static LtlFormula U(LtlFormula leftOperand, Expression<Func<bool>> rightOperand)
 		{
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
 
-			return Until(leftOperand, StateFormulaTransformation.Transform(rightOperand));
+			return U(leftOperand, StateFormulaTransformation.Transform(rightOperand));
 		}
 
 		#endregion
@@ -229,7 +229,7 @@ namespace SafetySharp.Analysis
 		///     Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">[LiftExpression] The operand the 'next' operator should be applied to.</param>
-		public static LtlFormula Next([LiftExpression] bool operand)
+		public static LtlFormula X([LiftExpression] bool operand)
 		{
 			Requires.CompilationTransformation();
 			return null;
@@ -239,7 +239,7 @@ namespace SafetySharp.Analysis
 		///     Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">[LiftExpression] The operand the 'finally' operator should be applied to.</param>
-		public static LtlFormula Finally([LiftExpression] bool operand)
+		public static LtlFormula F([LiftExpression] bool operand)
 		{
 			Requires.CompilationTransformation();
 			return null;
@@ -249,7 +249,7 @@ namespace SafetySharp.Analysis
 		///     Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">[LiftExpression] The operand the 'globally' operator should be applied to.</param>
-		public static LtlFormula Globally([LiftExpression] bool operand)
+		public static LtlFormula G([LiftExpression] bool operand)
 		{
 			Requires.CompilationTransformation();
 			return null;
@@ -261,19 +261,7 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		/// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until([LiftExpression] bool leftOperand, [LiftExpression] bool rightOperand)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-		///     <paramref name="rightOperand" />.
-		/// </summary>
-		/// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
-		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until([LiftExpression] bool leftOperand, LtlFormula rightOperand)
+		public static LtlFormula U([LiftExpression] bool leftOperand, [LiftExpression] bool rightOperand)
 		{
 			Requires.CompilationTransformation();
 			return null;
@@ -285,7 +273,19 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		/// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until([LiftExpression] bool leftOperand, Expression<Func<bool>> rightOperand)
+		public static LtlFormula U([LiftExpression] bool leftOperand, LtlFormula rightOperand)
+		{
+			Requires.CompilationTransformation();
+			return null;
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     <paramref name="rightOperand" />.
+		/// </summary>
+		/// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
+		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
+		public static LtlFormula U([LiftExpression] bool leftOperand, Expression<Func<bool>> rightOperand)
 		{
 			Requires.CompilationTransformation();
 			return null;
@@ -297,7 +297,7 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(Expression<Func<bool>> leftOperand, [LiftExpression] bool rightOperand)
+		public static LtlFormula U(Expression<Func<bool>> leftOperand, [LiftExpression] bool rightOperand)
 		{
 			Requires.CompilationTransformation();
 			return null;
@@ -309,7 +309,7 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(LtlFormula leftOperand, [LiftExpression] bool rightOperand)
+		public static LtlFormula U(LtlFormula leftOperand, [LiftExpression] bool rightOperand)
 		{
 			Requires.CompilationTransformation();
 			return null;

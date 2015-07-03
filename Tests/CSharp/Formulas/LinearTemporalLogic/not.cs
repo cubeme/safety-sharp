@@ -41,7 +41,16 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = Ltl.Not(Ltl.Next(true));
+				var actual = Ltl.Not(Ltl.X(true));
+				var expected = new UnaryFormula(
+					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.None),
+					UnaryFormulaOperator.Not, PathQuantifier.None);
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = !Ltl.X(true);
 				var expected = new UnaryFormula(
 					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.None),
 					UnaryFormulaOperator.Not, PathQuantifier.None);

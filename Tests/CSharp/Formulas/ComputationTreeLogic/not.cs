@@ -32,37 +32,28 @@ namespace Tests.Formulas.ComputationTreeLogic
 		protected override void Check()
 		{
 			{
-				var actual = Ctl.AllPaths.Not(false);
+				var actual = Ctl.Not(false);
 				var expected = new UnaryFormula(
 					new StateFormula(new BooleanLiteralExpression(false)),
-					UnaryFormulaOperator.Not, PathQuantifier.All);
+					UnaryFormulaOperator.Not, PathQuantifier.None);
 
 				Check(actual, expected);
 			}
 
 			{
-				var actual = Ctl.AllPaths.Not(Ctl.AllPaths.Next(true));
+				var actual = Ctl.Not(Ctl.AX(true));
 				var expected = new UnaryFormula(
 					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.All),
-					UnaryFormulaOperator.Not, PathQuantifier.All);
+					UnaryFormulaOperator.Not, PathQuantifier.None);
 
 				Check(actual, expected);
 			}
 
 			{
-				var actual = Ctl.ExistsPath.Not(false);
+				var actual = !Ctl.EF(true);
 				var expected = new UnaryFormula(
-					new StateFormula(new BooleanLiteralExpression(false)),
-					UnaryFormulaOperator.Not, PathQuantifier.Exists);
-
-				Check(actual, expected);
-			}
-
-			{
-				var actual = Ctl.ExistsPath.Not(Ctl.AllPaths.Next(true));
-				var expected = new UnaryFormula(
-					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.All),
-					UnaryFormulaOperator.Not, PathQuantifier.Exists);
+					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Finally, PathQuantifier.Exists),
+					UnaryFormulaOperator.Not, PathQuantifier.None);
 
 				Check(actual, expected);
 			}

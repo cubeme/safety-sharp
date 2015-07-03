@@ -45,7 +45,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			}
 
 			{
-				var actual = Ctl.StateExpression(false).Implies(Ctl.AllPaths.Finally(intValue < 7));
+				var actual = Ctl.StateExpression(false).Implies(Ctl.AF(intValue < 7));
 				var expected = new BinaryFormula(
 					new StateFormula(new BooleanLiteralExpression(false)),
 					BinaryFormulaOperator.Implication,
