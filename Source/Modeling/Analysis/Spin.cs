@@ -29,7 +29,7 @@ namespace SafetySharp.Analysis
 	using Utilities;
 
 	/// <summary>
-	///     Represents the SPIN model checker that can be used to check properties of a model.
+	///     Represents the SPIN model checker that can be used to thoroughly check properties of a model.
 	/// </summary>
 	public class Spin
 	{
@@ -58,7 +58,7 @@ namespace SafetySharp.Analysis
 		public bool Check(LtlFormula formula)
 		{
 			Requires.NotNull(formula, () => formula);
-			return Equals(_analysis.atAnalyseLtl_WithPromela(LtlFormulaTransformation.Transform(formula)), Ternary.Ternary.True);
+			return _analysis.atAnalyseLtl_WithPromela(LtlFormulaTransformation.Transform(formula)).IsTrue;
 		}
 	}
 }

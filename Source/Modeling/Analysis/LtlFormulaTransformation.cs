@@ -23,10 +23,13 @@
 namespace SafetySharp.Analysis
 {
 	using System;
+	using System.Globalization;
+	using System.Linq;
 	using Formulas;
 	using Models;
 	using Runtime;
 	using Runtime.BoundTree;
+	using Transformation;
 	using Utilities;
 	using LtlExpression = Models.ScmVerificationElements.LtlExpr;
 
@@ -235,7 +238,27 @@ namespace SafetySharp.Analysis
 		protected internal override LtlExpression VisitFieldExpression(FieldExpression expression)
 		{
 			var component = (ComponentMetadata)expression.Field.DeclaringObject;
-			return ScmVerificationElements.CreateReadField(component.GetPath(), expression.Field.Name);
+
+			if (expression.Field.FieldInfo.IsInitOnly)
+			{
+				var value = expression.Field.FieldInfo.GetValue(component.Component);
+
+				if (expression.Field.Type == typeof(int))
+					return LtlExpression.NewLiteral(Scm.Val.NewIntVal((int)value));
+
+				if (expression.Field.Type.IsEnum)
+					return LtlExpression.NewLiteral(Scm.Val.NewIntVal(((IConvertible)value).ToInt32(CultureInfo.InvariantCulture)));
+
+				if (expression.Field.Type == typeof(double))
+					return LtlExpression.NewLiteral(Scm.Val.NewRealVal((double)value));
+
+				if (expression.Field.Type == typeof(bool))
+					return LtlExpression.NewLiteral(Scm.Val.NewBoolVal((bool)value));
+
+				Assert.NotReached("Unsupported field type '{0}'.", expression.Field.Type.FullName);
+			}
+				
+			return ScmVerificationElements.CreateReadField(component.GetPath().Reverse(), expression.Field.Name);
 		}
 
 		/// <summary>
@@ -265,6 +288,26 @@ namespace SafetySharp.Analysis
 					Assert.NotReached("Unsupported unary operator.");
 					return null;
 			}
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="MethodInvocationExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="MethodInvocationExpression" /> instance that should be visited.</param>
+		protected internal override LtlExpression VisitMethodInvocationExpression(MethodInvocationExpression expression)
+		{
+			var body = expression.Method.MethodBody.Body;
+			var returnStatement = body.Statements[body.Statements.Count - 1] as ReturnStatement;
+
+			Requires.That(returnStatement != null,
+				"Detected an invalid method invocation '{0}' within the formula: The invoked method does not consist of a single return statement only.",
+				expression);
+
+			var replacer = new VariableReplacer();
+			replacer.AddArgumentReplacements(expression);
+
+			var replacedBody = (Expression)replacer.Visit(returnStatement.Expression);
+			return Visit(replacedBody);
 		}
 	}
 }

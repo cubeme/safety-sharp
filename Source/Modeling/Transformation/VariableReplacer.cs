@@ -24,6 +24,7 @@ namespace SafetySharp.Transformation
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 	using Runtime;
 	using Runtime.BoundTree;
 	using Utilities;
@@ -44,13 +45,31 @@ namespace SafetySharp.Transformation
 		/// </summary>
 		/// <param name="variable">The variable that should be replaced by <paramref name="expression" />.</param>
 		/// <param name="expression">The expression that <paramref name="variable" /> should be replaced with.</param>
-		public void AddReplacedVariable(VariableMetadata variable, Expression expression)
+		public void AddVariableReplacement(VariableMetadata variable, Expression expression)
 		{
 			Requires.NotNull(variable, () => variable);
 			Requires.NotNull(expression, () => expression);
 			Requires.That(!_replacedVariables.ContainsKey(variable), () => variable, "The variable has already been added.");
 
 			_replacedVariables.Add(variable, expression);
+		}
+
+		/// <summary>
+		///     Handles the replacement of the <paramref name="invocation" />'s arguments.
+		/// </summary>
+		public void AddArgumentReplacements(MethodInvocationExpression invocation)
+		{
+			var methodBody = invocation.Method.MethodBody;
+			var parameters = methodBody.Parameters.ToArray();
+			var arguments = invocation.Arguments.ToArray();
+
+			Assert.That(parameters.Length == arguments.Length, "Parameters and arguments don't match up.");
+
+			for (var i = 0; i < parameters.Length; ++i)
+			{
+				if (arguments[i].RefKind != RefKind.None || !VariableAccessClassifier.Classify(methodBody.Body, parameters[i]).IsWritten())
+					AddVariableReplacement(parameters[i], arguments[i].Expression);
+			}
 		}
 
 		/// <summary>

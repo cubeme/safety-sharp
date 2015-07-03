@@ -45,4 +45,30 @@ namespace SafetySharp.Transformation
 		/// </summary>
 		Write = 2,
 	}
+
+	/// <summary>
+	///     Provides convenience methods for working with <see cref="VariableOperations" />.
+	/// </summary>
+	internal static class VariableOperationsExtensions
+	{
+		/// <summary>
+		///     Gets a value indicating whether the <see cref="VariableOperations.Read" /> flag is set in <paramref name="operations" />
+		///     .
+		/// </summary>
+		/// <param name="operations">The set of operations that should be checked.</param>
+		public static bool IsRead(this VariableOperations operations)
+		{
+			return (operations & VariableOperations.Read) == VariableOperations.Read;
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether the <see cref="VariableOperations.Write" /> flag is set in
+		///     <paramref name="operations" />.
+		/// </summary>
+		/// <param name="operations">The set of operations that should be checked.</param>
+		public static bool IsWritten(this VariableOperations operations)
+		{
+			return (operations & VariableOperations.Write) == VariableOperations.Write;
+		}
+	}
 }
