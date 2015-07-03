@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Formulas
+namespace SafetySharp.Transformation
 {
 	using System;
 	using System.Linq;
@@ -29,6 +29,7 @@ namespace SafetySharp.Analysis.Formulas
 	using CompilerServices;
 	using Modeling;
 	using Runtime.BoundTree;
+	using Runtime.Formulas;
 	using Utilities;
 	using BinaryExpression = System.Linq.Expressions.BinaryExpression;
 	using Expression = Runtime.BoundTree.Expression;
@@ -52,7 +53,8 @@ namespace SafetySharp.Analysis.Formulas
 		public Expression Expression { get; private set; }
 
 		/// <summary>
-		///     Transforms the <paramref name="expression" />, returning the transformed <see cref="SafetySharp.Runtime.BoundTree.Expression" />.
+		///     Transforms the <paramref name="expression" />, returning the transformed
+		///     <see cref="SafetySharp.Runtime.BoundTree.Expression" />.
 		/// </summary>
 		/// <param name="expression">The expression that should be transformed.</param>
 		private Expression Transform(System.Linq.Expressions.Expression expression)

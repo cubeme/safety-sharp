@@ -24,9 +24,9 @@ namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Analysis.Formulas;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
 	internal class T7 : FormulaTestObject
 	{
@@ -58,8 +58,36 @@ namespace Tests.Formulas.ComputationTreeLogic
 					new BinaryExpression(BinaryOperator.Equals,
 						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[1]),
 						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[2],
-							new ArgumentExpression(new IntegerLiteralExpression(1), RefKind.None),
+							new ArgumentExpression(
+								new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[0],
+									new ArgumentExpression(new IntegerLiteralExpression(33), RefKind.None)),
+								RefKind.None),
 							new ArgumentExpression(new BooleanLiteralExpression(true), RefKind.None))));
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = ((Formula)Ctl.StateExpression(0 == c.M(17) - 2)).InlineMethodInvocations();
+				var expected = new StateFormula(
+					new BinaryExpression(BinaryOperator.Equals,
+						new IntegerLiteralExpression(0),
+						new BinaryExpression(BinaryOperator.Subtract,
+							new BinaryExpression(BinaryOperator.Add, new IntegerLiteralExpression(17), new IntegerLiteralExpression(3)),
+							new IntegerLiteralExpression(2))
+						));
+
+				Check(actual, expected);
+			}
+
+			{
+				var actual = ((Formula)c.F).InlineMethodInvocations();
+				var expected = new StateFormula(
+					new BinaryExpression(BinaryOperator.Equals,
+						new UnaryExpression(UnaryOperator.Minus, new IntegerLiteralExpression(1)),
+						new BinaryExpression(BinaryOperator.Multiply,
+							new BinaryExpression(BinaryOperator.Add, new IntegerLiteralExpression(33), new IntegerLiteralExpression(3)),
+							new IntegerLiteralExpression(7))));
 
 				Check(actual, expected);
 			}
@@ -71,7 +99,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 
 			public C()
 			{
-				F = Ctl.StateExpression(M0() == M2(1, true));
+				F = Ctl.StateExpression(M0() == M2(M(33), true));
 			}
 
 			public int M(int i)
@@ -81,12 +109,12 @@ namespace Tests.Formulas.ComputationTreeLogic
 
 			public int M0()
 			{
-				return 3;
+				return -1;
 			}
 
 			public int M2(int i, bool b)
 			{
-				return i + 3;
+				return i * 7;
 			}
 		}
 	}

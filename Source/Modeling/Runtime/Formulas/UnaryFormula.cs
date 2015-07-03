@@ -20,9 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Formulas
+namespace SafetySharp.Runtime.Formulas
 {
 	using System;
+	using BoundTree;
 	using Utilities;
 
 	/// <summary>
@@ -105,7 +106,7 @@ namespace SafetySharp.Analysis.Formulas
 		///     <see cref="FormulaVisitor.VisitUnaryFormula(UnaryFormula)" /> method.
 		/// </summary>
 		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		internal override void Accept(FormulaVisitor visitor)
+		internal override void Accept(BoundTreeVisitor visitor)
 		{
 			Requires.NotNull(visitor, () => visitor);
 			visitor.VisitUnaryFormula(this);
@@ -113,11 +114,11 @@ namespace SafetySharp.Analysis.Formulas
 
 		/// <summary>
 		///     Implements the visitor pattern, calling <paramref name="visitor" />'s
-		///     <see cref="FormulaVisitor{TResult}.VisitUnaryFormula(UnaryFormula)" /> method.
+		///     <see cref="BoundTreeVisitor{TResult}.VisitUnaryFormula(UnaryFormula)" /> method.
 		/// </summary>
 		/// <typeparam name="TResult">The type of the value returned by <paramref name="visitor" />.</typeparam>
 		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		internal override TResult Accept<TResult>(FormulaVisitor<TResult> visitor)
+		internal override TResult Accept<TResult>(BoundTreeVisitor<TResult> visitor)
 		{
 			Requires.NotNull(visitor, () => visitor);
 			return visitor.VisitUnaryFormula(this);

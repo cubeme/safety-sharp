@@ -24,7 +24,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Analysis.Formulas;
+	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime.BoundTree;
 

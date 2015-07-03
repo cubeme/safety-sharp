@@ -20,22 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Formulas
+namespace SafetySharp.Runtime.Formulas
 {
 	using System;
+	using BoundTree;
+	using Transformation;
 
 	/// <summary>
 	///     Represents a linear temporal logic or computation tree logic formula that can be modelchecked.
 	/// </summary>
-	public abstract class Formula
+	public abstract class Formula : BoundNode
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		internal Formula()
-		{
-		}
-
 		/// <summary>
 		///     Gets a value indicating whether the formula contains any temporal operators.
 		/// </summary>
@@ -52,22 +47,17 @@ namespace SafetySharp.Analysis.Formulas
 		public abstract bool IsTreeFormula { get; }
 
 		/// <summary>
-		///     Accepts <paramref name="visitor" />, calling the type-specific visit method.
-		/// </summary>
-		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		internal abstract void Accept(FormulaVisitor visitor);
-
-		/// <summary>
-		///     Accepts <paramref name="visitor" />, calling the type-specific visit method.
-		/// </summary>
-		/// <typeparam name="TResult">The type of the value returned by <paramref name="visitor" />.</typeparam>
-		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		internal abstract TResult Accept<TResult>(FormulaVisitor<TResult> visitor);
-
-		/// <summary>
 		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="formula" />.
 		/// </summary>
 		/// <param name="formula">The formula this instance should be structurally equivalent to.</param>
 		internal abstract bool IsStructurallyEquivalent(Formula formula);
+
+		/// <summary>
+		///     Gets a version of this <see cref="Formula" /> with all <see cref="MethodInvocationExpression" />s inlined.
+		/// </summary>
+		public Formula InlineMethodInvocations()
+		{
+			return FormulaInliner.Inline(this);
+		}
 	}
 }

@@ -30,15 +30,11 @@ namespace SafetySharp.Transformation
 	using Utilities;
 
 	/// <summary>
-	///     Inlines <see cref="MethodInvocationExpression" />s recursively.
+	///     Inlines <see cref="MethodInvocationExpression" />s within <see cref="MethodBodyMetadata" /> instances recursively.
+	///     Assumes that there are no cycles in the method call graph.
 	/// </summary>
 	internal class MethodInliner : BoundTreeWalker
 	{
-		/// <summary>
-		///     The methods that have already been inlined.
-		/// </summary>
-		private readonly HashSet<MethodMetadata> _inlinedMethods = new HashSet<MethodMetadata>();
-
 		/// <summary>
 		///     The list of local variables of the new inlined method.
 		/// </summary>
@@ -81,19 +77,8 @@ namespace SafetySharp.Transformation
 		/// <param name="method">The method which should have all invoked methods inlined.</param>
 		private void InlineMethod(MethodMetadata method)
 		{
-			if (!_inlinedMethods.Add(method))
-				throw new InvalidOperationException("Control flow is cyclic.");
-
 			_localVariables.AddRange(method.MethodBody.LocalVariables);
 			Visit(method.MethodBody.Body);
-		}
-
-		/// <summary>
-		///     Visits an element of type <see cref="MethodInvocationExpression" />.
-		/// </summary>
-		/// <param name="expression">The <see cref="MethodInvocationExpression" /> instance that should be visited.</param>
-		protected internal override void VisitMethodInvocationExpression(MethodInvocationExpression expression)
-		{
 		}
 
 		/// <summary>

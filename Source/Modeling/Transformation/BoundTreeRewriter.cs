@@ -25,6 +25,7 @@ namespace SafetySharp.Transformation
 	using System;
 	using System.Linq;
 	using Runtime.BoundTree;
+	using Runtime.Formulas;
 
 	/// <summary>
 	///     A base class for rewriting trees of <see cref="BoundNode" />s.
@@ -175,6 +176,34 @@ namespace SafetySharp.Transformation
 		protected internal override BoundNode VisitReturnStatement(ReturnStatement statement)
 		{
 			return new ReturnStatement((Expression)Visit(statement.Expression));
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="StateFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="StateFormula" /> instance that should be visited.</param>
+		protected internal override BoundNode VisitStateFormula(StateFormula formula)
+		{
+			return new StateFormula((Expression)Visit(formula.Expression));
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="BinaryFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
+		protected internal override BoundNode VisitBinaryFormula(BinaryFormula formula)
+		{
+			return new BinaryFormula((Formula)Visit(formula.LeftOperand), formula.Operator, formula.PathQuantifier,
+				(Formula)Visit(formula.RightOperand));
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="UnaryFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="UnaryFormula" /> instance that should be visited.</param>
+		protected internal override BoundNode VisitUnaryFormula(UnaryFormula formula)
+		{
+			return new UnaryFormula((Formula)Visit(formula.Operand), formula.Operator, formula.PathQuantifier);
 		}
 	}
 }

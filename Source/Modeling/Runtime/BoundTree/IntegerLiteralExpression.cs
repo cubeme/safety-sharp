@@ -23,7 +23,6 @@
 namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
-	using Analysis.Formulas;
 
 	/// <summary>
 	///     Represents an interger literal expression.
@@ -59,25 +58,6 @@ namespace SafetySharp.Runtime.BoundTree
 		/// </summary>
 		/// <param name="visitor">The visitor that should be accepted.</param>
 		internal override TResult Accept<TResult>(BoundTreeVisitor<TResult> visitor)
-		{
-			return visitor.VisitIntegerLiteralExpression(this);
-		}
-
-		/// <summary>
-		///     Calls the <see cref="FormulaVisitor.VisitIntegerLiteralExpression" /> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override void Accept(FormulaVisitor visitor)
-		{
-			visitor.VisitIntegerLiteralExpression(this);
-		}
-
-		/// <summary>
-		///     Calls the <see cref="FormulaVisitor{TResult}.VisitIntegerLiteralExpression" /> method on the <paramref name="visitor" />
-		///     .
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override TResult Accept<TResult>(FormulaVisitor<TResult> visitor)
 		{
 			return visitor.VisitIntegerLiteralExpression(this);
 		}

@@ -23,7 +23,6 @@
 namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
-	using Analysis.Formulas;
 	using Utilities;
 
 	/// <summary>
@@ -69,24 +68,6 @@ namespace SafetySharp.Runtime.BoundTree
 		/// </summary>
 		/// <param name="visitor">The visitor that should be accepted.</param>
 		internal override TResult Accept<TResult>(BoundTreeVisitor<TResult> visitor)
-		{
-			return visitor.VisitUnaryExpression(this);
-		}
-
-		/// <summary>
-		///     Calls the <see cref="FormulaVisitor.VisitUnaryExpression" /> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override void Accept(FormulaVisitor visitor)
-		{
-			visitor.VisitUnaryExpression(this);
-		}
-
-		/// <summary>
-		///     Calls the <see cref="FormulaVisitor{TResult}.VisitUnaryExpression" /> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override TResult Accept<TResult>(FormulaVisitor<TResult> visitor)
 		{
 			return visitor.VisitUnaryExpression(this);
 		}

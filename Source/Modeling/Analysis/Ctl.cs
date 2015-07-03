@@ -25,7 +25,8 @@ namespace SafetySharp.Analysis
 	using System;
 	using System.Linq.Expressions;
 	using CompilerServices;
-	using Formulas;
+	using Runtime.Formulas;
+	using Transformation;
 	using Utilities;
 
 	/// <summary>

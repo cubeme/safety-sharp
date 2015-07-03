@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Formulas
+namespace SafetySharp.Runtime.Formulas
 {
 	using System;
-	using Runtime.BoundTree;
+	using BoundTree;
 	using Utilities;
 
 	/// <summary>
@@ -91,10 +91,10 @@ namespace SafetySharp.Analysis.Formulas
 
 		/// <summary>
 		///     Implements the visitor pattern, calling <paramref name="visitor" />'s
-		///     <see cref="FormulaVisitor.VisitStateFormula(StateFormula)" /> method.
+		///     <see cref="BoundTreeVisitor.VisitStateFormula(StateFormula)" /> method.
 		/// </summary>
 		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		internal override void Accept(FormulaVisitor visitor)
+		internal override void Accept(BoundTreeVisitor visitor)
 		{
 			Requires.NotNull(visitor, () => visitor);
 			visitor.VisitStateFormula(this);
@@ -102,11 +102,11 @@ namespace SafetySharp.Analysis.Formulas
 
 		/// <summary>
 		///     Implements the visitor pattern, calling <paramref name="visitor" />'s
-		///     <see cref="FormulaVisitor{TResult}.VisitStateFormula(StateFormula)" /> method.
+		///     <see cref="BoundTreeVisitor{TResult}.VisitStateFormula(StateFormula)" /> method.
 		/// </summary>
 		/// <typeparam name="TResult">The type of the value returned by <paramref name="visitor" />.</typeparam>
 		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		internal override TResult Accept<TResult>(FormulaVisitor<TResult> visitor)
+		internal override TResult Accept<TResult>(BoundTreeVisitor<TResult> visitor)
 		{
 			Requires.NotNull(visitor, () => visitor);
 			return visitor.VisitStateFormula(this);

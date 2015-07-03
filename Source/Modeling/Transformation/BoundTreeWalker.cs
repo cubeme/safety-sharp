@@ -24,6 +24,7 @@ namespace SafetySharp.Transformation
 {
 	using System;
 	using Runtime.BoundTree;
+	using Runtime.Formulas;
 
 	/// <summary>
 	///     A base class for visiting all <see cref="BoundNode" />s within a tree.
@@ -128,6 +129,34 @@ namespace SafetySharp.Transformation
 		protected internal override void VisitReturnStatement(ReturnStatement statement)
 		{
 			Visit(statement.Expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="StateFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="StateFormula" /> instance that should be visited.</param>
+		protected internal override void VisitStateFormula(StateFormula formula)
+		{
+			Visit(formula.Expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="BinaryFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
+		protected internal override void VisitBinaryFormula(BinaryFormula formula)
+		{
+			Visit(formula.LeftOperand);
+			Visit(formula.RightOperand);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="UnaryFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="UnaryFormula" /> instance that should be visited.</param>
+		protected internal override void VisitUnaryFormula(UnaryFormula formula)
+		{
+			Visit(formula.Operand);
 		}
 	}
 }

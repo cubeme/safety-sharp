@@ -24,9 +24,10 @@ namespace Tests.Formulas.LinearTemporalLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Analysis.Formulas;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
+	using Utilities;
 
 	internal class T7 : FormulaTestObject
 	{
@@ -67,7 +68,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 
 			{
 				var actual = Ltl.StateExpression(c2.M3());
-				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[5]));
+				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[6]));
 
 				Check(actual, expected);
 			}
@@ -75,7 +76,15 @@ namespace Tests.Formulas.LinearTemporalLogic
 			{
 				var ic = c2;
 				var actual = Ltl.StateExpression(ic.M3());
-				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[5]));
+				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[6]));
+
+				Check(actual, expected);
+			}
+
+			{
+				var ic = c2;
+				var actual = ((Formula)Ltl.StateExpression(ic.M3())).InlineMethodInvocations();
+				var expected = new StateFormula(new BooleanLiteralExpression(false));
 
 				Check(actual, expected);
 			}
@@ -84,12 +93,14 @@ namespace Tests.Formulas.LinearTemporalLogic
 				var actual = Ltl.StateExpression(c2.M(1) == 1);
 				var expected = new StateFormula(
 					new BinaryExpression(BinaryOperator.Equals,
-						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[4],
+						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[5],
 							new ArgumentExpression(new IntegerLiteralExpression(1), RefKind.None)),
 						new IntegerLiteralExpression(1)));
 
 				Check(actual, expected);
 			}
+
+			Tests.Raises<InvalidOperationException>(() => ((Formula)Ltl.StateExpression(c2.M4(111) == 81)).InlineMethodInvocations());
 		}
 
 		private interface I : IComponent
@@ -126,18 +137,28 @@ namespace Tests.Formulas.LinearTemporalLogic
 			{
 				return i + 3;
 			}
+
+			public virtual int M4(int i)
+			{
+				return M(i);
+			}
 		}
 
 		private class C2 : C1
 		{
 			public new int M(int i)
 			{
-				return i + 3;
+				return i / 2;
 			}
 
 			public override bool M3()
 			{
 				return false;
+			}
+
+			public override int M4(int i)
+			{
+				return base.M4(i) - 99;
 			}
 		}
 	}

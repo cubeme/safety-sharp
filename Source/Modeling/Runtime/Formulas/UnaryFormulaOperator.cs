@@ -20,28 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Formulas
+namespace SafetySharp.Runtime.Formulas
 {
 	using System;
 
 	/// <summary>
-	///     Represents the path quantifier of a <see cref="UnaryFormula" /> or <see cref="BinaryFormula" />.
+	///     Represents the operator of a <see cref="UnaryFormula" />.
 	/// </summary>
-	public enum PathQuantifier
+	public enum UnaryFormulaOperator
 	{
-		/// <summary>
-		///     Indicates that no path quantifier is used by the formula's operator.
-		/// </summary>
-		None,
+		// Non-temporal operators
+		Not,
 
-		/// <summary>
-		///     Indicates that the formula's operator applies to all paths.
-		/// </summary>
-		All,
-
-		/// <summary>
-		///     Indicates that the formula's operator requires the existence of at least a single path.
-		/// </summary>
-		Exists
+		// Temporal operators
+		Next,
+		Finally,
+		Globally
 	}
 }

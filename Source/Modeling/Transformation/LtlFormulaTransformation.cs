@@ -20,23 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis
+namespace SafetySharp.Transformation
 {
 	using System;
 	using System.Globalization;
 	using System.Linq;
-	using Formulas;
+	using Analysis;
 	using Models;
 	using Runtime;
 	using Runtime.BoundTree;
-	using Transformation;
+	using Runtime.Formulas;
 	using Utilities;
 	using LtlExpression = Models.ScmVerificationElements.LtlExpr;
 
 	/// <summary>
 	///     Transforms a <see cref="Formula" /> instance to a <see cref="LtlExpression" /> instance.
 	/// </summary>
-	internal class LtlFormulaTransformation : FormulaVisitor<LtlExpression>
+	internal class LtlFormulaTransformation : BoundTreeVisitor<LtlExpression>
 	{
 		/// <summary>
 		///     The default instance of the <see cref="LtlFormulaTransformation" /> class.
@@ -61,24 +61,33 @@ namespace SafetySharp.Analysis
 		}
 
 		/// <summary>
+		///     Visits the <paramref name="node" />.
+		/// </summary>
+		/// <param name="node">The <see cref="BoundNode" /> instance that should be visited.</param>
+		protected override LtlExpression DefaultVisit(BoundNode node)
+		{
+			throw new NotSupportedException(String.Format("Unexpected expression '{0}' in LTL formula.", node));
+		}
+
+		/// <summary>
 		///     Visits an element of type <see cref="StateFormula" />.
 		/// </summary>
-		/// <param name="stateFormula">The <see cref="StateFormula" /> instance that should be visited.</param>
-		protected internal override LtlExpression VisitStateFormula(StateFormula stateFormula)
+		/// <param name="formula">The <see cref="StateFormula" /> instance that should be visited.</param>
+		protected internal override LtlExpression VisitStateFormula(StateFormula formula)
 		{
-			return Visit(stateFormula.Expression);
+			return Visit(formula.Expression);
 		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="BinaryFormula" />.
 		/// </summary>
-		/// <param name="binaryFormula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
-		protected internal override LtlExpression VisitBinaryFormula(BinaryFormula binaryFormula)
+		/// <param name="formula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
+		protected internal override LtlExpression VisitBinaryFormula(BinaryFormula formula)
 		{
-			var left = Visit(binaryFormula.LeftOperand);
-			var right = Visit(binaryFormula.RightOperand);
+			var left = Visit(formula.LeftOperand);
+			var right = Visit(formula.RightOperand);
 
-			switch (binaryFormula.Operator)
+			switch (formula.Operator)
 			{
 				case BinaryFormulaOperator.And:
 					return LtlExpression.NewBExpr(left, Scm.BOp.And, right);
@@ -106,12 +115,12 @@ namespace SafetySharp.Analysis
 		/// <summary>
 		///     Visits an element of type <see cref="UnaryFormula" />.
 		/// </summary>
-		/// <param name="unaryFormula">The <see cref="UnaryFormula" /> instance that should be visited.</param>
-		protected internal override LtlExpression VisitUnaryFormula(UnaryFormula unaryFormula)
+		/// <param name="formula">The <see cref="UnaryFormula" /> instance that should be visited.</param>
+		protected internal override LtlExpression VisitUnaryFormula(UnaryFormula formula)
 		{
-			var operand = Visit(unaryFormula.Operand);
+			var operand = Visit(formula.Operand);
 
-			switch (unaryFormula.Operator)
+			switch (formula.Operator)
 			{
 				case UnaryFormulaOperator.Not:
 					return LtlExpression.NewUExpr(operand, Scm.UOp.Not);
@@ -125,15 +134,6 @@ namespace SafetySharp.Analysis
 					Assert.NotReached("Unsupported unary formula operator.");
 					return null;
 			}
-		}
-
-		/// <summary>
-		///     Visits the <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">The <see cref="Expression" /> instance that should be visited.</param>
-		protected override LtlExpression DefaultVisit(Expression expression)
-		{
-			throw new NotSupportedException(String.Format("Unexpected expression '{0}' in LTL formula.", expression));
 		}
 
 		/// <summary>
@@ -257,7 +257,7 @@ namespace SafetySharp.Analysis
 
 				Assert.NotReached("Unsupported field type '{0}'.", expression.Field.Type.FullName);
 			}
-				
+
 			return ScmVerificationElements.CreateReadField(component.GetPath().Reverse(), expression.Field.Name);
 		}
 
@@ -288,26 +288,6 @@ namespace SafetySharp.Analysis
 					Assert.NotReached("Unsupported unary operator.");
 					return null;
 			}
-		}
-
-		/// <summary>
-		///     Visits an element of type <see cref="MethodInvocationExpression" />.
-		/// </summary>
-		/// <param name="expression">The <see cref="MethodInvocationExpression" /> instance that should be visited.</param>
-		protected internal override LtlExpression VisitMethodInvocationExpression(MethodInvocationExpression expression)
-		{
-			var body = expression.Method.MethodBody.Body;
-			var returnStatement = body.Statements[body.Statements.Count - 1] as ReturnStatement;
-
-			Requires.That(returnStatement != null,
-				"Detected an invalid method invocation '{0}' within the formula: The invoked method does not consist of a single return statement only.",
-				expression);
-
-			var replacer = new VariableReplacer();
-			replacer.AddArgumentReplacements(expression);
-
-			var replacedBody = (Expression)replacer.Visit(returnStatement.Expression);
-			return Visit(replacedBody);
 		}
 	}
 }

@@ -30,6 +30,13 @@ namespace SafetySharp.Runtime.BoundTree
 	public abstract class BoundNode
 	{
 		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		internal BoundNode()
+		{
+		}
+
+		/// <summary>
 		///     Calls the appropriate <c>Visit*</c> method on the <paramref name="visitor" />.
 		/// </summary>
 		/// <param name="visitor">The visitor that should be accepted.</param>

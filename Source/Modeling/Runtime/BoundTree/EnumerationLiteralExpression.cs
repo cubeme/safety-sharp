@@ -24,7 +24,6 @@ namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
 	using System.Globalization;
-	using Analysis.Formulas;
 
 	/// <summary>
 	///     Represents an enumeration literal expression.
@@ -68,25 +67,6 @@ namespace SafetySharp.Runtime.BoundTree
 		/// </summary>
 		/// <param name="visitor">The visitor that should be accepted.</param>
 		internal override TResult Accept<TResult>(BoundTreeVisitor<TResult> visitor)
-		{
-			return visitor.VisitEnumerationLiteralExpression(this);
-		}
-
-		/// <summary>
-		///     Calls the <see cref="FormulaVisitor.VisitEnumerationLiteralExpression" /> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override void Accept(FormulaVisitor visitor)
-		{
-			visitor.VisitEnumerationLiteralExpression(this);
-		}
-
-		/// <summary>
-		///     Calls the <see cref="FormulaVisitor{TResult}.VisitEnumerationLiteralExpression" /> method on the
-		///     <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override TResult Accept<TResult>(FormulaVisitor<TResult> visitor)
 		{
 			return visitor.VisitEnumerationLiteralExpression(this);
 		}

@@ -26,6 +26,7 @@ namespace SafetySharp.Analysis
 	using AnalysisTechniques;
 	using Modeling;
 	using Models;
+	using Transformation;
 	using Utilities;
 
 	/// <summary>

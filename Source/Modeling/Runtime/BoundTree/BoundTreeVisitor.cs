@@ -23,6 +23,7 @@
 namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
+	using Formulas;
 	using Utilities;
 
 	/// <summary>
@@ -180,6 +181,33 @@ namespace SafetySharp.Runtime.BoundTree
 		protected internal virtual void VisitReturnStatement(ReturnStatement statement)
 		{
 			DefaultVisit(statement);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="StateFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="StateFormula" /> instance that should be visited.</param>
+		protected internal virtual void VisitStateFormula(StateFormula formula)
+		{
+			DefaultVisit(formula);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="BinaryFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
+		protected internal virtual void VisitBinaryFormula(BinaryFormula formula)
+		{
+			DefaultVisit(formula);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="UnaryFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="UnaryFormula" /> instance that should be visited.</param>
+		protected internal virtual void VisitUnaryFormula(UnaryFormula formula)
+		{
+			DefaultVisit(formula);
 		}
 
 		/// <summary>

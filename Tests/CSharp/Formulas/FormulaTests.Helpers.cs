@@ -27,7 +27,7 @@ namespace Tests.Formulas
 	using System.IO;
 	using System.Text;
 	using JetBrains.Annotations;
-	using SafetySharp.Analysis.Formulas;
+	using SafetySharp.Runtime.Formulas;
 	using Shouldly;
 	using Utilities;
 	using Xunit.Abstractions;

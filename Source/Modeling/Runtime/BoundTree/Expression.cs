@@ -23,7 +23,6 @@
 namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
-	using Analysis.Formulas;
 	using Transformation;
 
 	/// <summary>
@@ -31,18 +30,6 @@ namespace SafetySharp.Runtime.BoundTree
 	/// </summary>
 	public abstract class Expression : BoundNode
 	{
-		/// <summary>
-		///     Calls the appropriate <c>Visit*</c> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal abstract void Accept(FormulaVisitor visitor);
-
-		/// <summary>
-		///     Calls the appropriate <c>Visit*</c> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal abstract TResult Accept<TResult>(FormulaVisitor<TResult> visitor);
-
 		/// <summary>
 		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
 		/// </summary>
