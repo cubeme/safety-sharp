@@ -24,8 +24,8 @@ namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
 	internal class T6 : FormulaTestObject
 	{

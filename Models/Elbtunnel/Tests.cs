@@ -31,6 +31,7 @@ namespace Elbtunnel
 	using SafetySharp.Analysis;
 	using SafetySharp.Modeling;
 	using Sensors;
+	using static SafetySharp.Analysis.Ltl;
 
 	[TestFixture]
 	public class Tests
@@ -93,7 +94,7 @@ namespace Elbtunnel
 			var watch = new Stopwatch();
 			watch.Start();
 			var spin = new Spin(_model);
-			spin.Check(Ltl.Next(true));
+			spin.Check(X(true));
 			Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
 		}
 	}

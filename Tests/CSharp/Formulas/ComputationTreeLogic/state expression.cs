@@ -24,8 +24,8 @@ namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
 	internal class T1 : FormulaTestObject
 	{
@@ -49,7 +49,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 					));
 
 			{
-				var actual = Ctl.StateExpression(enumValue == E.C || ((intValue / 2) * 3) > 45 == false);
+				var actual = (CtlFormula)(enumValue == E.C || ((intValue / 2) * 3) > 45 == false);
 				Check(actual, expected);
 			}
 

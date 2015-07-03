@@ -38,7 +38,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			m.Seal();
 
 			{
-				var actual = Ctl.StateExpression(0 == c.M(17) - 2);
+				var actual = (CtlFormula)(0 == c.M(17) - 2);
 				var expected = new StateFormula(
 					new BinaryExpression(BinaryOperator.Equals,
 						new IntegerLiteralExpression(0),
@@ -68,7 +68,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			}
 
 			{
-				var actual = ((Formula)Ctl.StateExpression(0 == c.M(17) - 2)).InlineMethodInvocations();
+				var actual = ((Formula)(CtlFormula)(0 == c.M(17) - 2)).InlineMethodInvocations();
 				var expected = new StateFormula(
 					new BinaryExpression(BinaryOperator.Equals,
 						new IntegerLiteralExpression(0),
@@ -99,7 +99,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 
 			public C()
 			{
-				F = Ctl.StateExpression(M0() == M2(M(33), true));
+				F = (CtlFormula)(M0() == M2(M(33), true));
 			}
 
 			public int M(int i)

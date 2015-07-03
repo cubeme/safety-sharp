@@ -24,20 +24,21 @@ namespace SafetySharp.Compiler.Normalization
 {
 	using System;
 	using Analysis;
-	using Runtime.Formulas;
+	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
+	using Runtime.Formulas;
 	using Utilities;
 
 	/// <summary>
 	///     Normalizes all implicit conversions from a Boolean expression to a <see cref="LtlFormula" /> or
 	///     <see cref="CtlFormula" /> by explicitly invoking the
-	///     <see cref="Ltl.StateExpression(System.Linq.Expressions.Expression{System.Func{bool}})" /> or
-	///     <see cref="Ctl.StateExpression(System.Linq.Expressions.Expression{System.Func{bool}})" /> methods.
+	///     <see cref="FormulaFactory.LtlExpression(System.Linq.Expressions.Expression{System.Func{bool}})" /> or
+	///     <see cref="FormulaFactory.CtlExpression(System.Linq.Expressions.Expression{System.Func{bool}})" /> methods.
 	/// </summary>
 	public sealed class FormulaNormalizer : SyntaxNormalizer
 	{
@@ -49,7 +50,7 @@ namespace SafetySharp.Compiler.Normalization
 		/// <summary>
 		///     Represents the <see cref="Ctl" /> type.
 		/// </summary>
-		private INamedTypeSymbol _ctlType;
+		private INamedTypeSymbol _factoryType;
 
 		/// <summary>
 		///     Represents the <see cref="Formula" /> type.
@@ -62,19 +63,13 @@ namespace SafetySharp.Compiler.Normalization
 		private INamedTypeSymbol _ltlFormulaType;
 
 		/// <summary>
-		///     Represents the <see cref="Ltl" /> type.
-		/// </summary>
-		private INamedTypeSymbol _ltlType;
-
-		/// <summary>
 		///     Normalizes the syntax trees of the <see cref="Compilation" />.
 		/// </summary>
 		protected override Compilation Normalize()
 		{
 			_ctlFormulaType = Compilation.GetTypeSymbol<CtlFormula>();
 			_ltlFormulaType = Compilation.GetTypeSymbol<LtlFormula>();
-			_ctlType = Compilation.GetTypeSymbol(typeof(Ctl));
-			_ltlType = Compilation.GetTypeSymbol(typeof(Ltl));
+			_factoryType = Compilation.GetTypeSymbol(typeof(FormulaFactory));
 			_formulaType = Compilation.GetTypeSymbol<Formula>();
 
 			return base.Normalize();
@@ -193,22 +188,10 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		private ExpressionSyntax CreateInvocation(ExpressionType expressionType, ExpressionSyntax expression)
 		{
-			SyntaxNode type;
-			switch (expressionType)
-			{
-				case ExpressionType.Ctl:
-					type = Syntax.TypeExpression(_ctlType);
-					break;
-				case ExpressionType.Ltl:
-					type = Syntax.TypeExpression(_ltlType);
-					break;
-				default:
-					Assert.NotReached("Unexpected expression type.");
-					return null;
-			}
-
-			var memberAccess = Syntax.MemberAccessExpression(type, Syntax.IdentifierName("StateExpression"));
-			var invocation = Syntax.InvocationExpression(memberAccess, expression);
+			var type = Syntax.TypeExpression(_factoryType);
+			var memberAccess = Syntax.MemberAccessExpression(type, Syntax.IdentifierName(String.Format("{0}Expression", expressionType)));
+			var lambdaExpression = Syntax.ValueReturningLambdaExpression(expression);
+			var invocation = Syntax.InvocationExpression(memberAccess, lambdaExpression);
 			return (ExpressionSyntax)invocation;
 		}
 

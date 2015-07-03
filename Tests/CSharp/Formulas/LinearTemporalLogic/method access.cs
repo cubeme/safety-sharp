@@ -40,7 +40,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			m.Seal();
 
 			{
-				var actual = Ltl.StateExpression(0 == c1.M(17) - 2);
+				var actual = (LtlFormula)(0 == c1.M(17) - 2);
 				var expected = new StateFormula(
 					new BinaryExpression(BinaryOperator.Equals,
 						new IntegerLiteralExpression(0),
@@ -67,7 +67,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = Ltl.StateExpression(c2.M3());
+				var actual = (LtlFormula)(c2.M3());
 				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[6]));
 
 				Check(actual, expected);
@@ -75,7 +75,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 
 			{
 				var ic = c2;
-				var actual = Ltl.StateExpression(ic.M3());
+				var actual = (LtlFormula)(ic.M3());
 				var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[6]));
 
 				Check(actual, expected);
@@ -83,14 +83,14 @@ namespace Tests.Formulas.LinearTemporalLogic
 
 			{
 				var ic = c2;
-				var actual = ((Formula)Ltl.StateExpression(ic.M3())).InlineMethodInvocations();
+				var actual = ((Formula)(LtlFormula)(ic.M3())).InlineMethodInvocations();
 				var expected = new StateFormula(new BooleanLiteralExpression(false));
 
 				Check(actual, expected);
 			}
 
 			{
-				var actual = Ltl.StateExpression(c2.M(1) == 1);
+				var actual = (LtlFormula)(c2.M(1) == 1);
 				var expected = new StateFormula(
 					new BinaryExpression(BinaryOperator.Equals,
 						new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[1].ProvidedPorts[5],
@@ -100,7 +100,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 				Check(actual, expected);
 			}
 
-			Tests.Raises<InvalidOperationException>(() => ((Formula)Ltl.StateExpression(c2.M4(111) == 81)).InlineMethodInvocations());
+			Tests.Raises<InvalidOperationException>(() => ((Formula)(LtlFormula)(c2.M4(111) == 81)).InlineMethodInvocations());
 		}
 
 		private interface I : IComponent

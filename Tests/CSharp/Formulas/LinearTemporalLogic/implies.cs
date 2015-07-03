@@ -24,8 +24,8 @@ namespace Tests.Formulas.LinearTemporalLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
 	internal class T9 : FormulaTestObject
 	{
@@ -34,7 +34,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			var intValue = 7;
 
 			{
-				var actual = Ltl.StateExpression(false).Implies(intValue < 7);
+				var actual = ((LtlFormula)false).Implies(intValue < 7);
 				var expected = new BinaryFormula(
 					new StateFormula(new BooleanLiteralExpression(false)),
 					BinaryFormulaOperator.Implication,
@@ -45,7 +45,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			}
 
 			{
-				var actual = Ltl.StateExpression(false).Implies(Ltl.F(intValue < 7));
+				var actual = ((LtlFormula)false).Implies(Ltl.F(intValue < 7));
 				var expected = new BinaryFormula(
 					new StateFormula(new BooleanLiteralExpression(false)),
 					BinaryFormulaOperator.Implication,

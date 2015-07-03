@@ -57,7 +57,9 @@ namespace SafetySharp.Transformation
 		public static LtlExpression Transform(LtlFormula formula)
 		{
 			Requires.NotNull(formula, () => formula);
-			return _instance.Visit(formula);
+
+			var inlinedFormula = ((Formula)formula).InlineMethodInvocations();
+			return _instance.Visit(inlinedFormula);
 		}
 
 		/// <summary>

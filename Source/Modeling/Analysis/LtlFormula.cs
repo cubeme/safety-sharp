@@ -95,33 +95,12 @@ namespace SafetySharp.Analysis
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'conjunction' operator to this instance and
-		///     <paramref name="formula" />.
-		/// </summary>
-		/// <param name="formula">The second operand of the conjunction.</param>
-		internal LtlFormula And(LtlFormula formula)
-		{
-			Requires.NotNull(formula, () => formula);
-			return new BinaryFormula(_formula, BinaryFormulaOperator.And, PathQuantifier.None, formula);
-		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'disjunction' operator to this instance and
-		///     <paramref name="formula" />.
-		/// </summary>
-		/// <param name="formula">The second operator of the disjunction.</param>
-		internal LtlFormula Or(LtlFormula formula)
-		{
-			Requires.NotNull(formula, () => formula);
-			return new BinaryFormula(_formula, BinaryFormulaOperator.Or, PathQuantifier.None, formula);
-		}
-
-		/// <summary>
 		///     Returns a <see cref="LtlFormula" /> that applies the 'not' operator to the <paramref name="formula" />.
 		/// </summary>
 		public static LtlFormula operator !(LtlFormula formula)
 		{
-			return Ltl.Not(formula);
+			Requires.NotNull(formula, () => formula);
+			return new UnaryFormula(formula, UnaryFormulaOperator.Not, PathQuantifier.None);
 		}
 
 		/// <summary>
@@ -130,7 +109,10 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		public static LtlFormula operator &(LtlFormula left, LtlFormula right)
 		{
-			return left.And(right);
+			Requires.NotNull(left, () => left);
+			Requires.NotNull(right, () => right);
+
+			return new BinaryFormula(left, BinaryFormulaOperator.And, PathQuantifier.None, right);
 		}
 
 		/// <summary>
@@ -139,7 +121,10 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		public static LtlFormula operator |(LtlFormula left, LtlFormula right)
 		{
-			return left.Or(right);
+			Requires.NotNull(left, () => left);
+			Requires.NotNull(right, () => right);
+
+			return new BinaryFormula(left, BinaryFormulaOperator.Or, PathQuantifier.None, right);
 		}
 	}
 }

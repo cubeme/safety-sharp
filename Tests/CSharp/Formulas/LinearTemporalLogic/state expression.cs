@@ -24,8 +24,8 @@ namespace Tests.Formulas.LinearTemporalLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
 	internal class T1 : FormulaTestObject
 	{
@@ -49,7 +49,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 					));
 
 			{
-				var actual = Ltl.StateExpression(enumValue == E.C || ((intValue / 2) * 3) > 45 == false);
+				var actual = (LtlFormula)(enumValue == E.C || ((intValue / 2) * 3) > 45 == false);
 				Check(actual, expected);
 			}
 

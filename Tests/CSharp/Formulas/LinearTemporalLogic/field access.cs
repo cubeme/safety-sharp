@@ -24,9 +24,9 @@ namespace Tests.Formulas.LinearTemporalLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
 	internal class T2 : FormulaTestObject
 	{
@@ -38,7 +38,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			m.AddRootComponents(c1, c2);
 			m.Seal();
 
-			var actual = Ltl.StateExpression(c1.F && +c1.C2.F != -c2.F);
+			var actual = (LtlFormula)(c1.F && +c1.C2.F != -c2.F);
 			var expected = new StateFormula(
 				new BinaryExpression(BinaryOperator.And,
 					new FieldExpression(m.Metadata.RootComponent.Subcomponents[0].Fields[0]),

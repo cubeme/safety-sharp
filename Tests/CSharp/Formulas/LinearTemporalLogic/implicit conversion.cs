@@ -30,7 +30,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 	internal class T14 : FormulaTestObject
 	{
 		private readonly LtlFormula _f1 = true;
-		private readonly LtlFormula _f2 = Ltl.StateExpression(true);
+		private readonly LtlFormula _f2 = (LtlFormula)(true);
 		private readonly LtlFormula _f3 = (LtlFormula)true;
 		private LtlFormula F1 { get; } = true;
 		private LtlFormula F2 { get; } = (LtlFormula)true;
@@ -39,7 +39,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 		{
 			var expected = new StateFormula(new BooleanLiteralExpression(true));
 			LtlFormula f1 = true;
-			var f2 = Ltl.StateExpression(true);
+			var f2 = (LtlFormula)(true);
 			var f3 = (LtlFormula)true;
 
 			Check(_f1, expected);
@@ -51,6 +51,9 @@ namespace Tests.Formulas.LinearTemporalLogic
 
 			CheckArgumentConversion(true, expected);
 			CheckArgumentConversion((LtlFormula)true, expected);
+			CheckArgumentConversion(!(LtlFormula)true, new UnaryFormula(expected, UnaryFormulaOperator.Not, PathQuantifier.None));
+			CheckArgumentConversion(!Ltl.X(true), 
+				new UnaryFormula(new UnaryFormula(expected, UnaryFormulaOperator.Next, PathQuantifier.None), UnaryFormulaOperator.Not, PathQuantifier.None));
 		}
 
 		private void CheckArgumentConversion(LtlFormula actual, LtlFormula expected)

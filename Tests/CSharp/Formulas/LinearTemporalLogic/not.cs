@@ -24,24 +24,15 @@ namespace Tests.Formulas.LinearTemporalLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
 	internal class T13 : FormulaTestObject
 	{
 		protected override void Check()
 		{
 			{
-				var actual = Ltl.Not(false);
-				var expected = new UnaryFormula(
-					new StateFormula(new BooleanLiteralExpression(false)),
-					UnaryFormulaOperator.Not, PathQuantifier.None);
-
-				Check(actual, expected);
-			}
-
-			{
-				var actual = Ltl.Not(Ltl.X(true));
+				var actual = !(Ltl.X(true));
 				var expected = new UnaryFormula(
 					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.None),
 					UnaryFormulaOperator.Not, PathQuantifier.None);

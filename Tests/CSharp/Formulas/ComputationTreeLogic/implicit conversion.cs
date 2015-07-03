@@ -30,7 +30,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 	internal class T14 : FormulaTestObject
 	{
 		private readonly CtlFormula _f1 = true;
-		private readonly CtlFormula _f2 = Ctl.StateExpression(true);
+		private readonly CtlFormula _f2 = (CtlFormula)(true);
 		private readonly CtlFormula _f3 = (CtlFormula)true;
 		private CtlFormula F1 { get; } = true;
 		private CtlFormula F2 { get; } = (CtlFormula)true;
@@ -39,7 +39,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 		{
 			var expected = new StateFormula(new BooleanLiteralExpression(true));
 			CtlFormula f1 = true;
-			var f2 = Ctl.StateExpression(true);
+			var f2 = (CtlFormula)(true);
 			var f3 = (CtlFormula)true;
 
 			Check(_f1, expected);

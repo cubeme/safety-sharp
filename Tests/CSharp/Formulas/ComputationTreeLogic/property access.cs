@@ -23,10 +23,7 @@
 namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
-	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime.BoundTree;
 
 	internal class T8 : FormulaTestObject
 	{
@@ -39,7 +36,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			m.Seal();
 
 			//{
-			//	var actual = Ctl.StateExpression(!c1.M == false);
+			//	var actual = (CtlFormula)(!c1.M == false);
 			//	var expected = new StateFormula(
 			//		new BinaryExpression(BinaryOperator.Equals,
 			//			new UnaryExpression(UnaryOperator.Not,
@@ -51,7 +48,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			//}
 
 			//{
-			//	var actual = Ctl.StateExpression(c1.M2);
+			//	var actual = (CtlFormula)(c1.M2);
 			//	var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[1]));
 
 			//	// TODO: Support properties
@@ -59,7 +56,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			//}
 
 			//{
-			//	var actual = Ctl.StateExpression(c2.M2);
+			//	var actual = (CtlFormula)(c2.M2);
 			//	var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[3]));
 
 			//	// TODO: Support properties
@@ -68,7 +65,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 
 			//{
 			//	var ic = c2;
-			//	var actual = Ctl.StateExpression(ic.M2);
+			//	var actual = (CtlFormula)(ic.M2);
 			//	var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[3]));
 
 			//	// TODO: Support properties
@@ -76,7 +73,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			//}
 
 			//{
-			//	var actual = Ctl.StateExpression(c2.M);
+			//	var actual = (CtlFormula)(c2.M);
 			//	var expected = new StateFormula(new MethodInvocationExpression(m.Metadata.RootComponent.Subcomponents[0].ProvidedPorts[2]));
 
 			//	// TODO: Support properties

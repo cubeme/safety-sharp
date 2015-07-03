@@ -24,15 +24,15 @@ namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
 	internal class T13 : FormulaTestObject
 	{
 		protected override void Check()
 		{
 			{
-				var actual = Ctl.Not(false);
+				var actual = !((CtlFormula)false);
 				var expected = new UnaryFormula(
 					new StateFormula(new BooleanLiteralExpression(false)),
 					UnaryFormulaOperator.Not, PathQuantifier.None);
@@ -41,7 +41,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			}
 
 			{
-				var actual = Ctl.Not(Ctl.AX(true));
+				var actual = !(Ctl.AX(true));
 				var expected = new UnaryFormula(
 					new UnaryFormula(new StateFormula(new BooleanLiteralExpression(true)), UnaryFormulaOperator.Next, PathQuantifier.All),
 					UnaryFormulaOperator.Not, PathQuantifier.None);

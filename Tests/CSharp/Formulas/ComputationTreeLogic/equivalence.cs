@@ -24,8 +24,8 @@ namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
 	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
 	internal class T12 : FormulaTestObject
 	{
@@ -34,7 +34,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			var intValue = 7;
 
 			{
-				var actual = Ctl.StateExpression(false).EquivalentTo(intValue < 7);
+				var actual = ((CtlFormula)false).EquivalentTo(intValue < 7);
 				var expected = new BinaryFormula(
 					new StateFormula(new BooleanLiteralExpression(false)),
 					BinaryFormulaOperator.Equivalence,
@@ -45,7 +45,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			}
 
 			{
-				var actual = Ctl.StateExpression(false).EquivalentTo(Ctl.AF(intValue < 7));
+				var actual = ((CtlFormula)false).EquivalentTo(Ctl.AF(intValue < 7));
 				var expected = new BinaryFormula(
 					new StateFormula(new BooleanLiteralExpression(false)),
 					BinaryFormulaOperator.Equivalence,

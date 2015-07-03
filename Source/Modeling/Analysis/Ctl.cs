@@ -23,10 +23,7 @@
 namespace SafetySharp.Analysis
 {
 	using System;
-	using System.Linq.Expressions;
-	using CompilerServices;
 	using Runtime.Formulas;
-	using Transformation;
 	using Utilities;
 
 	/// <summary>
@@ -35,37 +32,6 @@ namespace SafetySharp.Analysis
 	// ReSharper disable InconsistentNaming
 	public static class Ctl
 	{
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
-		/// </summary>
-		/// <param name="expression">[LiftExpression] The expression that should be evaluated.</param>
-		/// <remarks>For testing-purposes only.</remarks>
-		internal static CtlFormula StateExpression([LiftExpression] bool expression)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
-		/// </summary>
-		/// <param name="expression">The expression that should be evaluated.</param>
-		internal static CtlFormula StateExpression(Expression<Func<bool>> expression)
-		{
-			Requires.NotNull(expression, () => expression);
-			return StateFormulaTransformation.Transform(expression);
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'not' operator to <paramref name="operand" />.
-		/// </summary>
-		/// <param name="operand">The operand the 'not' operator should be applied to.</param>
-		internal static CtlFormula Not(CtlFormula operand)
-		{
-			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Not, PathQuantifier.None);
-		}
-
 		/// <summary>
 		///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" /> for all paths.
 		/// </summary>

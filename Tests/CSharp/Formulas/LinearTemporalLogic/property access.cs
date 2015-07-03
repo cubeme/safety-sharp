@@ -23,10 +23,7 @@
 namespace Tests.Formulas.LinearTemporalLogic
 {
 	using System;
-	using SafetySharp.Analysis;
-	using SafetySharp.Runtime.Formulas;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime.BoundTree;
 
 	internal class T8 : FormulaTestObject
 	{
@@ -37,7 +34,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 			m.AddRootComponents(c);
 			m.Seal();
 
-			//var actual = Ltl.StateExpression(!c.M == false);
+			//var actual = (LtlFormula)(!c.M == false);
 			//var expected = new StateFormula(
 			//	new BinaryExpression(BinaryOperator.Equals,
 			//		new UnaryExpression(UnaryOperator.Not,

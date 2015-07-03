@@ -20,45 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Formulas.ComputationTreeLogic
+namespace SafetySharp.CompilerServices
 {
 	using System;
-	using SafetySharp.Analysis;
-	using SafetySharp.Modeling;
-	using SafetySharp.Runtime.BoundTree;
-	using SafetySharp.Runtime.Formulas;
+	using System.Linq.Expressions;
+	using Analysis;
+	using Transformation;
+	using Utilities;
 
-	internal class T2 : FormulaTestObject
+	/// <summary>
+	///     Provides factory methods for the creation of <see cref="LtlFormula" /> and <see cref="CtlFormula" /> instances from C#
+	///     expressions.
+	/// </summary>
+	public static class FormulaFactory
 	{
-		protected override void Check()
+		/// <summary>
+		///     Returns a <see cref="CtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
+		/// </summary>
+		/// <param name="expression">The expression that should be evaluated.</param>
+		public static CtlFormula CtlExpression(Expression<Func<bool>> expression)
 		{
-			var c1 = new C1();
-			var c2 = new C2();
-			var m = new Model();
-			m.AddRootComponents(c1, c2);
-			m.Seal();
-
-			var actual = (LtlFormula)c1.F & +c1.C2.F != -c2.F;
-			var expected = new BinaryFormula(
-				new StateFormula(new FieldExpression(m.Metadata.RootComponent.Subcomponents[0].Fields[0])),
-				BinaryFormulaOperator.And, PathQuantifier.None,
-				new StateFormula(new BinaryExpression(BinaryOperator.NotEquals,
-					new FieldExpression(m.Metadata.RootComponent.Subcomponents[0].Subcomponents[0].Fields[0]),
-					new UnaryExpression(UnaryOperator.Minus, new FieldExpression(m.Metadata.RootComponent.Subcomponents[1].Fields[0])))
-					));
-
-			Check(actual, expected);
+			Requires.NotNull(expression, () => expression);
+			return StateFormulaTransformation.Transform(expression);
 		}
 
-		private class C1 : Component
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
+		/// </summary>
+		/// <param name="expression">The expression that should be evaluated.</param>
+		public static LtlFormula LtlExpression(Expression<Func<bool>> expression)
 		{
-			public readonly C2 C2 = new C2();
-			public bool F;
-		}
-
-		private class C2 : Component
-		{
-			public int F;
+			Requires.NotNull(expression, () => expression);
+			return StateFormulaTransformation.Transform(expression);
 		}
 	}
 }
