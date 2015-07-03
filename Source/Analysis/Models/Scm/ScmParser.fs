@@ -291,7 +291,11 @@ module internal ScmParser =
         parseIdentifierDecl Scope.Component IdentifierType.Field |>> Field.Field
     let fieldIdInst: Parser<_,UserState> =
         parseIdentifierInst IdentifierType.Field |>> Field.Field
-                        
+    
+    let elementIdInst: Parser<_,UserState> =
+        (attempt fieldIdDecl |>> Element.Field) <|>
+        (varIdInst |>> Element.Var)
+
     let reqPortId: Parser<_,UserState> =
         ((identifier (IdentifierOptions())) |>> ReqPort.ReqPort)                
     
@@ -323,6 +327,10 @@ module internal ScmParser =
     let locatedFaultInst : Parser<_,UserState> =
         parseLocatedIdentifierInst IdentifierType.Fault |>> (fun (loc,str) -> (loc,Fault.Fault(str)))
 
+    let locatedElementInst : Parser<_,UserState> =
+        (attempt locatedFieldInst |>> LocElement.Field) <|>
+        (varIdInst |>> LocElement.LocalVar)
+
     // parsers with space afterwards
     let pstring_ws s : Parser<_,UserState> =
         pstring s .>> spaces
@@ -337,6 +345,7 @@ module internal ScmParser =
     let varIdInst_ws = varIdInst .>> spaces
     let fieldIdDecl_ws = fieldIdDecl .>> spaces
     let fieldIdInst_ws = fieldIdInst .>> spaces
+    let elementIdInst_ws = elementIdInst .>> spaces
     let reqPortId_ws = reqPortId .>> spaces
     let provPortId_ws = provPortId .>> spaces
     let faultIdDecl_ws = faultIdDecl .>> spaces
@@ -347,6 +356,7 @@ module internal ScmParser =
     let parentClose_ws = pstring_ws ")"
     let locatedFieldInst_ws = locatedFieldInst .>> spaces
     let locatedFaultInst_ws = locatedFaultInst .>> spaces
+    let locatedElementInst_ws = locatedElementInst .>> spaces
     
     // parses an expression
     let expression : Parser<_,UserState> =
@@ -377,8 +387,7 @@ module internal ScmParser =
         opp.TermParser <-
             (boolVal_ws |>> Expr.Literal) <|> 
             (numberVal_ws |>> Expr.Literal) <|>
-            (attempt fieldIdInst_ws |>> Expr.ReadField) <|>
-            (attempt varIdInst_ws |>> Expr.ReadVar) <|> 
+            (attempt elementIdInst_ws |>> Expr.Read) <|>
             (parenExpr_ws)
 
         opp.ExpressionParser
@@ -391,10 +400,9 @@ module internal ScmParser =
     let expressions_ws = sepBy expression_ws (pstring_ws ",")
     let varIdInsts_ws = sepBy varIdInst_ws (pstring_ws ",")
     let param_ws =
-        let inoutVarParam = attempt ((pstring_ws1 "inout") >>. varIdInst_ws) |>> Param.InOutVarParam
-        let inoutFieldParam = attempt ((pstring_ws1 "inout") >>. fieldIdInst_ws) |>> Param.InOutFieldParam
+        let inoutElementParam = attempt ((pstring_ws1 "inout") >>. elementIdInst_ws) |>> Param.InOutElementParam
         let exprParam = attempt ((pstring_ws1 "in") >>. expression_ws) |>> Param.ExprParam
-        inoutVarParam <|> inoutFieldParam <|> exprParam
+        inoutElementParam <|> exprParam
     let params_ws = sepBy (param_ws) (pstring_ws ",")
     
     let probability_expression : Parser<_,UserState> =
@@ -424,12 +432,9 @@ module internal ScmParser =
               ((many statement_ws |>> Stm.Block) .>> (pstring_ws "}"))
         
     do statementRef :=
-        let parseVariableAssignment =
-            attempt (tuple2 (varIdInst_ws .>> (pstring_ws ":="))
-                            (expression_ws .>> (pstring_ws ";")) |>> Stm.AssignVar)
-        let parseFieldAssignment =
-            attempt (tuple2 (fieldIdInst_ws .>> (pstring_ws ":="))
-                            (expression_ws .>> (pstring_ws ";")) |>> Stm.AssignField)
+        let parseElementAssignment =
+            attempt (tuple2 (elementIdInst_ws .>> (pstring_ws ":="))
+                            (expression_ws .>> (pstring_ws ";")) |>> Stm.AssignElement)
         let parseFaultAssignment =
             // note: should only appear in a FaultDecl (fault {})
             attempt (tuple2 (faultIdInst_ws .>> (pstring_ws ":="))
@@ -453,8 +458,7 @@ module internal ScmParser =
             attempt ((pstring_ws1 "step") >>. faultIdInst_ws .>>  (pstring_ws ";") ) |>> Stm.StepFault
             
         let allKindsOfStatements =
-            parseVariableAssignment <|>
-            parseFieldAssignment <|>
+            parseElementAssignment <|>
             parseFaultAssignment <|>
             parseBlock <|>
             parseChoice <|>
@@ -499,11 +503,10 @@ module internal ScmParser =
         opp.TermParser <-
             (boolVal_ws |>> LocExpr.Literal) <|> 
             (numberVal_ws |>> LocExpr.Literal) <|>
-            (attempt ((locatedFieldInst .>> notFollowedBy oldValueIndicator) .>> spaces) |>> LocExpr.ReadField) <|>
+            (attempt ((locatedElementInst .>> notFollowedBy oldValueIndicator) .>> spaces) |>> LocExpr.Read) <|>
             (attempt ((locatedFaultInst .>> notFollowedBy oldValueIndicator) .>> spaces) |>> LocExpr.ReadFault) <|>
-            (attempt ((locatedFieldInst .>> oldValueIndicator) .>> spaces) |>> LocExpr.ReadOldField) <|>
+            (attempt ((locatedElementInst .>> oldValueIndicator) .>> spaces) |>> LocExpr.ReadOld) <|>
             (attempt ((locatedFaultInst .>> oldValueIndicator) .>> spaces) |>> LocExpr.ReadOldFault) <|>
-            (attempt varIdInst_ws |>> LocExpr.ReadVar) <|> 
             (parenExpr_ws)
         opp.ExpressionParser
 

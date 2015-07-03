@@ -61,8 +61,7 @@ module internal ScmConsistencyCheck =
         // Return true, if at no DelayedPort is called.    
         let walkerAssessor (stm:Stm,oldValue:bool) : (bool*bool) = //returns (keepOnWalking,newValue)
             match stm with                
-                | Stm.AssignVar (_) -> false,true // stop walking, and everything is fine
-                | Stm.AssignField (_) -> false,true // stop walking, and everything is fine
+                | Stm.AssignElement (_) -> false,true // stop walking, and everything is fine
                 | Stm.AssignFault (_) -> false,true // stop walking, and everything is fine
                 | Stm.Block (_) -> true,true // keep on walking
                 | Stm.Choice (_) -> true,true  // keep on walking
@@ -95,8 +94,7 @@ module internal ScmConsistencyCheck =
         let stopValue = 2
         let walkerAssessor (stm:Stm,oldValue:int) : (bool*int) = //returns (keepOnWalking,number of delayed Port Calls)
             match stm with                
-                | Stm.AssignVar (_) -> false,oldValue // stop walking, and everything is fine
-                | Stm.AssignField (_) -> false,oldValue // stop walking, and everything is fine
+                | Stm.AssignElement (_) -> false,oldValue // stop walking, and everything is fine
                 | Stm.AssignFault (_) -> false,oldValue // stop walking, and everything is fine
                 | Stm.Block (_) -> true,oldValue // keep on walking
                 | Stm.Choice (_) -> true,oldValue  // keep on walking
@@ -146,19 +144,25 @@ module internal ScmConsistencyCheck =
         let rec checkExpression (expr:Expr) : bool =
             match expr with
                 | Literal (_) -> true
-                | ReadVar (_) -> false //read var is forbidden
-                | ReadField (_) -> true
+                | Read elem ->
+                    match elem with
+                        | Element.Var _ ->  false //read var is forbidden
+                        | Element.Field _ -> true
                 | UExpr (expr,_) -> checkExpression expr
                 | BExpr (leftExpr,_,rightExpr) -> (checkExpression leftExpr) && (checkExpression rightExpr)                
         let checkParams (_param:Param) : bool =
             match _param with
                 | Param.ExprParam (expr) -> checkExpression expr
-                | Param.InOutFieldParam (_) -> false
-                | Param.InOutVarParam (_) -> true
+                | Param.InOutElementParam (elem) ->
+                    match elem with
+                        | Element.Var _ ->  false //read var is forbidden
+                        | Element.Field _ -> true
         let walkerAssessor (stm:Stm) : (bool*bool) = // statement -> (keepOnWalking,result)
             match stm with
-                | AssignVar (var, expr) -> (false,checkExpression expr)
-                | AssignField (_) -> false,false
+                | AssignElement (elem, expr) ->
+                    match elem with
+                        | Element.Var _-> (false,checkExpression expr)
+                        | Element.Field _ -> false,false
                 | AssignFault (_,expr) -> false,false
                 | Block (_) -> true,true
                 | Choice (choices:(Expr * Stm) list) ->

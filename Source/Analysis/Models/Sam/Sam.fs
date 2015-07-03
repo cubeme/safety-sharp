@@ -66,6 +66,11 @@ module internal Sam =
         | RealVal of double
 
         | ProbVal of double
+                
+    [<RequireQualifiedAccessAttribute>]
+    type internal Element =
+        | GlobalVar of Var
+        | LocalVar of Var
 
     /// Represents side-effect free expressions within a SAM model.
     type internal Expr =
@@ -82,10 +87,10 @@ module internal Sam =
         | IfThenElseExpr of GuardExpr : Expr * ThenExpr : Expr * ElseExpr : Expr
     
         /// Represents a read operation of a variable.
-        | Read of Variable : Var
+        | Read of Element : Element
 
         /// Represents a read operation of the previous value of a variable.
-        | ReadOld of Variable : Var
+        | ReadOld of Element : Element
 
     type internal Clause = {
         Guard:Expr;
@@ -105,7 +110,7 @@ module internal Sam =
         | Stochastic of (Expr * Stm) list //Expr must be of type ProbVal
 
         /// Represents the assignment of a variable.
-        | Write of Variable:Var * Expression:Expr
+        | Write of Element:Element * Expression:Expr
 
     type internal Type =
         | BoolType

@@ -8,7 +8,13 @@ component simple {
 	
 	rport_IntArray ( );
 	
-	pport_IntArray () {		
+	pport_IntArray () {				
+		int intLocal0;
+		int intLocal1;
+		int intLocal2;
+		intLocal0 := 0;
+		intLocal1 := 1;
+		intLocal2 := 2;
 		boolField1 := intArrayField1[intLocal0] || intArrayField1[intLocal1] || intArrayField1[intLocal2];
 	}
 		
@@ -16,6 +22,9 @@ component simple {
 		int intLocal0;
 		int intLocal1;
 		int intLocal2;
+		intLocal0 := 0;
+		intLocal1 := 1;
+		intLocal2 := 2;
 		
 		boolField1 :=
 			( intLocal0==0 ? intArrayField1_0 : ( intLocal0==1 ? intArrayField1_1 : intArrayField1_2 ) ) ||

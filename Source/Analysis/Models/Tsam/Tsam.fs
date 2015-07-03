@@ -42,6 +42,7 @@ module internal Tsam =
     type Var = SafetySharp.Models.Sam.Var
     type OverflowBehavior = SafetySharp.Models.Scm.OverflowBehavior
     type Val = SafetySharp.Models.Sam.Val
+    type Element = SafetySharp.Models.Sam.Element
     type Expr = SafetySharp.Models.Sam.Expr
         
     type FormOfGuards =
@@ -72,7 +73,7 @@ module internal Tsam =
         | Block of SID:StatementId * Statements:Stm list
         | Choice of SID:StatementId * Choices:(Expr option * Stm) list //Expr must be of type BoolVal
         | Stochastic of SID:StatementId * StochasticChoices:(Expr * Stm) list //Expr must be of type ProbVal
-        | Write of SID:StatementId * Variable:Var * Expression:Expr
+        | Write of SID:StatementId * Element:Element * Expression:Expr
         //| ParallelWrite  // TODO (maybe): Parallel assignment could simplify some algorithms
         with
             member this.GetStatementId : StatementId =

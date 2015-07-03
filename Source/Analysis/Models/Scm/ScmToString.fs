@@ -84,22 +84,32 @@ module internal ScmToString =
         let compPath (p : CompPath) =
             writer.AppendRepeated (p |> List.rev) comp (fun () -> writer.Append ".")
 
+        let rec element = function
+            | Element.Field f -> field f
+            | Element.Var v -> var v
+
         let rec expr = function
             | Literal l           -> value l
-            | ReadVar v           -> var v
-            | ReadField f         -> field f
+            | Read e           -> element e
             | UExpr (e, op)       -> uop op; writer.AppendParenthesized (fun () -> expr e)
             | BExpr (e1, op, e2)  -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
             
         let oldValueIndicator = '\u207B' // Old Value : '⁻' (U+207B = SUPERSCRIPT MINUS)
+        
+        let rec locElement = function
+            | LocElement.Field (l,f) -> compPath l; writer.Append "."; field f
+            | LocElement.LocalVar v  -> var v
+
+        let rec locOldElement = function
+            | LocElement.Field (l,f) -> compPath l; writer.Append "."; field f; writer.Append "%c" oldValueIndicator
+            | LocElement.LocalVar v  -> var v; writer.Append "%c" oldValueIndicator
 
         let rec locExpr = function
             | LocExpr.Literal l           -> value l
-            | LocExpr.ReadField (l, f)    -> compPath l; writer.Append "."; field f
+            | LocExpr.Read (e)            -> locElement e
             | LocExpr.ReadFault (l, f)    -> compPath l; writer.Append "."; fault f
-            | LocExpr.ReadOldField (l, f) -> compPath l; writer.Append "."; field f; writer.Append "%c" oldValueIndicator
+            | LocExpr.ReadOld e           -> locOldElement e
             | LocExpr.ReadOldFault (l, f) -> compPath l; writer.Append "."; fault f; writer.Append "%c" oldValueIndicator
-            | LocExpr.ReadVar v           -> var v
             | LocExpr.UExpr (e, op)       -> uop op; writer.AppendParenthesized (fun () -> locExpr e)
             | LocExpr.BExpr (e1, op, e2)  -> writer.AppendParenthesized (fun () -> locExpr e1; writer.Append " "; bop op; writer.Append " "; locExpr e2)
 
@@ -110,17 +120,15 @@ module internal ScmToString =
             | OrFault (f1, f2) -> writer.AppendParenthesized (fun () -> fexpr f1; writer.Append " || "; writer.Append " "; fexpr f2)
 
         let param = function
-            | ExprParam e       -> writer.Append "in "; expr e
-            | InOutVarParam v   -> writer.Append "inout "; var v
-            | InOutFieldParam f -> writer.Append "inout "; field f
+            | ExprParam e           -> writer.Append "in "; expr e
+            | InOutElementParam e   -> writer.Append "inout "; element e
 
         let rec stms s = 
             s |> List.iter (fun s -> stm s; writer.NewLine ())
 
         and stm = function
-            | AssignVar (v, e) -> var v; writer.Append " = "; expr e; writer.Append ";"
-            | AssignField (f, e) -> field f; writer.Append " = "; expr e; writer.Append ";"
-            | AssignFault (f, e) -> fault f; writer.Append " = "; expr e; writer.Append ";"
+            | AssignElement (el, e) -> element el; writer.Append " = "; expr e; writer.Append ";"
+            | AssignFault (f, e)    -> fault f; writer.Append " = "; expr e; writer.Append ";"
             | Block s -> writer.AppendBlockStatement (fun () -> stms s)
             | Choice c -> 
                 writer.AppendLine "choice"

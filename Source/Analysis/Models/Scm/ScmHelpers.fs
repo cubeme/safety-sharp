@@ -133,13 +133,9 @@ module internal ScmHelpers =
             match param with
                 | ExprParam (_) -> true
                 | _ -> false
-        member param.IsInOutVar =
+        member param.IsInOutElement =
             match param with
-                | InOutVarParam (_) -> true
-                | _ -> false
-        member param.IsInOutField =
-            match param with
-                | InOutFieldParam (_) -> true
+                | InOutElementParam (_) -> true
                 | _ -> false
 
     
@@ -181,7 +177,7 @@ module internal ScmHelpers =
         member faultExpr.rewrite_toExpr (faultMap:Map<Fault,Field>) : Expr =
             match faultExpr with
                 | Fault (fault) ->
-                    Expr.ReadField(faultMap.Item fault)
+                    Expr.Read (Element.Field( faultMap.Item fault))
                 | NotFault (faultExpr) ->
                     Expr.UExpr(faultExpr.rewrite_toExpr faultMap,UOp.Not)
                 | AndFault (leftFaultExpr,rightFaultExpr) ->
@@ -427,7 +423,7 @@ module internal ScmHelpers =
                 model.rewriteAncestors compRewriter parentPath nextRelativeLeveledUpPath rewrittenComponent
 
 
-        // search in the model. Todo: Make extension methods of ScmModel
+        // search in the model. TODO: Make extension methods of ScmModel
         member model.tryFindBindingOfReqPort (pathOfReqPort:ReqPortPath) : BndDeclPath option =
             // option, because it might not be in the model (binding is not declared, or declared in any parent node)
             let compPath,reqPort = pathOfReqPort            
@@ -515,179 +511,107 @@ module internal ScmHelpers =
         else
             item
                     
-    let rec rewriteExpr (varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (expr:Expr) : Expr=
+    let rec rewriteExpr (elementMap:Map<Element,Element>) (expr:Expr) : Expr=
         match expr with
             | Expr.Literal (_val) -> Expr.Literal(_val)
-            | Expr.ReadVar (_var) ->
-                let newVar = itemOrOld varMap _var
-                Expr.ReadVar (newVar)
-            | Expr.ReadField (field) ->
-                let newField = itemOrOld fieldMap field
-                Expr.ReadField (newField)
-            | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr (varMap,fieldMap) expr,uop)
-            | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr (varMap,fieldMap) left,bop,rewriteExpr (varMap,fieldMap) right)
+            | Expr.Read (_var) ->
+                let newElement = itemOrOld elementMap _var
+                Expr.Read (newElement)
+            | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr elementMap expr,uop)
+            | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr elementMap left,bop,rewriteExpr elementMap right)
 
-    let rewriteParam (varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (_param:Param) : Param =
+    let rewriteParam (elementMap:Map<Element,Element>) (_param:Param) : Param =
         match _param with
-            | Param.ExprParam (expr) -> Param.ExprParam(rewriteExpr (varMap,fieldMap) expr)
-            | Param.InOutVarParam (var) ->
-                let newVar = itemOrOld varMap var
-                Param.InOutVarParam (newVar)
-            | Param.InOutFieldParam (field) ->                    
-                let newField = itemOrOld fieldMap (field)
-                Param.InOutFieldParam (newField)
+            | Param.ExprParam (expr) -> Param.ExprParam(rewriteExpr elementMap expr)
+            | Param.InOutElementParam (element) ->
+                let newElement = itemOrOld elementMap element
+                Param.InOutElementParam (newElement)
 
-    let rec rewriteStm (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (stm:Stm) : Stm =
+    let rec rewriteStm (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,elementMap:Map<Element,Element>) (stm:Stm) : Stm =
         match stm with
-            | Stm.AssignVar (var,expr) ->
-                let newExpr = rewriteExpr (varMap,fieldMap) expr
-                let newVar = itemOrOld varMap var
-                Stm.AssignVar (newVar, newExpr)
-            | Stm.AssignField (field, expr) ->
-                let newField = itemOrOld fieldMap (field)
-                let newExpr = rewriteExpr (varMap,fieldMap) expr
-                Stm.AssignField (newField, newExpr)
+            | Stm.AssignElement(element,expr) ->
+                let newExpr = rewriteExpr elementMap expr
+                let newElement = itemOrOld elementMap element
+                Stm.AssignElement (newElement, newExpr)
             | Stm.AssignFault (fault, expr) ->
                 let newFault = itemOrOld faultMap (fault)
-                let newExpr = rewriteExpr (varMap,fieldMap)  expr
+                let newExpr = rewriteExpr elementMap  expr
                 Stm.AssignFault (newFault, newExpr)
             | Stm.Block (smnts) ->
-                let newStmnts = smnts |> List.map (rewriteStm (reqPortMap,faultMap,varMap,fieldMap))
+                let newStmnts = smnts |> List.map (rewriteStm (reqPortMap,faultMap,elementMap))
                 Stm.Block(newStmnts)
             | Stm.Choice (choices:(Expr * Stm) list) ->
-                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr (varMap,fieldMap)  expr,rewriteStm (reqPortMap,faultMap,varMap,fieldMap) stm) )
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr elementMap expr,rewriteStm (reqPortMap,faultMap,elementMap) stm) )
                 Stm.Choice(newChoices)
             | Stm.Stochastic (choices:(Expr * Stm) list) ->
-                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr (varMap,fieldMap)  expr,rewriteStm (reqPortMap,faultMap,varMap,fieldMap) stm) )
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr elementMap expr,rewriteStm (reqPortMap,faultMap,elementMap) stm) )
                 Stm.Stochastic(newChoices)
             | Stm.CallPort (reqPort,_params) ->
                 let newReqPort = itemOrOld reqPortMap (reqPort)
-                let newParams = _params |> List.map (rewriteParam (varMap,fieldMap) )
+                let newParams = _params |> List.map (rewriteParam elementMap )
                 Stm.CallPort (newReqPort,newParams)
             | Stm.StepComp (comp) ->
                 Stm.StepComp (comp)
             | Stm.StepFault (fault) ->
                 let newFault = itemOrOld faultMap (fault)
                 Stm.StepFault (newFault)
+
+    let rewriteStm_elementsToElements (elementMap:Map<Element,Element>) = rewriteStm (Map.empty<ReqPort,ReqPort>,Map.empty<Fault,Fault>,elementMap)
                 
-    let rewriteBehavior (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (behavior:BehaviorDecl) =
+    let rewriteBehavior (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,varMap:Map<Var,Var>,elementMap:Map<Element,Element>) (behavior:BehaviorDecl) =
         let newLocals =
             behavior.Locals |> List.map (fun varDecl -> {varDecl with VarDecl.Var = itemOrOld varMap varDecl.Var})
         {
             BehaviorDecl.Locals= newLocals;
-            BehaviorDecl.Body = rewriteStm (reqPortMap,faultMap,varMap,fieldMap) behavior.Body;
+            BehaviorDecl.Body = rewriteStm (reqPortMap,faultMap,elementMap) behavior.Body;
         }
     let prependStmBeforeStm (stm:Stm) (oldStm:Stm) =
         match oldStm with
             | Stm.Block (stmnts) -> Stm.Block (stm::stmnts) //prepend statement to existing Block
             | _ -> Stm.Block (stm::oldStm::[]) //create a new Block with stm as first entry
+                            
+            
 
-
-    let rewriteStm_onlyVars (varMap:Map<Var,Var>) =
-        rewriteStm (Map.empty<ReqPort,ReqPort>,Map.empty<Fault,Fault>,varMap,Map.empty<Field,Field>)
-    
-    
-    let rec rewriteExpr_varsToFields (varMap:Map<Var,Field>) (expr:Expr) : Expr=
+    let rec rewriteExpr_elementsToExpr (elementToExprMap:Map<Element,Expr>) (expr:Expr) : Expr=
         match expr with
             | Expr.Literal (_val) -> Expr.Literal(_val)
-            | Expr.ReadVar (_var) ->
-                if varMap.ContainsKey _var then
-                    Expr.ReadField(varMap.Item _var)
+            | Expr.Read (element) ->
+                if elementToExprMap.ContainsKey element then
+                    elementToExprMap.Item element
                 else
-                    Expr.ReadVar (_var)
-            | Expr.ReadField (field) -> Expr.ReadField (field)
-            | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr_varsToFields (varMap) expr,uop)
-            | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr_varsToFields (varMap) left,bop,rewriteExpr_varsToFields (varMap) right)
+                    expr
+            | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr_elementsToExpr elementToExprMap expr,uop)
+            | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr_elementsToExpr elementToExprMap left,bop,rewriteExpr_elementsToExpr elementToExprMap right)
             
-    let rewriteParam_varsToFields (varMap:Map<Var,Field>) (_param:Param) : Param =
+    let rewriteParam_elementsToExpr (elementToExprMap:Map<Element,Expr>) (_param:Param) : Param =
         match _param with
-            | Param.ExprParam (expr) -> Param.ExprParam(rewriteExpr_varsToFields (varMap) expr)
-            | Param.InOutVarParam (var) ->
-                if varMap.ContainsKey var then
-                    Param.InOutFieldParam (varMap.Item var)
-                else
-                    Param.InOutVarParam (var)
-            | Param.InOutFieldParam (field) -> 
-                Param.InOutFieldParam (field)
-
-    let rec rewriteStm_varsToFields (varMap:Map<Var,Field>) (stm:Stm) : Stm =
-        match stm with
-            | Stm.AssignVar (var,expr) ->
-                let newExpr = rewriteExpr_varsToFields (varMap) expr                
-                if varMap.ContainsKey var then              
-                    Stm.AssignField (varMap.Item var, newExpr)
-                else
-                    Stm.AssignVar (var, newExpr)                
-            | Stm.AssignField (field, expr) ->
-                Stm.AssignField (field, expr)
-            | Stm.AssignFault (fault, expr) ->
-                Stm.AssignFault (fault, expr)
-            | Stm.Block (smnts) ->
-                let newStmnts = smnts |> List.map (rewriteStm_varsToFields (varMap))
-                Stm.Block(newStmnts)
-            | Stm.Choice (choices:(Expr * Stm) list) ->
-                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToFields (varMap)  expr,rewriteStm_varsToFields (varMap) stm) )
-                Stm.Choice(newChoices)
-            | Stm.Stochastic (choices:(Expr * Stm) list) ->
-                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToFields (varMap)  expr,rewriteStm_varsToFields (varMap) stm) )
-                Stm.Stochastic(newChoices)
-            | Stm.CallPort (reqPort,_params) ->
-                let newParams = _params |> List.map (rewriteParam_varsToFields (varMap) )
-                Stm.CallPort (reqPort,newParams)
-            | Stm.StepComp (comp) ->
-                Stm.StepComp (comp)
-            | Stm.StepFault (fault) ->
-                Stm.StepFault (fault)
-    
-
-
-
-    let rec rewriteExpr_varsToExpr (varMap:Map<Var,Expr>) (expr:Expr) : Expr=
-        match expr with
-            | Expr.Literal (_val) -> Expr.Literal(_val)
-            | Expr.ReadVar (_var) ->
-                if varMap.ContainsKey _var then
-                    varMap.Item _var
-                else
-                    Expr.ReadVar (_var)
-            | Expr.ReadField (field) -> Expr.ReadField (field)
-            | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr_varsToExpr (varMap) expr,uop)
-            | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr_varsToExpr (varMap) left,bop,rewriteExpr_varsToExpr (varMap) right)
-            
-    let rewriteParam_varsToExpr (varMap:Map<Var,Expr>) (_param:Param) : Param =
-        match _param with
-            | Param.ExprParam (expr) -> Param.ExprParam(rewriteExpr_varsToExpr (varMap) expr)
-            | Param.InOutVarParam (var) ->
-                if varMap.ContainsKey var then
+            | Param.ExprParam (expr) ->
+                Param.ExprParam(rewriteExpr_elementsToExpr elementToExprMap expr)
+            | Param.InOutElementParam (element) -> 
+                if (elementToExprMap.ContainsKey element) then
                     failwith "BUG: ExprParam may never be used as InoutVarParam of another Call"
-                else
-                    Param.InOutVarParam (var)
-            | Param.InOutFieldParam (field) -> 
-                Param.InOutFieldParam (field)
+                _param
 
-    let rec rewriteStm_varsToExpr (varMap:Map<Var,Expr>) (stm:Stm) : Stm =
+    let rec rewriteStm_elementsToExpr (elementToExprMap:Map<Element,Expr>) (stm:Stm) : Stm =
         match stm with
-            | Stm.AssignVar (var,expr) ->
-                let newExpr = rewriteExpr_varsToExpr (varMap) expr                
-                if varMap.ContainsKey var then              
+            | Stm.AssignElement (element,expr) ->
+                if (elementToExprMap.ContainsKey element) then
                     failwith "BUG: ExprParam may never be assigned to. Maybe in the model is a missing 'inout' in the parameter list of a reqCall (TODO: Move this into a consistency check)." // User tries to replace something like "localVar:=7+2" with "5+intField:=7+2"
-                else
-                    Stm.AssignVar (var, newExpr)                
-            | Stm.AssignField (field, expr) ->
-                Stm.AssignField (field, expr)
+                let newExpr = rewriteExpr_elementsToExpr elementToExprMap expr                
+                Stm.AssignElement (element, newExpr)
             | Stm.AssignFault (fault, expr) ->
                 Stm.AssignFault (fault, expr)
             | Stm.Block (smnts) ->
-                let newStmnts = smnts |> List.map (rewriteStm_varsToExpr (varMap))
+                let newStmnts = smnts |> List.map (rewriteStm_elementsToExpr elementToExprMap)
                 Stm.Block(newStmnts)
             | Stm.Choice (choices:(Expr * Stm) list) ->
-                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToExpr (varMap)  expr,rewriteStm_varsToExpr (varMap) stm) )
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_elementsToExpr elementToExprMap expr,rewriteStm_elementsToExpr elementToExprMap stm) )
                 Stm.Choice(newChoices)
             | Stm.Stochastic (choices:(Expr * Stm) list) ->
-                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToExpr (varMap)  expr,rewriteStm_varsToExpr (varMap) stm) )
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_elementsToExpr elementToExprMap expr,rewriteStm_elementsToExpr elementToExprMap stm) )
                 Stm.Stochastic(newChoices)
             | Stm.CallPort (reqPort,_params) ->
-                let newParams = _params |> List.map (rewriteParam_varsToExpr (varMap) )
+                let newParams = _params |> List.map (rewriteParam_elementsToExpr elementToExprMap )
                 Stm.CallPort (reqPort,newParams)
             | Stm.StepComp (comp) ->
                 Stm.StepComp (comp)
@@ -718,7 +642,7 @@ module internal ScmHelpers =
                 Stm.Choice(newChoices)
             | Stm.AssignFault (fault,expr) ->
                 if faultToConvert = fault then
-                    Stm.AssignField (field,expr)
+                    Stm.AssignElement (Element.Field(field),expr)
                 else
                     failwith "A fault value should only be assigned in the step of the fault (and in no other fault)"
             | _ -> stm
@@ -778,65 +702,70 @@ module internal ScmHelpers =
                      // is an assignment or something similar.
                     newState
 
-                    
+                   
     // Extension methods    
     type LocExpr with
-        member locExpr.rewriteLocation (oldLocation:CompPath) (newLocation:CompPath) (faultMap:Map<Fault,Fault>,fieldMap:Map<Field,Field>) : LocExpr =
+        member locExpr.rewriteLocation (oldLocation:CompPath) (newLocation:CompPath) (faultMap:Map<Fault,Fault>,elementMap:Map<Element,Element>) : LocExpr =
+            let rewriteLocElement (elem:LocElement) = 
+                match elem with
+                    | LocElement.Field (location,field) ->                        
+                        if location = oldLocation then
+                            let newElement = elementMap.Item (Element.Field (field))
+                            match newElement with
+                                | Element.Field (fieldInNewPlace) -> LocElement.Field (newLocation,fieldInNewPlace)
+                                | Element.Var (var) -> LocElement.LocalVar (var)
+                        else
+                            elem
+                    | LocElement.LocalVar (var) ->
+                        elem
             match locExpr with
                 | LocExpr.Literal (_) ->
                     locExpr
-                | LocExpr.ReadField (location, field) ->
-                    if location = oldLocation then
-                        LocExpr.ReadField (newLocation, fieldMap.Item field)
-                    else
-                        locExpr
+                | LocExpr.Read (elem) ->
+                    LocExpr.Read(rewriteLocElement elem)
                 | LocExpr.ReadFault (location, fault) ->
                     if location = oldLocation then
                         LocExpr.ReadFault (newLocation, faultMap.Item fault)
                     else
                         locExpr
-                | LocExpr.ReadOldField (location, field) ->
-                    if location = oldLocation then
-                        LocExpr.ReadOldField (newLocation, fieldMap.Item field)
-                    else
-                        locExpr
+                | LocExpr.ReadOld (elem) ->
+                    LocExpr.ReadOld(rewriteLocElement elem)
                 | LocExpr.ReadOldFault (location, fault) ->
                     if location = oldLocation then
                         LocExpr.ReadOldFault (newLocation, faultMap.Item fault)
                     else
                         locExpr
-                | LocExpr.ReadVar _ ->
-                    locExpr
                 | LocExpr.UExpr (locExpr,uop) ->
-                    LocExpr.UExpr(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap),uop)
+                    LocExpr.UExpr(locExpr.rewriteLocation oldLocation newLocation (faultMap,elementMap),uop)
                 | LocExpr.BExpr (locExprLeft,bop,locExprRight) ->
-                    LocExpr.BExpr(locExprLeft.rewriteLocation oldLocation newLocation (faultMap,fieldMap),bop,locExprRight.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
+                    LocExpr.BExpr(locExprLeft.rewriteLocation oldLocation newLocation (faultMap,elementMap),bop,locExprRight.rewriteLocation oldLocation newLocation (faultMap,elementMap))
 
                     
     // Extension methods    
     type Contract with
         member contract.rewriteLocation (oldLocation:CompPath) (newLocation:CompPath) (faultMap:Map<Fault,Fault>,fieldMap:Map<Field,Field>) =
+            let elementMap = fieldMap |> Map.toSeq |> Seq.map (fun (oldField,newField) -> (Element.Field(oldField),Element.Field(newField)) ) |> Map.ofSeq
             match contract with
                 | Contract.None -> contract
                 | Contract.AutoDeriveChanges(require,ensure) ->
                     let newRequire =
                         match require with
                             | None -> None
-                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
+                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,elementMap))
                     let newEnsure =
                         match ensure with
                             | None -> None
-                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
+                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,elementMap))
                     Contract.AutoDeriveChanges(newRequire,newEnsure)
                 | Contract.Full(require,ensure,changedFields,changedFaults) ->
                     let newRequire =
                         match require with
                             | None -> None
-                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
+                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,elementMap))
                     let newEnsure =
                         match ensure with
                             | None -> None
-                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
+                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,elementMap))
                     let newFields =
                         changedFields |> List.map (itemOrOld fieldMap)
                     let newFaults =

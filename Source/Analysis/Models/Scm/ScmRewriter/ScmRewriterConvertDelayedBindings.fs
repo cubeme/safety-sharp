@@ -138,12 +138,14 @@ module internal ScmRewriterConvertDelayedBindings =
         let varMapLocals = List.zip varListOfBeh newVarsForBeh |> Map.ofList
         let newBehavior1 = rewriteBehavior (Map.empty,Map.empty,varMapLocals,Map.empty) provPortDecl.Behavior
         
+        let elementsToElementsMap =
+            varToNewFieldMap |> Map.toSeq |> Seq.map (fun (var,field) -> Element.Var(var),Element.Field(field)) |> Map.ofSeq
 
         // replace outs in param with fields
         let newBehavior2 =
             {
                 BehaviorDecl.Locals = newBehavior1.Locals;
-                BehaviorDecl.Body = rewriteStm_varsToFields varToNewFieldMap newBehavior1.Body;
+                BehaviorDecl.Body = rewriteStm_elementsToElements elementsToElementsMap newBehavior1.Body;
             }
 
         // add prepend modified ProvPortDecl to Step
@@ -167,7 +169,7 @@ module internal ScmRewriterConvertDelayedBindings =
     let createReflectionOfProvPort (oldProvPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) (newProvPort:ProvPort) : ScmRewriterConvertDelayedBindingsFunction<_,unit> = workflow {
         let assignments =
             varToNewFieldMap |> Map.toList
-                             |> List.map (fun (var,field)-> Stm.AssignVar(var,Expr.ReadField(field)))
+                             |> List.map (fun (var,field)-> Stm.AssignElement(Element.Var(var),Expr.Read(Element.Field(field))))
         let newStep = Stm.Block (assignments)
         let newBehavior =
             { 

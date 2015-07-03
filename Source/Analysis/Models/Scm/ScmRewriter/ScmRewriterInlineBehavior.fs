@@ -130,8 +130,7 @@ module internal ScmRewriterInlineBehavior =
                     let head_or_acc = max headLevel accMaxLevel
                     maxLevel stmnts.Tail head_or_acc
             match stm with
-                | Stm.AssignVar (_) -> currentLevel
-                | Stm.AssignField (_) -> currentLevel
+                | Stm.AssignElement (_) -> currentLevel
                 | Stm.AssignFault (_) -> currentLevel
                 | Stm.Block (stmnts) ->
                     maxLevel stmnts currentLevel
@@ -216,8 +215,7 @@ module internal ScmRewriterInlineBehavior =
                 else
                     let rec findCall (stm:Stm) (currentPath:StmPath) : (StmPath option) =
                         match stm with
-                            | Stm.AssignVar (_) -> None
-                            | Stm.AssignField (_) -> None
+                            | Stm.AssignElement(_) -> None
                             | Stm.AssignFault (_) -> None
                             | Stm.Block (stmnts) ->
                                 stmnts |> List.map2 (fun index stm -> (index,stm)) ([0..(stmnts.Length-1)])
@@ -259,8 +257,7 @@ module internal ScmRewriterInlineBehavior =
                 let body = inlineBehavior.InlinedBehavior.Body
                 let callToReplace = body.getSubStatement pathToCallToReplace 
                 match callToReplace with
-                    | Stm.AssignVar (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
-                    | Stm.AssignField (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                    | Stm.AssignElement (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
                     | Stm.AssignFault (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
                     | Stm.Block (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
                     | Stm.Choice (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()

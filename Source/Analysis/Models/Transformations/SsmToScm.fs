@@ -78,8 +78,8 @@ module internal SsmToScm =
         | Ssm.BoolExpr b                 -> Scm.Literal (Scm.BoolVal b)
         | Ssm.IntExpr i                  -> Scm.Literal (Scm.IntVal i)
         | Ssm.DoubleExpr d               -> notImplemented ()
-        | Ssm.VarExpr (Ssm.Field (f, _)) -> Scm.ReadField (Scm.Field f)
-        | Ssm.VarExpr v                  -> Scm.ReadVar (Scm.Var (Ssm.getVarName v))
+        | Ssm.VarExpr (Ssm.Field (f, _)) -> Scm.Read (Scm.Element.Field( Scm.Field f))
+        | Ssm.VarExpr v                  -> Scm.Read (Scm.Element.Var (Scm.Var (Ssm.getVarName v)))
         | Ssm.UExpr (op, e)              -> Scm.UExpr (transformExpr e, mapUOp op)
         | Ssm.BExpr (e1, op, e2)         -> Scm.BExpr (transformExpr e1, mapBOp op, transformExpr e2)
         | _                              -> notSupported "Unsupported SSM expression '%+A'." e
@@ -88,12 +88,12 @@ module internal SsmToScm =
     let private transformParamExpr (e : Ssm.Expr list) (d : Ssm.ParamDir list) : Scm.Param list =
         let transform = function
             | (e, Ssm.In)                                    -> transformExpr e |> Scm.ExprParam 
-            | (Ssm.VarRefExpr (Ssm.Local (l, _)), Ssm.InOut) -> Scm.InOutVarParam (Scm.Var l)
-            | (Ssm.VarRefExpr (Ssm.Local (l, _)), Ssm.Out)   -> Scm.InOutVarParam (Scm.Var l)
-            | (Ssm.VarRefExpr (Ssm.Arg (a, _)), Ssm.InOut)   -> Scm.InOutVarParam (Scm.Var a)
-            | (Ssm.VarRefExpr (Ssm.Arg (a, _)), Ssm.Out)     -> Scm.InOutVarParam (Scm.Var a)
-            | (Ssm.VarRefExpr (Ssm.Field (f, _)), Ssm.InOut) -> Scm.InOutFieldParam (Scm.Field f)
-            | (Ssm.VarRefExpr (Ssm.Field (f, _)), Ssm.Out)   -> Scm.InOutFieldParam (Scm.Field f)
+            | (Ssm.VarRefExpr (Ssm.Local (l, _)), Ssm.InOut) -> Scm.InOutElementParam (Scm.Element.Var (Scm.Var l))
+            | (Ssm.VarRefExpr (Ssm.Local (l, _)), Ssm.Out)   -> Scm.InOutElementParam (Scm.Element.Var (Scm.Var l))
+            | (Ssm.VarRefExpr (Ssm.Arg (a, _)), Ssm.InOut)   -> Scm.InOutElementParam (Scm.Element.Var (Scm.Var a))
+            | (Ssm.VarRefExpr (Ssm.Arg (a, _)), Ssm.Out)     -> Scm.InOutElementParam (Scm.Element.Var (Scm.Var a))
+            | (Ssm.VarRefExpr (Ssm.Field (f, _)), Ssm.InOut) -> Scm.InOutElementParam (Scm.Element.Field (Scm.Field f))
+            | (Ssm.VarRefExpr (Ssm.Field (f, _)), Ssm.Out)   -> Scm.InOutElementParam (Scm.Element.Field (Scm.Field f))
             | (e, _)                                         -> notSupported "Unsupported inout or out parameter '%+A'." e
 
         List.zip e d |> List.map transform
@@ -106,8 +106,8 @@ module internal SsmToScm =
         let rec transform s = 
             match s with
             | Ssm.NopStm                        -> emptyBlock
-            | Ssm.AsgnStm (Ssm.Field (f, _), e) -> Scm.AssignField (Scm.Field f, transformExpr e)
-            | Ssm.AsgnStm (v, e)                -> Scm.AssignVar (Scm.Var (Ssm.getVarName v), transformExpr e)
+            | Ssm.AsgnStm (Ssm.Field (f, _), e) -> Scm.AssignElement (Scm.Element.Field (Scm.Field f), transformExpr e)
+            | Ssm.AsgnStm (v, e)                -> Scm.AssignElement (Scm.Element.Var (Scm.Var (Ssm.getVarName v)), transformExpr e)
             | Ssm.SeqStm s                      -> s |> List.map transform |> Scm.Block
             | Ssm.ChoiceStm (e, s)              -> Scm.Choice (List.zip e s |> List.map (fun (e, s) -> transformExpr e, transform s))
             | Ssm.ExprStm (Ssm.MemberExpr (Ssm.Field (f, _), Ssm.CallExpr (m, _, _, d, _, e, false))) -> Scm.StepComp (Scm.Comp f)

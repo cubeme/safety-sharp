@@ -125,15 +125,15 @@ module internal Scm =
     [<RequireQualifiedAccessAttribute>]
     type internal LocElement = // Extension of Element with Location. For detailed examples of the idea see description of ComplexElementAccess
         | Field of CompPath * Field
-        | Var of CompPath * Var
         | LocalVar of Var // no path here, because only local! Also we do not assume a previous valuation!
-        | Indexed of Container:(CompPath*LocElement) * Index:LocExpr
+        //| Indexed of Container:(CompPath*LocElement) * Index:LocExpr
 
     and [<RequireQualifiedAccessAttribute>] internal LocExpr = // expression with location
         | Literal of Val
         | Read of LocElement //Arrays of Fields, Arrays of Arrays of Vars...
         | ReadFault of CompPath * Fault
         | ReadOld of LocElement //Arrays of Fields, Arrays of Arrays of Vars...
+        | ReadOldFault of CompPath * Fault
         | UExpr of LocExpr * UOp
         | BExpr of LocExpr * BOp * LocExpr
     

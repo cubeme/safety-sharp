@@ -38,8 +38,7 @@ module internal ScmRewriterRemoveGivenFaults =
 
         let removeFaultsFromStm = removeFaultsFromStm faultsToRemoveInCurrentComponent
         match stm with
-            | Stm.AssignVar (var,expr) -> stm
-            | Stm.AssignField (field, expr) -> stm
+            | Stm.AssignElement (element,expr) -> stm
             | Stm.AssignFault (fault, expr) ->
                 if faultsToRemoveInCurrentComponent.Contains fault then
                     Stm.Block([])

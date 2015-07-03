@@ -48,6 +48,7 @@ module internal ScmRewriterLevelUp =
         ArtificialFaultsOldToNew : Map<Fault,Fault>
         ArtificialReqPortOldToNew : Map<ReqPort,ReqPort>
         ArtificialProvPortOldToNew : Map<ProvPort,ProvPort>
+        ArtificialElementsOldToNew : Map<Element,Element>
                 
 
         //Maps from new path to old path (TODO: when not necessary, delete); or change to newToOrigin
@@ -56,18 +57,19 @@ module internal ScmRewriterLevelUp =
         ArtificialReqPortNewToOld : Map<ReqPortPath,ReqPortPath>
         ArtificialProvPortNewToOld : Map<ProvPortPath,ProvPortPath>
         
+
         FaultsToRewrite : FaultDecl list    //declared in parent
         ProvPortsToRewrite : ProvPortDecl list    //declared in parent
         StepsToRewrite : StepDecl list    //declared in parent
         ArtificialStep : (ReqPort*ProvPort) option
     }
         with
-            member levelUp.oldToNewMaps1 =                
-                    (levelUp.ArtificialReqPortOldToNew,levelUp.ArtificialFaultsOldToNew,Map.empty<Var,Var>,levelUp.ArtificialFieldsOldToNew)
+            member levelUp.oldToNewMaps1 =
+                (levelUp.ArtificialReqPortOldToNew,levelUp.ArtificialFaultsOldToNew,Map.empty<Var,Var>,levelUp.ArtificialElementsOldToNew)
             member levelUp.oldToNewMaps2 =                
-                    (levelUp.ArtificialFaultsOldToNew)
-            member levelUp.oldToNewMaps3=                
-                    (levelUp.ArtificialFaultsOldToNew,levelUp.ArtificialFieldsOldToNew)
+                (levelUp.ArtificialFaultsOldToNew)
+            member levelUp.oldToNewMaps3 =
+                (levelUp.ArtificialFaultsOldToNew,levelUp.ArtificialFieldsOldToNew)                
             interface IScmTracer<'traceableOfOrigin,ScmRewriterLevelUpState<'traceableOfOrigin>> with
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
@@ -135,10 +137,12 @@ module internal ScmRewriterLevelUp =
         let! levelUp = getLevelUpState ()
         let parentPath = state.PathOfChangingSubcomponent
         let childPath = levelUp.NameOfChildToRewrite.Value::parentPath
-        let newLevelUp = 
+        let newLevelUp =
             { levelUp with
-                ScmRewriterLevelUpState.ArtificialFieldsOldToNew = levelUp.ArtificialFieldsOldToNew.Add( oldField,newField );
+                ScmRewriterLevelUpState.ArtificialFieldsOldToNew = levelUp.ArtificialFieldsOldToNew.Add( oldField,newField )
                 ScmRewriterLevelUpState.ArtificialFieldsNewToOld = levelUp.ArtificialFieldsNewToOld.Add( (parentPath,newField), (childPath,oldField) );
+                ScmRewriterLevelUpState.ArtificialElementsOldToNew = levelUp.ArtificialElementsOldToNew.Add( Scm.Element.Field (oldField),Scm.Element.Field (newField) )
+                    
             }
         do! updateLevelUpState newLevelUp
     }
@@ -819,6 +823,7 @@ module internal ScmRewriterLevelUp =
                 ScmRewriterLevelUpState.ArtificialFaultsOldToNew = Map.empty<Fault,Fault>;
                 ScmRewriterLevelUpState.ArtificialReqPortOldToNew = Map.empty<ReqPort,ReqPort>;
                 ScmRewriterLevelUpState.ArtificialProvPortOldToNew = Map.empty<ProvPort,ProvPort>;
+                ScmRewriterLevelUpState.ArtificialElementsOldToNew = Map.empty<Element,Element>;
                 ScmRewriterLevelUpState.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
                 ScmRewriterLevelUpState.ArtificialFaultsNewToOld = Map.empty<FaultPath,FaultPath>;
                 ScmRewriterLevelUpState.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
@@ -880,6 +885,7 @@ module internal ScmRewriterLevelUp =
                 ScmRewriterLevelUpState.ArtificialFaultsOldToNew = Map.empty<Fault,Fault>;
                 ScmRewriterLevelUpState.ArtificialReqPortOldToNew = Map.empty<ReqPort,ReqPort>;
                 ScmRewriterLevelUpState.ArtificialProvPortOldToNew = Map.empty<ProvPort,ProvPort>;
+                ScmRewriterLevelUpState.ArtificialElementsOldToNew = Map.empty<Element,Element>;
                 ScmRewriterLevelUpState.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
                 ScmRewriterLevelUpState.ArtificialFaultsNewToOld = Map.empty<FaultPath,FaultPath>;
                 ScmRewriterLevelUpState.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
