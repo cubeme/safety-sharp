@@ -24,7 +24,7 @@ namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
 	using Analysis.Formulas;
-	using Analysis.Transformation;
+	using Transformation;
 
 	/// <summary>
 	///     Represents an expression within a S# method.

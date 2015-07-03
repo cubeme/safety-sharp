@@ -30,7 +30,6 @@ namespace SafetySharp.Analysis
 	using Models;
 	using Runtime;
 	using Runtime.BoundTree;
-	using Transformation;
 	using Utilities;
 
 	/// <summary>

@@ -24,7 +24,6 @@ namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
 	using Analysis.Formulas;
-	using Analysis.Transformation;
 	using Utilities;
 
 	/// <summary>
@@ -74,8 +73,8 @@ namespace SafetySharp.Runtime.BoundTree
 		}
 
 		/// <summary>
-		///     Calls the <see cref="BoundTreeVisitor{TResult}.VisitConditionalExpression" /> method on the <paramref name="visitor" />
-		///     .
+		///     Calls the <see cref="BoundTreeVisitor{TResult}.VisitConditionalExpression" /> method on the
+		///     <paramref name="visitor" />.
 		/// </summary>
 		/// <param name="visitor">The visitor that should be accepted.</param>
 		internal override TResult Accept<TResult>(BoundTreeVisitor<TResult> visitor)

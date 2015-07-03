@@ -25,7 +25,6 @@ namespace SafetySharp.Runtime.BoundTree
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using Analysis.Transformation;
 	using Utilities;
 
 	/// <summary>

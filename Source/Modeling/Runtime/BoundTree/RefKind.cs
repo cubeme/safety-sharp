@@ -25,12 +25,23 @@ namespace SafetySharp.Runtime.BoundTree
 	using System;
 
 	/// <summary>
-	///     Indicates whether a method argument is passed as <c>ref</c>, <c>out</c>, or neither of which.
+	///     Indicates whether a method parameter is declared as <c>ref</c>, <c>out</c>, or neither of which.
 	/// </summary>
 	public enum RefKind
 	{
+		/// <summary>
+		///     Indicates that the method parameter is neither declared as <c>ref</c> nor as <c>out</c>.
+		/// </summary>
 		None,
+
+		/// <summary>
+		///     Indicates that the method parameter is declared as <c>ref</c>.
+		/// </summary>
 		Ref,
+
+		/// <summary>
+		///     Indicates that the method parameter is declared as <c>out</c>.
+		/// </summary>
 		Out,
 	}
 }

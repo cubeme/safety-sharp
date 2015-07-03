@@ -23,7 +23,6 @@
 namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
-	using Analysis.Transformation;
 	using Utilities;
 
 	/// <summary>

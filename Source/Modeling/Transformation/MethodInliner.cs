@@ -20,23 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.BoundTree
+namespace SafetySharp.Transformation
 {
 	using System;
-	using Transformation;
+	using Runtime.BoundTree;
 
 	/// <summary>
-	///     Represents an expression within a S# method.
+	///     Inlines <see cref="MethodInvocationExpression" />s.
 	/// </summary>
-	public abstract class Statement : BoundNode
+	internal class MethodInliner : BoundTreeRewriter
 	{
-		/// <summary>
-		///     Returns a string that represents the current object.
-		/// </summary>
-		public override sealed string ToString()
-		{
-			var serializer = new CSharpSerializer();
-			return serializer.Serialize(this);
-		}
 	}
 }

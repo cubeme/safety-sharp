@@ -25,7 +25,6 @@ namespace SafetySharp.Runtime.BoundTree
 	using System;
 	using System.Globalization;
 	using Analysis.Formulas;
-	using Analysis.Transformation;
 
 	/// <summary>
 	///     Represents an enumeration literal expression.

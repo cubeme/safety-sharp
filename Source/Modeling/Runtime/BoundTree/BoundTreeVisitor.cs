@@ -20,10 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Transformation
+namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
-	using Runtime.BoundTree;
 	using Utilities;
 
 	/// <summary>
@@ -32,119 +31,165 @@ namespace SafetySharp.Analysis.Transformation
 	public abstract class BoundTreeVisitor
 	{
 		/// <summary>
+		///     Visits the <paramref name="node" />.
+		/// </summary>
+		/// <param name="node">The <see cref="BoundNode" /> instance that should be visited.</param>
+		protected virtual void DefaultVisit(BoundNode node)
+		{
+		}
+
+		/// <summary>
 		///     Visits an element of type <see cref="ArgumentExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="ArgumentExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitArgumentExpression(ArgumentExpression expression);
+		protected internal virtual void VisitArgumentExpression(ArgumentExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="BinaryExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="BinaryExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitBinaryExpression(BinaryExpression expression);
+		protected internal virtual void VisitBinaryExpression(BinaryExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="BooleanLiteralExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="BooleanLiteralExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitBooleanLiteralExpression(BooleanLiteralExpression expression);
+		protected internal virtual void VisitBooleanLiteralExpression(BooleanLiteralExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="ConditionalExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="ConditionalExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitConditionalExpression(ConditionalExpression expression);
+		protected internal virtual void VisitConditionalExpression(ConditionalExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="DoubleLiteralExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="DoubleLiteralExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitDoubleLiteralExpression(DoubleLiteralExpression expression);
+		protected internal virtual void VisitDoubleLiteralExpression(DoubleLiteralExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="EnumerationLiteralExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="EnumerationLiteralExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitEnumerationLiteralExpression(EnumerationLiteralExpression expression);
+		protected internal virtual void VisitEnumerationLiteralExpression(EnumerationLiteralExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="FieldExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="FieldExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitFieldExpression(FieldExpression expression);
+		protected internal virtual void VisitFieldExpression(FieldExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="MethodInvocationExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="MethodInvocationExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitMethodInvocationExpression(MethodInvocationExpression expression);
+		protected internal virtual void VisitMethodInvocationExpression(MethodInvocationExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="IntegerLiteralExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="IntegerLiteralExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitIntegerLiteralExpression(IntegerLiteralExpression expression);
+		protected internal virtual void VisitIntegerLiteralExpression(IntegerLiteralExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="UnaryExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="UnaryExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitUnaryExpression(UnaryExpression expression);
+		protected internal virtual void VisitUnaryExpression(UnaryExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="VariableExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="VariableExpression" /> instance that should be visited.</param>
-		protected internal abstract void VisitVariableExpression(VariableExpression expression);
+		protected internal virtual void VisitVariableExpression(VariableExpression expression)
+		{
+			DefaultVisit(expression);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="BlockStatement" />.
 		/// </summary>
 		/// <param name="statement">The <see cref="BlockStatement" /> instance that should be visited.</param>
-		protected internal abstract void VisitBlockStatement(BlockStatement statement);
+		protected internal virtual void VisitBlockStatement(BlockStatement statement)
+		{
+			DefaultVisit(statement);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="ChoiceStatement" />.
 		/// </summary>
 		/// <param name="statement">The <see cref="ChoiceStatement" /> instance that should be visited.</param>
-		protected internal abstract void VisitChoiceStatement(ChoiceStatement statement);
+		protected internal virtual void VisitChoiceStatement(ChoiceStatement statement)
+		{
+			DefaultVisit(statement);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="ExpressionStatement" />.
 		/// </summary>
 		/// <param name="statement">The <see cref="ExpressionStatement" /> instance that should be visited.</param>
-		protected internal abstract void VisitExpressionStatement(ExpressionStatement statement);
+		protected internal virtual void VisitExpressionStatement(ExpressionStatement statement)
+		{
+			DefaultVisit(statement);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="AssignmentStatement" />.
 		/// </summary>
 		/// <param name="statement">The <see cref="AssignmentStatement" /> instance that should be visited.</param>
-		protected internal abstract void VisitAssignmentStatement(AssignmentStatement statement);
+		protected internal virtual void VisitAssignmentStatement(AssignmentStatement statement)
+		{
+			DefaultVisit(statement);
+		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="ReturnStatement" />.
 		/// </summary>
 		/// <param name="statement">The <see cref="ReturnStatement" /> instance that should be visited.</param>
-		protected internal abstract void VisitReturnStatement(ReturnStatement statement);
-
-		/// <summary>
-		///     Visits the <paramref name="statement" />.
-		/// </summary>
-		/// <param name="statement">The statement that should be visited.</param>
-		public void Visit(Statement statement)
+		protected internal virtual void VisitReturnStatement(ReturnStatement statement)
 		{
-			Requires.NotNull(statement, () => statement);
-			statement.Accept(this);
+			DefaultVisit(statement);
 		}
 
 		/// <summary>
-		///     Visits the <paramref name="expression" />.
+		///     Visits the <paramref name="node" />.
 		/// </summary>
-		/// <param name="expression">The expression that should be visited.</param>
-		public void Visit(Expression expression)
+		/// <param name="node">The node that should be visited.</param>
+		public void Visit(BoundNode node)
 		{
-			Requires.NotNull(expression, () => expression);
-			expression.Accept(this);
+			Requires.NotNull(node, () => node);
+			node.Accept(this);
 		}
 	}
 }

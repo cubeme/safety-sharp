@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,48 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Runtime.BoundTree
+namespace SafetySharp.Transformation
 {
 	using System;
-	using System.Collections.Generic;
-	using Utilities;
 
 	/// <summary>
-	///     Represents a sequence of statements.
+	///     Indicates which operations are performed on a variable.
 	/// </summary>
-	public sealed class BlockStatement : Statement
+	[Flags]
+	internal enum VariableOperations
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///     Indicates that the variable is neither read nor written.
 		/// </summary>
-		/// <param name="statements">The statements the block should consist of.</param>
-		public BlockStatement(params Statement[] statements)
-		{
-			Requires.NotNull(statements, () => statements);
-			Statements = statements;
-		}
+		None = 0,
 
 		/// <summary>
-		///     Gets the statements contained within the block.
+		///     Indicates that the variable is read, but not written.
 		/// </summary>
-		public IReadOnlyList<Statement> Statements { get; private set; }
+		Read = 1,
 
 		/// <summary>
-		///     Calls the <see cref="BoundTreeVisitor.VisitBlockStatement" /> method on the <paramref name="visitor" />.
+		///     Indicates that the variable is written, but not read.
 		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override void Accept(BoundTreeVisitor visitor)
-		{
-			visitor.VisitBlockStatement(this);
-		}
-
-		/// <summary>
-		///     Calls the <see cref="BoundTreeVisitor{TResult}.VisitBlockStatement" /> method on the <paramref name="visitor" />.
-		/// </summary>
-		/// <param name="visitor">The visitor that should be accepted.</param>
-		internal override TResult Accept<TResult>(BoundTreeVisitor<TResult> visitor)
-		{
-			return visitor.VisitBlockStatement(this);
-		}
+		Write = 2,
 	}
 }

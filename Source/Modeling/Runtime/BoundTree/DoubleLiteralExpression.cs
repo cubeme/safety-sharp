@@ -24,7 +24,6 @@ namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
 	using Analysis.Formulas;
-	using Analysis.Transformation;
 
 	/// <summary>
 	///     Represents a double literal expression.

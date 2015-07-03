@@ -23,7 +23,6 @@
 namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
-	using Analysis.Transformation;
 
 	/// <summary>
 	///     Represents a base class for all nodes of a bound syntax tree.

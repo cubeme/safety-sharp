@@ -72,7 +72,9 @@
     <Compile Include="Modeling\IMetadataObject.cs" />
     <Compile Include="Modeling\MetadataObject.cs" />
     <Compile Include="Modeling\PriorityAttribute.cs" />
-    <Compile Include="Analysis\Transformation\CSharpSerializer.cs" />
+    <Compile Include="Transformation\BoundTreeWalker.cs" />
+    <Compile Include="Transformation\BoundTreeRewriter.cs" />
+    <Compile Include="Transformation\CSharpSerializer.cs" />
     <Compile Include="Runtime\BoundTree\ArgumentExpression.cs" />
     <Compile Include="Runtime\BoundTree\BinaryExpression.cs" />
     <Compile Include="Runtime\BoundTree\BinaryOperator.cs" />
@@ -93,8 +95,8 @@
     <Compile Include="Runtime\MetadataAnalyzers\HierarchyStructureAnalyzer.cs" />
     <Compile Include="Runtime\MetadataAnalyzers\InvalidBindingException.cs" />
     <Compile Include="Runtime\MetadataAnalyzers\InvalidHierarchyStructureException.cs" />
-    <Compile Include="Analysis\Transformation\BoundTreeVisitor`1.cs" />
-    <Compile Include="Analysis\Transformation\BoundTreeVisitor.cs" />
+    <Compile Include="Runtime\BoundTree\BoundTreeVisitor`1.cs" />
+    <Compile Include="Runtime\BoundTree\BoundTreeVisitor.cs" />
     <Compile Include="Runtime\MetadataAnalyzers\ModelAnalyzer.cs" />
     <Compile Include="Runtime\MetadataAnalyzers\RequiredPortBindingsAnalyzer.cs" />
     <Compile Include="Runtime\MetadataAnalyzers\UnboundRequiredPortException.cs" />
@@ -133,6 +135,10 @@
     <Compile Include="Simulation\RealTimeSimulator.cs" />
     <Compile Include="Simulation\SimulationState.cs" />
     <Compile Include="Simulation\Simulator.cs" />
+    <Compile Include="Transformation\MethodInliner.cs" />
+    <Compile Include="Transformation\VariableOperations.cs" />
+    <Compile Include="Transformation\VariableAccessClassifier.cs" />
+    <Compile Include="Transformation\VariableReplacer.cs" />
     <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="Utilities\NameScope.cs" />
     <Compile Include="Runtime\NondeterministicFaultInjection.cs" />

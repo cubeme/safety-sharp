@@ -23,7 +23,6 @@
 namespace SafetySharp.Runtime.BoundTree
 {
 	using System;
-	using Analysis.Transformation;
 
 	/// <summary>
 	///     Represents the statement that ends the execution of the method, optionally returning a value.

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Transformation
+namespace SafetySharp.Transformation
 {
 	using System;
 	using System.Collections.Generic;
@@ -29,13 +29,12 @@ namespace SafetySharp.Analysis.Transformation
 	using System.Reflection;
 	using Runtime;
 	using Runtime.BoundTree;
-	using Runtime.MetadataAnalyzers;
 	using Utilities;
 
 	/// <summary>
 	///     Serializes S# metadata to C# code.
 	/// </summary>
-	public sealed class CSharpSerializer
+	internal sealed class CSharpSerializer
 	{
 		/// <summary>
 		///     The code writer that is used by the serializer.
