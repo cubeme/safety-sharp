@@ -84,7 +84,7 @@ module internal SamToPromela =
     let transformSamVarToVarref ( var:Sam.Var ) =
         let varName = var.getName
         PrVarref.Varref(varName,None,None)
-
+        
     let transformSamVal (literal:Sam.Val) : PrExpression =
         match literal with
             | Sam.Val.NumbVal (value) ->
@@ -115,7 +115,13 @@ module internal SamToPromela =
             let assignExpr = transformSamVal (varDecl.Type.getDefaultValue)
             PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))
         varDecls |> List.map generateResetStatement
-                                                
+        
+        
+    let transformSamElement (element:Sam.Element) : PrVarref =
+        match element with
+            | Sam.Element.GlobalVar variable -> transformSamVarToVarref variable
+            | Sam.Element.LocalVar variable -> transformSamVarToVarref variable
+                                                        
     let rec transformSamExpr (expression:Sam.Expr) : PrExpression =
         match expression with
             | Sam.Expr.Literal (value:Sam.Val) ->
@@ -143,8 +149,8 @@ module internal SamToPromela =
                     | Sam.BOp.LessEqual   -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Le,transformedRight)
                     | Sam.BOp.Greater     -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Gt,transformedRight)
                     | Sam.BOp.GreaterEqual -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Ge,transformedRight)
-            | Sam.Expr.Read (variable) ->
-                let varref = transformSamVarToVarref variable
+            | Sam.Expr.Read (element) ->
+                let varref = transformSamElement element
                 PrExpression.Varref varref
             | Sam.Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
                 let guardExpr = transformSamExpr guardExpr
@@ -162,7 +168,7 @@ module internal SamToPromela =
             | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangesAfterStep ->
                 let forceVariableToBeInRange (varDecl:Sam.GlobalVarDecl) : PrStatement =
                     let assignVarref = transformSamVarToVarref varDecl.Var  
-                    let expr = Sam.Expr.Read(varDecl.Var)
+                    let expr = Sam.Expr.Read( Sam.Element.GlobalVar (varDecl.Var) )
                     let newExpr = forceExprToBeInRangeOfVar varToType varDecl.Var expr
                     let assignExpr = transformSamExpr newExpr
                     PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))
@@ -180,7 +186,7 @@ module internal SamToPromela =
                             (varToType:Map<Sam.Var,Sam.Type>)
                             (statement:Sam.Stm)
                     : PrStatement =                          
-        let applyAssignmentSemanticsAfterAssignment (expr:Sam.Expr) (_var:Sam.Var) =
+        let applyAssignmentSemanticsAfterAssignment (expr:Sam.Expr) (element:Sam.Element) =
             match semanticsOfAssignmentToRangedVariables with
                 | TsamEngineOptions.SemanticsOfAssignmentToRangedVariables.ForceRangeAfterEveryAssignmentToAGlobalVar ->
                     forceExprToBeInRangeOfVar varToType _var expr
@@ -207,9 +213,9 @@ module internal SamToPromela =
                         |> PrOptions.Options
                         |> PrStatement.IfStmnt
 
-            | Sam.Stm.Write (variable:Sam.Var, expression:Sam.Expr) ->
-                let expressionInRange = applyAssignmentSemanticsAfterAssignment expression variable
-                let transformedTarget = transformSamVarToVarref variable
+            | Sam.Stm.Write (element:Sam.Element, expression:Sam.Expr) ->
+                let expressionInRange = applyAssignmentSemanticsAfterAssignment expression element
+                let transformedTarget = transformSamElement element
                 let transformedExpression = transformSamExpr expressionInRange
                 createAssignmentStatement transformedTarget transformedExpression
             | Sam.Stm.Stochastic _ ->

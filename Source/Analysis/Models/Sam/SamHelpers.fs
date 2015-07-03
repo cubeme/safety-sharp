@@ -25,11 +25,20 @@ open SafetySharp.Models.Sam
 
 module internal SamHelpers =
 
+
     // Extension methods
     type Var with
         member var.getName =
             match var with
                 | Var (name) -> name
+
+
+    // Extension methods
+    type Element with
+        member elem.getName =
+            match elem with
+                | Element.GlobalVar (var) -> var.getName
+                | Element.LocalVar (var) -> var.getName
                  
     // Extension methods
     type Expr with

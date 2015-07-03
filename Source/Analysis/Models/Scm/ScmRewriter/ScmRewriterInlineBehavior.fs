@@ -287,8 +287,8 @@ module internal ScmRewriterInlineBehavior =
                             let listOldVarDeclsToNewVars =
                                 List.zip provPortDecl.Behavior.Locals newLocalVarDecls
                             let mapOldVarsToNewVars =
-                                listOldVarDeclsToNewVars |> List.map (fun (oldVarDecl,newVar) -> (oldVarDecl.Var,newVar))
-                                                            |> Map.ofList                                                                    
+                                listOldVarDeclsToNewVars |> List.map (fun (oldVarDecl,newVar) -> (Element.Var oldVarDecl.Var,Element.Var newVar))
+                                                         |> Map.ofList                                                                    
                             let newLocalVarDecls =
                                 let createNewVarDecl (oldVarDecl:VarDecl,newVar:Var) : VarDecl =
                                     { oldVarDecl with
@@ -296,7 +296,7 @@ module internal ScmRewriterInlineBehavior =
                                     }
                                 listOldVarDeclsToNewVars |> List.map createNewVarDecl
 
-                            let newStatementStep1 = rewriteStm_onlyVars mapOldVarsToNewVars (provPortDecl.Behavior.Body)
+                            let newStatementStep1 = rewriteStm_elementsToElements mapOldVarsToNewVars (provPortDecl.Behavior.Body)
                                 
                             // Step 2-4: Replace the local vars in the signature.
                             //   replace Params by their actual Fields or LocalVars or declared in the parameters of the caller
@@ -315,29 +315,31 @@ module internal ScmRewriterInlineBehavior =
                                 localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
                                                             (
                                                             match paramReq with
-                                                                | Param.ExprParam (expr) -> [(localVarParamDecl.Var.Var,expr)]
+                                                                | Param.ExprParam (expr) -> [(Element.Var localVarParamDecl.Var.Var,expr)]
                                                                 | _ -> []
                                                             ) )
                                                         |> Map.ofList
                             let newStatementStep2 =
-                                rewriteStm_varsToExpr localVarToReqPortExprParamMap newStatementStep1 
+                                rewriteStm_elementsToExpr localVarToReqPortExprParamMap newStatementStep1 
 
-                            // Step 3: ParamExpr.InOutVarParam:
+                            // Step 3: ParamExpr.InOutElementParam:
                             //      a) replace in each expression, which may occur where ever ReadVar by remapped ReadVar
                             //      b) replace in each statement, which may occur where ever AssignVar by remapped AssignVar
                             //      c) replace in each param, which may occur where ever InOutVarParam by remapped InOutVarParam
-                            let localVarToReqPortInOutVarParamMap =
+                            let localVarToReqPortInOutElementParamMap =
                                 localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
                                                             (
                                                             match paramReq with
-                                                                | Param.InOutVarParam (var) -> [(localVarParamDecl.Var.Var,var)]
+                                                                | Param.InOutElementParam (element) -> [(Element.Var localVarParamDecl.Var.Var,element)]
                                                                 | _ -> []
                                                             ) )
                                                         |> Map.ofList
                             let newStatementStep3 =
-                                rewriteStm_onlyVars localVarToReqPortInOutVarParamMap (newStatementStep2) 
+                                rewriteStm_elementsToElements localVarToReqPortInOutElementParamMap (newStatementStep2) 
 
-
+                            (*
+                            TODO: remove step and update the numbers of the following steps
+                                  Not needed anymore after unifying Params
                             // Step 4: ParamExpr.InOutFieldParam:
                             //      a) replace in each expression, which may occur where ever ReadVar by remapped ReadField
                             //      b) replace in each statement, which may occur where ever AssignVar by remapped AssignField
@@ -346,17 +348,17 @@ module internal ScmRewriterInlineBehavior =
                                 localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
                                                             (
                                                             match paramReq with
-                                                                | Param.InOutFieldParam (field) -> [(localVarParamDecl.Var.Var,field)]
+                                                                | Param.InOutElementParam (field) -> [(Element.Field localVarParamDecl.Var.Var,field)]
                                                                 | _ -> []
                                                             ) )
                                                         |> Map.ofList
                             let newStatementStep4 =
                                 rewriteStm_varsToFields localVarToReqPortInOutFieldMap newStatementStep3
-
+                            *)
                                 
 
                             // Step 5: Write back changes into state
-                            let newBody = body.replaceSubStatement pathToCallToReplace newStatementStep4
+                            let newBody = body.replaceSubStatement pathToCallToReplace newStatementStep3
                             let newBehavior =
                                 {
                                     BehaviorDecl.Body = newBody;

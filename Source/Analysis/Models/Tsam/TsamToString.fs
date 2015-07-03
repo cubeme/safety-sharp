@@ -82,12 +82,17 @@ module internal TsamToString =
                 | Val.RealVal (_val) -> System.Convert.ToString(_val,realFormat)
                 | Val.ProbVal (_val) -> System.Convert.ToString(_val,realFormat)
         append toAppend
+        
+    let exportElement (elem:Element) : AstToStringStateFunction =
+        match elem with
+            | Element.GlobalVar (_var) -> exportVar _var
+            | Element.LocalVar (_var) -> exportVar _var
 
     let rec exportExpr (expr:Expr) : AstToStringStateFunction =
         match expr with
             | Expr.Literal (_val) -> exportVal  _val
-            | Expr.Read (_var) -> exportVar  _var
-            | Expr.ReadOld (_var) -> (append "prev(") >>= (exportVar _var) >>= (append ")")
+            | Expr.Read (elem) -> exportElement elem
+            | Expr.ReadOld (elem) -> (append "prev(") >>= (exportElement elem) >>= (append ")")
             | Expr.UExpr (expr,uop) ->                
                 //sprintf "%s(%s)" (exportUOp state uop)  (exportExpr state expr)
                 (exportUOp uop) >>= (append "(") >>= (exportExpr expr) >>= (append ")")
@@ -135,8 +140,8 @@ module internal TsamToString =
                     ) >>=
                 decreaseIndent >>= (append "}") >>=
                 (append "\t\t\t// ") >>= (exportStatementId sid) >>= newLine
-            | Stm.Write (sid,var,expr) ->
-                (exportVar var) >>=
+            | Stm.Write (sid,elem,expr) ->
+                (exportElement elem) >>=
                 (append " := ") >>=
                 (exportExpr expr) >>=
                 (append "; ") >>=

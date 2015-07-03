@@ -33,6 +33,7 @@ module internal TransitionSystemAsRelationExpr =
     
     type VarDecl = Tsam.LocalVarDecl
     type Var = Tsam.Var
+    type Element = Tsam.Element
     type Val = Tsam.Val
     type BOp= Tsam.BOp
     type Expr = Tsam.Expr
@@ -42,8 +43,8 @@ module internal TransitionSystemAsRelationExpr =
         Ivars : VarDecl list;
         // The virtual next var should be purely virtual. In e.g. NuXmv it will be replaced by next(x). This variable should neither appear in
         // Globals nor in Ivars. Every Global should have a virtual next var
-        VirtualNextVarToVar : Map<Var,Var>;
-        VarToVirtualNextVar : Map<Var,Var>;
+        VirtualNextVarToVar : Map<Element,Element>;
+        VarToVirtualNextVar : Map<Element,Element>;
         Init : Expr;
         Trans : Expr; //TODO: Idea: Maybe allow more parallel Transitions. A topological sorting of the variables in Tsam.Pgm could find out, which assignments are independent of each other (e.g: if at the end of each step the faults are evaluated, they could also just be executed in parallel. This might speed up the algorithms of the underlying Tools. At least the size of the Trans-Expr is reduced dramatically in such cases). This might make it necessary to introduce more Pgms in Tsam.
     }
@@ -76,7 +77,7 @@ module internal TransitionSystemAsRelationExpr =
                 let assignVar = varDecl.Var
                 let assignExpr = Expr.Literal(initialValue)
                 let operator = BOp.Equals
-                Expr.BExpr(Expr.Read(assignVar),operator,assignExpr)
+                Expr.BExpr(Expr.Read(Element.GlobalVar assignVar),operator,assignExpr)
             varDecl.Init |> List.map generatePossibleValues
                          |> TsamHelpers.createOredExpr
         varDecls |> List.map generateInit
@@ -87,10 +88,10 @@ module internal TransitionSystemAsRelationExpr =
     
     let transitionSystemToString (ts:TransitionSystem) : string =    
         let rec addPrimeToNextVariableInExpr (expr:Expr) : Expr =
-            let addPrimeToNextVariable (_var:Tsam.Var) : Tsam.Var =
+            let addPrimeToNextVariable (_var:Element) : Tsam.Element =
                 if ts.VirtualNextVarToVar.ContainsKey _var then
                     let normalVar = ts.VirtualNextVarToVar.Item _var
-                    Tsam.Var.Var(normalVar.getName + "'")
+                    Element.GlobalVar (Tsam.Var.Var(normalVar.getName + "'"))
                 else
                     _var
             match expr with
@@ -123,7 +124,7 @@ module internal TransitionSystemAsRelationExpr =
     
     // -- GWAM --------------------------------------------------------
     
-    let createVirtualVarEntriesForGwam (gwam:GuardWithAssignmentModel) : (Var*Var) list =
+    let createVirtualVarEntriesForGwam (gwam:GuardWithAssignmentModel) : (Element*Element) list =
         //var_x,next(var_x).
         //Var to Virtual Var which represents "next(Var)"
         let takenNames:Set<string> ref = 
@@ -161,7 +162,7 @@ module internal TransitionSystemAsRelationExpr =
         let transformAssignments (assignments:Assignments) : Expr =
             match assignments with            
                 | Assignments.Deterministic (guard:Expr, assignments:FinalVariableAssignments) ->                    
-                    let transformAssignment (var:Var,expr:Expr) : Expr =
+                    let transformAssignment (var:Element,expr:Expr) : Expr =
                         Expr.BExpr(Expr.Read(varToVirtualVar.Item var),BOp.Equals,expr)
                     let transformedAssignments =
                         assignments.Assignments |> Map.toList
@@ -191,7 +192,7 @@ module internal TransitionSystemAsRelationExpr =
     
     // This strongest postcondition transformation requires input variables
         
-    let createVirtualVarEntryPool (pgm:Tsam.Pgm) : Map<Var,Var> =
+    let createVirtualVarEntryPool (pgm:Tsam.Pgm) : Map<Element,Element> =
         //var_x,next(var_x).
         //Var to Virtual Var which represents "next(Var)"
         let takenNames:Set<string> ref = 

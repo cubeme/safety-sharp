@@ -54,7 +54,7 @@ module internal SamSimplifyBlocks =
                         let transformStochasticChoice (prob,stm) : Expr*Stm=
                             (prob, removeEmptyBlocks stm)
                         Stm.Stochastic(stochasticChoice |> List.map transformStochasticChoice)
-                    | Stm.Write (variable:Var, expression:Expr) ->
+                    | Stm.Write (element, expression:Expr) ->
                         stm // nothing to do
             let rec iterRemove (stm) =
                 let removed = removeEmptyBlocks stm
@@ -91,7 +91,7 @@ module internal SamSimplifyBlocks =
                     let transformStochasticChoice (prob,stm:Stm) : Expr*Stm=
                         (prob, stm.simplifyBlocksWithOnlyOneStatement)
                     Stm.Stochastic(stochasticChoice |> List.map transformStochasticChoice)
-                | Stm.Write (variable:Var, expression:Expr) ->
+                | Stm.Write (element, expression:Expr) ->
                     stm // nothing to do
                     
         // a so called "peephole optimization"

@@ -89,12 +89,16 @@ module internal ScmToSam =
             Sam.LocalVarDecl.Type = transformTypeToType var.Type;
             Sam.LocalVarDecl.Var = transformVarToVar var.Var;
         }
+
+    let transformElementToElement (elem:Scm.Element) : Sam.Element =
+        match elem with
+            | Scm.Element.Field (_var) -> Sam.Element.GlobalVar (transformFieldToVar _var)
+            | Scm.Element.Var (_var) -> Sam.Element.LocalVar (transformVarToVar _var)
         
     let rec transformExprToExpr (expr:Scm.Expr) : Sam.Expr =
         match expr with            
             | Scm.Literal (_val) -> Sam.Expr.Literal (transformValToVal _val)
-            | Scm.ReadVar (_var) -> Sam.Expr.Read(transformVarToVar _var)
-            | Scm.ReadField (field) -> Sam.Expr.Read(transformFieldToVar field)
+            | Scm.Read (elem) -> Sam.Expr.Read(transformElementToElement elem)
             | Scm.UExpr (expr, uop) ->
                 let operand = transformExprToExpr expr
                 match uop with
@@ -112,14 +116,10 @@ module internal ScmToSam =
 
     let rec transformStmToStm (stm:Scm.Stm) : Sam.Stm =
         match stm with
-            | Scm.AssignVar (var, expr) ->
-                let var = transformVarToVar var
+            | Scm.AssignElement (elem, expr) ->
+                let elem = transformElementToElement elem
                 let expr = transformExprToExpr expr
-                Sam.Write(var,expr)
-            | Scm.AssignField (field, expr) ->
-                let var = transformFieldToVar field
-                let expr = transformExprToExpr expr
-                Sam.Write(var,expr)
+                Sam.Write(elem,expr)
             | Scm.AssignFault (_) -> failwith "Statements are expected not to assign to a fault. By inlining with levelUpAndInline you can convert the model to a new model with this property!"
             | Scm.Block (stms) -> 
                 let newStmnts = stms |> List.map transformStmToStm
@@ -207,12 +207,12 @@ module internal ScmVeToSam =
             | PropositionalExpr.ReadFault (faultComp,fault) ->
                 let traced = forwardTracer (Scm.Traceable.TraceableFault(faultComp,fault))
                 match traced with
-                    | Sam.Traceable(_var) -> Sam.Expr.Read(_var)
+                    | Sam.Traceable(_var) -> Sam.Expr.Read( Sam.Element.GlobalVar _var )
                     | Sam.TraceableRemoved (reason) -> failwith ("variable you talk about was removed because " + reason)
             | PropositionalExpr.ReadField (fieldComp,field) ->
                 let traced = forwardTracer (Scm.Traceable.TraceableField(fieldComp,field))
                 match traced with
-                    | Sam.Traceable(_var) -> Sam.Expr.Read(_var)
+                    | Sam.Traceable(_var) -> Sam.Expr.Read( Sam.Element.GlobalVar _var )
                     | Sam.TraceableRemoved (reason) -> failwith ("variable you talk about was removed because " + reason)
             | PropositionalExpr.UExpr (expr, uop) ->
                 let operator = ScmToSam.transformUopToUop uop

@@ -29,8 +29,8 @@ module internal TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables =
     open SafetySharp.Ternary
 
         
-    let rec forceExprToBeInRangeOfVar (varToType:Map<Var,Type>) (_var:Var) (expr:Expr)=
-        let rangeOfVar = varToType.Item _var            
+    let rec forceExprToBeInRangeOfVar (elementToType:Map<Element,Type>) (element:Element) (expr:Expr)=
+        let rangeOfVar = elementToType.Item element            
         let newExpr_clampOverflow (minValue:Val) (maxValue:Val) : Expr =
             let minValue = Expr.Literal(minValue)
             let maxValue = Expr.Literal(maxValue)
@@ -93,8 +93,7 @@ module internal TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables =
                         failwith "not determined what it means, yet"
                         
     let rec applyAssignmentSemanticsAfterAssignment (pgm:Pgm) : Pgm =
-        let varToType =
-            pgm.VarToType
+        let elementToType = pgm.ElementToType
         //    let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Tsam.Var,Tsam.Type>)
         //    let varToTypeWithGlobalsAndLocals = pgm.Locals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
         //    varToTypeWithGlobalsAndLocals
@@ -114,7 +113,7 @@ module internal TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables =
                     let newChoices = stochasticChoices |> List.map (fun (stochasticExpr,stochasticStm) -> (stochasticExpr,applyToStm stochasticStm))
                     Stm.Stochastic (sid,newChoices)
                 | Stm.Write (sid,_var,expr) ->
-                    Stm.Write (sid,_var,forceExprToBeInRangeOfVar varToType _var expr)
+                    Stm.Write (sid,_var,forceExprToBeInRangeOfVar elementToType _var expr)
         { pgm with
             Pgm.Body = applyToStm pgm.Body
             Pgm.Attributes = {pgm.Attributes with Attributes.SemanticsOfAssignmentToRangedVariablesAppliedExplicitly=Ternary.True;}
@@ -124,8 +123,9 @@ module internal TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables =
     let applyAssignmentSemanticsAfterStep (pgm:Pgm) : Pgm =
         let newStatements =
             let createRangedAssignment (globalVarDecl:GlobalVarDecl) : Stm =
-                let rangedVarExpression = forceExprToBeInRangeOfVar (pgm.VarToType) (globalVarDecl.Var) (Expr.Read(globalVarDecl.Var))
-                Stm.Write(pgm.UniqueStatementIdGenerator (),globalVarDecl.Var,rangedVarExpression)
+                let globalVarElement = Element.GlobalVar(globalVarDecl.Var)
+                let rangedVarExpression = forceExprToBeInRangeOfVar (pgm.ElementToType) globalVarElement (Expr.Read(globalVarElement))
+                Stm.Write(pgm.UniqueStatementIdGenerator (),globalVarElement,rangedVarExpression)
             
             do pgm.Globals |> List.iter (fun globalVar -> assert ( (pgm.NextGlobal.Item (globalVar.Var)) = (globalVar.Var))  ) // TODO: currently stupid check here is necessary to avoid false use
             

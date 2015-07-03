@@ -58,40 +58,40 @@ module internal TsamHelpers =
     
     // Extension methods
     type Sam.Expr with    
-        member expr.rewriteExpr_varsToExpr (currentValuation:Map<Var,Expr>) : Expr =
+        member expr.rewriteExpr_elementsToExpr (currentValuation:Map<Element,Expr>) : Expr =
             match expr with
                 | Expr.Literal (_) -> expr
-                | Expr.Read (_var) ->                
-                    if currentValuation.ContainsKey _var then
-                        currentValuation.Item _var
+                | Expr.Read (element) ->                
+                    if currentValuation.ContainsKey element then
+                        currentValuation.Item element
                     else
                         expr
                 | Expr.ReadOld (_var) -> expr //old variables keep their value
                 | Expr.UExpr (expr,uop) ->
-                    Expr.UExpr (expr.rewriteExpr_varsToExpr currentValuation,uop)
+                    Expr.UExpr (expr.rewriteExpr_elementsToExpr currentValuation,uop)
                 | Expr.BExpr (left, bop, right) ->
-                    Expr.BExpr (left.rewriteExpr_varsToExpr currentValuation, bop, right.rewriteExpr_varsToExpr currentValuation)
+                    Expr.BExpr (left.rewriteExpr_elementsToExpr currentValuation, bop, right.rewriteExpr_elementsToExpr currentValuation)
                 | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
                     Expr.IfThenElseExpr
-                        (guardExpr.rewriteExpr_varsToExpr currentValuation,
-                         thenExpr.rewriteExpr_varsToExpr currentValuation,
-                         elseExpr.rewriteExpr_varsToExpr currentValuation)
+                        (guardExpr.rewriteExpr_elementsToExpr currentValuation,
+                         thenExpr.rewriteExpr_elementsToExpr currentValuation,
+                         elseExpr.rewriteExpr_elementsToExpr currentValuation)
                          
-        member expr.rewriteExpr_varToExpr (varToUpdate:Var,assignVarTo:Expr) : Expr =
+        member expr.rewriteExpr_elementToExpr (elementToUpdate:Element,assignElementTo:Expr) : Expr =
             match expr with
                 | Expr.Literal (_) -> expr
-                | Expr.Read (_var) ->                
-                    if varToUpdate = _var then assignVarTo else expr
+                | Expr.Read (element) ->                
+                    if elementToUpdate = element then assignElementTo else expr
                 | Expr.ReadOld (_var) -> expr //old variables keep their value
                 | Expr.UExpr (expr,uop) ->
-                    Expr.UExpr (expr.rewriteExpr_varToExpr (varToUpdate,assignVarTo) ,uop)
+                    Expr.UExpr (expr.rewriteExpr_elementToExpr (elementToUpdate,assignElementTo) ,uop)
                 | Expr.BExpr (left, bop, right) ->
-                    Expr.BExpr (left.rewriteExpr_varToExpr (varToUpdate,assignVarTo), bop, right.rewriteExpr_varToExpr (varToUpdate,assignVarTo))
+                    Expr.BExpr (left.rewriteExpr_elementToExpr (elementToUpdate,assignElementTo), bop, right.rewriteExpr_elementToExpr (elementToUpdate,assignElementTo))
                 | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
                     Expr.IfThenElseExpr
-                        (guardExpr.rewriteExpr_varToExpr (varToUpdate,assignVarTo),
-                         thenExpr.rewriteExpr_varToExpr (varToUpdate,assignVarTo),
-                         elseExpr.rewriteExpr_varToExpr (varToUpdate,assignVarTo))
+                        (guardExpr.rewriteExpr_elementToExpr (elementToUpdate,assignElementTo),
+                         thenExpr.rewriteExpr_elementToExpr (elementToUpdate,assignElementTo),
+                         elseExpr.rewriteExpr_elementToExpr (elementToUpdate,assignElementTo))
                                         
 
         
