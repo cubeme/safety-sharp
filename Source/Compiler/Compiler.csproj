@@ -128,7 +128,6 @@
     <Compile Include="Normalization\BoundTree\BoundTreeNormalizer.cs" />
     <Compile Include="Normalization\BoundTree\SwitchStatementNormalizer.cs" />
     <Compile Include="Normalization\RootComponentsNormalizer.cs" />
-    <Compile Include="Normalization\SafetySharpAttributeNormalizer.cs" />
     <Compile Include="Normalization\BindingNormalizer.cs" />
     <Compile Include="Normalization\DebugInfoNormalizer.cs" />
     <Compile Include="Normalization\PartialNormalizer.cs" />

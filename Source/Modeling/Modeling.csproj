@@ -115,7 +115,6 @@
     <Compile Include="Runtime\MethodMetadata.cs" />
     <Compile Include="Runtime\MetadataExtensions.cs" />
     <Compile Include="CompilerServices\IntendedBehaviorAttribute.cs" />
-    <Compile Include="CompilerServices\SafetySharpAttribute.cs" />
     <Compile Include="Modeling\Faults\OccurrencePattern.cs" />
     <Compile Include="Runtime\BindingMetadata.cs" />
     <Compile Include="Runtime\ComponentMetadata.cs" />
@@ -157,9 +156,6 @@
     <Compile Include="Utilities\ReferenceEqualityComparer.cs" />
     <Compile Include="Utilities\ReflectionExtensions.cs" />
     <Compile Include="Utilities\Requires.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Analysis\Analysis.fsproj">

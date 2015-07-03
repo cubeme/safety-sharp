@@ -139,28 +139,6 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
 
         assembly
 
-    /// Emits an assembly for the compilation compiled with the S# compiler and loads the S# assembly into the app domain.
-    member this.CompileSSharp runSSharpDiagnostics =
-        if assembly = null then
-            // Note: We create a temporary file for the compiled assembly and subsequently load 
-            // it from that file, as some tests require the assembly to be present on the file system
-            use workspace = new AdhocWorkspace ()
-            let project = workspace.AddProject (csharpCompilation.AssemblyName, LanguageNames.CSharp)
-            let project = csharpCompilation.References |> Seq.fold (fun (p : Project) r -> p.AddMetadataReference r) project
-            let project = 
-                csharpCompilation.SyntaxTrees |> Seq.fold (fun (p : Project) s -> 
-                    p.AddDocument(Guid.NewGuid().ToString (), s.GetRoot().GetText (Encoding.UTF8)).Project
-                ) project
-            let project = project.WithCompilationOptions csharpCompilation.Options
-            
-            let compiler = Compiler (ConsoleErrorReporter ())
-            if not <| compiler.Compile (project, assemblyPath, runSSharpDiagnostics) then
-                failed "Assembly compilation failed."
-
-            assembly <- Assembly.LoadFile assemblyPath
-
-        assembly
-
     /// Finds the <see cref="TypeDeclarationSyntax" /> for the type with the given name in the compilation.
     /// Throws an exception if more than one type with the given name was found.
     member this.FindTypeDeclaration typeName =
@@ -414,10 +392,3 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         |> Seq.collect (fun tree -> tree.Descendants<InterfaceDeclarationSyntax> ())
         |> Seq.map (fun tree -> tree.ToString () |> normalizeNewLines) 
         |> Seq.toList
-
-    /// Compiles the given C# code and creates an instance of the "TestModel" class.
-    static member CreateModel (csharpCode, ?runSSharpDiagnostics : bool) =
-        let compilation = TestCompilation csharpCode
-        let assembly = compilation.CompileSSharp (defaultArg runSSharpDiagnostics false)
-        let modelType = assembly.GetType "TestModel"
-        Activator.CreateInstance modelType :?> Model
