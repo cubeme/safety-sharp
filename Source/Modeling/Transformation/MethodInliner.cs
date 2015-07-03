@@ -41,6 +41,11 @@ namespace SafetySharp.Transformation
 		private readonly List<VariableMetadata> _localVariables = new List<VariableMetadata>();
 
 		/// <summary>
+		///     The name scope that is used to create unique variables names.
+		/// </summary>
+		private readonly NameScope _nameScope = new NameScope();
+
+		/// <summary>
 		///     The predicate that indicates whether an invoked method should be inlined.
 		/// </summary>
 		private readonly Func<MethodMetadata, bool> _predicate;
@@ -80,19 +85,22 @@ namespace SafetySharp.Transformation
 			Requires.NotNull(methodBody, () => methodBody);
 
 			var inliner = new MethodInliner(predicate);
-			var body = inliner.Inline(methodBody);
+			inliner._nameScope.AddRange(methodBody.Parameters.Select(parameter => parameter.Name));
 
+			var body = inliner._variableReplacer.Visit(inliner.Inline(methodBody));
 			return new MethodBodyMetadata(methodBody.Parameters, inliner._localVariables, (BlockStatement)body);
 		}
 
 		/// <summary>
-		///     Recursively inlines all methods invoked within <paramref name="method" />'s body.
+		///     Recursively inlines all methods invoked within <paramref name="methodBody" />'s body.
 		/// </summary>
-		/// <param name="method">The method which should have all invoked methods inlined.</param>
-		private BoundNode Inline(MethodBodyMetadata method)
+		/// <param name="methodBody">The method which should have all invoked methods inlined.</param>
+		private BoundNode Inline(MethodBodyMetadata methodBody)
 		{
-			_localVariables.AddRange(method.LocalVariables);
-			return Visit(method.Body);
+			foreach (var variable in methodBody.LocalVariables)
+				ReplaceWithNewLocalVariable(variable);
+
+			return Visit(methodBody.Body);
 		}
 
 		/// <summary>
@@ -105,8 +113,11 @@ namespace SafetySharp.Transformation
 			if (invocationExpression == null || !_predicate(invocationExpression.Method))
 				return statement;
 
-			HandleArgumentReplacement(invocationExpression);
-			return (Statement)Inline(invocationExpression.Method.MethodBody);
+			ReplaceReadonlyArguments(invocationExpression);
+			var assignments = ReplaceOverwrittenArguments(invocationExpression);
+			var inlinedBody = (Statement)Inline(invocationExpression.Method.MethodBody);
+
+			return new BlockStatement(assignments.Concat(new[] { inlinedBody }).ToArray());
 		}
 
 		/// <summary>
@@ -118,8 +129,6 @@ namespace SafetySharp.Transformation
 			var invocationExpression = statement.Expression as MethodInvocationExpression;
 			if (invocationExpression == null || !_predicate(invocationExpression.Method))
 				return statement;
-
-			HandleArgumentReplacement(invocationExpression);
 
 			// There are two possibilities: 
 			//    (1) The method consists of a single return statement only
@@ -134,25 +143,40 @@ namespace SafetySharp.Transformation
 			{
 				// For case (1), rewrite the assignment by replacing the right-hand side with the inlined method's expression.
 				Assert.That(!methodBody.LocalVariables.Any(), "Method unexpectedly has local variables.");
+
+				ReplaceReadonlyArguments(invocationExpression);
 				return new AssignmentStatement(statement.AssignmentTarget, returnStatement.Expression);
 			}
 
 			// For case (2), replace the method's return variable with the assignment target,
 			// and replace this assignment with the method's body
+			ReplaceReadonlyArguments(invocationExpression);
+			var assignments = ReplaceOverwrittenArguments(invocationExpression);
+			var inlinedBody = (Statement)Inline(invocationExpression.Method.MethodBody);
+			var inlinedInvocation = new BlockStatement(assignments.Concat(new[] { inlinedBody }).ToArray());
+
+			// Assign the method's return value directly to this assignment's assignment target
 			var returnVariable = returnStatement.Expression as VariableExpression;
 			Assert.NotNull(returnVariable, "Expected the return statement's expression to be a reference to a variable.");
 
 			_variableReplacer.AddVariableReplacement(returnVariable.Variable, statement.AssignmentTarget);
-			return (Statement)Inline(invocationExpression.Method.MethodBody);
+			return inlinedInvocation;
 		}
 
 		/// <summary>
-		///     Handles the replacement of the <paramref name="invocation" />'s arguments.
+		///     Handles the replacement of the <paramref name="invocation" />'s arguments that are read-only.
 		/// </summary>
-		private void HandleArgumentReplacement(MethodInvocationExpression invocation)
+		private void ReplaceReadonlyArguments(MethodInvocationExpression invocation)
 		{
 			_variableReplacer.AddArgumentReplacements(invocation);
+		}
 
+		/// <summary>
+		///     Handles the replacement of the <paramref name="invocation" />'s arguments whose value is potentially overwritten during
+		///     the execution of the method.
+		/// </summary>
+		private IEnumerable<Statement> ReplaceOverwrittenArguments(MethodInvocationExpression invocation)
+		{
 			var methodBody = invocation.Method.MethodBody;
 			var parameters = methodBody.Parameters.ToArray();
 			var arguments = invocation.Arguments.ToArray();
@@ -164,9 +188,23 @@ namespace SafetySharp.Transformation
 				if (arguments[i].RefKind != RefKind.None || !VariableAccessClassifier.Classify(methodBody.Body, parameters[i]).IsWritten())
 					continue;
 
-				//_statements.Add(new AssignmentStatement(new VariableExpression(parameters[i]), arguments[i]));
-				_localVariables.Add(parameters[i]);
+				var variable = ReplaceWithNewLocalVariable(parameters[i]);
+				yield return new AssignmentStatement(new VariableExpression(variable), arguments[i]);
 			}
+		}
+
+		/// <summary>
+		///     Generates a new, uniquely-named local replacement variable for <paramref name="variable" />.
+		/// </summary>
+		private VariableMetadata ReplaceWithNewLocalVariable(VariableMetadata variable)
+		{
+			var uniqueName = _nameScope.MakeUnique(variable.Name);
+			var replacingVariable = new VariableMetadata(uniqueName, variable.Type, isParameter: false);
+
+			_localVariables.Add(replacingVariable);
+			_variableReplacer.AddVariableReplacement(variable, new VariableExpression(replacingVariable));
+
+			return replacingVariable;
 		}
 	}
 }

@@ -28,8 +28,7 @@ namespace SafetySharp.Transformation
 	using Utilities;
 
 	/// <summary>
-	///     Inlines <see cref="MethodInvocationExpression" />s within <see cref="Formula" />s recursively. Checks that there are no
-	///     cycles in the method call graph.
+	///     Inlines <see cref="MethodInvocationExpression" />s within <see cref="Formula" />s recursively.
 	/// </summary>
 	internal class FormulaInliner : BoundTreeRewriter
 	{

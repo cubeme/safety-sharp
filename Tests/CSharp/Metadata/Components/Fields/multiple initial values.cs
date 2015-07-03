@@ -51,19 +51,19 @@ namespace Tests.Metadata.Components.Fields
 
 			Metadata.Fields[0].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[0].FieldInfo.ShouldBe(typeof(X8).GetField("_w", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { _w, E.B, E.D });
+			Metadata.Fields[0].InitialValues.ShouldBe(new object[] { E.A, E.B, E.D });
 
 			Metadata.Fields[1].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[1].FieldInfo.ShouldBe(typeof(X8).GetField("_x", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.Fields[1].InitialValues.ShouldBe(new object[] { _x, -1, 0 });
+			Metadata.Fields[1].InitialValues.ShouldBe(new object[] { 1, -1, 0 });
 
 			Metadata.Fields[2].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[2].FieldInfo.ShouldBe(typeof(X8).GetField("_y", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.Fields[2].InitialValues.ShouldBe(new object[] { _y, -1.0, 0.0 });
+			Metadata.Fields[2].InitialValues.ShouldBe(new object[] { 2.0, -1.0, 0.0 });
 
 			Metadata.Fields[3].DeclaringObject.ShouldBe(this.GetMetadata());
 			Metadata.Fields[3].FieldInfo.ShouldBe(typeof(X8).GetField("_z", BindingFlags.Instance | BindingFlags.NonPublic));
-			Metadata.Fields[3].InitialValues.ShouldBe(new object[] { true, _z });
+			Metadata.Fields[3].InitialValues.ShouldBe(new object[] { true, false });
 		}
 
 		private enum E

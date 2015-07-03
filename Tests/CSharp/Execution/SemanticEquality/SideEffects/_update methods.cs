@@ -41,8 +41,9 @@ namespace Tests.Execution.SemanticEquality.SideEffects
 
 		public override void Update()
 		{
+			var x = _f;
 			base.Update();
-			_g = 1 + _f;
+			_g = 1 + _f + x;
 		}
 	}
 
@@ -62,8 +63,9 @@ namespace Tests.Execution.SemanticEquality.SideEffects
 		{
 			_h = _f + _g;
 			_c.Update();
+			var x = _g;
 			base.Update();
-			_i = _g + _f + _h + M(17);
+			_i = _g + _f + _h + M(17) + x;
 		}
 
 		private class C : Component
