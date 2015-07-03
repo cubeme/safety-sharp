@@ -23,7 +23,6 @@
 namespace SafetySharp.Analysis
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Globalization;
 	using System.Linq;
 	using System.Reflection;
@@ -177,18 +176,7 @@ namespace SafetySharp.Analysis
 		/// </summary>
 		private static string GetComponentPath(ComponentMetadata component)
 		{
-			var components = new List<ComponentMetadata>();
-			var root = component.RootComponent;
-
-			while (root != component)
-			{
-				components.Add(component);
-				component = component.ParentComponent;
-			}
-
-			components.Add(root);
-			components.Reverse();
-			return String.Join(".", components.Select(c => c.Name));
+			return String.Join(".", component.GetPath());
 		}
 
 		private class MethodBodyTransformation : MethodBodyVisitor
@@ -208,11 +196,6 @@ namespace SafetySharp.Analysis
 				return _stm;
 			}
 
-			protected internal override void VisitArgumentExpression(ArgumentExpression expression)
-			{
-				Visit(expression.Expression);
-			}
-
 			private Ssm.Expr GetTransformed(Expression expression)
 			{
 				Visit(expression);
@@ -223,6 +206,11 @@ namespace SafetySharp.Analysis
 			{
 				Visit(expression);
 				return _stm;
+			}
+
+			protected internal override void VisitArgumentExpression(ArgumentExpression expression)
+			{
+				Visit(expression.Expression);
 			}
 
 			protected internal override void VisitBinaryExpression(BinaryExpression expression)
@@ -294,7 +282,7 @@ namespace SafetySharp.Analysis
 
 			protected internal override void VisitEnumerationLiteralExpression(EnumerationLiteralExpression expression)
 			{
-				_expr = Ssm.Expr.NewIntExpr(((IConvertible)expression.Value).ToInt32(CultureInfo.InvariantCulture));
+				_expr = Ssm.Expr.NewIntExpr(expression.IntegerValue);
 			}
 
 			protected internal override void VisitFieldExpression(FieldExpression expression)

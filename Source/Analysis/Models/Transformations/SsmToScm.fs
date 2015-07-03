@@ -65,8 +65,8 @@ module internal SsmToScm =
         | Ssm.Mod -> Scm.Modulo
         | Ssm.And -> Scm.And
         | Ssm.Or  -> Scm.Or
-        | Ssm.Eq  -> Scm.Equals
-        | Ssm.Ne  -> Scm.NotEquals
+        | Ssm.Eq  -> Scm.Equal
+        | Ssm.Ne  -> Scm.NotEqual
         | Ssm.Lt  -> Scm.Less
         | Ssm.Le  -> Scm.LessEqual
         | Ssm.Gt  -> Scm.Greater

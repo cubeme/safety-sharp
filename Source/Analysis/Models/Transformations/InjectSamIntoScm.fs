@@ -55,8 +55,8 @@ module internal InjectSamIntoScm =
             | Sam.Modulo       -> Scm.Modulo
             | Sam.And          -> Scm.And
             | Sam.Or           -> Scm.Or
-            | Sam.Equals       -> Scm.Equals
-            | Sam.NotEquals    -> Scm.NotEquals
+            | Sam.Equals       -> Scm.Equal
+            | Sam.NotEquals    -> Scm.NotEqual
             | Sam.Less         -> Scm.Less
             | Sam.LessEqual    -> Scm.LessEqual
             | Sam.Greater      -> Scm.Greater

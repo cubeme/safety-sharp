@@ -23,6 +23,7 @@
 namespace SafetySharp.Runtime.Expressions
 {
 	using System;
+	using Analysis.Formulas;
 	using MetadataAnalyzers;
 	using Utilities;
 
@@ -73,7 +74,23 @@ namespace SafetySharp.Runtime.Expressions
 		{
 			visitor.VisitBinaryExpression(this);
 		}
+		/// <summary>
+		///     Calls the <see cref="MethodBodyVisitor.VisitBinaryExpression" /> method on the <paramref name="visitor" />.
+		/// </summary>
+		/// <param name="visitor">The visitor that should be accepted.</param>
+		internal override void Accept(FormulaVisitor visitor)
+		{
+			visitor.VisitBinaryExpression(this);
+		}
 
+		/// <summary>
+		///     Calls the <see cref="MethodBodyVisitor.VisitBinaryExpression" /> method on the <paramref name="visitor" />.
+		/// </summary>
+		/// <param name="visitor">The visitor that should be accepted.</param>
+		internal override TResult Accept<TResult>(FormulaVisitor<TResult> visitor)
+		{
+			return visitor.VisitBinaryExpression(this);
+		}
 		/// <summary>
 		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
 		/// </summary>

@@ -54,6 +54,7 @@
     <Compile Include="Analysis\Formulas\UnaryFormulaOperator.cs" />
     <Compile Include="Analysis\Ltl.cs" />
     <Compile Include="Analysis\LtlFormula.cs" />
+    <Compile Include="Analysis\LtlFormulaTransformation.cs" />
     <Compile Include="Analysis\ModelTransformation.cs" />
     <Compile Include="Analysis\Spin.cs" />
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />

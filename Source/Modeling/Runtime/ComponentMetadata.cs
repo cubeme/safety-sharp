@@ -23,6 +23,8 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Linq;
 	using Modeling;
 	using Utilities;
 
@@ -119,6 +121,27 @@ namespace SafetySharp.Runtime
 			};
 
 			preOrder(this);
+		}
+
+		/// <summary>
+		///     Returns a component path leading to this instance, starting at the root. For instance, returns <c>R, A, B</c> for root
+		///     component <c>R</c> containing a subcomponent <c>A</c>, which in turn constains this instance with name <c>B</c>.
+		/// </summary>
+		internal IEnumerable<string> GetPath()
+		{
+			var components = new List<ComponentMetadata>();
+			var root = RootComponent;
+			var component = this;
+
+			while (root != component)
+			{
+				components.Add(component);
+				component = component.ParentComponent;
+			}
+
+			components.Add(root);
+			components.Reverse();
+			return components.Select(c => c.Name);
 		}
 	}
 }

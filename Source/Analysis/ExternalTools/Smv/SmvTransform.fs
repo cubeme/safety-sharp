@@ -503,8 +503,8 @@ module internal ScmVeToNuXmv =
             | Scm.BOp.Modulo -> Smv.BinaryOperator.IntegerRemainder
             | Scm.BOp.And -> Smv.BinaryOperator.LogicalAnd
             | Scm.BOp.Or -> Smv.BinaryOperator.LogicalOr
-            | Scm.BOp.Equals -> Smv.BinaryOperator.Equality //TODO: For Binary Left and Right Smv.BinaryOperator.LogicalEquivalence should be better
-            | Scm.BOp.NotEquals -> Smv.BinaryOperator.Inequality //TODO: For Binary Left and Right Smv.BinaryOperator.Xor should be better
+            | Scm.BOp.Equal -> Smv.BinaryOperator.Equality //TODO: For Binary Left and Right Smv.BinaryOperator.LogicalEquivalence should be better
+            | Scm.BOp.NotEqual -> Smv.BinaryOperator.Inequality //TODO: For Binary Left and Right Smv.BinaryOperator.Xor should be better
             | Scm.BOp.Less -> Smv.BinaryOperator.LessThan
             | Scm.BOp.LessEqual -> Smv.BinaryOperator.LessEqual
             | Scm.BOp.Greater -> Smv.BinaryOperator.GreaterThan
@@ -586,7 +586,7 @@ module internal ScmVeToNuXmv =
                     let transformedLeft = (transformLtlExpression tracer) left
                     let transformedRight = (transformLtlExpression tracer) right
                     Smv.LtlExpression.LtlBinaryExpression(transformedLeft,Smv.LtlBinaryOperator.LogicalOr,transformedRight)
-                | Scm.BOp.Equals ->
+                | Scm.BOp.Equal ->
                     let transformedLeft = (transformLtlExpression tracer) left
                     let transformedRight = (transformLtlExpression tracer) right
                     Smv.LtlExpression.LtlBinaryExpression(transformedLeft,Smv.LtlBinaryOperator.LogicalEquivalence,transformedRight)
@@ -664,7 +664,7 @@ module internal ScmVeToNuXmv =
                     let transformedLeft = (transformCtlExpression tracer) left
                     let transformedRight = (transformCtlExpression tracer) right
                     Smv.CtlExpression.CtlBinaryExpression(transformedLeft,Smv.CtlBinaryOperator.LogicalOr,transformedRight)
-                | Scm.BOp.Equals ->
+                | Scm.BOp.Equal ->
                     let transformedLeft = (transformCtlExpression tracer) left
                     let transformedRight = (transformCtlExpression tracer) right
                     Smv.CtlExpression.CtlBinaryExpression(transformedLeft,Smv.CtlBinaryOperator.LogicalEquivalence,transformedRight)

@@ -70,8 +70,8 @@ module internal ScmToSam =
             | Scm.Modulo       -> Sam.Modulo
             | Scm.And          -> Sam.And
             | Scm.Or           -> Sam.Or
-            | Scm.Equals       -> Sam.Equals
-            | Scm.NotEquals    -> Sam.NotEquals
+            | Scm.Equal        -> Sam.Equals
+            | Scm.NotEqual     -> Sam.NotEquals
             | Scm.Less         -> Sam.Less
             | Scm.LessEqual    -> Sam.LessEqual
             | Scm.Greater      -> Sam.Greater

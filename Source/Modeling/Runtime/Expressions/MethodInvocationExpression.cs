@@ -25,6 +25,7 @@ namespace SafetySharp.Runtime.Expressions
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using Analysis.Formulas;
 	using MetadataAnalyzers;
 	using Utilities;
 
@@ -64,6 +65,24 @@ namespace SafetySharp.Runtime.Expressions
 		internal override void Accept(MethodBodyVisitor visitor)
 		{
 			visitor.VisitMethodInvocationExpression(this);
+		}
+
+		/// <summary>
+		///     Calls the <see cref="MethodBodyVisitor.VisitMethodInvocationExpression" /> method on the <paramref name="visitor" />.
+		/// </summary>
+		/// <param name="visitor">The visitor that should be accepted.</param>
+		internal override void Accept(FormulaVisitor visitor)
+		{
+			visitor.VisitMethodInvocationExpression(this);
+		}
+
+		/// <summary>
+		///     Calls the <see cref="MethodBodyVisitor.VisitMethodInvocationExpression" /> method on the <paramref name="visitor" />.
+		/// </summary>
+		/// <param name="visitor">The visitor that should be accepted.</param>
+		internal override TResult Accept<TResult>(FormulaVisitor<TResult> visitor)
+		{
+			return visitor.VisitMethodInvocationExpression(this);
 		}
 
 		/// <summary>

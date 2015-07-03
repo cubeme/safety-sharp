@@ -23,6 +23,7 @@
 namespace SafetySharp.Runtime.Expressions
 {
 	using System;
+	using Analysis.Formulas;
 	using MetadataAnalyzers;
 
 	/// <summary>
@@ -37,9 +38,30 @@ namespace SafetySharp.Runtime.Expressions
 		internal abstract void Accept(MethodBodyVisitor visitor);
 
 		/// <summary>
+		///     Calls the appropriate <c>Visit*</c> method on the <paramref name="visitor" />.
+		/// </summary>
+		/// <param name="visitor">The visitor that should be accepted.</param>
+		internal abstract void Accept(FormulaVisitor visitor);
+
+		/// <summary>
+		///     Calls the appropriate <c>Visit*</c> method on the <paramref name="visitor" />.
+		/// </summary>
+		/// <param name="visitor">The visitor that should be accepted.</param>
+		internal abstract TResult Accept<TResult>(FormulaVisitor<TResult> visitor);
+
+		/// <summary>
 		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
 		/// </summary>
 		/// <param name="expression">The expression this instance should be structurally equivalent to.</param>
 		internal abstract bool IsStructurallyEquivalent(Expression expression);
+
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
+		{
+			var serializer = new CSharpSerializer();
+			return serializer.Serialize(this);
+		}
 	}
 }

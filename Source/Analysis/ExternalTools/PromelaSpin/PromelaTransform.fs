@@ -378,8 +378,8 @@ module internal ScmVeToPromela =
             | Scm.BOp.Modulo       -> PrBinarop.Mod
             | Scm.BOp.And          -> PrBinarop.Andor(PrAndor.And)
             | Scm.BOp.Or           -> PrBinarop.Andor(PrAndor.Or)
-            | Scm.BOp.Equals       -> PrBinarop.Eq
-            | Scm.BOp.NotEquals    -> PrBinarop.Neq
+            | Scm.BOp.Equal        -> PrBinarop.Eq
+            | Scm.BOp.NotEqual     -> PrBinarop.Neq
             | Scm.BOp.Less         -> PrBinarop.Lt
             | Scm.BOp.LessEqual    -> PrBinarop.Le
             | Scm.BOp.Greater      -> PrBinarop.Gt

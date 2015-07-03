@@ -23,6 +23,8 @@
 namespace SafetySharp.Runtime.Expressions
 {
 	using System;
+	using System.Globalization;
+	using Analysis.Formulas;
 	using MetadataAnalyzers;
 
 	/// <summary>
@@ -45,6 +47,14 @@ namespace SafetySharp.Runtime.Expressions
 		public object Value { get; private set; }
 
 		/// <summary>
+		///     Gets the value represented by the expression as an <see cref="int" />.
+		/// </summary>
+		public int IntegerValue
+		{
+			get { return ((IConvertible)Value).ToInt32(CultureInfo.InvariantCulture); }
+		}
+
+		/// <summary>
 		///     Calls the <see cref="MethodBodyVisitor.VisitEnumerationLiteralExpression" /> method on the <paramref name="visitor" />.
 		/// </summary>
 		/// <param name="visitor">The visitor that should be accepted.</param>
@@ -52,7 +62,23 @@ namespace SafetySharp.Runtime.Expressions
 		{
 			visitor.VisitEnumerationLiteralExpression(this);
 		}
+		/// <summary>
+		///     Calls the <see cref="MethodBodyVisitor.VisitEnumerationLiteralExpression" /> method on the <paramref name="visitor" />.
+		/// </summary>
+		/// <param name="visitor">The visitor that should be accepted.</param>
+		internal override void Accept(FormulaVisitor visitor)
+		{
+			visitor.VisitEnumerationLiteralExpression(this);
+		}
 
+		/// <summary>
+		///     Calls the <see cref="MethodBodyVisitor.VisitEnumerationLiteralExpression" /> method on the <paramref name="visitor" />.
+		/// </summary>
+		/// <param name="visitor">The visitor that should be accepted.</param>
+		internal override TResult Accept<TResult>(FormulaVisitor<TResult> visitor)
+		{
+			return visitor.VisitEnumerationLiteralExpression(this);
+		}
 		/// <summary>
 		///     Gets a value indicating whether this instance is structurally equivalent to <paramref name="expression" />.
 		/// </summary>

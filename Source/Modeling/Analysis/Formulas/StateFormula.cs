@@ -23,7 +23,6 @@
 namespace SafetySharp.Analysis.Formulas
 {
 	using System;
-	using Runtime;
 	using Runtime.Expressions;
 	using Utilities;
 
@@ -131,8 +130,7 @@ namespace SafetySharp.Analysis.Formulas
 		/// </summary>
 		public override string ToString()
 		{
-			var serializer = new CSharpSerializer();
-			return serializer.Serialize(Expression);
+			return Expression.ToString();
 		}
 	}
 }

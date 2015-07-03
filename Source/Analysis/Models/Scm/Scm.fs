@@ -45,8 +45,8 @@ module internal Scm =
         | Modulo
         | And
         | Or
-        | Equals
-        | NotEquals
+        | Equal
+        | NotEqual
         | Less
         | LessEqual
         | Greater

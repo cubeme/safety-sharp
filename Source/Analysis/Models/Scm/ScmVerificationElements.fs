@@ -52,6 +52,9 @@ module internal ScmVerificationElements =
         | BExpr of LtlExpr * BOp * LtlExpr
         | LuExpr of LtlExpr * LuOp
         | LbExpr of LtlExpr * LbOp * LtlExpr
+
+    let CreateReadField path field =
+        LtlExpr.ReadField (path |> Seq.map Comp |> Seq.toList, field |> Field)
         
     [<RequireQualifiedAccessAttribute>]
     type internal CuOp =

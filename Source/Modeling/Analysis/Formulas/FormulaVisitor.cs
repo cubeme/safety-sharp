@@ -23,6 +23,7 @@
 namespace SafetySharp.Analysis.Formulas
 {
 	using System;
+	using Runtime.Expressions;
 	using Utilities;
 
 	/// <summary>
@@ -31,40 +32,165 @@ namespace SafetySharp.Analysis.Formulas
 	public abstract class FormulaVisitor
 	{
 		/// <summary>
-		///     Visits an element of type <see cref="Formula" />.
+		///     Visits the <paramref name="formula" />.
 		/// </summary>
-		/// <param name="element">The <see cref="Formula" /> instance that should be visited.</param>
-		public virtual void Visit(Formula element)
+		/// <param name="formula">The <see cref="Formula" /> instance that should be visited.</param>
+		public virtual void Visit(Formula formula)
 		{
-			Requires.NotNull(element, () => element);
-			element.Accept(this);
+			Requires.NotNull(formula, () => formula);
+			formula.Accept(this);
+		}
+
+		/// <summary>
+		///     Visits the <paramref name="expression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="Expression" /> instance that should be visited.</param>
+		public virtual void Visit(Expression expression)
+		{
+			Requires.NotNull(expression, () => expression);
+			expression.Accept(this);
+		}
+
+		/// <summary>
+		///     Visits the <paramref name="formula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="Formula" /> instance that should be visited.</param>
+		protected virtual void DefaultVisit(Formula formula)
+		{
+		}
+
+		/// <summary>
+		///     Visits the <paramref name="expression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="Expression" /> instance that should be visited.</param>
+		protected virtual void DefaultVisit(Expression expression)
+		{
 		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="StateFormula" />.
 		/// </summary>
 		/// <param name="stateFormula">The <see cref="StateFormula" /> instance that should be visited.</param>
-		public virtual void VisitStateFormula(StateFormula stateFormula)
+		protected internal virtual void VisitStateFormula(StateFormula stateFormula)
 		{
-			Requires.NotNull(stateFormula, () => stateFormula);
+			DefaultVisit(stateFormula);
 		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="BinaryFormula" />.
 		/// </summary>
 		/// <param name="binaryFormula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
-		public virtual void VisitBinaryFormula(BinaryFormula binaryFormula)
+		protected internal virtual void VisitBinaryFormula(BinaryFormula binaryFormula)
 		{
-			Requires.NotNull(binaryFormula, () => binaryFormula);
+			DefaultVisit(binaryFormula);
 		}
 
 		/// <summary>
 		///     Visits an element of type <see cref="UnaryFormula" />.
 		/// </summary>
 		/// <param name="unaryFormula">The <see cref="UnaryFormula" /> instance that should be visited.</param>
-		public virtual void VisitUnaryFormula(UnaryFormula unaryFormula)
+		protected internal virtual void VisitUnaryFormula(UnaryFormula unaryFormula)
 		{
-			Requires.NotNull(unaryFormula, () => unaryFormula);
+			DefaultVisit(unaryFormula);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="ArgumentExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="ArgumentExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitArgumentExpression(ArgumentExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="BinaryExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="BinaryExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitBinaryExpression(BinaryExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="BooleanLiteralExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="BooleanLiteralExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitBooleanLiteralExpression(BooleanLiteralExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="ConditionalExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="ConditionalExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitConditionalExpression(ConditionalExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="DoubleLiteralExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="DoubleLiteralExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitDoubleLiteralExpression(DoubleLiteralExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="EnumerationLiteralExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="EnumerationLiteralExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitEnumerationLiteralExpression(EnumerationLiteralExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="FieldExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="FieldExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitFieldExpression(FieldExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="MethodInvocationExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="MethodInvocationExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitMethodInvocationExpression(MethodInvocationExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="IntegerLiteralExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="IntegerLiteralExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitIntegerLiteralExpression(IntegerLiteralExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="UnaryExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="UnaryExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitUnaryExpression(UnaryExpression expression)
+		{
+			DefaultVisit(expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="VariableExpression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="VariableExpression" /> instance that should be visited.</param>
+		protected internal virtual void VisitVariableExpression(VariableExpression expression)
+		{
+			DefaultVisit(expression);
 		}
 	}
 }

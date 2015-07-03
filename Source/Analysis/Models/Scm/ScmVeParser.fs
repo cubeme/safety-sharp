@@ -154,8 +154,8 @@ module internal ScmVeParser =
         opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">" , 4, Associativity.Left, fun e1 e2 -> PropositionalExpr.BExpr(e1, BOp.Subtract, e2)))
         // >
         opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> PropositionalExpr.BExpr(e1, BOp.LessEqual, e2)))
-        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> PropositionalExpr.BExpr(e1, BOp.Equals, e2)))
-        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> PropositionalExpr.BExpr(e1, BOp.NotEquals, e2)))
+        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> PropositionalExpr.BExpr(e1, BOp.Equal, e2)))
+        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> PropositionalExpr.BExpr(e1, BOp.NotEqual, e2)))
         opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> PropositionalExpr.BExpr(e1, BOp.GreaterEqual, e2)))
         opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> PropositionalExpr.BExpr(e1, BOp.Greater, e2)))
         opp.AddOperator(InfixOperator("<"   , spaces , 3, Associativity.Left, fun e1 e2 -> PropositionalExpr.BExpr(e1, BOp.Less, e2)))
@@ -194,8 +194,8 @@ module internal ScmVeParser =
         opp.AddOperator(InfixOperator("U"  , (notFollowedBy parseIdStartCharOrDot) .>> spaces , 4, Associativity.Left, fun e1 e2 -> LtlExpr.LbExpr(e1, LbOp.Until, e2)))
         // >
         opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.LessEqual, e2)))
-        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.Equals, e2)))
-        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.NotEquals, e2)))
+        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.Equal, e2)))
+        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.NotEqual, e2)))
         opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.GreaterEqual, e2)))
         opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.Greater, e2)))
         opp.AddOperator(InfixOperator("<"   , (notFollowedBy (pchar '>')).>> spaces , 3, Associativity.Left, fun e1 e2 -> LtlExpr.BExpr(e1, BOp.Less, e2)))
