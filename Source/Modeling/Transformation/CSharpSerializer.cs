@@ -42,13 +42,6 @@ namespace SafetySharp.Transformation
 		private readonly CodeWriter _writer = new CodeWriter();
 
 		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		public CSharpSerializer()
-		{
-		}
-
-		/// <summary>
 		///     Serializes the <paramref name="statement" />.
 		/// </summary>
 		/// <param name="statement">The statement that should be serialized.</param>
@@ -133,6 +126,26 @@ namespace SafetySharp.Transformation
 				{
 					foreach (var binding in metadata.Bindings)
 						_writer.AppendLine("Bind(RequiredPorts.{0} = ProvidedPorts.{1});", binding.RequiredPort.Name, binding.ProvidedPort.Name);
+
+					foreach (var field in metadata.Fields)
+					{
+						string values = null;
+
+						if (field.Type == typeof(int))
+							values = String.Join(", ", field.InitialValues);
+
+						if (field.Type == typeof(bool))
+							values = String.Join(", ", field.InitialValues.Select(v => v.ToString().ToLower()));
+
+						if (field.Type == typeof(double))
+							values = String.Join(", ", field.InitialValues.Select(v => ((double)v).ToString(CultureInfo.InvariantCulture)));
+
+						if (field.Type.IsEnum)
+							values = String.Join(", ", field.InitialValues.Select(v =>
+								String.Format("{0}.{1}", field.Type.Name, Enum.GetValues(field.Type).Cast<object>().First())));
+
+						_writer.AppendLine("SetInitialValues({0}, {1});", field.Name, values);
+					}
 				});
 
 				foreach (var enumeration in statementWriter.Enums.Union(metadata.Fields.Where(f => f.Type.IsEnum).Select(f => f.Type)))

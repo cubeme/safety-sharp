@@ -34,6 +34,11 @@ namespace SafetySharp.Runtime
 	/// </summary>
 	internal sealed class FieldCollectionBuilder
 	{
+		/// <summary>
+		///     Used to randomly select one of multiple initial values.
+		/// </summary>
+		private static readonly Random _random = new Random();
+
 		private readonly List<FieldInfo> _fields = new List<FieldInfo>();
 		private readonly List<object[]> _initialValues = new List<object[]>();
 		private readonly IMetadataObject _object;
@@ -95,7 +100,10 @@ namespace SafetySharp.Runtime
 			var typesMatch = values.All(value => value.GetType() == field.FieldType);
 			Requires.That(typesMatch, () => values, "Expected all values to be of type '{0}'.", field.FieldType);
 
-			_initialValues[fieldIndex] = values.Cast<object>().ToArray();
+			var initialValues = values.Cast<object>().ToArray();
+			_initialValues[fieldIndex] = initialValues;
+
+			field.SetValue(_object, initialValues[_random.Next(0, initialValues.Length)]);
 		}
 
 		/// <summary>

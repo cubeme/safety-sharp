@@ -160,6 +160,11 @@ namespace Tests.Execution
 				methodInfo.Attribute.ExecuteTests(Output, originalComponent, transformedComponent, originalMethod, transformedMethod);
 			}
 		}
+
+		protected void InvokeUpdate()
+		{
+			Update();
+		}
 	}
 
 	partial class ExecutionTests

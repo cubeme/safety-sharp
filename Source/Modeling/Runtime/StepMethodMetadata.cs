@@ -25,6 +25,7 @@ namespace SafetySharp.Runtime
 	using System;
 	using System.Reflection;
 	using Modeling;
+	using Transformation;
 	using Utilities;
 
 	/// <summary>
@@ -42,6 +43,16 @@ namespace SafetySharp.Runtime
 			: base(obj, stepMethod, baseMethod: baseStepMethod)
 		{
 			Requires.That(HasImplementation, () => stepMethod, "Step methods must have an implementation.");
+		}
+
+		/// <summary>
+		///     Initializes the method's <see cref="MethodBodyMetadata" />.
+		/// </summary>
+		protected override MethodBodyMetadata InitializeMethodBody()
+		{
+			// We have to inline all base calls, if any
+			var methodBody = base.InitializeMethodBody();
+			return MethodInliner.Inline(methodBody, method => BaseMethod == method);
 		}
 	}
 }

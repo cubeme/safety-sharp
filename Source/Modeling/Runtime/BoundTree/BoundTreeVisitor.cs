@@ -40,6 +40,33 @@ namespace SafetySharp.Runtime.BoundTree
 		}
 
 		/// <summary>
+		///     Visits the <paramref name="expression" />.
+		/// </summary>
+		/// <param name="expression">The <see cref="Expression" /> instance that should be visited.</param>
+		protected virtual void DefaultVisit(Expression expression)
+		{
+			DefaultVisit((BoundNode)expression);
+		}
+
+		/// <summary>
+		///     Visits the <paramref name="statement" />.
+		/// </summary>
+		/// <param name="statement">The <see cref="Statement" /> instance that should be visited.</param>
+		protected virtual void DefaultVisit(Statement statement)
+		{
+			DefaultVisit((BoundNode)statement);
+		}
+
+		/// <summary>
+		///     Visits the <paramref name="formula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="Formula" /> instance that should be visited.</param>
+		protected virtual void DefaultVisit(Formula formula)
+		{
+			DefaultVisit((BoundNode)formula);
+		}
+
+		/// <summary>
 		///     Visits an element of type <see cref="ArgumentExpression" />.
 		/// </summary>
 		/// <param name="expression">The <see cref="ArgumentExpression" /> instance that should be visited.</param>

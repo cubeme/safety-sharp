@@ -245,6 +245,10 @@
     <Compile Include="Execution\Faults\StepMethods\single fault.cs" />
     <Compile Include="Execution\Faults\RequiredPorts\single fault.cs" />
     <Compile Include="Execution\Faults\ProvidedPorts\single fault.cs" />
+    <Compile Include="Execution\Fields\multiple values.cs" />
+    <Compile Include="Execution\Fields\single constructor value.cs" />
+    <Compile Include="Execution\Fields\single inline value.cs" />
+    <Compile Include="Execution\Fields\default value.cs" />
     <Compile Include="Execution\ProvidedPorts\generic component.cs" />
     <Compile Include="Execution\ProvidedPorts\replaced.cs" />
     <Compile Include="Execution\ProvidedPorts\overridden.cs" />
@@ -255,6 +259,7 @@
     <Compile Include="Execution\RequiredPorts\overridden.cs" />
     <Compile Include="Execution\RequiredPorts\replaced.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffectsFree\switch.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffects\update methods.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\and.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\equivalence.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\expression operators.cs" />

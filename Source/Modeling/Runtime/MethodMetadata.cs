@@ -84,11 +84,7 @@ namespace SafetySharp.Runtime
 			Behaviors = new MethodBehaviorCollection(obj, this);
 			ImplementedMethods = DetermineImplementedInterfaceMethods().ToArray();
 
-			_methodBody = new Lazy<MethodBodyMetadata>(() =>
-			{
-				var methodBodyAttribute = MethodInfo.GetCustomAttribute<MethodBodyMetadataAttribute>();
-				return methodBodyAttribute == null ? null : methodBodyAttribute.GetMethodBody(obj, MethodInfo);
-			});
+			_methodBody = new Lazy<MethodBodyMetadata>(InitializeMethodBody);
 		}
 
 		/// <summary>
@@ -232,6 +228,15 @@ namespace SafetySharp.Runtime
 		///     Gets the interface methods implemented by the method.
 		/// </summary>
 		internal IEnumerable<MethodInfo> ImplementedMethods { get; private set; }
+
+		/// <summary>
+		///     Initializes the method's <see cref="MethodBodyMetadata" />.
+		/// </summary>
+		protected virtual MethodBodyMetadata InitializeMethodBody()
+		{
+			var methodBodyAttribute = MethodInfo.GetCustomAttribute<MethodBodyMetadataAttribute>();
+			return methodBodyAttribute == null ? null : methodBodyAttribute.GetMethodBody(_object, MethodInfo);
+		}
 
 		/// <summary>
 		///     Escapes the <paramref name="methodName" />.

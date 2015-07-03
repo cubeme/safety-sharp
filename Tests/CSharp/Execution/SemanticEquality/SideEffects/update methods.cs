@@ -20,49 +20,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution
+namespace Tests.Execution.SemanticEquality.SideEffects
 {
 	using System;
-	using Microsoft.CodeAnalysis;
-	using Utilities;
-	using Xunit;
+	using SafetySharp.Modeling;
 
-	public partial class ExecutionTests : Tests
+	internal abstract class C14 : SemanticEqualityComponent
 	{
-		[Theory, MemberData("DiscoverTests", "Fields")]
-		public void Fields(string test, SyntaxTree code)
+		public int _f = 12;
+
+		public override void Update()
 		{
-			ExecuteDynamicTests(code);
+			_f = 99;
+		}
+	}
+
+	internal abstract class C15 : C14
+	{
+		public int _g = 7;
+
+		public override void Update()
+		{
+			base.Update();
+			_g = 1 + _f;
+		}
+	}
+
+	internal class C16 : C15
+	{
+		private readonly C _c = new C();
+		public int _h;
+		private int _i;
+
+		private int M(int i)
+		{
+			return i * 2;
 		}
 
-		[Theory, MemberData("DiscoverTests", "ProvidedPorts")]
-		public void ProvidedPorts(string test, SyntaxTree code)
+		[Test(1)]
+		public override void Update()
 		{
-			ExecuteDynamicTests(code);
+			_h = _f + _g;
+			_c.Update();
+			base.Update();
+			_i = _g + _f + _h + M(17);
 		}
 
-		[Theory, MemberData("DiscoverTests", "RequiredPorts")]
-		public void RequiredPorts(string test, SyntaxTree code)
+		private class C : Component
 		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Steps")]
-		public void Steps(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory(Skip = "Transformation fails"), MemberData("DiscoverTests", "Faults")]
-		public void Faults(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "SemanticEquality")]
-		public void SemanticEquality(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
 		}
 	}
 }
