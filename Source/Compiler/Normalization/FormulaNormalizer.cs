@@ -123,23 +123,19 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes the <paramref name="declarator" />.
+		///     Normalizes the <paramref name="initializer" />.
 		/// </summary>
-		public override SyntaxNode VisitVariableDeclarator(VariableDeclaratorSyntax declarator)
+		public override SyntaxNode VisitEqualsValueClause(EqualsValueClauseSyntax initializer)
 		{
-			if (declarator.Initializer == null)
-				return base.VisitVariableDeclarator(declarator);
+			var typeInfo = SemanticModel.GetTypeInfo(initializer.Value);
+			if (typeInfo.Type.Equals(typeInfo.ConvertedType))
+				return base.VisitEqualsValueClause(initializer);
 
-			var variableType = DetermineType(declarator.GetVariableType(SemanticModel));
-			if (variableType == ExpressionType.Other)
-				return base.VisitVariableDeclarator(declarator);
+			var convertedType = DetermineType(typeInfo.ConvertedType);
+			if (convertedType == ExpressionType.Other)
+				return base.VisitEqualsValueClause(initializer);
 
-			var initializerType = DetermineType(declarator.Initializer.Value);
-			if (initializerType != ExpressionType.Other)
-				return base.VisitVariableDeclarator(declarator);
-
-			var initializer = declarator.Initializer.WithValue(CreateInvocation(variableType, declarator.Initializer.Value));
-			return declarator.WithInitializer(initializer);
+			return initializer.WithValue(CreateInvocation(convertedType, initializer.Value));
 		}
 
 		/// <summary>
@@ -159,9 +155,8 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="expression" /> is implicitly converted to <paramref name="targetExpressionType" />. If
-		///     so,
-		///     replaces the implicit conversion by an invocation of the corresponding state expression factory method.
+		///     Checks whether <paramref name="expression" /> is implicitly converted to <paramref name="targetExpressionType" />.
+		///     If so, replaces the implicit conversion by an invocation of the corresponding state expression factory method.
 		/// </summary>
 		private ExpressionSyntax ReplaceImplicitConversion(ExpressionType targetExpressionType, ExpressionSyntax expression)
 		{

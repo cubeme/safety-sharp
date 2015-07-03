@@ -32,6 +32,8 @@ namespace Tests.Formulas.LinearTemporalLogic
 		private readonly LtlFormula _f1 = true;
 		private readonly LtlFormula _f2 = Ltl.StateExpression(true);
 		private readonly LtlFormula _f3 = (LtlFormula)true;
+		private LtlFormula F1 { get; } = true;
+		private LtlFormula F2 { get; } = (LtlFormula)true;
 
 		protected override void Check()
 		{
@@ -43,6 +45,9 @@ namespace Tests.Formulas.LinearTemporalLogic
 			Check(_f1, expected);
 			Check(_f2, expected);
 			Check(_f3, expected);
+
+			Check(F1, expected);
+			Check(F2, expected);
 
 			CheckArgumentConversion(true, expected);
 			CheckArgumentConversion((LtlFormula)true, expected);

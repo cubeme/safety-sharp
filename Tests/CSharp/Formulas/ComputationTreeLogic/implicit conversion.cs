@@ -32,6 +32,8 @@ namespace Tests.Formulas.ComputationTreeLogic
 		private readonly CtlFormula _f1 = true;
 		private readonly CtlFormula _f2 = Ctl.StateExpression(true);
 		private readonly CtlFormula _f3 = (CtlFormula)true;
+		private CtlFormula F1 { get; } = true;
+		private CtlFormula F2 { get; } = (CtlFormula)true;
 
 		protected override void Check()
 		{
@@ -43,6 +45,9 @@ namespace Tests.Formulas.ComputationTreeLogic
 			Check(_f1, expected);
 			Check(_f2, expected);
 			Check(_f3, expected);
+
+			Check(F1, expected);
+			Check(F2, expected);
 
 			CheckArgumentConversion(true, expected);
 			CheckArgumentConversion((CtlFormula)true, expected);
