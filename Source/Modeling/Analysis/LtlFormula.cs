@@ -24,7 +24,6 @@ namespace SafetySharp.Analysis
 {
 	using System;
 	using System.Linq.Expressions;
-	using CompilerServices;
 	using Formulas;
 	using Utilities;
 
@@ -192,54 +191,6 @@ namespace SafetySharp.Analysis
 		{
 			Requires.NotNull(expression, () => expression);
 			return Or(StateFormulaTransformation.Transform(expression));
-		}
-
-		#endregion
-
-		#region Unlifted
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the implication operator to this instance (the antecedent) and
-		///     <paramref name="expression" /> (the succedent).
-		/// </summary>
-		/// <param name="expression">[LiftExpression] The formula representing the succedent of the implication.</param>
-		public LtlFormula Implies([LiftExpression] bool expression)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the equivalence operator to this instance and
-		///     <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">[LiftExpression] The formula that should be equivalent.</param>
-		public LtlFormula EquivalentTo([LiftExpression] bool expression)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'conjunction' operator to this instance and
-		///     <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">[LiftExpression] The second operand of the conjunction.</param>
-		public LtlFormula And([LiftExpression] bool expression)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'disjunction' operator to this instance and
-		///     <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">[LiftExpression] The second operator of the disjunction.</param>
-		public LtlFormula Or([LiftExpression] bool expression)
-		{
-			Requires.CompilationTransformation();
-			return null;
 		}
 
 		#endregion

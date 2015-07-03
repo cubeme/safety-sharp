@@ -57,6 +57,7 @@
     <Compile Include="Analysis\ModelTransformation.cs" />
     <Compile Include="Analysis\Spin.cs" />
     <Compile Include="CompilerServices\BackingFieldAttribute.cs" />
+    <Compile Include="CompilerServices\LiftExpressionAttribute.cs" />
     <Compile Include="CompilerServices\MetadataAttribute.cs" />
     <Compile Include="CompilerServices\MetadataBuilders.cs" />
     <Compile Include="CompilerServices\MethodBodyMetadataAttribute.cs" />
@@ -109,7 +110,6 @@
     <Compile Include="Runtime\FieldMetadata.cs" />
     <Compile Include="Runtime\FaultInjection.cs" />
     <Compile Include="Runtime\MethodMetadata.cs" />
-    <Compile Include="CompilerServices\LiftExpressionAttribute.cs" />
     <Compile Include="Runtime\MetadataExtensions.cs" />
     <Compile Include="CompilerServices\IntendedBehaviorAttribute.cs" />
     <Compile Include="CompilerServices\SafetySharpAttribute.cs" />
