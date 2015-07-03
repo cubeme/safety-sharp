@@ -37,10 +37,10 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public class Builder
 		{
-			private readonly NameScope _effectNameScope = new NameScope();
 			private readonly Fault _fault;
 			private readonly List<FaultEffectMetadata> _faultEffects = new List<FaultEffectMetadata>();
 			private readonly FieldCollectionBuilder _fields;
+			private readonly NameScope _nameScope = new NameScope();
 			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
 			private OccurrencePatternMetadata _occurrencePattern;
 
@@ -53,7 +53,7 @@ namespace SafetySharp.Runtime
 				Requires.NotNull(fault, () => fault);
 
 				_fault = fault;
-				_fields = new FieldCollectionBuilder(fault);
+				_fields = new FieldCollectionBuilder(fault, _nameScope);
 			}
 
 			/// <summary>
@@ -96,7 +96,7 @@ namespace SafetySharp.Runtime
 				Requires.NotNull(faultEffect, () => faultEffect);
 				Requires.NotNull(affectedMethod, () => affectedMethod);
 
-				var name = _effectNameScope.MakeUnique(MethodMetadata.EscapeName(faultEffect.Name));
+				var name = _nameScope.MakeUnique(MethodMetadata.EscapeName(faultEffect.Name));
 				_faultEffects.Add(new FaultEffectMetadata(_fault, faultEffect, affectedMethod, name));
 			}
 

@@ -41,16 +41,21 @@ namespace SafetySharp.Runtime
 
 		private readonly List<FieldInfo> _fields = new List<FieldInfo>();
 		private readonly List<object[]> _initialValues = new List<object[]>();
+		private readonly NameScope _nameScope;
 		private readonly IMetadataObject _object;
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="obj">The objects that declares the fields.</param>
-		public FieldCollectionBuilder(IMetadataObject obj)
+		/// <param name="nameScope">The name scope that should be used to ensure that the field names are unique.</param>
+		public FieldCollectionBuilder(IMetadataObject obj, NameScope nameScope)
 		{
 			Requires.NotNull(obj, () => obj);
+			Requires.NotNull(nameScope, () => nameScope);
+
 			_object = obj;
+			_nameScope = nameScope;
 		}
 
 		/// <summary>
@@ -111,8 +116,7 @@ namespace SafetySharp.Runtime
 		/// </summary>
 		public MemberCollection<FieldMetadata> ToImmutableCollection()
 		{
-			var nameScope = new NameScope();
-			var fields = _fields.Select((field, index) => new FieldMetadata(_object, field, _initialValues[index], nameScope.MakeUnique(field.Name)));
+			var fields = _fields.Select((field, index) => new FieldMetadata(_object, field, _initialValues[index], _nameScope.MakeUnique(field.Name)));
 			return new MemberCollection<FieldMetadata>(_object, fields);
 		}
 	}

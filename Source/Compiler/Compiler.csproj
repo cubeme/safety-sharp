@@ -136,6 +136,7 @@
     <Compile Include="Compiler.cs" />
     <Compile Include="Normalization\BoundTree\SingleExitPointNormalizer.cs" />
     <Compile Include="Normalization\BoundTree\MethodBodyCreationNormalizer.cs" />
+    <Compile Include="Normalization\StateMachineNormalizer.cs" />
     <Compile Include="Port.cs" />
     <Compile Include="PortCollection.cs" />
     <Compile Include="Program.cs" />

@@ -49,7 +49,7 @@ namespace SafetySharp.Runtime
 				Requires.NotNull(occurrencePattern, () => occurrencePattern);
 
 				_occurrencePattern = occurrencePattern;
-				_fields = new FieldCollectionBuilder(occurrencePattern);
+				_fields = new FieldCollectionBuilder(occurrencePattern, new NameScope());
 			}
 
 			/// <summary>

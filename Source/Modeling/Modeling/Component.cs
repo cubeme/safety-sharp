@@ -135,5 +135,47 @@ namespace SafetySharp.Modeling
 		{
 			Requires.CompilationTransformation();
 		}
+
+		/// <summary>
+		///     Adds a transition to the component's finite state machine.
+		/// </summary>
+		/// <typeparam name="TSource">An enumeration type representing the type of the source state.</typeparam>
+		/// <typeparam name="TTarget">An enumeration type representing the type of the target state.</typeparam>
+		/// <param name="from">The source state that should be left by the transition.</param>
+		/// <param name="to">The target state that should be entered by the transition.</param>
+		/// <param name="guard">
+		///     The (side effect free) guard that determines whether the transition can be taken. A value of <c>null</c>
+		///     indicates that the transition can always be taken when the state machine is in the source state.
+		/// </param>
+		/// <param name="action">
+		///     The action that should be executed when the transition is taken. A value of <c>null</c> indicates that
+		///     no action should be performed when the transition is taken.
+		/// </param>
+		protected static void AddTransition<TSource, TTarget>(TSource from, TTarget to, Func<bool> guard = null, Action action = null)
+			where TSource : struct, IConvertible
+			where TTarget : struct, IConvertible
+		{
+			Requires.CompilationTransformation();
+		}
+
+		/// <summary>
+		///     Indicates that the component's state machine can initially be in <paramref name="initialState" />.
+		/// </summary>
+		/// <param name="initialState">One of the initial states of the state machine.</param>
+		protected static void AddInitialState<TState>(TState initialState)
+			where TState : struct, IConvertible
+		{
+			Requires.CompilationTransformation();
+		}
+
+		/// <summary>
+		///     Indicates that the component's state machine can initially be in the <paramref name="initialStates" />.
+		/// </summary>
+		/// <param name="initialStates">Some of the initial states of the state machine.</param>
+		protected static void AddInitialStates<TState>(params TState[] initialStates)
+			where TState : struct, IConvertible
+		{
+			Requires.CompilationTransformation();
+		}
 	}
 }

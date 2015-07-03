@@ -35,6 +35,12 @@ namespace Tests.Metadata
 			ExecuteDynamicTests(code);
 		}
 
+		[Theory, MemberData("DiscoverTests", "Components/StateMachines")]
+		public void StateMachines(string test, SyntaxTree code)
+		{
+			ExecuteDynamicTests(code);
+		}
+
 		[Theory, MemberData("DiscoverTests", "Components/Faults")]
 		public void Faults(string test, SyntaxTree code)
 		{

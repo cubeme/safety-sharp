@@ -43,8 +43,13 @@
     <Compile Include="Analysis\Ctl.cs" />
     <Compile Include="Analysis\CtlFormula.cs" />
     <Compile Include="CompilerServices\FormulaFactory.cs" />
+    <Compile Include="Runtime\ActionMetadata.cs" />
     <Compile Include="Runtime\Formulas\BinaryFormula.cs" />
     <Compile Include="Runtime\Formulas\BinaryFormulaOperator.cs" />
+    <Compile Include="Runtime\GuardMetadata.cs" />
+    <Compile Include="Runtime\StateMachineMetadata.cs" />
+    <Compile Include="Runtime\StateMetadata.cs" />
+    <Compile Include="Runtime\TransitionMetadata.cs" />
     <Compile Include="Transformation\FormulaInliner.cs" />
     <Compile Include="Transformation\StateFormulaTransformation.cs" />
     <Compile Include="Runtime\Formulas\Formula.cs" />

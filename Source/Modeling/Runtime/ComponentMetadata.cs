@@ -85,6 +85,11 @@ namespace SafetySharp.Runtime
 		public MemberCollection<ProvidedPortMetadata> ProvidedPorts { get; private set; }
 
 		/// <summary>
+		///     Gets the state machine of the component, or <c>null</c> if the component does not declare any transitions.
+		/// </summary>
+		public StateMachineMetadata StateMachine { get; private set; }
+
+		/// <summary>
 		///     Gets the root of the component hierarchy.
 		/// </summary>
 		public ComponentMetadata RootComponent

@@ -259,7 +259,7 @@
     <Compile Include="Execution\RequiredPorts\overridden.cs" />
     <Compile Include="Execution\RequiredPorts\replaced.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffectsFree\switch.cs" />
-    <Compile Include="Execution\SemanticEquality\SideEffects\_update methods.cs" />
+    <Compile Include="Execution\SemanticEquality\SideEffects\update methods.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\and.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\equivalence.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\expression operators.cs" />
@@ -294,6 +294,16 @@
     <Compile Include="Formulas\LinearTemporalLogic\finally.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\next.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\state expression.cs" />
+    <Compile Include="Metadata\Components\StateMachines\multiple transitions, multiple states.cs" />
+    <Compile Include="Metadata\Components\StateMachines\multiple state enums.cs" />
+    <Compile Include="Metadata\Components\StateMachines\multiple initial states.cs" />
+    <Compile Include="Metadata\Components\StateMachines\non-enum states.cs" />
+    <Compile Include="Metadata\Components\StateMachines\single initial state.cs" />
+    <Compile Include="Metadata\Components\StateMachines\no initial state.cs" />
+    <Compile Include="Metadata\Components\StateMachines\single transition, multiple states.cs" />
+    <Compile Include="Metadata\Components\StateMachines\multiple transitions, single state.cs" />
+    <Compile Include="Metadata\Components\StateMachines\single transition, single state.cs" />
+    <Compile Include="Metadata\Components\StateMachines\empty state machine.cs" />
     <Compile Include="Utilities\TestTraceOutput.cs" />
     <None Include="app.config" />
     <None Include="Execution\SemanticEquality\SideEffectsFree\expression bodies.cs" />

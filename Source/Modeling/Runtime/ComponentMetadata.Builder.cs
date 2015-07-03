@@ -41,14 +41,17 @@ namespace SafetySharp.Runtime
 			private readonly Component _component;
 			private readonly List<FaultMetadata> _faults = new List<FaultMetadata>();
 			private readonly FieldCollectionBuilder _fields;
+			private readonly List<StateMetadata> _initialStates = new List<StateMetadata>();
+			private readonly NameScope _nameScope = new NameScope();
 			private readonly List<ProvidedPortMetadata> _providedPorts = new List<ProvidedPortMetadata>();
-			private readonly NameScope _providedPortsNameScope = new NameScope();
 			private readonly List<RequiredPortMetadata> _requiredPorts = new List<RequiredPortMetadata>();
-			private readonly NameScope _requiredPortsNameScope = new NameScope();
+			private readonly NameScope _stateNameScope = new NameScope();
+			private readonly Dictionary<object, StateMetadata> _states = new Dictionary<object, StateMetadata>();
 			private readonly List<StepMethodMetadata> _stepMethods = new List<StepMethodMetadata>();
 			private readonly List<FieldInfo> _subcomponentFields = new List<FieldInfo>();
 			private readonly List<PropertyInfo> _subcomponentProperties = new List<PropertyInfo>();
 			private readonly List<IComponent> _subcomponents = new List<IComponent>();
+			private readonly List<TransitionMetadata> _transitions = new List<TransitionMetadata>();
 			private string _name;
 
 			/// <summary>
@@ -60,7 +63,7 @@ namespace SafetySharp.Runtime
 				Requires.NotNull(component, () => component);
 
 				_component = component;
-				_fields = new FieldCollectionBuilder(component);
+				_fields = new FieldCollectionBuilder(component, _nameScope);
 			}
 
 			/// <summary>
@@ -200,7 +203,7 @@ namespace SafetySharp.Runtime
 					Requires.That(baseMetadata != null, () => basePort, "The base port is unknown.");
 				}
 
-				var name = _providedPortsNameScope.MakeUnique(MethodMetadata.EscapeName(providedPort.Name));
+				var name = _nameScope.MakeUnique(MethodMetadata.EscapeName(providedPort.Name));
 				_providedPorts.Add(new ProvidedPortMetadata(_component, providedPort, name, baseMetadata));
 			}
 
@@ -215,7 +218,7 @@ namespace SafetySharp.Runtime
 				Requires.That(requiredPort.HasAttribute<RequiredAttribute>(), () => requiredPort,
 					"The method must be marked with'{0}'.", typeof(RequiredAttribute).FullName);
 
-				var name = _requiredPortsNameScope.MakeUnique(MethodMetadata.EscapeName(requiredPort.Name));
+				var name = _nameScope.MakeUnique(MethodMetadata.EscapeName(requiredPort.Name));
 				_requiredPorts.Add(new RequiredPortMetadata(_component, requiredPort, name));
 			}
 
@@ -279,6 +282,59 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
+			///     Indicates that the component's state machine can initially be in the <paramref name="initialStates" />.
+			/// </summary>
+			/// <param name="initialStates">Some of the initial states of the state machine.</param>
+			public void WithInitialStates(params object[] initialStates)
+			{
+				Requires.NotNull(initialStates, () => initialStates);
+
+				foreach (var initialState in initialStates)
+				{
+					Requires.That(initialState.GetType().IsEnum, () => initialStates, "Expected enum values.");
+					_initialStates.Add(GetOrAddState(initialState));
+				}
+			}
+
+			/// <summary>
+			///     Adds a transition to the component's finite state machine.
+			/// </summary>
+			/// <param name="sourceState">The source state that should be left by the transition.</param>
+			/// <param name="targetState">The target state that should be entered by the transition.</param>
+			/// <param name="guard">The (side effect free) guard that determines whether the transition can be taken.</param>
+			/// <param name="action">The action that should be executed when the transition is taken.</param>
+			public void WithTransition(object sourceState, object targetState, MethodInfo guard, MethodInfo action)
+			{
+				Requires.NotNull(sourceState, () => sourceState);
+				Requires.NotNull(targetState, () => targetState);
+				Requires.That(sourceState.GetType().IsEnum, () => sourceState, "Expected an enum value.");
+				Requires.That(targetState.GetType().IsEnum, () => targetState, "Expected an enum value.");
+
+				var source = GetOrAddState(sourceState);
+				var target = GetOrAddState(targetState);
+				var guardMetadata = guard == null ? null : new GuardMetadata(_component, guard, _nameScope.MakeUnique(guard.Name));
+				var actionMetadata = action == null ? null : new ActionMetadata(_component, action, _nameScope.MakeUnique(action.Name));
+
+				_transitions.Add(new TransitionMetadata(_component, source, target, guardMetadata, actionMetadata));
+			}
+
+			/// <summary>
+			///     Gets the <see cref="StateMetadata" /> instance corresponding targetState the <paramref name="state" /> if
+			///     <paramref name="state" /> is already known; creates a new instance otherwise.
+			/// </summary>
+			private StateMetadata GetOrAddState(object state)
+			{
+				StateMetadata metadata;
+				if (!_states.TryGetValue(state, out metadata))
+				{
+					metadata = new StateMetadata(_component, _states.Count, _stateNameScope.MakeUnique(state.ToString()));
+					_states.Add(state, metadata);
+				}
+
+				return metadata;
+			}
+
+			/// <summary>
 			///     Creates an immutable <see cref="ComponentMetadata" /> instance from the current state of the builder.
 			/// </summary>
 			/// <param name="name">The automatically generated name of the component.</param>
@@ -298,7 +354,8 @@ namespace SafetySharp.Runtime
 					StepMethod = (StepMethodMetadata)_stepMethods[0].VirtuallyInvokedMethod,
 					RequiredPorts = new MemberCollection<RequiredPortMetadata>(_component, _requiredPorts),
 					ProvidedPorts = new MemberCollection<ProvidedPortMetadata>(_component, _providedPorts),
-					Bindings = new MemberCollection<BindingMetadata>(_component, _bindings)
+					Bindings = new MemberCollection<BindingMetadata>(_component, _bindings),
+					StateMachine = _transitions.Count == 0 ? null : new StateMachineMetadata(_component, _states.Values, _initialStates, _transitions)
 				};
 
 				InitializeFaults();

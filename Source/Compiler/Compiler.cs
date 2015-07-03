@@ -285,6 +285,7 @@ namespace SafetySharp.Compiler
 		{
 			compilation = Normalizer.ApplyNormalizer<DebugInfoNormalizer>(compilation, syntaxGenerator);
 			compilation = Normalizer.ApplyNormalizer<PartialNormalizer>(compilation, syntaxGenerator);
+			compilation = Normalizer.ApplyNormalizer<StateMachineNormalizer>(compilation, syntaxGenerator);
 			compilation = Normalizer.ApplyNormalizer<MethodBodyNormalizer>(compilation, syntaxGenerator);
 			compilation = Normalizer.ApplyNormalizer<FormulaNormalizer>(compilation, syntaxGenerator);
 			compilation = Normalizer.ApplyNormalizer<LiftedExpressionNormalizer>(compilation, syntaxGenerator);
