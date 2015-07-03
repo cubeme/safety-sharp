@@ -38,58 +38,33 @@ namespace SafetySharp.Analysis
 		/// <summary>
 		///     Returns a <see cref="CtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
 		/// </summary>
+		/// <param name="expression">[LiftExpression] The expression that should be evaluated.</param>
+		/// <remarks>For testing-purposes only.</remarks>
+		internal static CtlFormula StateExpression([LiftExpression] bool expression)
+		{
+			Requires.CompilationTransformation();
+			return null;
+		}
+
+		/// <summary>
+		///     Returns a <see cref="CtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
+		/// </summary>
 		/// <param name="expression">The expression that should be evaluated.</param>
-		public static CtlFormula StateExpression(Expression<Func<bool>> expression)
+		internal static CtlFormula StateExpression(Expression<Func<bool>> expression)
 		{
 			Requires.NotNull(expression, () => expression);
 			return StateFormulaTransformation.Transform(expression);
 		}
 
 		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
-		/// </summary>
-		/// <param name="expression">[LiftExpression] The expression that should be evaluated.</param>
-		public static CtlFormula StateExpression([LiftExpression] bool expression)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		#region Not
-
-		/// <summary>
 		///     Returns a <see cref="CtlFormula" /> that applies the 'not' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'not' operator should be applied to.</param>
-		public static CtlFormula Not(CtlFormula operand)
+		internal static CtlFormula Not(CtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
 			return new UnaryFormula(operand, UnaryFormulaOperator.Not, PathQuantifier.None);
 		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'not' operator to <paramref name="operand" />.
-		/// </summary>
-		/// <param name="operand">The operand the 'not' operator should be applied to.</param>
-		public static CtlFormula Not(Expression<Func<bool>> operand)
-		{
-			Requires.NotNull(operand, () => operand);
-			return Not(StateFormulaTransformation.Transform(operand));
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'not' operator to <paramref name="operand" />.
-		/// </summary>
-		/// <param name="operand">[LiftExpression] The operand the 'not' operator should be applied to.</param>
-		public static CtlFormula Not([LiftExpression] bool operand)
-		{
-			Requires.CompilationTransformation();
-			return null;
-		}
-
-		#endregion
-
-		#region Next
 
 		/// <summary>
 		///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" /> for all paths.
@@ -99,16 +74,6 @@ namespace SafetySharp.Analysis
 		{
 			Requires.NotNull(operand, () => operand);
 			return new UnaryFormula(operand, UnaryFormulaOperator.Next, PathQuantifier.All);
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" /> for all paths.
-		/// </summary>
-		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
-		public static CtlFormula AX(Expression<Func<bool>> operand)
-		{
-			Requires.NotNull(operand, () => operand);
-			return AX(StateFormulaTransformation.Transform(operand));
 		}
 
 		/// <summary>
@@ -122,20 +87,6 @@ namespace SafetySharp.Analysis
 		}
 
 		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" /> for any path.
-		/// </summary>
-		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
-		public static CtlFormula EX(Expression<Func<bool>> operand)
-		{
-			Requires.NotNull(operand, () => operand);
-			return EX(StateFormulaTransformation.Transform(operand));
-		}
-
-		#endregion
-
-		#region Finally
-
-		/// <summary>
 		///     Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" /> for all paths.
 		/// </summary>
 		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
@@ -143,16 +94,6 @@ namespace SafetySharp.Analysis
 		{
 			Requires.NotNull(operand, () => operand);
 			return new UnaryFormula(operand, UnaryFormulaOperator.Finally, PathQuantifier.All);
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" /> for all paths.
-		/// </summary>
-		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
-		public static CtlFormula AF(Expression<Func<bool>> operand)
-		{
-			Requires.NotNull(operand, () => operand);
-			return AF(StateFormulaTransformation.Transform(operand));
 		}
 
 		/// <summary>
@@ -166,20 +107,6 @@ namespace SafetySharp.Analysis
 		}
 
 		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" /> for any path.
-		/// </summary>
-		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
-		public static CtlFormula EF(Expression<Func<bool>> operand)
-		{
-			Requires.NotNull(operand, () => operand);
-			return EF(StateFormulaTransformation.Transform(operand));
-		}
-
-		#endregion
-
-		#region Globally
-
-		/// <summary>
 		///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" /> for all paths.
 		/// </summary>
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
@@ -190,16 +117,6 @@ namespace SafetySharp.Analysis
 		}
 
 		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" /> for all paths.
-		/// </summary>
-		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
-		public static CtlFormula AG(Expression<Func<bool>> operand)
-		{
-			Requires.NotNull(operand, () => operand);
-			return AG(StateFormulaTransformation.Transform(operand));
-		}
-
-		/// <summary>
 		///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" /> for any path.
 		/// </summary>
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
@@ -207,34 +124,6 @@ namespace SafetySharp.Analysis
 		{
 			Requires.NotNull(operand, () => operand);
 			return new UnaryFormula(operand, UnaryFormulaOperator.Globally, PathQuantifier.Exists);
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" /> for any path.
-		/// </summary>
-		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
-		public static CtlFormula EG(Expression<Func<bool>> operand)
-		{
-			Requires.NotNull(operand, () => operand);
-			return EG(StateFormulaTransformation.Transform(operand));
-		}
-
-		#endregion
-
-		#region Until
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-		///     <paramref name="rightOperand" /> for all paths.
-		/// </summary>
-		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
-		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static CtlFormula AU(Expression<Func<bool>> leftOperand, Expression<Func<bool>> rightOperand)
-		{
-			Requires.NotNull(leftOperand, () => leftOperand);
-			Requires.NotNull(rightOperand, () => rightOperand);
-
-			return AU(StateFormulaTransformation.Transform(leftOperand), StateFormulaTransformation.Transform(rightOperand));
 		}
 
 		/// <summary>
@@ -253,48 +142,6 @@ namespace SafetySharp.Analysis
 
 		/// <summary>
 		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-		///     <paramref name="rightOperand" /> for all paths.
-		/// </summary>
-		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
-		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static CtlFormula AU(Expression<Func<bool>> leftOperand, CtlFormula rightOperand)
-		{
-			Requires.NotNull(leftOperand, () => leftOperand);
-			Requires.NotNull(rightOperand, () => rightOperand);
-
-			return AU(StateFormulaTransformation.Transform(leftOperand), rightOperand);
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-		///     <paramref name="rightOperand" /> for all paths.
-		/// </summary>
-		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
-		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static CtlFormula AU(CtlFormula leftOperand, Expression<Func<bool>> rightOperand)
-		{
-			Requires.NotNull(leftOperand, () => leftOperand);
-			Requires.NotNull(rightOperand, () => rightOperand);
-
-			return AU(leftOperand, StateFormulaTransformation.Transform(rightOperand));
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-		///     <paramref name="rightOperand" /> for any path.
-		/// </summary>
-		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
-		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static CtlFormula EU(Expression<Func<bool>> leftOperand, Expression<Func<bool>> rightOperand)
-		{
-			Requires.NotNull(leftOperand, () => leftOperand);
-			Requires.NotNull(rightOperand, () => rightOperand);
-
-			return EU(StateFormulaTransformation.Transform(leftOperand), StateFormulaTransformation.Transform(rightOperand));
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" /> for any path.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
@@ -306,35 +153,5 @@ namespace SafetySharp.Analysis
 
 			return new BinaryFormula(leftOperand, BinaryFormulaOperator.Until, PathQuantifier.Exists, rightOperand);
 		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-		///     <paramref name="rightOperand" /> for any path.
-		/// </summary>
-		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
-		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static CtlFormula EU(Expression<Func<bool>> leftOperand, CtlFormula rightOperand)
-		{
-			Requires.NotNull(leftOperand, () => leftOperand);
-			Requires.NotNull(rightOperand, () => rightOperand);
-
-			return EU(StateFormulaTransformation.Transform(leftOperand), rightOperand);
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-		///     <paramref name="rightOperand" /> for any path.
-		/// </summary>
-		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
-		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static CtlFormula EU(CtlFormula leftOperand, Expression<Func<bool>> rightOperand)
-		{
-			Requires.NotNull(leftOperand, () => leftOperand);
-			Requires.NotNull(rightOperand, () => rightOperand);
-
-			return EU(leftOperand, StateFormulaTransformation.Transform(rightOperand));
-		}
-
-		#endregion
 	}
 }

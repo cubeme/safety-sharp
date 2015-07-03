@@ -23,9 +23,7 @@
 namespace SafetySharp.Analysis
 {
 	using System;
-	using System.Linq.Expressions;
 	using Runtime.Formulas;
-	using Transformation;
 	using Utilities;
 
 	/// <summary>
@@ -74,8 +72,6 @@ namespace SafetySharp.Analysis
 			return null;
 		}
 
-		#region Formula
-
 		/// <summary>
 		///     Returns a <see cref="LtlFormula" /> that applies the implication operator to this instance (the antecedent) and
 		///     <paramref name="formula" /> (the succedent).
@@ -103,7 +99,7 @@ namespace SafetySharp.Analysis
 		///     <paramref name="formula" />.
 		/// </summary>
 		/// <param name="formula">The second operand of the conjunction.</param>
-		public LtlFormula And(LtlFormula formula)
+		internal LtlFormula And(LtlFormula formula)
 		{
 			Requires.NotNull(formula, () => formula);
 			return new BinaryFormula(_formula, BinaryFormulaOperator.And, PathQuantifier.None, formula);
@@ -114,7 +110,7 @@ namespace SafetySharp.Analysis
 		///     <paramref name="formula" />.
 		/// </summary>
 		/// <param name="formula">The second operator of the disjunction.</param>
-		public LtlFormula Or(LtlFormula formula)
+		internal LtlFormula Or(LtlFormula formula)
 		{
 			Requires.NotNull(formula, () => formula);
 			return new BinaryFormula(_formula, BinaryFormulaOperator.Or, PathQuantifier.None, formula);
@@ -145,55 +141,5 @@ namespace SafetySharp.Analysis
 		{
 			return left.Or(right);
 		}
-
-		#endregion
-
-		#region Expression
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the implication operator to this instance (the antecedent) and
-		///     <paramref name="expression" /> (the succedent).
-		/// </summary>
-		/// <param name="expression">The formula representing the succedent of the implication.</param>
-		public LtlFormula Implies(Expression<Func<bool>> expression)
-		{
-			Requires.NotNull(expression, () => expression);
-			return Implies(StateFormulaTransformation.Transform(expression));
-		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the equivalence operator to this instance and
-		///     <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">The formula that should be equivalent.</param>
-		public LtlFormula EquivalentTo(Expression<Func<bool>> expression)
-		{
-			Requires.NotNull(expression, () => expression);
-			return EquivalentTo(StateFormulaTransformation.Transform(expression));
-		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'conjunction' operator to this instance and
-		///     <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">The second operand of the conjunction.</param>
-		public LtlFormula And(Expression<Func<bool>> expression)
-		{
-			Requires.NotNull(expression, () => expression);
-			return And(StateFormulaTransformation.Transform(expression));
-		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'disjunction' operator to this instance and
-		///     <paramref name="expression" />.
-		/// </summary>
-		/// <param name="expression">The second operator of the disjunction.</param>
-		public LtlFormula Or(Expression<Func<bool>> expression)
-		{
-			Requires.NotNull(expression, () => expression);
-			return Or(StateFormulaTransformation.Transform(expression));
-		}
-
-		#endregion
 	}
 }
