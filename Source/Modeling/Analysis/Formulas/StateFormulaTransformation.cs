@@ -28,10 +28,10 @@ namespace SafetySharp.Analysis.Formulas
 	using System.Reflection;
 	using CompilerServices;
 	using Modeling;
-	using Runtime.Expressions;
+	using Runtime.BoundTree;
 	using Utilities;
 	using BinaryExpression = System.Linq.Expressions.BinaryExpression;
-	using Expression = Runtime.Expressions.Expression;
+	using Expression = Runtime.BoundTree.Expression;
 	using UnaryExpression = System.Linq.Expressions.UnaryExpression;
 
 	/// <summary>
@@ -47,12 +47,12 @@ namespace SafetySharp.Analysis.Formulas
 		}
 
 		/// <summary>
-		///     Gets the transformed <see cref="Runtime.Expressions.Expression" />.
+		///     Gets the transformed <see cref="SafetySharp.Runtime.BoundTree.Expression" />.
 		/// </summary>
 		public Expression Expression { get; private set; }
 
 		/// <summary>
-		///     Transforms the <paramref name="expression" />, returning the transformed <see cref="Runtime.Expressions.Expression" />.
+		///     Transforms the <paramref name="expression" />, returning the transformed <see cref="SafetySharp.Runtime.BoundTree.Expression" />.
 		/// </summary>
 		/// <param name="expression">The expression that should be transformed.</param>
 		private Expression Transform(System.Linq.Expressions.Expression expression)
@@ -115,13 +115,13 @@ namespace SafetySharp.Analysis.Formulas
 			switch (node.NodeType)
 			{
 				case ExpressionType.Negate:
-					Expression = new Runtime.Expressions.UnaryExpression(UnaryOperator.Minus, operand);
+					Expression = new Runtime.BoundTree.UnaryExpression(UnaryOperator.Minus, operand);
 					break;
 				case ExpressionType.UnaryPlus:
 					Expression = operand;
 					break;
 				case ExpressionType.Not:
-					Expression = new Runtime.Expressions.UnaryExpression(UnaryOperator.Not, operand);
+					Expression = new Runtime.BoundTree.UnaryExpression(UnaryOperator.Not, operand);
 					break;
 				case ExpressionType.Convert:
 					// We'll skip over 'enum literal to int' conversions
@@ -194,7 +194,7 @@ namespace SafetySharp.Analysis.Formulas
 					break;
 			}
 
-			Expression = new Runtime.Expressions.BinaryExpression(binaryOperator, leftOperand, rightOperand);
+			Expression = new Runtime.BoundTree.BinaryExpression(binaryOperator, leftOperand, rightOperand);
 			return node;
 		}
 

@@ -23,19 +23,20 @@
 namespace SafetySharp.Analysis
 {
 	using System;
+	using AnalysisTechniques;
 	using Modeling;
 	using Models;
 	using Utilities;
 
 	/// <summary>
-	///   Represents the SPIN model checker that can be used to check properties of a model.
+	///     Represents the SPIN model checker that can be used to check properties of a model.
 	/// </summary>
 	public class Spin
 	{
-		private readonly Scm.CompDecl _model;
+		private readonly AnalysisFacade _analysis = new AnalysisFacade();
 
 		/// <summary>
-		///   Initializes a new instance.
+		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="model">The model that should be checked.</param>
 		public Spin(Model model)
@@ -43,19 +44,21 @@ namespace SafetySharp.Analysis
 			Requires.NotNull(model, () => model);
 
 			model.Seal();
-			_model = ModelTransformation.Transform(model);
+
+			var transformedModel = ModelTransformation.Transform(model);
+			Console.WriteLine(ScmToString.toString(transformedModel.Item));
+
+			_analysis.setMainModel(transformedModel);
 		}
 
 		/// <summary>
-		///   Checks whether the <paramref name="formula" /> holds.
+		///     Checks whether the <paramref name="formula" /> holds.
 		/// </summary>
 		/// <param name="formula">The formula that should be checked.</param>
-		public void Check(LtlFormula formula)
+		public bool Check(LtlFormula formula)
 		{
 			Requires.NotNull(formula, () => formula);
-
-			Console.WriteLine(ScmToString.toString(_model));
-			SpinModelChecker.check(_model);
+			return Equals(_analysis.atAnalyseLtl_WithPromela(LtlFormulaTransformation.Transform(formula)), Ternary.Ternary.True);
 		}
 	}
 }

@@ -29,7 +29,7 @@ namespace SafetySharp.Compiler.Normalization
 	using CompilerServices;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Quotations;
+	using BoundTree;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;

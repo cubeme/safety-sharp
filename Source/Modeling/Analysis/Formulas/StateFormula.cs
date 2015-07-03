@@ -23,7 +23,7 @@
 namespace SafetySharp.Analysis.Formulas
 {
 	using System;
-	using Runtime.Expressions;
+	using Runtime.BoundTree;
 	using Utilities;
 
 	/// <summary>

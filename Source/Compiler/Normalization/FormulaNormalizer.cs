@@ -128,7 +128,7 @@ namespace SafetySharp.Compiler.Normalization
 		public override SyntaxNode VisitEqualsValueClause(EqualsValueClauseSyntax initializer)
 		{
 			var typeInfo = SemanticModel.GetTypeInfo(initializer.Value);
-			if (typeInfo.Type.Equals(typeInfo.ConvertedType))
+			if (typeInfo.Type == null || typeInfo.Type.Equals(typeInfo.ConvertedType))
 				return base.VisitEqualsValueClause(initializer);
 
 			var convertedType = DetermineType(typeInfo.ConvertedType);

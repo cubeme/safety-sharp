@@ -29,13 +29,12 @@ namespace SafetySharp.Analysis
 	using Modeling;
 	using Models;
 	using Runtime;
-	using Runtime.Expressions;
-	using Runtime.MetadataAnalyzers;
-	using Runtime.Statements;
+	using Runtime.BoundTree;
+	using Transformation;
 	using Utilities;
 
 	/// <summary>
-	///     Transforms a <see cref="Model" /> instance to a <see cref="Scm.CompDecl" /> instance.
+	///     Transforms a <see cref="Model" /> instance to a <see cref="Scm.ScmModel" /> instance.
 	/// </summary>
 	internal static class ModelTransformation
 	{
@@ -43,10 +42,10 @@ namespace SafetySharp.Analysis
 		///     Transforms the <paramref name="model" />.
 		/// </summary>
 		/// <param name="model">The model that should be transformed.</param>
-		public static Scm.CompDecl Transform(Model model)
+		public static Scm.ScmModel Transform(Model model)
 		{
 			Requires.NotNull(model, () => model);
-			return SsmToScm.transform(SsmLowering.lower(Transform(model.Metadata.RootComponent)));
+			return Scm.ScmModel.NewScmModel(SsmToScm.transform(SsmLowering.lower(Transform(model.Metadata.RootComponent))));
 		}
 
 		/// <summary>
@@ -179,7 +178,7 @@ namespace SafetySharp.Analysis
 			return String.Join(".", component.GetPath());
 		}
 
-		private class MethodBodyTransformation : MethodBodyVisitor
+		private class MethodBodyTransformation : BoundTreeVisitor
 		{
 			private readonly ObjectMetadata _this;
 			private Ssm.Expr _expr;

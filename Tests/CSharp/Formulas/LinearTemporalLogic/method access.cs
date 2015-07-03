@@ -26,7 +26,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 	using SafetySharp.Analysis;
 	using SafetySharp.Analysis.Formulas;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime.Expressions;
+	using SafetySharp.Runtime.BoundTree;
 
 	internal class T7 : FormulaTestObject
 	{
@@ -104,7 +104,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 
 			public C1()
 			{
-				F = Ltl.StateExpression(M0() == M2(1, true));
+				F = M0() == M2(1, true);
 			}
 
 			public virtual bool M3()
@@ -119,7 +119,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 
 			public int M0()
 			{
-				return 3;
+				return M(3);
 			}
 
 			public int M2(int i, bool b)

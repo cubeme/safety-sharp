@@ -66,7 +66,7 @@ namespace SafetySharp.Runtime.MetadataAnalyzers
 					return false;
 
 				component = component.ParentComponent;
-			} 
+			}
 		}
 	}
 }

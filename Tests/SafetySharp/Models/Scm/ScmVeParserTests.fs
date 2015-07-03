@@ -63,7 +63,7 @@ type ExampleFormulas () =
         let formula =
             let left = (Scm.Comp("in")::Scm.Comp("backupRecoverySystem")::[]),Scm.Field("sourceValueField")
             let right = (Scm.Comp("out")::Scm.Comp("backupRecoverySystem")::[]),Scm.Field("result")
-            let equals = ScmVerificationElements.LtlExpr.BExpr(ScmVerificationElements.LtlExpr.ReadField(left),Scm.BOp.Equals,ScmVerificationElements.LtlExpr.ReadField(right) )
+            let equals = ScmVerificationElements.LtlExpr.BExpr(ScmVerificationElements.LtlExpr.ReadField(left),Scm.BOp.Equal,ScmVerificationElements.LtlExpr.ReadField(right) )
             ScmVerificationElements.LtlExpr.LuExpr(equals,ScmVerificationElements.LuOp.Globally)
         
         let parsedFormula = parseScmVeLtl initialParserState formulaAsString
@@ -82,7 +82,7 @@ type ExampleFormulas () =
         let formula = 
             let readField = ScmVerificationElements.PropositionalExpr.ReadField( ( [Scm.Comp("simple")], Scm.Field("isHazard") ) )
             let trueValue = ScmVerificationElements.PropositionalExpr.Literal(Scm.Val.BoolVal(true))
-            ScmVerificationElements.PropositionalExpr.BExpr(readField,Scm.BOp.Equals,trueValue)
+            ScmVerificationElements.PropositionalExpr.BExpr(readField,Scm.BOp.Equal,trueValue)
         
         let parsedFormula = parseScmVeProp initialParserState formulaAsString
         parsedFormula =? formula

@@ -29,6 +29,7 @@ namespace Tests.Execution
 	using System.Linq;
 	using System.Reflection;
 	using JetBrains.Annotations;
+	using SafetySharp.Analysis.Transformation;
 	using SafetySharp.Modeling;
 	using SafetySharp.Runtime;
 	using SafetySharp.Utilities;

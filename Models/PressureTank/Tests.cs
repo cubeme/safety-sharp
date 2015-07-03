@@ -29,6 +29,7 @@ namespace PressureTank
 	using SafetySharp.Analysis;
 	using SafetySharp.Simulation;
 	using SharedComponents;
+	using static SafetySharp.Analysis.Ltl;
 
 	[TestFixture]
 	public class ModelCheckingTests
@@ -47,7 +48,7 @@ namespace PressureTank
 
 			var model = new PressureTankModel();
 			var spin = new Spin(model);
-			spin.Check(Ltl.Next(true));
+			spin.Check(!F(model.Tank.IsRuptured()));
 
 			Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
 		}

@@ -229,6 +229,11 @@ type AnalysisFacade () =
     // Analysis Techniques
     
     member internal this.atAnalyseLtl_WithPromela (ltlExpr:LtlExpr) : SafetySharp.Ternary.Ternary =
+        printfn ""
+        printfn "Checking formula: "
+        printfn "%+A" ltlExpr
+        printfn ""
+
         let workflowToCalculateLtlResult =
             currentState.getLoadedModelCache.AtLtlFormulas.checkLtlFormulaWithPromela(ltlExpr)
         this.RunWorkflowOnModel_getResult workflowToCalculateLtlResult

@@ -27,7 +27,7 @@ namespace SafetySharp.Modeling
 	using CompilerServices;
 	using JetBrains.Annotations;
 	using Runtime;
-	using Runtime.Statements;
+	using Runtime.BoundTree;
 	using Utilities;
 
 	/// <summary>

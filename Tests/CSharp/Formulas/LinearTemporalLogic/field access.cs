@@ -26,7 +26,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 	using SafetySharp.Analysis;
 	using SafetySharp.Analysis.Formulas;
 	using SafetySharp.Modeling;
-	using SafetySharp.Runtime.Expressions;
+	using SafetySharp.Runtime.BoundTree;
 
 	internal class T2 : FormulaTestObject
 	{
