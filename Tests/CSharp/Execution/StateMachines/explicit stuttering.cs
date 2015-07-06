@@ -31,8 +31,8 @@ namespace Tests.Execution.StateMachines
 	{
 		public C4()
 		{
-			AddTransition(S.A, S.A);
-			AddInitialState(S.A);
+			Transition(S.A, S.A);
+			InitialState(S.A);
 		}
 
 		[SuppressTransformation]

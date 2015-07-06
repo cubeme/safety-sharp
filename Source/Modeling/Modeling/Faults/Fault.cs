@@ -54,6 +54,10 @@ namespace SafetySharp.Modeling.Faults
 		/// </summary>
 		internal bool IsOccurring { get; set; }
 
+		static public bool IsOccurring2{get{return
+			true;
+		}}
+
 		/// <summary>
 		///     Updates the internal state of the fault.
 		/// </summary>

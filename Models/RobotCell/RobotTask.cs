@@ -26,6 +26,7 @@ namespace ProductionCell
 	{
 		Drill,
 		Insert,
-		Tighten
+		Tighten,
+		None
 	}
 }

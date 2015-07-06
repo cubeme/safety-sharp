@@ -31,10 +31,10 @@ namespace Tests.Execution.StateMachines
 	{
 		public C2()
 		{
-			AddTransition(S.A, S.B);
-			AddTransition(S.C, S.B);
+			Transition(S.A, S.B);
+			Transition(S.C, S.B);
 
-			AddInitialStates(S.B, S.C);
+			InitialStates(S.B, S.C);
 		}
 
 		[SuppressTransformation]

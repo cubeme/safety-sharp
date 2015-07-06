@@ -31,9 +31,9 @@ namespace Tests.Metadata.Components.StateMachines
 	{
 		public C12()
 		{
-			AddTransition(S.A, S.B);
-			AddInitialState(S.A);
-			AddInitialState(S.B);
+			Transition(S.A, S.B);
+			InitialState(S.A);
+			InitialState(S.B);
 		}
 
 		[SuppressTransformation]
@@ -54,8 +54,8 @@ namespace Tests.Metadata.Components.StateMachines
 	{
 		public C13()
 		{
-			AddTransition(S.A, S.B);
-			AddInitialStates(S.A, S.B);
+			Transition(S.A, S.B);
+			InitialStates(S.A, S.B);
 		}
 
 		[SuppressTransformation]
@@ -76,8 +76,8 @@ namespace Tests.Metadata.Components.StateMachines
 	{
 		public C14()
 		{
-			AddTransition(S.A, S.B);
-			AddInitialStates(S.A, S.B, S.C);
+			Transition(S.A, S.B);
+			InitialStates(S.A, S.B, S.C);
 		}
 
 		[SuppressTransformation]

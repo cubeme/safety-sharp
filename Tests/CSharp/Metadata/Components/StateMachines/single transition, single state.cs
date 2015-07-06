@@ -31,8 +31,8 @@ namespace Tests.Metadata.Components.StateMachines
 	{
 		public C3()
 		{
-			AddTransition(S.A, S.A);
-			AddInitialState(S.A);
+			Transition(S.A, S.A);
+			InitialState(S.A);
 		}
 
 		[SuppressTransformation]

@@ -29,52 +29,55 @@ namespace ProductionCell
 		private readonly CartEngine _engine;
 		private Position _destination;
 		private Position _pointOfOrigin;
-		private State _state = State.AwaitingReconfiguration;
 
 		public CartController(CartEngine engine)
 		{
 			_engine = engine;
+
+			InitialState(State.AwaitingReconfiguration);
+
+			Transition(
+				from: State.AwaitingReconfiguration,
+				to: State.AwaitWorkpiece,
+				guard: () => _destination != Position.Unknown && _pointOfOrigin != Position.Unknown,
+				action: () => _engine.MoveTo(_pointOfOrigin));
+
+			Transition(
+				from: State.AwaitWorkpiece,
+				to: State.AwaitCompletion,
+				guard: () => true,
+				action: () => _engine.MoveTo(_destination));
+
+			Transition(
+				from: State.AwaitCompletion,
+				to: State.AwaitWorkpiece,
+				guard: IsDone,
+				action: () => _engine.MoveTo(_pointOfOrigin));
+
+			Transition(
+				from: State.AwaitCompletion | State.AwaitWorkpiece,
+				to: State.AwaitingReconfiguration,
+				guard: () => _destination == Position.Unknown || _pointOfOrigin == Position.Unknown);
 		}
 
 		public void Reconfigure(Position pointOfOrigin, Position destination)
 		{
 			_pointOfOrigin = pointOfOrigin;
 			_destination = destination;
-
-			_state = State.GetWorkpiece;
 		}
 
 		public bool RequiresReconfiguration()
 		{
-			return _state == State.AwaitingReconfiguration;
+			return InState(State.AwaitingReconfiguration);
 		}
 
 		public extern bool IsDone();
 
-		public override void Update()
-		{
-			switch (_state)
-			{
-				case State.GetWorkpiece:
-					_engine.MoveTo(_pointOfOrigin);
-					return;
-				case State.GoToDestination:
-					_engine.MoveTo(_destination);
-					return;
-				case State.AwaitCompletion:
-					if (IsDone())
-						_state = State.GoToDestination;
-					return;
-			}
-		}
-
 		private enum State
 		{
 			AwaitingReconfiguration,
-			GetWorkpiece,
-			GoToDestination,
-			AwaitCompletion,
-			Done
+			AwaitWorkpiece,
+			AwaitCompletion
 		}
 	}
 }

@@ -335,7 +335,7 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 			public override Result VisitAssignmentExpression(AssignmentExpressionSyntax assignment)
 			{
 				Requires.That(assignment.Kind() == SyntaxKind.SimpleAssignmentExpression, "Unexpected compound assignment.");
-				Requires.That(_analyzer.IsSideEffectFree(assignment.Left), "Left-hand side of assignment has side effect.");
+				Requires.That(_analyzer.IsSideEffectFree(assignment.Left), "Left-hand side of assignment has side effect: '{0}'.", assignment);
 
 				var result = Visit(assignment.Right);
 				return result

@@ -30,28 +30,47 @@ namespace ProductionCell
 		private readonly Tool _insertTool;
 		private readonly WorkpieceSensor _sensor;
 		private readonly Tool _tightenTool;
-		private Position _position;
-		private State _state = State.AwaitingReconfiguration;
-		private RobotTask _task;
+		private RobotTask _task = RobotTask.None;
 
-		public Robot(Position position, WorkpieceSensor sensor, Tool drillTool, Tool insertTool, Tool tightenTool)
+		public Robot(WorkpieceSensor sensor, Tool drillTool, Tool insertTool, Tool tightenTool)
 		{
-			_position = position;
 			_sensor = sensor;
 			_drillTool = drillTool;
 			_insertTool = insertTool;
 			_tightenTool = tightenTool;
+
+			InitialState(State.AwaitingReconfiguration);
+
+			Transition(
+				from: State.AwaitingReconfiguration,
+				to: State.Ready,
+				guard: () => _task != RobotTask.None && !IsCurrentToolBroken());
+
+			Transition(
+				from: State.Ready,
+				to: State.WorkpieceProcessed,
+				guard: () => _sensor.WorkpieceDetected() && !IsCurrentToolBroken(),
+				action: UseTool);
+
+			Transition(
+				from: State.WorkpieceProcessed,
+				to: State.Ready,
+				guard: () => !_sensor.WorkpieceDetected() && !IsCurrentToolBroken());
+
+			Transition(
+				from: State.Ready | State.WorkpieceProcessed,
+				to: State.AwaitingReconfiguration,
+				guard: () => _task == RobotTask.None || IsCurrentToolBroken());
 		}
 
 		public void Reconfigure(RobotTask task)
 		{
 			_task = task;
-			_state = State.Ready;
 		}
 
 		public bool RequiresReconfiguration()
 		{
-			return _state == State.AwaitingReconfiguration || IsCurrentToolBroken();
+			return InState(State.AwaitingReconfiguration);
 		}
 
 		private bool IsCurrentToolBroken()
@@ -66,24 +85,6 @@ namespace ProductionCell
 					return _tightenTool.IsBroken();
 				default:
 					return true;
-			}
-		}
-
-		public override void Update()
-		{
-			switch (_state)
-			{
-				case State.Done:
-					_state = State.Ready;
-					return;
-				case State.Ready:
-					if (_sensor.WorkpieceDetected())
-						_state = State.Working;
-					return;
-				case State.Working:
-					UseTool();
-					_state = IsCurrentToolBroken() ? State.AwaitingReconfiguration : State.Done;
-					return;
 			}
 		}
 
@@ -107,8 +108,7 @@ namespace ProductionCell
 		{
 			AwaitingReconfiguration,
 			Ready,
-			Working,
-			Done
+			WorkpieceProcessed,
 		}
 	}
 }

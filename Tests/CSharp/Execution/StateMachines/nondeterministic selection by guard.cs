@@ -33,10 +33,10 @@ namespace Tests.Execution.StateMachines
 
 		public C10()
 		{
-			AddTransition(S.A, S.B, guard: () => _f > 0, action: () => _f = 17);
-			AddTransition(S.A, S.B, guard: () => _f < 0, action: () => --_f);
-			AddTransition(S.B, S.A);
-			AddInitialState(S.A);
+			Transition(S.A, S.B, guard: () => _f > 0, action: () => _f = 17);
+			Transition(S.A, S.B, guard: () => _f < 0, action: () => --_f);
+			Transition(S.B, S.A);
+			InitialState(S.A);
 		}
 
 		[SuppressTransformation]

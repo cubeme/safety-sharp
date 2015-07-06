@@ -56,46 +56,19 @@ namespace ProductionCell
 			return 0;
 		}
 
-		public bool Drill(Position position)
+		public bool ApplyTool(Position position, RobotTask task)
 		{
 			switch (GetWorkpieceAt(position))
 			{
 				case 0:
-					return _workpiece1.Drill();
+					_workpiece1.ApplyTool(task);
+					return true;
 				case 1:
-					return _workpiece2.Drill();
+					_workpiece2.ApplyTool(task);
+					return true;
 				case 2:
-					return _workpiece3.Drill();
-				default:
-					return false;
-			}
-		}
-
-		public bool Insert(Position position)
-		{
-			switch (GetWorkpieceAt(position))
-			{
-				case 0:
-					return _workpiece1.Insert();
-				case 1:
-					return _workpiece2.Insert();
-				case 2:
-					return _workpiece3.Insert();
-				default:
-					return false;
-			}
-		}
-
-		public bool Tighten(Position position)
-		{
-			switch (GetWorkpieceAt(position))
-			{
-				case 0:
-					return _workpiece1.Tighten();
-				case 1:
-					return _workpiece2.Tighten();
-				case 2:
-					return _workpiece3.Tighten();
+					_workpiece3.ApplyTool(task);
+					return true;
 				default:
 					return false;
 			}

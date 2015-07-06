@@ -32,8 +32,8 @@ namespace Tests.Execution.StateMachines
 		private int _f;
 		public C6()
 		{
-			AddTransition(S.A, S.B, guard: () => _f > 3);
-			AddInitialState(S.A);
+			Transition(S.A, S.B, guard: () => _f > 3);
+			InitialState(S.A);
 		}
 
 		[SuppressTransformation]

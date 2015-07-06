@@ -26,42 +26,16 @@ namespace ProductionCell
 
 	public class Workpiece : Component
 	{
-		private State _state;
+		private bool _isDamaged;
+		private RobotTask _nextTask = RobotTask.Drill;
+		public bool IsDamaged() => _isDamaged;
 
-		public bool Drill()
+		public void ApplyTool(RobotTask task)
 		{
-			return ChangeState(State.Unchanged, State.Drilled);
-		}
-
-		public bool Insert()
-		{
-			return ChangeState(State.Drilled, State.Inserted);
-		}
-
-		public bool Tighten()
-		{
-			return ChangeState(State.Inserted, State.Tightened);
-		}
-
-		private bool ChangeState(State requiredState, State newState)
-		{
-			if (_state != requiredState)
-			{
-				_state = State.Damaged;
-				return false;
-			}
-
-			_state = newState;
-			return true;
-		}
-
-		private enum State
-		{
-			Unchanged,
-			Drilled,
-			Inserted,
-			Tightened,
-			Damaged
+			if (task != _nextTask)
+				_isDamaged = true;
+			else
+				_nextTask = _nextTask + 1;
 		}
 	}
 }

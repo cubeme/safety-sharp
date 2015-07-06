@@ -83,13 +83,13 @@ namespace PressureTank
 			_sensor = sensor;
 			_timer = timer;
 
-			AddTransition(
+			Transition(
 				from: State.Filling,
 				to: State.StoppedByTimer,
 				guard: _timer.HasElapsed,
 				action: _pump.Disable);
 
-			AddTransition(
+			Transition(
 				from: State.Filling,
 				to: State.StoppedBySensor,
 				guard: _sensor.IsFull,
@@ -99,7 +99,7 @@ namespace PressureTank
 					_timer.Stop();
 				});
 
-			AddTransition(
+			Transition(
 				from: State.StoppedByTimer | State.StoppedBySensor | State.Inactive,
 				to: State.Filling,
 				guard: _sensor.IsEmpty,
@@ -109,7 +109,7 @@ namespace PressureTank
 					_pump.Enable();
 				});
 
-			AddInitialState(State.Inactive);
+			InitialState(State.Inactive);
 		}
 	}
 }

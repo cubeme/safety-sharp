@@ -33,8 +33,8 @@ namespace Tests.Execution.StateMachines
 
 		public C7()
 		{
-			AddTransition(S.A, S.B, action: () => _f = 17);
-			AddInitialState(S.A);
+			Transition(S.A, S.B, action: () => _f = 17);
+			InitialState(S.A);
 		}
 
 		[SuppressTransformation]

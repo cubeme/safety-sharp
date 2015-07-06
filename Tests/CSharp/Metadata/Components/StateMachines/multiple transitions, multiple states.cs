@@ -31,10 +31,10 @@ namespace Tests.Metadata.Components.StateMachines
 	{
 		public C8()
 		{
-			AddTransition(S.A, S.B);
-			AddTransition(S.B, S.C);
-			AddTransition(S.C, S.A);
-			AddInitialState(S.A);
+			Transition(S.A, S.B);
+			Transition(S.B, S.C);
+			Transition(S.C, S.A);
+			InitialState(S.A);
 		}
 
 		[SuppressTransformation]

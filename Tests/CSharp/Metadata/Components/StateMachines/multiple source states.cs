@@ -31,8 +31,8 @@ namespace Tests.Metadata.Components.StateMachines
 	{
 		public C15()
 		{
-			AddTransition(S.A | S.B | S.C, S.A, guard: () => true);
-			AddInitialState(S.A);
+			Transition(S.A | S.B | S.C, S.A, guard: () => true);
+			InitialState(S.A);
 		}
 
 		private void Action()

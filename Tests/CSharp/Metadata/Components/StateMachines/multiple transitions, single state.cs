@@ -34,12 +34,12 @@ namespace Tests.Metadata.Components.StateMachines
 
 		public C5()
 		{
-			AddTransition(S.A, S.A, guard: () => true);
-			AddTransition(S.A, S.A, action: () => { });
-			AddTransition(S.A, S.A, () => true, () => { });
-			AddTransition(S.A, S.A, action: () => NonVoidReturning(), guard: _c.Guard);
-			AddTransition(S.A, S.A, _c.Guard, Action);
-			AddInitialState(S.A);
+			Transition(S.A, S.A, guard: () => true);
+			Transition(S.A, S.A, action: () => { });
+			Transition(S.A, S.A, () => true, () => { });
+			Transition(S.A, S.A, action: () => NonVoidReturning(), guard: _c.Guard);
+			Transition(S.A, S.A, _c.Guard, Action);
+			InitialState(S.A);
 		}
 
 		private void Action()

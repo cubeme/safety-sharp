@@ -40,7 +40,7 @@ namespace Tests.Metadata.Components.StateMachines
 	{
 		public C2()
 		{
-			AddInitialStates(S.A);
+			InitialStates(S.A);
 		}
 
 		[SuppressTransformation]

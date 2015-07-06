@@ -38,7 +38,7 @@ namespace Tests.Metadata.Components.StateMachines
 		{
 			public C()
 			{
-				AddTransition(S.A, S.B);
+				Transition(S.A, S.B);
 			}
 
 			private enum S

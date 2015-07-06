@@ -59,7 +59,7 @@ namespace SafetySharp.Compiler.Normalization
 			if (!methodSymbol.IsStatic)
 				return base.VisitExpressionStatement(statement);
 
-			if (methodSymbol.Name != "AddInitialState" && methodSymbol.Name != "AddInitialStates" && methodSymbol.Name != "AddTransition")
+			if (methodSymbol.Name != "InitialState" && methodSymbol.Name != "InitialStates" && methodSymbol.Name != "Transition")
 				return base.VisitExpressionStatement(statement);
 
 			var isComponentMethod = methodSymbol.ContainingType.Equals(Compilation.GetComponentClassSymbol());
@@ -71,7 +71,7 @@ namespace SafetySharp.Compiler.Normalization
 			var getBuilderMethod = Syntax.MemberAccessExpression(metadataBuilderSymbol, "GetBuilder");
 			var builder = Syntax.InvocationExpression(getBuilderMethod, Syntax.ThisExpression());
 
-			if (methodSymbol.Name == "AddTransition")
+			if (methodSymbol.Name == "Transition")
 				return SyntaxFactory.Block(NormalizeTransitions(builder, invocationExpression)).NormalizeWhitespace().EnsureLineCount(statement);
 
 			// .WithInitialStates(states)
@@ -81,7 +81,7 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes the call to the <see cref="Component.AddTransition{TSource,TTarget}" /> method.
+		///     Normalizes the call to the <see cref="Component.Transition{TSourceState,TTargetState}" /> method.
 		/// </summary>
 		private IEnumerable<StatementSyntax> NormalizeTransitions(SyntaxNode builder, InvocationExpressionSyntax invocationExpression)
 		{

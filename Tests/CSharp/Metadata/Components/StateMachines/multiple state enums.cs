@@ -31,7 +31,7 @@ namespace Tests.Metadata.Components.StateMachines
 	{
 		protected C6()
 		{
-			AddTransition(S.A, S.B);
+			Transition(S.A, S.B);
 		}
 
 		protected enum S
@@ -45,8 +45,8 @@ namespace Tests.Metadata.Components.StateMachines
 	{
 		public C7()
 		{
-			AddTransition(S.A, S.B);
-			AddInitialState(S.A);
+			Transition(S.A, S.B);
+			InitialState(S.A);
 		}
 
 		[SuppressTransformation]

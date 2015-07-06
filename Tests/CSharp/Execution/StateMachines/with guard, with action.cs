@@ -33,9 +33,9 @@ namespace Tests.Execution.StateMachines
 
 		public C8()
 		{
-			AddTransition(S.A, S.B, guard: () => _f < 0, action: () => _f = 17);
-			AddTransition(S.B, S.A, guard: () => _f > 2, action: () => --_f);
-			AddInitialState(S.A);
+			Transition(S.A, S.B, guard: () => _f < 0, action: () => _f = 17);
+			Transition(S.B, S.A, guard: () => _f > 2, action: () => --_f);
+			InitialState(S.A);
 		}
 
 		[SuppressTransformation]
