@@ -126,7 +126,6 @@
     <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />
     <Compile Include="Analyzers\UpdateInvocationAnalyzer.fs" />
     <None Include="app.config" />
-    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Modeling\Modeling.csproj">

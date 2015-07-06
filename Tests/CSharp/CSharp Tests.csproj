@@ -305,6 +305,7 @@
     <Compile Include="Formulas\LinearTemporalLogic\finally.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\next.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\state expression.cs" />
+    <Compile Include="Metadata\Components\StateMachines\explicit nulls.cs" />
     <Compile Include="Metadata\Components\StateMachines\multiple source and target states.cs" />
     <Compile Include="Metadata\Components\StateMachines\multiple target states.cs" />
     <Compile Include="Metadata\Components\StateMachines\multiple source states.cs" />

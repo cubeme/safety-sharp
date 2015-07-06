@@ -37,7 +37,7 @@ namespace Tests.Metadata.Components.StateMachines
 			AddTransition(S.A, S.A, guard: () => true);
 			AddTransition(S.A, S.A, action: () => { });
 			AddTransition(S.A, S.A, () => true, () => { });
-			AddTransition(S.A, S.A, _c.Guard, () => NonVoidReturning());
+			AddTransition(S.A, S.A, action: () => NonVoidReturning(), guard: _c.Guard);
 			AddTransition(S.A, S.A, _c.Guard, Action);
 			AddInitialState(S.A);
 		}

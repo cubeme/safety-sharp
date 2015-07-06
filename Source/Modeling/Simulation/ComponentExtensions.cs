@@ -42,13 +42,18 @@ namespace SafetySharp.Simulation
 		{
 			Requires.NotNull(component, () => component);
 
+			var metadata = component.GetMetadata();
+
 			// TODO: What about fields with nondeterministic initial values
 			// TODO: Requires tests
-			foreach (var field in component.GetMetadata().Fields)
+			foreach (var field in metadata.Fields)
 				field.FieldInfo.SetValue(component, field.InitialValues.First());
 
+			if (metadata.StateMachine != null)
+				metadata.StateMachine.StateField.FieldInfo.SetValue(component, metadata.StateMachine.StateField.InitialValues.First());
+
 			// TODO: Respect other initial states
-			foreach (var fault in component.GetMetadata().Faults)
+			foreach (var fault in metadata.Faults)
 				fault.Fault.IsOccurring = false;
 		}
 

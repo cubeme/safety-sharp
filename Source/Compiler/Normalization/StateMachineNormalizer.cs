@@ -133,6 +133,10 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		private ExpressionSyntax GetReflectedMethod(ExpressionSyntax expression, bool isGuard)
 		{
+			var nullConstant = SemanticModel.GetConstantValue(expression);
+			if (nullConstant.HasValue && nullConstant.Value == null)
+				return (ExpressionSyntax)Syntax.NullLiteralExpression();
+
 			var returnTypeExpression = SyntaxFactory.ParseTypeName(isGuard ? "bool" : "void");
 			var methodName = GetMethodName(expression, isGuard);
 			var reflectionHelperType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(ReflectionHelpers)));
