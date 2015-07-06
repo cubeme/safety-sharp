@@ -47,15 +47,17 @@ namespace SafetySharp.Runtime
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="component">The component the state machine belongs to.</param>
+		/// <param name="stateField">The field that should be used to store the component's current state.</param>
 		/// <param name="states">The states of the state machine.</param>
 		/// <param name="initialStates">The initial states of the state machine.</param>
 		/// <param name="transitions">The transitions of the state machine.</param>
-		internal StateMachineMetadata(Component component, IEnumerable<StateMetadata> states, IEnumerable<StateMetadata> initialStates,
-									  IEnumerable<TransitionMetadata> transitions)
+		internal StateMachineMetadata(Component component, FieldMetadata stateField, IEnumerable<StateMetadata> states,
+									  IEnumerable<StateMetadata> initialStates, IEnumerable<TransitionMetadata> transitions)
 		{
 			Requires.NotNull(component, () => component);
 			Requires.NotNull(states, () => states);
 			Requires.NotNull(transitions, () => transitions);
+			Requires.NotNull(stateField, () => stateField);
 
 			var stateArray = states.ToArray();
 			var initialStatesArray = initialStates.Distinct().ToArray();
@@ -68,9 +70,15 @@ namespace SafetySharp.Runtime
 			States = stateArray;
 			InitialStates = initialStatesArray;
 			Transitions = transitionArray;
+			StateField = stateField;
 
-			_component.CurrentState = InitialStates[_random.Next(0, InitialStates.Count)];
+			_component.State = InitialStates[_random.Next(0, InitialStates.Count)];
 		}
+
+		/// <summary>
+		///     Gets the metadata of the field storing the component's current state.
+		/// </summary>
+		public FieldMetadata StateField { get; private set; }
 
 		/// <summary>
 		///     Gets the metadata of the declaring component.

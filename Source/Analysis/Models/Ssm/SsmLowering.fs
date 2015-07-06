@@ -64,7 +64,7 @@ module internal SsmLowering =
                 | AsgnStm (v, MemberExpr (t, CallExpr (m, dt, p, d, r, e, false))) -> MemberExpr (t, rewrite v m dt p d r e) |> ExprStm
                 | AsgnStm (v, TypeExpr (t, CallExpr (m, dt, p, d, r, e, false)))   -> TypeExpr (t, rewrite v m dt p d r e) |> ExprStm
                 | SeqStm s          -> SeqStm (s |> List.map lower)
-                | IfStm (c, s1, s2) -> IfStm (c, lower s1, lower s2)
+                | ChoiceStm (c, s)  -> ChoiceStm (c, List.map lower s)
                 | s                 -> s
             { m with Body = lower m.Body }
 
@@ -72,7 +72,7 @@ module internal SsmLowering =
             let rec lower = function
                 | RetStm (Some e)   -> SeqStm [ AsgnStm (retArg, e); RetStm None ]
                 | SeqStm s          -> SeqStm (s |> List.map lower)
-                | IfStm (c, s1, s2) -> IfStm (c, lower s1, lower s2)
+                | ChoiceStm (c, s)  -> ChoiceStm (c, List.map lower s)
                 | s                 -> s
             { m with Body = lower m.Body; Return = VoidType }
 
@@ -155,36 +155,6 @@ module internal SsmLowering =
             Methods = c.Methods |> List.map lower
             Subs = c.Subs |> List.map lowerScheduling }
 
-    /// Inlines all calls to overriden Update methods.
-    let rec lowerBaseSteps (c : Comp) = 
-        let renameLocal methodName local = sprintf "%s!@!%s" methodName (Ssm.getVarName local)
-
-        let inlineBase baseBody =
-            Ssm.mapStms (fun stm ->
-                match stm with
-                | ExprStm (CallExpr (n, _, _, _, _, _, _)) when c.Methods |> List.exists (fun m -> m.Name = n && m.Kind = Step) -> baseBody
-                | _ -> stm
-            )
-
-        let renameLocals methodName locals body = 
-            locals |> List.fold (fun body local ->
-                body |> Ssm.replaceVar local (Local (renameLocal methodName local, Ssm.getVarType local))
-            ) body
-
-        let steps = c.Methods |> List.filter (fun m -> m.Kind = Step)
-        let step = steps |> List.reduce (fun step m ->
-            { step with
-                Locals = step.Locals @ (m.Locals |> List.map (fun l -> Local (renameLocal m.Name l, Ssm.getVarType l)))
-                Body = m.Body |> renameLocals m.Name m.Locals |> inlineBase step.Body
-            }
-        ) 
-        let step = { step with Body = step.Body |> Ssm.mapStms (fun stm -> match stm with | RetStm _ -> NopStm | _ -> stm) }
-
-        { c with
-            Methods = step :: (c.Methods |> List.filter (fun m -> m.Kind <> Step))
-            Subs = c.Subs |> List.map lowerBaseSteps
-        }
-
     /// Applies all lowerings to the given components after SSM model validation.
     let lower (root : Comp) : Comp =
-        root |> lowerSignatures |> lowerLocalBindings |> lowerScheduling |> lowerBaseSteps
+        root |> lowerSignatures |> lowerLocalBindings |> lowerScheduling

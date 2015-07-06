@@ -109,9 +109,7 @@ module internal SsmToScm =
             | Ssm.AsgnStm (Ssm.Field (f, _), e) -> Scm.AssignField (Scm.Field f, transformExpr e)
             | Ssm.AsgnStm (v, e)                -> Scm.AssignVar (Scm.Var (Ssm.getVarName v), transformExpr e)
             | Ssm.SeqStm s                      -> s |> List.map transform |> Scm.Block
-            | Ssm.IfStm (e, s1, s2)             -> 
-                let e = transformExpr e
-                Scm.Choice [(e, transform s1); (Scm.UExpr (e, Scm.Not), transform s2)]
+            | Ssm.ChoiceStm (e, s)              -> Scm.Choice (List.zip e s |> List.map (fun (e, s) -> transformExpr e, transform s))
             | Ssm.ExprStm (Ssm.MemberExpr (Ssm.Field (f, _), Ssm.CallExpr (m, _, _, d, _, e, false))) -> Scm.StepComp (Scm.Comp f)
             | Ssm.ExprStm (Ssm.CallExpr (m, _, _, d, _, e, false)) -> Scm.CallPort (Scm.ReqPort m, transformParamExpr e d)
             | Ssm.RetStm _ -> emptyBlock

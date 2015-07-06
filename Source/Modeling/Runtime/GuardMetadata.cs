@@ -23,6 +23,7 @@
 namespace SafetySharp.Runtime
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
 	using Modeling;
@@ -39,9 +40,9 @@ namespace SafetySharp.Runtime
 		private readonly Func<bool> _delegate;
 
 		/// <summary>
-		///     The metadata of the transition the guard belongs to.
+		///     The metadata of the transitions the guard belongs to.
 		/// </summary>
-		private readonly Lazy<TransitionMetadata> _transition;
+		private readonly Lazy<IEnumerable<TransitionMetadata>> _transition;
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -57,8 +58,9 @@ namespace SafetySharp.Runtime
 			Requires.That(method.GetParameters().Length == 0, () => method, "A guard cannot take any parameters.");
 			Requires.That(method.ReturnType == typeof(bool), () => method, "A guard must return a Boolean value.");
 
-			_transition = new Lazy<TransitionMetadata>(() => DeclaringObject.StateMachine.Transitions.Single(transition => transition.Guard == this));
 			_delegate = (Func<bool>)CreateDelegate(typeof(Func<bool>));
+			_transition = new Lazy<IEnumerable<TransitionMetadata>>(
+				() => DeclaringObject.StateMachine.Transitions.Where(transition => transition.Guard == this).ToArray());
 		}
 
 		/// <summary>
@@ -70,9 +72,9 @@ namespace SafetySharp.Runtime
 		}
 
 		/// <summary>
-		///     Gets the metadata of the transition the guard belongs to.
+		///     Gets the metadata of the transitions the guard belongs to.
 		/// </summary>
-		public TransitionMetadata Transition
+		public IEnumerable<TransitionMetadata> Transitions
 		{
 			get { return _transition.Value; }
 		}

@@ -23,7 +23,6 @@
 namespace PressureTank
 {
 	using System;
-	using System.Diagnostics;
 	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.Analysis;
@@ -31,26 +30,31 @@ namespace PressureTank
 	using SharedComponents;
 	using static SafetySharp.Analysis.Ltl;
 
-	[TestFixture]
-	public class ModelCheckingTests
+	internal class Program
 	{
 		private static void Main()
 		{
 			var tests = new Tests();
 			tests.TankDoesNotRuptureWhenNoFaultsOccur();
 		}
+	}
+
+	[TestFixture]
+	public class ModelCheckingTests
+	{
+		private readonly PressureTankModel _model;
+		private readonly Spin _spin;
+
+		public ModelCheckingTests()
+		{
+			_model = new PressureTankModel();
+			_spin = new Spin(_model);
+		}
 
 		[Test]
-		public void FirstTest()
+		public void PressureIsIncreased()
 		{
-			var watch = new Stopwatch();
-			watch.Start();
-
-			var model = new PressureTankModel();
-			var spin = new Spin(model);
-			spin.Check(!F(model.Tank.IsRuptured()));
-
-			Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
+			_spin.Check(F(_model.Tank.PressureLevel() > 0));
 		}
 	}
 

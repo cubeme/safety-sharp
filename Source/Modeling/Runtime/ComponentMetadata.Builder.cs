@@ -26,6 +26,7 @@ namespace SafetySharp.Runtime
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
+	using CompilerServices;
 	using Modeling;
 	using Modeling.Faults;
 	using Utilities;
@@ -33,14 +34,16 @@ namespace SafetySharp.Runtime
 	partial class ComponentMetadata
 	{
 		/// <summary>
-		///     Represents a mutable builder for <see cref="ComponentMetadata" /> instances.
+		///   Represents a mutable builder for <see cref="ComponentMetadata" /> instances.
 		/// </summary>
 		public class Builder
 		{
+			private readonly Dictionary<MethodInfo, ActionMetadata> _actions = new Dictionary<MethodInfo, ActionMetadata>();
 			private readonly List<BindingMetadata> _bindings = new List<BindingMetadata>();
 			private readonly Component _component;
 			private readonly List<FaultMetadata> _faults = new List<FaultMetadata>();
 			private readonly FieldCollectionBuilder _fields;
+			private readonly Dictionary<MethodInfo, GuardMetadata> _guards = new Dictionary<MethodInfo, GuardMetadata>();
 			private readonly List<StateMetadata> _initialStates = new List<StateMetadata>();
 			private readonly NameScope _nameScope = new NameScope();
 			private readonly List<ProvidedPortMetadata> _providedPorts = new List<ProvidedPortMetadata>();
@@ -55,7 +58,7 @@ namespace SafetySharp.Runtime
 			private string _name;
 
 			/// <summary>
-			///     Initializes a new instance.
+			///   Initializes a new instance.
 			/// </summary>
 			/// <param name="component">The component instance the metadata should be built for.</param>
 			internal Builder(Component component)
@@ -67,7 +70,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="field" /> to the component's metadata.
+			///   Adds the <paramref name="field" /> to the component's metadata.
 			/// </summary>
 			/// <param name="field">The field that should be added to the metadata.</param>
 			public void WithField(FieldInfo field)
@@ -76,8 +79,8 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="field" /> of compile-time generic type to the component's metadata. The field
-			///     is not added if it is not of a supported field type.
+			///   Adds the <paramref name="field" /> of compile-time generic type to the component's metadata. The field
+			///   is not added if it is not of a supported field type.
 			/// </summary>
 			/// <param name="field">The field that should be added to the metadata.</param>
 			public void WithGenericField(FieldInfo field)
@@ -86,7 +89,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Sets the initial <paramref name="values" /> of the component's <paramref name="field" />.
+			///   Sets the initial <paramref name="values" /> of the component's <paramref name="field" />.
 			/// </summary>
 			/// <typeparam name="T">The type of the field.</typeparam>
 			/// <param name="field">The field whose initial values should be set.</param>
@@ -97,7 +100,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="subcomponent" /> to the component's metadata.
+			///   Adds the <paramref name="subcomponent" /> to the component's metadata.
 			/// </summary>
 			/// <param name="subcomponent">The subcomponent that should be added.</param>
 			public void WithSubcomponent(IComponent subcomponent)
@@ -111,7 +114,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the subcomponent stored in <paramref name="field" /> to the component's metadata.
+			///   Adds the subcomponent stored in <paramref name="field" /> to the component's metadata.
 			/// </summary>
 			/// <param name="field">The field holding the subcomponent reference.</param>
 			public void WithSubcomponent(FieldInfo field)
@@ -125,8 +128,8 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the subcomponent of compile-time generic type stored in <paramref name="field" /> to the component's metadata. The
-			///     subcomponent is not added if it actually wasn't an <see cref="IComponent" />-derived type.
+			///   Adds the subcomponent of compile-time generic type stored in <paramref name="field" /> to the component's metadata. The
+			///   subcomponent is not added if it actually wasn't an <see cref="IComponent" />-derived type.
 			/// </summary>
 			/// <param name="field">The field holding the subcomponent reference.</param>
 			public void WithGenericSubcomponent(FieldInfo field)
@@ -138,7 +141,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the subcomponent stored in <paramref name="property" /> to the component's metadata.
+			///   Adds the subcomponent stored in <paramref name="property" /> to the component's metadata.
 			/// </summary>
 			/// <param name="property">The property holding the subcomponent reference.</param>
 			public void WithSubcomponent(PropertyInfo property)
@@ -153,8 +156,8 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the subcomponent of compile-time generic type stored in <paramref name="property" /> to the component's metadata.
-			///     The subcomponent is not added if it actually wasn't an <see cref="IComponent" />-derived type.
+			///   Adds the subcomponent of compile-time generic type stored in <paramref name="property" /> to the component's metadata.
+			///   The subcomponent is not added if it actually wasn't an <see cref="IComponent" />-derived type.
 			/// </summary>
 			/// <param name="property">The property holding the subcomponent reference.</param>
 			public void WithGenericSubcomponent(PropertyInfo property)
@@ -166,7 +169,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="fault" /> to the component's metadata.
+			///   Adds the <paramref name="fault" /> to the component's metadata.
 			/// </summary>
 			/// <typeparam name="TFault">The type of the fault that should be added to the component's metadata.</typeparam>
 			/// <param name="fault">The fault that should be added.</param>
@@ -183,8 +186,8 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="providedPort" /> to the component's metadata. If the port overrides a virtual port declared by
-			///     a base type, the <paramref name="basePort" /> must not be <c>null</c>.
+			///   Adds the <paramref name="providedPort" /> to the component's metadata. If the port overrides a virtual port declared by
+			///   a base type, the <paramref name="basePort" /> must not be <c>null</c>.
 			/// </summary>
 			/// <param name="providedPort">The provided port that should be added to the component's metadata.</param>
 			/// <param name="basePort">The overridden method of the base type, if any.</param>
@@ -208,7 +211,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="requiredPort" /> to the component's metadata.
+			///   Adds the <paramref name="requiredPort" /> to the component's metadata.
 			/// </summary>
 			public void WithRequiredPort(MethodInfo requiredPort)
 			{
@@ -223,11 +226,11 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds the <paramref name="stepMethod" /> to the component's metadata. If <paramref name="stepMethod" /> overrides a step
-			///     method declared by a base type, the <paramref name="baseStepMethod" /> must not be <c>null</c>.
+			///   Adds the <paramref name="stepMethod" /> to the component's metadata. If <paramref name="stepMethod" /> overrides a step
+			///   method declared by a base type, the <paramref name="baseStepMethod" /> must not be <c>null</c>.
 			/// </summary>
 			/// <param name="stepMethod">
-			///     The method representing the component's step method that should be added to the component's metadata.
+			///   The method representing the component's step method that should be added to the component's metadata.
 			/// </param>
 			/// <param name="baseStepMethod">The overridden step method of the base type, if any.</param>
 			public void WithStepMethod(MethodInfo stepMethod, MethodInfo baseStepMethod = null)
@@ -244,8 +247,8 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds a binding between <paramref name="requiredPort" /> and <paramref name="providedPort" /> to the component's
-			///     metadata.
+			///   Adds a binding between <paramref name="requiredPort" /> and <paramref name="providedPort" /> to the component's
+			///   metadata.
 			/// </summary>
 			/// <param name="requiredPort">The required port of the port binding.</param>
 			/// <param name="providedPort">The provided port of the port binding.</param>
@@ -266,12 +269,12 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Assigns the <paramref name="name" /> to the component. Within a component hierarchy, all component names must be unique.
+			///   Assigns the <paramref name="name" /> to the component. Within a component hierarchy, all component names must be unique.
 			/// </summary>
 			/// <param name="name">The name of the component.</param>
 			/// <param name="compilerGenerated">
-			///     Indicates whether the name was generated by the S# compiler. If <c>true</c>,
-			///     <paramref name="name" /> is ignored if another name has already been set.
+			///   Indicates whether the name was generated by the S# compiler. If <c>true</c>,
+			///   <paramref name="name" /> is ignored if another name has already been set.
 			/// </param>
 			public void WithName(string name, bool compilerGenerated = false)
 			{
@@ -282,7 +285,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Indicates that the component's state machine can initially be in the <paramref name="initialStates" />.
+			///   Indicates that the component's state machine can initially be in the <paramref name="initialStates" />.
 			/// </summary>
 			/// <param name="initialStates">Some of the initial states of the state machine.</param>
 			public void WithInitialStates(params object[] initialStates)
@@ -297,7 +300,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Adds a transition to the component's finite state machine.
+			///   Adds a transition to the component's finite state machine.
 			/// </summary>
 			/// <param name="sourceState">The source state that should be left by the transition.</param>
 			/// <param name="targetState">The target state that should be entered by the transition.</param>
@@ -312,15 +315,21 @@ namespace SafetySharp.Runtime
 
 				var source = GetOrAddState(sourceState);
 				var target = GetOrAddState(targetState);
-				var guardMetadata = guard == null ? null : new GuardMetadata(_component, guard, _nameScope.MakeUnique(guard.Name));
-				var actionMetadata = action == null ? null : new ActionMetadata(_component, action, _nameScope.MakeUnique(action.Name));
+				GuardMetadata guardMetadata = null;
+				ActionMetadata actionMetadata = null;
+
+				if (guard != null && !_guards.TryGetValue(guard, out guardMetadata))
+					_guards.Add(guard, guardMetadata = new GuardMetadata(_component, guard, _nameScope.MakeUnique(guard.Name)));
+
+				if (action != null && !_actions.TryGetValue(action, out actionMetadata))
+					_actions.Add(action, actionMetadata = new ActionMetadata(_component, action, _nameScope.MakeUnique(action.Name)));
 
 				_transitions.Add(new TransitionMetadata(_component, source, target, guardMetadata, actionMetadata));
 			}
 
 			/// <summary>
-			///     Gets the <see cref="StateMetadata" /> instance corresponding targetState the <paramref name="state" /> if
-			///     <paramref name="state" /> is already known; creates a new instance otherwise.
+			///   Gets the <see cref="StateMetadata" /> instance corresponding targetState the <paramref name="state" /> if
+			///   <paramref name="state" /> is already known; creates a new instance otherwise.
 			/// </summary>
 			private StateMetadata GetOrAddState(object state)
 			{
@@ -335,7 +344,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Creates an immutable <see cref="ComponentMetadata" /> instance from the current state of the builder.
+			///   Creates an immutable <see cref="ComponentMetadata" /> instance from the current state of the builder.
 			/// </summary>
 			/// <param name="name">The automatically generated name of the component.</param>
 			/// <param name="parent">The metadata of the parent component. Can be <c>null</c> for the root of the component hierarchy.</param>
@@ -355,15 +364,23 @@ namespace SafetySharp.Runtime
 					RequiredPorts = new MemberCollection<RequiredPortMetadata>(_component, _requiredPorts),
 					ProvidedPorts = new MemberCollection<ProvidedPortMetadata>(_component, _providedPorts),
 					Bindings = new MemberCollection<BindingMetadata>(_component, _bindings),
-					StateMachine = _transitions.Count == 0 ? null : new StateMachineMetadata(_component, _states.Values, _initialStates, _transitions)
 				};
+
+				if (_transitions.Count > 0)
+				{
+					var fieldInfo = ReflectionHelpers.GetField(typeof(Component), typeof(int), "_state");
+					var initialValues = _initialStates.Select(state => state.Identifier).Cast<object>().Distinct().ToArray();
+					var stateField = new FieldMetadata(_component, fieldInfo, initialValues, _nameScope.MakeUnique(fieldInfo.Name));
+
+					_component.Metadata.StateMachine = new StateMachineMetadata(_component, stateField, _states.Values, _initialStates, _transitions);
+				}
 
 				InitializeFaults();
 				InitializeSubcomponents();
 			}
 
 			/// <summary>
-			///     Initializes the component's fault injections.
+			///   Initializes the component's fault injections.
 			/// </summary>
 			private void InitializeFaults()
 			{
@@ -373,7 +390,7 @@ namespace SafetySharp.Runtime
 			}
 
 			/// <summary>
-			///     Initializes the component's subcomponents.
+			///   Initializes the component's subcomponents.
 			/// </summary>
 			private void InitializeSubcomponents()
 			{

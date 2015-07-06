@@ -23,6 +23,7 @@
 namespace SafetySharp.Transformation
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Globalization;
 	using System.Linq;
 	using System.Reflection;
@@ -33,12 +34,12 @@ namespace SafetySharp.Transformation
 	using Utilities;
 
 	/// <summary>
-	///     Transforms a <see cref="Model" /> instance to a <see cref="Scm.ScmModel" /> instance.
+	///   Transforms a <see cref="Model" /> instance to a <see cref="Scm.ScmModel" /> instance.
 	/// </summary>
 	internal static class ModelTransformation
 	{
 		/// <summary>
-		///     Transforms the <paramref name="model" />.
+		///   Transforms the <paramref name="model" />.
 		/// </summary>
 		/// <param name="model">The model that should be transformed.</param>
 		public static Scm.ScmModel Transform(Model model)
@@ -48,17 +49,28 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
-		///     Transforms the <paramref name="component" /> to a <see cref="Ssm.Comp" /> instance.
+		///   Transforms the <paramref name="component" /> to a <see cref="Ssm.Comp" /> instance.
 		/// </summary>
 		private static Ssm.Comp Transform(ComponentMetadata component)
 		{
+			var fields = (IEnumerable<FieldMetadata>)component.Fields;
 			var methods = component.ProvidedPorts.Cast<MethodMetadata>().Concat(component.RequiredPorts).Concat(new[] { component.StepMethod });
-			return Ssm.CreateComponent(GetComponentPath(component), component.Fields.Select(Transform), methods.Select(Transform),
+
+			if (component.StateMachine != null)
+			{
+				var transitions = component.StateMachine.Transitions;
+				methods = methods.Concat(transitions.Where(transition => transition.Guard != null).Select(transition => transition.Guard).Distinct());
+				methods = methods.Concat(transitions.Where(transition => transition.Action != null).Select(transition => transition.Action).Distinct());
+
+				fields = fields.Concat(new[] { component.StateMachine.StateField });
+			}
+
+			return Ssm.CreateComponent(GetComponentPath(component), fields.Select(Transform), methods.Select(Transform),
 				component.Subcomponents.Select(Transform), component.Faults.Select(Transform), component.Bindings.Select(Transform));
 		}
 
 		/// <summary>
-		///     Transforms the <paramref name="fault" />.
+		///   Transforms the <paramref name="fault" />.
 		/// </summary>
 		private static Ssm.Fault Transform(FaultMetadata fault)
 		{
@@ -66,7 +78,7 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
-		///     Transforms the <paramref name="binding" />.
+		///   Transforms the <paramref name="binding" />.
 		/// </summary>
 		private static Ssm.Binding Transform(BindingMetadata binding)
 		{
@@ -79,7 +91,7 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
-		///     Transforms the <paramref name="method" />.
+		///   Transforms the <paramref name="method" />.
 		/// </summary>
 		private static Ssm.Method Transform(MethodMetadata method)
 		{
@@ -91,9 +103,11 @@ namespace SafetySharp.Transformation
 			Ssm.MethodKind kind;
 			if (method is RequiredPortMetadata)
 				kind = Ssm.MethodKind.ReqPort;
-			else if (method is ProvidedPortMetadata || method is FaultEffectMetadata) // TODO: Fault effects for non-provided ports
+			else if (method is ProvidedPortMetadata || method is GuardMetadata || method is ActionMetadata)
 				kind = Ssm.MethodKind.ProvPort;
-			else
+			else if (method is FaultEffectMetadata) // TODO: Fault effects for non-provided ports
+				kind = Ssm.MethodKind.ProvPort;
+            else
 				kind = Ssm.MethodKind.Step;
 
 			return Ssm.CreateMethod(method.Name, method.MethodInfo.GetParameters().Select(Transform), body,
@@ -101,7 +115,7 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
-		///     Transforms the <paramref name="parameter" />.
+		///   Transforms the <paramref name="parameter" />.
 		/// </summary>
 		private static Ssm.Param Transform(ParameterInfo parameter)
 		{
@@ -115,7 +129,7 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
-		///     Transforms the <paramref name="variable" />.
+		///   Transforms the <paramref name="variable" />.
 		/// </summary>
 		private static Ssm.Var Transform(VariableMetadata variable)
 		{
@@ -123,7 +137,7 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
-		///     Transforms the <paramref name="field" />.
+		///   Transforms the <paramref name="field" />.
 		/// </summary>
 		private static Ssm.Field Transform(FieldMetadata field)
 		{
@@ -149,7 +163,7 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
-		///     Transforms the <paramref name="type" />.
+		///   Transforms the <paramref name="type" />.
 		/// </summary>
 		private static Ssm.Type Transform(Type type)
 		{
@@ -170,7 +184,7 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
-		///     Returns a string representation of a component path leading to <paramref name="component" />.
+		///   Returns a string representation of a component path leading to <paramref name="component" />.
 		/// </summary>
 		private static string GetComponentPath(ComponentMetadata component)
 		{
@@ -351,13 +365,7 @@ namespace SafetySharp.Transformation
 
 			protected internal override void VisitChoiceStatement(ChoiceStatement statement)
 			{
-				Assert.That(statement.ChoiceCount > 0 && statement.ChoiceCount < 3, "Unsupported number of choices: {0}.", statement.ChoiceCount);
-
-				var condition = GetTransformed(statement.Guards[0]);
-				var thenStatement = GetTransformed(statement.Statements[0]);
-				var elseStatement = statement.ChoiceCount == 2 ? GetTransformed(statement.Statements[1]) : Ssm.Stm.NopStm;
-
-				_stm = Ssm.Stm.NewIfStm(condition, thenStatement, elseStatement);
+				_stm = Ssm.CreateChoice(statement.Guards.Select(GetTransformed), statement.Statements.Select(GetTransformed));
 			}
 
 			protected internal override void VisitExpressionStatement(ExpressionStatement statement)

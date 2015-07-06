@@ -54,6 +54,8 @@ module internal ScmToString =
             | Minus -> writer.Append "-"
      
         let bop = function
+            | And           -> writer.Append "&&"
+            | Or            -> writer.Append "||"
             | Add           -> writer.Append "+"
             | Subtract      -> writer.Append "-"
             | Multiply      -> writer.Append "*"
@@ -63,10 +65,8 @@ module internal ScmToString =
             | GreaterEqual  -> writer.Append ">="
             | Less          -> writer.Append "<"
             | LessEqual     -> writer.Append "<="
-            | Equals        -> writer.Append "=="
-            | NotEquals     -> writer.Append "!="
-            | And           -> writer.Append "&&"
-            | Or            -> writer.Append "||"
+            | Equal         -> writer.Append "=="
+            | NotEqual      -> writer.Append "!="
 
         let value = function
             | BoolVal b -> writer.Append "%b" b

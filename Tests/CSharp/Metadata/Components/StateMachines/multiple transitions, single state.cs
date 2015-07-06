@@ -79,7 +79,7 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.Transitions[0].SourceState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[0].TargetState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[0].Guard.ShouldNotBe(null);
-			Metadata.StateMachine.Transitions[0].Guard.Transition.ShouldBe(Metadata.StateMachine.Transitions[0]);
+			Metadata.StateMachine.Transitions[0].Guard.Transitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[0] });
 			Metadata.StateMachine.Transitions[0].Action.ShouldBe(null);
 
 			Metadata.StateMachine.Transitions[1].StateMachine.ShouldBe(Metadata.StateMachine);
@@ -87,31 +87,31 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.Transitions[1].TargetState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[1].Guard.ShouldBe(null);
 			Metadata.StateMachine.Transitions[1].Action.ShouldNotBe(null);
-			Metadata.StateMachine.Transitions[1].Action.Transition.ShouldBe(Metadata.StateMachine.Transitions[1]);
+			Metadata.StateMachine.Transitions[1].Action.Transitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[1] });
 
 			Metadata.StateMachine.Transitions[2].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[2].SourceState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[2].TargetState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[2].Guard.ShouldNotBe(null);
 			Metadata.StateMachine.Transitions[2].Action.ShouldNotBe(null);
-			Metadata.StateMachine.Transitions[2].Guard.Transition.ShouldBe(Metadata.StateMachine.Transitions[2]);
-			Metadata.StateMachine.Transitions[2].Action.Transition.ShouldBe(Metadata.StateMachine.Transitions[2]);
+			Metadata.StateMachine.Transitions[2].Guard.Transitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[2] });
+			Metadata.StateMachine.Transitions[2].Action.Transitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[2] });
 
 			Metadata.StateMachine.Transitions[3].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[3].SourceState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[3].TargetState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[3].Guard.ShouldNotBe(null);
 			Metadata.StateMachine.Transitions[3].Action.ShouldNotBe(null);
-			Metadata.StateMachine.Transitions[3].Guard.Transition.ShouldBe(Metadata.StateMachine.Transitions[3]);
-			Metadata.StateMachine.Transitions[3].Action.Transition.ShouldBe(Metadata.StateMachine.Transitions[3]);
+			Metadata.StateMachine.Transitions[3].Guard.Transitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[3] });
+			Metadata.StateMachine.Transitions[3].Action.Transitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[3] });
 
 			Metadata.StateMachine.Transitions[4].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[4].SourceState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[4].TargetState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[4].Guard.ShouldNotBe(null);
 			Metadata.StateMachine.Transitions[4].Action.ShouldNotBe(null);
-			Metadata.StateMachine.Transitions[4].Guard.Transition.ShouldBe(Metadata.StateMachine.Transitions[4]);
-			Metadata.StateMachine.Transitions[4].Action.Transition.ShouldBe(Metadata.StateMachine.Transitions[4]);
+			Metadata.StateMachine.Transitions[4].Guard.Transitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[4] });
+			Metadata.StateMachine.Transitions[4].Action.Transitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[4] });
 		}
 
 		private class C : Component

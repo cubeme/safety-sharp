@@ -24,6 +24,7 @@ namespace SafetySharp.Modeling
 {
 	using System;
 	using System.Diagnostics;
+	using System.Linq;
 	using CompilerServices;
 	using JetBrains.Annotations;
 	using Runtime;
@@ -36,6 +37,11 @@ namespace SafetySharp.Modeling
 	[Metadata("InitializeMetadata")]
 	public abstract class Component : MetadataObject<ComponentMetadata, ComponentMetadata.Builder>, IComponent
 	{
+		/// <summary>
+		///     The identifier of the currently state.
+		/// </summary>
+		private int _state = -1;
+
 		[UsedImplicitly]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private Action _updateMethod = null;
@@ -62,7 +68,15 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Gets or sets the currently active state of the component or <c>null</c> if there is none.
 		/// </summary>
-		internal StateMetadata CurrentState { get; set; }
+		internal StateMetadata State
+		{
+			get { return _state == -1 ? null : Metadata.StateMachine.States[_state]; }
+			set
+			{
+				Requires.NotNull(value, () => value);
+				_state = value.Identifier;
+			}
+		}
 
 		/// <summary>
 		///     Gets all required ports declared by the component that are accessible from the location of the caller.
@@ -70,7 +84,11 @@ namespace SafetySharp.Modeling
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public dynamic RequiredPorts
 		{
-			get { throw new InvalidOperationException("This property cannot be used outside of a port binding expression."); }
+			get
+			{
+				Requires.CompilationTransformation();
+				return null;
+			}
 		}
 
 		/// <summary>
@@ -79,7 +97,11 @@ namespace SafetySharp.Modeling
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public dynamic ProvidedPorts
 		{
-			get { throw new InvalidOperationException("This property cannot be used outside of a port binding expression."); }
+			get
+			{
+				Requires.CompilationTransformation();
+				return null;
+			}
 		}
 
 		/// <summary>
@@ -101,7 +123,7 @@ namespace SafetySharp.Modeling
 		public bool InState<TState>(TState state)
 			where TState : struct, IConvertible
 		{
-			return CurrentState != null && CurrentState.EnumValue.Equals(state);
+			return _state != -1 && State.EnumValue.Equals(state);
 		}
 
 		/// <summary>
@@ -111,8 +133,8 @@ namespace SafetySharp.Modeling
 		public TState GetCurrentState<TState>()
 			where TState : struct, IConvertible
 		{
-			Requires.That(CurrentState != null, "Component has no state.");
-			return (TState)CurrentState.EnumValue;
+			Requires.That(State != null, "Component has no state.");
+			return (TState)State.EnumValue;
 		}
 
 		/// <summary>
@@ -125,13 +147,13 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Empty default behavior of the <see cref="Update" /> method.
+		///     The default behavior of the <see cref="Update" /> method.
 		/// </summary>
 		[UsedImplicitly]
 		private void UpdateBehavior()
 		{
-			if (CurrentState != null)
-				CurrentState = CurrentState.Update();
+			if (State != null)
+				State = State.Update();
 		}
 
 		/// <summary>
@@ -140,8 +162,71 @@ namespace SafetySharp.Modeling
 		[UsedImplicitly]
 		private MethodBodyMetadata UpdateMethodBody()
 		{
-			return new MethodBodyMetadata(new VariableMetadata[0], new VariableMetadata[0],
-				new BlockStatement());
+			if (Metadata.StateMachine == null)
+				return new MethodBodyMetadata(new VariableMetadata[0], new VariableMetadata[0], new BlockStatement());
+
+			// If guards are shared, only execute them once
+			var transitions = Metadata.StateMachine.Transitions;
+			var guards = transitions
+				.Select(transition => transition.Guard)
+				.Where(guard => guard != null)
+				.Distinct()
+				.Select((guard, index) =>
+				{
+					var variable = new VariableMetadata("guard" + index, typeof(bool));
+					return new
+					{
+						Guard = guard,
+						Variable = variable,
+						Assignment = new AssignmentStatement(new VariableExpression(variable), new MethodInvocationExpression(guard))
+					};
+				})
+				.ToArray();
+
+			var guardVariableLookup = guards.ToDictionary(guard => guard.Guard, guard => guard.Variable);
+
+			// Similarily, optimize the case where multiple transitions have the same target state, the same guard, and the same action
+			var transitionGroups = transitions.GroupBy(transition => new { transition.TargetState, transition.Guard, transition.Action });
+			var guardConditions = transitionGroups.Select(group =>
+			{
+				var groupedTransitions = group.ToArray();
+				var inState = new BinaryExpression(BinaryOperator.Equals,
+					new FieldExpression(Metadata.StateMachine.StateField),
+					new IntegerLiteralExpression(groupedTransitions[0].SourceState.Identifier));
+
+				inState = groupedTransitions.Skip(1).Aggregate(inState, (expression, transition) =>
+					new BinaryExpression(BinaryOperator.Or, expression,
+						new BinaryExpression(BinaryOperator.Equals, 
+							new FieldExpression(Metadata.StateMachine.StateField),
+							new IntegerLiteralExpression(transition.SourceState.Identifier))));
+
+				return group.Key.Guard == null
+					? inState
+					: new BinaryExpression(BinaryOperator.And, inState, new VariableExpression(guardVariableLookup[group.Key.Guard]));
+			}).ToArray();
+
+			// Generate the statements for the transitions that execute the optional action and update the target state
+			var statements = transitionGroups.Select(group =>
+			{
+				var stateUpdate = new AssignmentStatement(
+					new FieldExpression(Metadata.StateMachine.StateField),
+					new IntegerLiteralExpression(group.Key.TargetState.Identifier));
+
+				if (group.Key.Action == null)
+					return (Statement)stateUpdate;
+
+				var action = new ExpressionStatement(new MethodInvocationExpression(group.Key.Action));
+				return new BlockStatement(action, stateUpdate);
+			}).ToArray();
+
+			// Now put everything together
+			var guardAssignments = guards.Select(guard => guard.Assignment);
+			var guardLocals = guards.Select(guard => guard.Variable);
+
+			var choiceStatement = new ChoiceStatement(guardConditions, statements, isDeterministic: false);
+			var body = new BlockStatement(guardAssignments.Cast<Statement>().Concat(new[] { choiceStatement }).ToArray());
+
+			return new MethodBodyMetadata(new VariableMetadata[0], guardLocals, body);
 		}
 
 		/// <summary>

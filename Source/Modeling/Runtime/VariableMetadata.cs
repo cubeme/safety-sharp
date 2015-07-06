@@ -36,7 +36,7 @@ namespace SafetySharp.Runtime
 		/// <param name="name">The name of the variable.</param>
 		/// <param name="type">The type of the variable.</param>
 		/// <param name="isParameter">A value indicating whether the variable is a parameter of the containing method.</param>
-		public VariableMetadata(string name, Type type, bool isParameter)
+		public VariableMetadata(string name, Type type, bool isParameter = false)
 		{
 			Requires.NotNullOrWhitespace(name, () => name);
 			Requires.NotNull(type, () => type);

@@ -89,7 +89,7 @@ module internal Ssm =
         | AsgnStm of Var * Expr
         | SeqStm  of Stm list
         | RetStm  of Expr option
-        | IfStm   of Expr * Stm * Stm
+        | ChoiceStm of Expr list * Stm list
         | ExprStm of Expr
 
     /// Represents a method parameter.
@@ -177,6 +177,9 @@ module internal Ssm =
     let CreateComponent name fields methods subs faults bindings =
         { Name = name; Fields = fields |> Seq.toList; Methods = methods |> Seq.toList; Subs = subs |> Seq.toList; Faults = faults |> Seq.toList; Bindings = bindings |> Seq.toList }
 
+    let CreateChoice guards statements =
+        ChoiceStm (guards |> Seq.toList, statements |> Seq.toList)
+
     /// Gets the type of the given variable.
     let getVarType = function
         | Arg (_, t)   -> t
@@ -242,7 +245,7 @@ module internal Ssm =
         | SeqStm stms                -> stms |> List.map getLocalsOfStm |> List.collect id
         | RetStm None                -> []
         | RetStm (Some e)            -> getLocalsOfExpr e
-        | IfStm (e, s1, s2)          -> (getLocalsOfExpr e) @ (getLocalsOfStm s1) @ (getLocalsOfStm s2)
+        | ChoiceStm (e, s )          -> List.collect getLocalsOfExpr e @ List.collect getLocalsOfStm s
         | ExprStm e                  -> getLocalsOfExpr e
 
     /// Maps all subexpressions within the given expression using the given map function.
@@ -259,7 +262,7 @@ module internal Ssm =
     let rec mapStms map stm =
         match stm with
         | SeqStm s          -> s |> List.map (mapStms map) |> SeqStm |> map
-        | IfStm (e, s1, s2) -> IfStm (e, mapStms map s1, mapStms map s2) |> map
+        | ChoiceStm (e, s)  -> ChoiceStm (e, List.map (mapStms map) s) |> map
         | _                 -> map stm
 
     /// Maps all expressions within the given statement using the given map function.
@@ -268,7 +271,7 @@ module internal Ssm =
             match stm with
             | AsgnStm (v, e)    -> AsgnStm (v, map e)
             | RetStm (Some e)   -> RetStm (Some (map e))
-            | IfStm (e, s1, s2) -> IfStm (map e, s1, s2)
+            | ChoiceStm (e, s)  -> ChoiceStm (List.map map e, s)
             | ExprStm e         -> ExprStm (map e)
             | _                 -> stm
         )
@@ -295,6 +298,6 @@ module internal Ssm =
         | AsgnStm (v, e)    -> func e
         | SeqStm s          -> s |> List.iter (iterExprsInStm func)
         | RetStm (Some e)   -> func e
-        | IfStm (e, s1, s2) -> func e; iterExprsInStm func s1; iterExprsInStm func s2
+        | ChoiceStm (e, s)  -> List.iter func e; List.iter (iterExprsInStm func) s
         | ExprStm e         -> func e
         | _                 -> ()

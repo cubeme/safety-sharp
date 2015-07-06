@@ -40,6 +40,7 @@ namespace Tests.Metadata.Components.StateMachines
 		protected override void Check()
 		{
 			Metadata.StateMachine.InitialStates.ShouldBe(new[] { Metadata.StateMachine.States[0], Metadata.StateMachine.States[1] });
+			Metadata.StateMachine.StateField.InitialValues.ShouldBe(new object[] { 0, 1 });
 		}
 
 		private enum S
@@ -61,6 +62,7 @@ namespace Tests.Metadata.Components.StateMachines
 		protected override void Check()
 		{
 			Metadata.StateMachine.InitialStates.ShouldBe(new[] { Metadata.StateMachine.States[0], Metadata.StateMachine.States[1] });
+			Metadata.StateMachine.StateField.InitialValues.ShouldBe(new object[] { 0, 1 });
 		}
 
 		private enum S
@@ -83,6 +85,7 @@ namespace Tests.Metadata.Components.StateMachines
 		{
 			Metadata.StateMachine.InitialStates.ShouldBe(
 				new[] { Metadata.StateMachine.States[0], Metadata.StateMachine.States[1], Metadata.StateMachine.States[2] });
+			Metadata.StateMachine.StateField.InitialValues.ShouldBe(new object[] { 0, 1, 2 });
 		}
 
 		private enum S

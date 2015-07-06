@@ -32,6 +32,11 @@ namespace SafetySharp.Runtime.BoundTree
 	public sealed class BlockStatement : Statement
 	{
 		/// <summary>
+		///     Represents the empty block statement.
+		/// </summary>
+		public static readonly BlockStatement Empty = new BlockStatement();
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="statements">The statements the block should consist of.</param>

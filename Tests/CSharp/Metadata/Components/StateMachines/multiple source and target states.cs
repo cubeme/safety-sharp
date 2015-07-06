@@ -77,26 +77,26 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.Transitions[0].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[0].SourceState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[0].TargetState.ShouldBe(Metadata.StateMachine.States[1]);
-			Metadata.StateMachine.Transitions[0].Action.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[1].Action.MethodInfo);
-			Metadata.StateMachine.Transitions[0].Guard.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[1].Guard.MethodInfo);
+			Metadata.StateMachine.Transitions[0].Action.ShouldBe(Metadata.StateMachine.Transitions[1].Action);
+			Metadata.StateMachine.Transitions[0].Guard.ShouldBe(Metadata.StateMachine.Transitions[1].Guard);
 
 			Metadata.StateMachine.Transitions[1].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[1].SourceState.ShouldBe(Metadata.StateMachine.States[0]);
 			Metadata.StateMachine.Transitions[1].TargetState.ShouldBe(Metadata.StateMachine.States[2]);
-			Metadata.StateMachine.Transitions[1].Action.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[2].Action.MethodInfo);
-			Metadata.StateMachine.Transitions[1].Guard.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[2].Guard.MethodInfo);
+			Metadata.StateMachine.Transitions[1].Action.ShouldBe(Metadata.StateMachine.Transitions[2].Action);
+			Metadata.StateMachine.Transitions[1].Guard.ShouldBe(Metadata.StateMachine.Transitions[2].Guard);
 
 			Metadata.StateMachine.Transitions[2].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[2].SourceState.ShouldBe(Metadata.StateMachine.States[2]);
 			Metadata.StateMachine.Transitions[2].TargetState.ShouldBe(Metadata.StateMachine.States[1]);
-			Metadata.StateMachine.Transitions[2].Action.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[3].Action.MethodInfo);
-			Metadata.StateMachine.Transitions[2].Guard.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[3].Guard.MethodInfo);
+			Metadata.StateMachine.Transitions[2].Action.ShouldBe(Metadata.StateMachine.Transitions[3].Action);
+			Metadata.StateMachine.Transitions[2].Guard.ShouldBe(Metadata.StateMachine.Transitions[3].Guard);
 
 			Metadata.StateMachine.Transitions[3].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[3].SourceState.ShouldBe(Metadata.StateMachine.States[2]);
 			Metadata.StateMachine.Transitions[3].TargetState.ShouldBe(Metadata.StateMachine.States[2]);
-			Metadata.StateMachine.Transitions[3].Action.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[0].Action.MethodInfo);
-			Metadata.StateMachine.Transitions[3].Guard.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[0].Guard.MethodInfo);
+			Metadata.StateMachine.Transitions[3].Action.ShouldBe(Metadata.StateMachine.Transitions[0].Action);
+			Metadata.StateMachine.Transitions[3].Guard.ShouldBe(Metadata.StateMachine.Transitions[0].Guard);
 		}
 
 		private enum S
