@@ -189,7 +189,7 @@ namespace Visualization
 				_sensorAlertStoryboard.Begin();
 
 			// Controller
-			switch (_model.Controller.GetState())
+			switch (_model.Controller.GetCurrentState<Controller.State>())
 			{
 				case global::PressureTank.Controller.State.Inactive:
 					ControllerScreen.Text = "Inactive";
