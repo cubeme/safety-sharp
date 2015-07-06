@@ -54,7 +54,7 @@ namespace SafetySharp.Runtime
 			: base(obj, method, name)
 		{
 			Requires.That(HasImplementation, () => method, "Transition actions must have an implementation.");
-			Requires.That(CanBeAffectedByFaultEffects, () => method, "Transition actions must be sensitive to fault effects.");
+			Requires.That(!CanBeAffectedByFaultEffects, () => method, "Transition actions must not be sensitive to fault effects.");
 			Requires.That(method.GetParameters().Length == 0, () => method, "A transition action cannot take any parameters.");
 			Requires.That(method.ReturnType == typeof(void), () => method, "A transition action must not return a value.");
 

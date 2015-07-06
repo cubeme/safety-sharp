@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CompilerServices
 {
 	using System;
 
 	/// <summary>
-	///     When applied to a method or property of a <see cref="Component" /> class or an
-	///     <see cref="IComponent" /> interface, marks the method or property as a provided port.
+	///     When applied to a method, indicates that the method is a guard or an action of a S# state machine.
 	/// </summary>
-	public sealed class ProvidedAttribute : Attribute
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+	public sealed class StateMachineMethodAttribute : Attribute
 	{
 	}
 }

@@ -38,7 +38,7 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 		/// </summary>
 		public override sealed SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
 		{
-			if (methodDeclaration.GenerateMethodBodyMetadata(SemanticModel))
+			if (methodDeclaration.RequiresBoundTreeGeneration(SemanticModel))
 				return Normalize(methodDeclaration);
 
 			return methodDeclaration;

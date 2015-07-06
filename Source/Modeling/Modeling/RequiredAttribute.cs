@@ -28,7 +28,7 @@ namespace SafetySharp.Modeling
 	///     When applied to a method or property of a <see cref="Component" /> class or an
 	///     <see cref="IComponent" /> interface, marks the method or property as a required port.
 	/// </summary>
-	public class RequiredAttribute : Attribute
+	public sealed class RequiredAttribute : Attribute
 	{
 	}
 }

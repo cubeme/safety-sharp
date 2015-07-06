@@ -24,6 +24,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 {
 	using System;
 	using System.Linq;
+	using CompilerServices;
 	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
@@ -177,8 +178,8 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 		/// <param name="methodDeclaration">The method declaration that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used for semantic analysis.</param>
 		[Pure]
-		public static bool GenerateMethodBodyMetadata([NotNull] this MethodDeclarationSyntax methodDeclaration,
-													  [NotNull] SemanticModel semanticModel)
+		public static bool RequiresBoundTreeGeneration([NotNull] this MethodDeclarationSyntax methodDeclaration,
+													   [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(methodDeclaration, () => methodDeclaration);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -192,6 +193,7 @@ namespace SafetySharp.Compiler.Roslyn.Syntax
 
 			return methodSymbol.IsProvidedPort(semanticModel) ||
 				   methodSymbol.IsUpdateMethod(semanticModel) ||
+				   methodSymbol.HasAttribute<StateMachineMethodAttribute>(semanticModel) ||
 				   methodSymbol.IsFaultEffect(semanticModel);
 		}
 

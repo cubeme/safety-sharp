@@ -54,7 +54,7 @@ namespace SafetySharp.Runtime
 			: base(obj, method, name)
 		{
 			Requires.That(HasImplementation, () => method, "Guards must have an implementation.");
-			Requires.That(CanBeAffectedByFaultEffects, () => method, "Guards must be sensitive to fault effects.");
+			Requires.That(!CanBeAffectedByFaultEffects, () => method, "Guards must not be sensitive to fault effects.");
 			Requires.That(method.GetParameters().Length == 0, () => method, "A guard cannot take any parameters.");
 			Requires.That(method.ReturnType == typeof(bool), () => method, "A guard must return a Boolean value.");
 

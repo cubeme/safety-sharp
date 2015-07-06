@@ -43,6 +43,7 @@
     <Compile Include="Analysis\Ctl.cs" />
     <Compile Include="Analysis\CtlFormula.cs" />
     <Compile Include="CompilerServices\FormulaFactory.cs" />
+    <Compile Include="CompilerServices\StateMachineMethodAttribute.cs" />
     <Compile Include="Runtime\ActionMetadata.cs" />
     <Compile Include="Runtime\Formulas\BinaryFormula.cs" />
     <Compile Include="Runtime\Formulas\BinaryFormulaOperator.cs" />

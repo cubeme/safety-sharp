@@ -134,7 +134,7 @@ namespace SafetySharp.Compiler.Normalization
 		private ExpressionSyntax GetReflectedMethod(ExpressionSyntax expression, bool isGuard)
 		{
 			var returnTypeExpression = SyntaxFactory.ParseTypeName(isGuard ? "bool" : "void");
-			var methodName = GetMethodName(expression, returnTypeExpression);
+			var methodName = GetMethodName(expression, isGuard);
 			var reflectionHelperType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(ReflectionHelpers)));
 			var getMethod = Syntax.MemberAccessExpression(reflectionHelperType, "GetMethod");
 
@@ -148,24 +148,24 @@ namespace SafetySharp.Compiler.Normalization
 		/// <summary>
 		///     Gets the name of the generated method that should be used for the guard or action.
 		/// </summary>
-		private string GetMethodName(ExpressionSyntax expression, SyntaxNode returnType)
+		private string GetMethodName(ExpressionSyntax expression, bool isGuard)
 		{
 			var lambda = expression as ParenthesizedLambdaExpressionSyntax;
 			return lambda == null
-				? GenerateMethod(Syntax.InvocationExpression(expression), returnType, expression.SpanStart)
-				: GenerateMethod(lambda.Body, returnType, expression.SpanStart);
+				? GenerateMethod(Syntax.InvocationExpression(expression), expression.SpanStart, isGuard)
+				: GenerateMethod(lambda.Body, expression.SpanStart, isGuard);
 		}
 
 		/// <summary>
 		///     Generates a method for the <paramref name="methodBody" />.
 		/// </summary>
-		private string GenerateMethod(SyntaxNode methodBody, SyntaxNode returnType, int position)
+		private string GenerateMethod(SyntaxNode methodBody, int position, bool isGuard)
 		{
-			var methodName = ("StateMachineMethod" + _stateMachineMethodCount++).ToSynthesized();
+			var methodName = ((isGuard ? "Guard" : "Action") + _stateMachineMethodCount++).ToSynthesized();
 
 			var method = (MethodDeclarationSyntax)Syntax.MethodDeclaration(
 				name: methodName,
-				returnType: returnType,
+				returnType: SyntaxFactory.ParseTypeName(isGuard ? "bool" : "void"),
 				accessibility: Accessibility.Private);
 
 			if (methodBody is StatementSyntax)
@@ -175,6 +175,8 @@ namespace SafetySharp.Compiler.Normalization
 				method = method.WithBody(null).WithExpressionBody(SyntaxFactory.ArrowExpressionClause((ExpressionSyntax)methodBody));
 				method = method.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 			}
+
+			method = (MethodDeclarationSyntax)Syntax.AddAttributes(method, Syntax.Attribute(typeof(StateMachineMethodAttribute).FullName));
 
 			AddMembers(SemanticModel.GetEnclosingSymbol(position).ContainingType, method);
 			return methodName;

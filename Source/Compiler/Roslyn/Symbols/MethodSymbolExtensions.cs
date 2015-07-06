@@ -93,7 +93,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		///     <see cref="Fault.UpdateFaultState" />, or <see cref="OccurrencePattern.UpdateOccurrenceState" /> within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsUpdateMethod([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
@@ -114,7 +114,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		///     <see cref="Fault.UpdateFaultState" />, or <see cref="OccurrencePattern.UpdateOccurrenceState" /> within the
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsUpdateMethod([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
@@ -128,7 +128,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a required port of a S# component or interface.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsRequiredPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
@@ -162,7 +162,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a required port of a S# component or interface.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsRequiredPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
@@ -176,7 +176,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a provided port of a S# component or interface.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsProvidedPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
@@ -196,6 +196,9 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 			if (methodSymbol.HasAttribute<SuppressTransformationAttribute>(compilation))
 				return false;
 
+			if (methodSymbol.HasAttribute<StateMachineMethodAttribute>(compilation))
+				return false;
+
 			switch (methodSymbol.ContainingType.TypeKind)
 			{
 				case TypeKind.Class:
@@ -212,7 +215,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a provided port of a S# component or interface.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsProvidedPort([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
@@ -226,7 +229,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a fault effect of a S# fault.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsFaultEffect([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
@@ -255,7 +258,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether <paramref name="methodSymbol" /> represents a fault effect of a S# fault.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
 		public static bool IsFaultEffect([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
@@ -270,7 +273,7 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		///     Checks whether <paramref name="methodSymbol" /> represents a built-in operator of the <see cref="int" />,
 		///     <see cref="bool" />, or <see cref="decimal" /> types.
 		/// </summary>
-		/// <param name="methodSymbol">The methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		[Pure]
 		public static bool IsBuiltInOperator([NotNull] this IMethodSymbol methodSymbol)
 		{
@@ -424,8 +427,8 @@ namespace SafetySharp.Compiler.Roslyn.Symbols
 		/// <summary>
 		///     Checks whether the two <see cref="IMethodSymbol" />s are signature-compatible.
 		/// </summary>
-		/// <param name="methodSymbol1">The first methodSymbol symbol that should be checked.</param>
-		/// <param name="methodSymbol2">The second methodSymbol symbol that should be checked.</param>
+		/// <param name="methodSymbol1">The first method symbol that should be checked.</param>
+		/// <param name="methodSymbol2">The second method symbol that should be checked.</param>
 		public static bool IsSignatureCompatibleTo([NotNull] this IMethodSymbol methodSymbol1, [NotNull] IMethodSymbol methodSymbol2)
 		{
 			Requires.NotNull(methodSymbol1, () => methodSymbol1);

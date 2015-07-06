@@ -33,7 +33,7 @@ namespace SafetySharp.CompilerServices
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
 	[Conditional("SafetySharpInternal")]
-	public class SuppressTransformationAttribute : Attribute
+	public sealed class SuppressTransformationAttribute : Attribute
 	{
 	}
 }
