@@ -100,7 +100,6 @@
     <Compile Include="Models\Tsam\TsamPassiveFormFS01Tests.fs" />
     <Compile Include="Models\Tsam\TsamPassiveFormGCFK09Tests.fs" />
     <Compile Include="Models\Tsam\TsamToDotTests.fs" />
-    <Compile Include="Models\Transformations\SsmToScmTests.fs" />
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
     <Compile Include="Analysis\VcGuardWithAssignmentModelFastTests.fs" />
     <Compile Include="Analysis\VcGuardWithAssignmentModelTests.fs" />
