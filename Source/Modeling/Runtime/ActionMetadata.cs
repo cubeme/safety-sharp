@@ -34,6 +34,11 @@ namespace SafetySharp.Runtime
 	public sealed class ActionMetadata : MethodMetadata
 	{
 		/// <summary>
+		///     The delegate that can be used to execute the guard.
+		/// </summary>
+		private readonly Action _delegate;
+
+		/// <summary>
 		///     The metadata of the transition the action belongs to.
 		/// </summary>
 		private readonly Lazy<TransitionMetadata> _transition;
@@ -53,6 +58,7 @@ namespace SafetySharp.Runtime
 			Requires.That(method.ReturnType == typeof(void), () => method, "A transition action must not return a value.");
 
 			_transition = new Lazy<TransitionMetadata>(() => DeclaringObject.StateMachine.Transitions.Single(transition => transition.Action == this));
+			_delegate = (Action)CreateDelegate(typeof(Action));
 		}
 
 		/// <summary>
@@ -69,6 +75,14 @@ namespace SafetySharp.Runtime
 		public TransitionMetadata Transition
 		{
 			get { return _transition.Value; }
+		}
+
+		/// <summary>
+		///     Executes the guard, returning <c>true</c> to indicate that the guard holds.
+		/// </summary>
+		public void Execute()
+		{
+			_delegate();
 		}
 	}
 }

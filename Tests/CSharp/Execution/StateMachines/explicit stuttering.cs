@@ -20,55 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution
+namespace Tests.Execution.StateMachines
 {
 	using System;
-	using Microsoft.CodeAnalysis;
+	using SafetySharp.CompilerServices;
+	using Shouldly;
 	using Utilities;
-	using Xunit;
 
-	public partial class ExecutionTests : Tests
+	internal class C4 : TestComponent
 	{
-		[Theory, MemberData("DiscoverTests", "Fields")]
-		public void Fields(string test, SyntaxTree code)
+		public C4()
 		{
-			ExecuteDynamicTests(code);
+			AddTransition(S.A, S.A);
+			AddInitialState(S.A);
 		}
 
-		[Theory, MemberData("DiscoverTests", "ProvidedPorts")]
-		public void ProvidedPorts(string test, SyntaxTree code)
+		[SuppressTransformation]
+		protected override void Check()
 		{
-			ExecuteDynamicTests(code);
+			GetCurrentState<S>().ShouldBe(S.A);
+			InState(S.A).ShouldBe(true);
+			InState(S.B).ShouldBe(false);
+
+			ExecuteUpdate();
+
+			GetCurrentState<S>().ShouldBe(S.A);
+			InState(S.A).ShouldBe(true);
+			InState(S.B).ShouldBe(false);
 		}
 
-		[Theory, MemberData("DiscoverTests", "StateMachines")]
-		public void StateMachines(string test, SyntaxTree code)
+		private enum S
 		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "RequiredPorts")]
-		public void RequiredPorts(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Steps")]
-		public void Steps(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory(Skip = "Transformation Fails"), MemberData("DiscoverTests", "Faults")]
-		public void Faults(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "SemanticEquality")]
-		public void SemanticEquality(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
+			A,
+			B,
+			C
 		}
 	}
 }

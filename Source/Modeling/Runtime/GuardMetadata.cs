@@ -34,6 +34,11 @@ namespace SafetySharp.Runtime
 	public sealed class GuardMetadata : MethodMetadata
 	{
 		/// <summary>
+		///     The delegate that can be used to execute the guard.
+		/// </summary>
+		private readonly Func<bool> _delegate;
+
+		/// <summary>
 		///     The metadata of the transition the guard belongs to.
 		/// </summary>
 		private readonly Lazy<TransitionMetadata> _transition;
@@ -53,6 +58,7 @@ namespace SafetySharp.Runtime
 			Requires.That(method.ReturnType == typeof(bool), () => method, "A guard must return a Boolean value.");
 
 			_transition = new Lazy<TransitionMetadata>(() => DeclaringObject.StateMachine.Transitions.Single(transition => transition.Guard == this));
+			_delegate = (Func<bool>)CreateDelegate(typeof(Func<bool>));
 		}
 
 		/// <summary>
@@ -69,6 +75,14 @@ namespace SafetySharp.Runtime
 		public TransitionMetadata Transition
 		{
 			get { return _transition.Value; }
+		}
+
+		/// <summary>
+		///     Executes the guard, returning <c>true</c> to indicate that the guard holds.
+		/// </summary>
+		public bool Execute()
+		{
+			return _delegate();
 		}
 	}
 }

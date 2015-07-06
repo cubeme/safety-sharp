@@ -34,29 +34,44 @@ namespace SafetySharp.Runtime
 	public sealed class StateMetadata
 	{
 		/// <summary>
+		///     The random number generator that is used to nondeterministically select one of the enabled transitions.
+		/// </summary>
+		private static readonly Random _random = new Random();
+
+		/// <summary>
 		///     The component the state belongs to.
 		/// </summary>
 		private readonly Component _component;
 
 		/// <summary>
+		///     A cached list that is used to store the indices of the currently enabled transitions.
+		/// </summary>
+		private readonly List<int> _enabledTransitions = new List<int>();
+
+		/// <summary>
 		///     The transitions entering this state.
 		/// </summary>
-		private readonly Lazy<IEnumerable<TransitionMetadata>> _incomingTransitions;
+		private readonly Lazy<IReadOnlyList<TransitionMetadata>> _incomingTransitions;
 
 		/// <summary>
 		///     The transitions leaving this state.
 		/// </summary>
-		private readonly Lazy<IEnumerable<TransitionMetadata>> _outgoingTransitions;
+		private readonly Lazy<IReadOnlyList<TransitionMetadata>> _outgoingTransitions;
 
 		/// <summary>
 		///     The predecessor states of this state.
 		/// </summary>
-		private readonly Lazy<IEnumerable<StateMetadata>> _predecessorStates;
+		private readonly Lazy<IReadOnlyList<StateMetadata>> _predecessorStates;
 
 		/// <summary>
 		///     The successor states of this state.
 		/// </summary>
-		private readonly Lazy<IEnumerable<StateMetadata>> _successorStates;
+		private readonly Lazy<IReadOnlyList<StateMetadata>> _successorStates;
+
+		/// <summary>
+		///     The priority overrides that affects the nondeterministic selection of enabled transitions.
+		/// </summary>
+		private int[] _priorityOverrides;
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -64,28 +79,36 @@ namespace SafetySharp.Runtime
 		/// <param name="component">The component the state belongs to.</param>
 		/// <param name="identifier">The identifier of the state.</param>
 		/// <param name="name">The user-friendly name of the state.</param>
-		internal StateMetadata(Component component, int identifier, string name)
+		/// <param name="enumValue">The original enumeration literal that was used to create the state.</param>
+		internal StateMetadata(Component component, int identifier, string name, object enumValue)
 		{
 			Requires.NotNull(component, () => component);
 			Requires.That(identifier >= 0, () => identifier, "The identifier must be equal to or greater than 0.");
 			Requires.NotNullOrWhitespace(name, () => name);
+			Requires.NotNull(enumValue, () => enumValue);
 
 			Identifier = identifier;
 			Name = name;
+			EnumValue = enumValue;
 			_component = component;
 
-			_incomingTransitions = new Lazy<IEnumerable<TransitionMetadata>>(
+			_incomingTransitions = new Lazy<IReadOnlyList<TransitionMetadata>>(
 				() => StateMachine.Transitions.Where(transition => transition.TargetState == this).ToArray());
 
-			_outgoingTransitions = new Lazy<IEnumerable<TransitionMetadata>>(
+			_outgoingTransitions = new Lazy<IReadOnlyList<TransitionMetadata>>(
 				() => StateMachine.Transitions.Where(transition => transition.SourceState == this).ToArray());
 
-			_successorStates = new Lazy<IEnumerable<StateMetadata>>(
+			_successorStates = new Lazy<IReadOnlyList<StateMetadata>>(
 				() => OutgoingTransitions.Select(transition => transition.TargetState).Distinct().ToArray());
 
-			_predecessorStates = new Lazy<IEnumerable<StateMetadata>>(
+			_predecessorStates = new Lazy<IReadOnlyList<StateMetadata>>(
 				() => IncomingTransitions.Select(transition => transition.SourceState).Distinct().ToArray());
 		}
+
+		/// <summary>
+		///     The original enumeration literal that was used to create the state.
+		/// </summary>
+		public object EnumValue { get; private set; }
 
 		/// <summary>
 		///     Gets the identifier of the state that is unique within its <see cref="StateMachine" />.
@@ -108,7 +131,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the transitions leaving this state.
 		/// </summary>
-		public IEnumerable<TransitionMetadata> OutgoingTransitions
+		public IReadOnlyList<TransitionMetadata> OutgoingTransitions
 		{
 			get { return _outgoingTransitions.Value; }
 		}
@@ -116,7 +139,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the transitions entering this state.
 		/// </summary>
-		public IEnumerable<TransitionMetadata> IncomingTransitions
+		public IReadOnlyList<TransitionMetadata> IncomingTransitions
 		{
 			get { return _incomingTransitions.Value; }
 		}
@@ -124,7 +147,7 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the successor states of the state that have incoming transitions from this state.
 		/// </summary>
-		public IEnumerable<StateMetadata> SuccessorStates
+		public IReadOnlyList<StateMetadata> SuccessorStates
 		{
 			get { return _successorStates.Value; }
 		}
@@ -132,9 +155,72 @@ namespace SafetySharp.Runtime
 		/// <summary>
 		///     Gets the predecessors states of the state that have outgoing transitions to this state.
 		/// </summary>
-		public IEnumerable<StateMetadata> PredecessorStates
+		public IReadOnlyList<StateMetadata> PredecessorStates
 		{
 			get { return _predecessorStates.Value; }
+		}
+
+		/// <summary>
+		///     Gets the priority overrides that can be used to (partially or fully) override the nondeterministic selection
+		///     of outgoing transitions.
+		/// </summary>
+		public int[] PriorityOverrides
+		{
+			get { return _priorityOverrides ?? (_priorityOverrides = new int[OutgoingTransitions.Count]); }
+		}
+
+		/// <summary>
+		///     Resets the <see cref="PriorityOverrides" /> property to its initial value.
+		/// </summary>
+		public void ResetPriorityOverrides()
+		{
+			for (var i = 0; i < OutgoingTransitions.Count; ++i)
+				PriorityOverrides[i] = 0;
+		}
+
+		/// <summary>
+		///     Checks whether any transitions are active and changes the state accordingly.
+		/// </summary>
+		internal StateMetadata Update()
+		{
+			_enabledTransitions.Clear();
+
+			// Determine the enabled transitions
+			for (var i = 0; i < OutgoingTransitions.Count; ++i)
+			{
+				if (OutgoingTransitions[i].IsCurrentlyEnabled())
+					_enabledTransitions.Add(i);
+			}
+
+			// If there are no enabled transitions, don't change the state
+			if (_enabledTransitions.Count == 0)
+				return this;
+
+			// If there is only one enabled transition, take it; otherwise, select one nondeterministically
+			int chosenTransition;
+			if (_enabledTransitions.Count == 1)
+				chosenTransition = _enabledTransitions[0];
+			else
+			{
+				// Remove all enabled transitions whose dynamic priority is too low
+				var maxPriority = _enabledTransitions.Select(transition => PriorityOverrides[transition]).Max();
+				for (var i = 0; i < _enabledTransitions.Count; ++i)
+				{
+					if (PriorityOverrides[_enabledTransitions[i]] < maxPriority)
+						_enabledTransitions.RemoveAt(i--);
+				}
+
+				// If we've now ruled out all nondeterminism, take the transition with the highest dynamic priority
+				if (_enabledTransitions.Count == 1)
+					chosenTransition = _enabledTransitions[0];
+
+				// Otherwise, nondeterministically choose one of the remaining transitions
+				chosenTransition = _enabledTransitions[_random.Next(0, _enabledTransitions.Count)];
+			}
+
+			// Execute the transition's action and return the new state
+			OutgoingTransitions[chosenTransition].ExecuteAction();
+			return OutgoingTransitions[chosenTransition].TargetState;
 		}
 	}
 }

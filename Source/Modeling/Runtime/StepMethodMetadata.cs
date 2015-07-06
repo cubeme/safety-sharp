@@ -43,6 +43,8 @@ namespace SafetySharp.Runtime
 			: base(obj, stepMethod, baseMethod: baseStepMethod)
 		{
 			Requires.That(HasImplementation, () => stepMethod, "Step methods must have an implementation.");
+			Requires.That(!(obj is Component) || CanBeAffectedByFaultEffects, () => stepMethod,
+				"Step methods of components must be sensitive to fault effects.");
 		}
 
 		/// <summary>

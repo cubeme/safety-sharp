@@ -301,7 +301,7 @@ namespace SafetySharp.Runtime
 			/// </summary>
 			/// <param name="sourceState">The source state that should be left by the transition.</param>
 			/// <param name="targetState">The target state that should be entered by the transition.</param>
-			/// <param name="guard">The (side effect free) guard that determines whether the transition can be taken.</param>
+			/// <param name="guard">The guard that determines whether the transition can be taken.</param>
 			/// <param name="action">The action that should be executed when the transition is taken.</param>
 			public void WithTransition(object sourceState, object targetState, MethodInfo guard, MethodInfo action)
 			{
@@ -327,7 +327,7 @@ namespace SafetySharp.Runtime
 				StateMetadata metadata;
 				if (!_states.TryGetValue(state, out metadata))
 				{
-					metadata = new StateMetadata(_component, _states.Count, _stateNameScope.MakeUnique(state.ToString()));
+					metadata = new StateMetadata(_component, _states.Count, _stateNameScope.MakeUnique(state.ToString()), state);
 					_states.Add(state, metadata);
 				}
 

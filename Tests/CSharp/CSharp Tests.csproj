@@ -260,6 +260,17 @@
     <Compile Include="Execution\RequiredPorts\replaced.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffectsFree\switch.cs" />
     <Compile Include="Execution\SemanticEquality\SideEffects\update methods.cs" />
+    <Compile Include="Execution\StateMachines\implicit stuttering.cs" />
+    <Compile Include="Execution\StateMachines\explicit stuttering.cs" />
+    <Compile Include="Execution\StateMachines\nondeterministic selection by priority.cs" />
+    <Compile Include="Execution\StateMachines\nondeterministic selection by guard.cs" />
+    <Compile Include="Execution\StateMachines\nondeterministic choice.cs" />
+    <Compile Include="Execution\StateMachines\with guard, with action.cs" />
+    <Compile Include="Execution\StateMachines\no guard, with action.cs" />
+    <Compile Include="Execution\StateMachines\with guard, no action .cs" />
+    <Compile Include="Execution\StateMachines\no guard, no action.cs" />
+    <Compile Include="Execution\StateMachines\multiple initial states.cs" />
+    <Compile Include="Execution\StateMachines\single initial state.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\and.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\equivalence.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\expression operators.cs" />

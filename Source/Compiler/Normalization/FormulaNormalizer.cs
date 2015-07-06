@@ -138,6 +138,14 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		public override SyntaxNode VisitArgument(ArgumentSyntax argument)
 		{
+			// Special case for array accesses, as Roslyn doesn't return a symbol for the argument
+			if (argument.Parent.Parent is ElementAccessExpressionSyntax)
+			{
+				var arrayExpression = ((ElementAccessExpressionSyntax)argument.Parent.Parent).Expression;
+				if (SemanticModel.GetTypeInfo(arrayExpression).Type.TypeKind == TypeKind.Array)
+					return base.VisitArgument(argument);
+			}
+
 			var parameterSymbol = argument.GetParameterSymbol(SemanticModel);
 			if (parameterSymbol.RefKind != RefKind.None)
 				return base.VisitArgument(argument);

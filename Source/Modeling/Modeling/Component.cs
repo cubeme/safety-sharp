@@ -41,11 +41,6 @@ namespace SafetySharp.Modeling
 		private Action _updateMethod = null;
 
 		/// <summary>
-		/// The currently active state of the component or <c>null</c> if there is none.
-		/// </summary>
-		private StateMetadata _currentState;
-
-		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		protected Component()
@@ -65,6 +60,11 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
+		///     Gets or sets the currently active state of the component or <c>null</c> if there is none.
+		/// </summary>
+		internal StateMetadata CurrentState { get; set; }
+
+		/// <summary>
 		///     Gets all required ports declared by the component that are accessible from the location of the caller.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -82,7 +82,6 @@ namespace SafetySharp.Modeling
 			get { throw new InvalidOperationException("This property cannot be used outside of a port binding expression."); }
 		}
 
-
 		/// <summary>
 		///     Updates the internal state of the component.
 		/// </summary>
@@ -92,6 +91,28 @@ namespace SafetySharp.Modeling
 		public virtual void Update()
 		{
 			_updateMethod();
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether this component is currently in <paramref name="state" />.
+		/// </summary>
+		/// <typeparam name="TState">The type of the state that should be checked.</typeparam>
+		/// <param name="state">The state that should be checked.</param>
+		public bool InState<TState>(TState state)
+			where TState : struct, IConvertible
+		{
+			return CurrentState != null && CurrentState.EnumValue.Equals(state);
+		}
+
+		/// <summary>
+		///     Gets the current state of the component.
+		/// </summary>
+		/// <typeparam name="TState">The type of the state.</typeparam>
+		public TState GetCurrentState<TState>()
+			where TState : struct, IConvertible
+		{
+			Requires.That(CurrentState != null, "Component has no state.");
+			return (TState)CurrentState.EnumValue;
 		}
 
 		/// <summary>
@@ -109,15 +130,18 @@ namespace SafetySharp.Modeling
 		[UsedImplicitly]
 		private void UpdateBehavior()
 		{
+			if (CurrentState != null)
+				CurrentState = CurrentState.Update();
 		}
 
 		/// <summary>
-		///     Creates the empty method body for the <see cref="Update" /> method.
+		///     Creates the method body for the <see cref="Update" /> method.
 		/// </summary>
 		[UsedImplicitly]
 		private MethodBodyMetadata UpdateMethodBody()
 		{
-			return new MethodBodyMetadata(new VariableMetadata[0], new VariableMetadata[0], new BlockStatement());
+			return new MethodBodyMetadata(new VariableMetadata[0], new VariableMetadata[0],
+				new BlockStatement());
 		}
 
 		/// <summary>
@@ -150,7 +174,7 @@ namespace SafetySharp.Modeling
 		/// <param name="from">The source state that should be left by the transition.</param>
 		/// <param name="to">The target state that should be entered by the transition.</param>
 		/// <param name="guard">
-		///     The (side effect free) guard that determines whether the transition can be taken. A value of <c>null</c>
+		///     The guard that determines whether the transition can be taken. A value of <c>null</c>
 		///     indicates that the transition can always be taken when the state machine is in the source state.
 		/// </param>
 		/// <param name="action">

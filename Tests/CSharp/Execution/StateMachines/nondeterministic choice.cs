@@ -20,55 +20,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Execution
+namespace Tests.Execution.StateMachines
 {
 	using System;
-	using Microsoft.CodeAnalysis;
+	using SafetySharp.CompilerServices;
+	using Shouldly;
 	using Utilities;
-	using Xunit;
 
-	public partial class ExecutionTests : Tests
+	internal class C9 : TestComponent
 	{
-		[Theory, MemberData("DiscoverTests", "Fields")]
-		public void Fields(string test, SyntaxTree code)
+		private int _f;
+
+		public C9()
 		{
-			ExecuteDynamicTests(code);
+			AddTransition(S.A, S.B, action: () => _f = 17);
+			AddTransition(S.A, S.A, action: () => --_f);
+			AddInitialState(S.A);
 		}
 
-		[Theory, MemberData("DiscoverTests", "ProvidedPorts")]
-		public void ProvidedPorts(string test, SyntaxTree code)
+		[SuppressTransformation]
+		protected override void Check()
 		{
-			ExecuteDynamicTests(code);
+			GetCurrentState<S>().ShouldBe(S.A);
+			InState(S.A).ShouldBe(true);
+			InState(S.B).ShouldBe(false);
+
+			for (var i = 0; i < 100; ++i)
+			{
+				var f = _f;
+				ExecuteUpdate();
+
+				(GetCurrentState<S>() == S.A || GetCurrentState<S>() == S.B).ShouldBe(true);
+
+				if (GetCurrentState<S>() == S.A)
+				{
+					InState(S.A).ShouldBe(true);
+					InState(S.B).ShouldBe(false);
+					_f.ShouldBe(f - 1);
+				}
+				else
+				{
+					InState(S.A).ShouldBe(false);
+					InState(S.B).ShouldBe(true);
+					_f.ShouldBe(17);
+				}
+			}
 		}
 
-		[Theory, MemberData("DiscoverTests", "StateMachines")]
-		public void StateMachines(string test, SyntaxTree code)
+		private enum S
 		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "RequiredPorts")]
-		public void RequiredPorts(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "Steps")]
-		public void Steps(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory(Skip = "Transformation Fails"), MemberData("DiscoverTests", "Faults")]
-		public void Faults(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
-		}
-
-		[Theory, MemberData("DiscoverTests", "SemanticEquality")]
-		public void SemanticEquality(string test, SyntaxTree code)
-		{
-			ExecuteDynamicTests(code);
+			A,
+			B,
+			C
 		}
 	}
 }

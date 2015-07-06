@@ -42,7 +42,7 @@ namespace SafetySharp.Runtime
 		/// <param name="component">The component the transition belongs to.</param>
 		/// <param name="sourceState">The source state that should be left by the transition.</param>
 		/// <param name="targetState">The target state that should be entered by the transition.</param>
-		/// <param name="guard">The (side effect free) guard that determines whether the transition can be taken.</param>
+		/// <param name="guard">The guard that determines whether the transition can be taken.</param>
 		/// <param name="action">The action that should be executed when the transition is taken.</param>
 		internal TransitionMetadata(Component component, StateMetadata sourceState, StateMetadata targetState,
 									GuardMetadata guard, ActionMetadata action)
@@ -69,7 +69,7 @@ namespace SafetySharp.Runtime
 		public StateMetadata TargetState { get; private set; }
 
 		/// <summary>
-		///     Gets the (side effect free) guard that determines whether the transition can be taken. A value of <c>null</c>
+		///     Gets the guard that determines whether the transition can be taken. A value of <c>null</c>
 		///     indicates that the transition can always be taken when the state machine is in the source state.
 		/// </summary>
 		public GuardMetadata Guard { get; private set; }
@@ -86,6 +86,26 @@ namespace SafetySharp.Runtime
 		public StateMachineMetadata StateMachine
 		{
 			get { return _component.Metadata.StateMachine; }
+		}
+
+		/// <summary>
+		///     Checks the transition's <see cref="Guard" /> to check if the transition is currently enabled.
+		/// </summary>
+		public bool IsCurrentlyEnabled()
+		{
+			if (Guard == null)
+				return true;
+
+			return Guard.Execute();
+		}
+
+		/// <summary>
+		///     Executes the transition's <see cref="Action" /> if there is one.
+		/// </summary>
+		public void ExecuteAction()
+		{
+			if (Action != null)
+				Action.Execute();
 		}
 	}
 }

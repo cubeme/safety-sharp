@@ -34,6 +34,11 @@ namespace SafetySharp.Runtime
 	public sealed class StateMachineMetadata
 	{
 		/// <summary>
+		///     The random number generator that is used to nondeterministically select one of the initial states.
+		/// </summary>
+		private static readonly Random _random = new Random();
+
+		/// <summary>
 		///     The metadata of the declaring component.
 		/// </summary>
 		private readonly Component _component;
@@ -63,6 +68,8 @@ namespace SafetySharp.Runtime
 			States = stateArray;
 			InitialStates = initialStatesArray;
 			Transitions = transitionArray;
+
+			_component.CurrentState = InitialStates[_random.Next(0, InitialStates.Count)];
 		}
 
 		/// <summary>
@@ -71,6 +78,21 @@ namespace SafetySharp.Runtime
 		public ComponentMetadata DeclaringComponent
 		{
 			get { return _component.Metadata; }
+		}
+
+		/// <summary>
+		///     Gets the metadata for the <paramref name="state" />.
+		/// </summary>
+		/// <param name="state">The state the metadata should be retrieved for.</param>
+		public StateMetadata this[object state]
+		{
+			get
+			{
+				var metadata = States.SingleOrDefault(s => s.EnumValue.Equals(state));
+				Requires.That(metadata != null, () => state, "Unknown state.");
+
+				return metadata;
+			}
 		}
 
 		/// <summary>

@@ -34,7 +34,7 @@ namespace Tests.Metadata.Components.StateMachines
 			AddTransition(S.A, S.B);
 		}
 
-		private enum S
+		protected enum S
 		{
 			A,
 			B
@@ -59,24 +59,28 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.States[0].Name.ShouldBe("A");
 			Metadata.StateMachine.States[0].OutgoingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[0] });
 			Metadata.StateMachine.States[0].IncomingTransitions.ShouldBeEmpty();
+			Metadata.StateMachine.States[0].EnumValue.ShouldBe(C6.S.A);
 
 			Metadata.StateMachine.States[1].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.States[1].Identifier.ShouldBe(1);
 			Metadata.StateMachine.States[1].Name.ShouldBe("B");
 			Metadata.StateMachine.States[1].OutgoingTransitions.ShouldBeEmpty();
 			Metadata.StateMachine.States[1].IncomingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[0] });
+			Metadata.StateMachine.States[1].EnumValue.ShouldBe(C6.S.B);
 
 			Metadata.StateMachine.States[2].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.States[2].Identifier.ShouldBe(2);
 			Metadata.StateMachine.States[2].Name.ShouldBe("A1");
 			Metadata.StateMachine.States[2].OutgoingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[1] });
 			Metadata.StateMachine.States[2].IncomingTransitions.ShouldBeEmpty();
+			Metadata.StateMachine.States[2].EnumValue.ShouldBe(S.A);
 
 			Metadata.StateMachine.States[3].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.States[3].Identifier.ShouldBe(3);
 			Metadata.StateMachine.States[3].Name.ShouldBe("B1");
 			Metadata.StateMachine.States[3].OutgoingTransitions.ShouldBeEmpty();
 			Metadata.StateMachine.States[3].IncomingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[1] });
+			Metadata.StateMachine.States[3].EnumValue.ShouldBe(S.B);
 
 			Metadata.StateMachine.Transitions.Count.ShouldBe(2);
 
@@ -93,7 +97,7 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.Transitions[1].Action.ShouldBe(null);
 		}
 
-		private enum S
+		private new enum S
 		{
 			A,
 			B

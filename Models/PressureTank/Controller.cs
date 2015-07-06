@@ -67,14 +67,14 @@ namespace PressureTank
 		private readonly Sensor _sensor;
 
 		/// <summary>
+		///   The current state of the controller.
+		/// </summary>
+		private readonly State _state = State.Inactive;
+
+		/// <summary>
 		///   The timer that is used to determine whether the pump should be disabled to prevent tank ruptures.
 		/// </summary>
 		private readonly Timer _timer;
-
-		/// <summary>
-		///   The current state of the controller.
-		/// </summary>
-		private State _state = State.Inactive;
 
 		/// <summary>
 		///   Initializes a new instance.
@@ -105,17 +105,7 @@ namespace PressureTank
 				});
 
 			AddTransition(
-				from: State.StoppedByTimer,
-				to: State.Filling,
-				guard: _sensor.IsEmpty);
-
-			AddTransition(
-				from: State.StoppedBySensor,
-				to: State.Filling,
-				guard: _sensor.IsEmpty);
-
-			AddTransition(
-				from: State.Inactive,
+				from: State.StoppedByTimer | State.StoppedBySensor | State.Inactive,
 				to: State.Filling,
 				guard: _sensor.IsEmpty);
 

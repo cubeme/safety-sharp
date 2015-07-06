@@ -48,142 +48,145 @@ namespace Tests.Execution.Faults.StepMethods
 		[SuppressTransformation]
 		protected override void Check()
 		{
-			var nondeterministicBehavior = (NondeterministicFaultInjection)Metadata.UpdateMethods[1].Behaviors.FaultInjections[0];
+			var nondeterministicBehavior = (NondeterministicFaultInjection)Metadata.StepMethod.Behaviors.FaultInjections[0];
 
-			// N faults
-			Metadata.Faults[0].Fault.IsOccurring = false;
-			Metadata.Faults[1].Fault.IsOccurring = false;
-			Metadata.Faults[2].Fault.IsOccurring = false;
+			for (var i = 0; i < 100; ++i)
+			{
+				// N faults
+				Metadata.Faults[0].Fault.IsOccurring = false;
+				Metadata.Faults[1].Fault.IsOccurring = false;
+				Metadata.Faults[2].Fault.IsOccurring = false;
 
-			M().ShouldBe(-1);
+				M().ShouldBe(-1);
 
-			// One fault, deterministic
-			Metadata.Faults[0].Fault.IsOccurring = true;
-			Metadata.Faults[1].Fault.IsOccurring = false;
-			Metadata.Faults[2].Fault.IsOccurring = false;
+				// One fault, deterministic
+				Metadata.Faults[0].Fault.IsOccurring = true;
+				Metadata.Faults[1].Fault.IsOccurring = false;
+				Metadata.Faults[2].Fault.IsOccurring = false;
 
-			M().ShouldBe(1);
+				M().ShouldBe(1);
 
-			//
-			Metadata.Faults[0].Fault.IsOccurring = false;
-			Metadata.Faults[1].Fault.IsOccurring = true;
-			Metadata.Faults[2].Fault.IsOccurring = false;
+				//
+				Metadata.Faults[0].Fault.IsOccurring = false;
+				Metadata.Faults[1].Fault.IsOccurring = true;
+				Metadata.Faults[2].Fault.IsOccurring = false;
 
-			M().ShouldBe(2);
+				M().ShouldBe(2);
 
-			//
-			Metadata.Faults[0].Fault.IsOccurring = false;
-			Metadata.Faults[1].Fault.IsOccurring = false;
-			Metadata.Faults[2].Fault.IsOccurring = true;
+				//
+				Metadata.Faults[0].Fault.IsOccurring = false;
+				Metadata.Faults[1].Fault.IsOccurring = false;
+				Metadata.Faults[2].Fault.IsOccurring = true;
 
-			M().ShouldBe(3);
+				M().ShouldBe(3);
 
-			// Two faults, nondeterministic
-			Metadata.Faults[0].Fault.IsOccurring = true;
-			Metadata.Faults[1].Fault.IsOccurring = true;
-			Metadata.Faults[2].Fault.IsOccurring = false;
+				// Two faults, nondeterministic
+				Metadata.Faults[0].Fault.IsOccurring = true;
+				Metadata.Faults[1].Fault.IsOccurring = true;
+				Metadata.Faults[2].Fault.IsOccurring = false;
 
-			var result = M();
-			(result == 1 || result == 2).ShouldBe(true);
+				var result = M();
+				(result == 1 || result == 2).ShouldBe(true);
 
-			//
-			Metadata.Faults[0].Fault.IsOccurring = true;
-			Metadata.Faults[1].Fault.IsOccurring = false;
-			Metadata.Faults[2].Fault.IsOccurring = true;
+				//
+				Metadata.Faults[0].Fault.IsOccurring = true;
+				Metadata.Faults[1].Fault.IsOccurring = false;
+				Metadata.Faults[2].Fault.IsOccurring = true;
 
-			result = M();
-			(result == 1 || result == 3).ShouldBe(true);
+				result = M();
+				(result == 1 || result == 3).ShouldBe(true);
 
-			//
-			Metadata.Faults[0].Fault.IsOccurring = false;
-			Metadata.Faults[1].Fault.IsOccurring = true;
-			Metadata.Faults[2].Fault.IsOccurring = true;
+				//
+				Metadata.Faults[0].Fault.IsOccurring = false;
+				Metadata.Faults[1].Fault.IsOccurring = true;
+				Metadata.Faults[2].Fault.IsOccurring = true;
 
-			result = M();
-			(result == 3 || result == 2).ShouldBe(true);
+				result = M();
+				(result == 3 || result == 2).ShouldBe(true);
 
-			// Three faults, nondeterministic
-			Metadata.Faults[0].Fault.IsOccurring = true;
-			Metadata.Faults[1].Fault.IsOccurring = true;
-			Metadata.Faults[2].Fault.IsOccurring = true;
+				// Three faults, nondeterministic
+				Metadata.Faults[0].Fault.IsOccurring = true;
+				Metadata.Faults[1].Fault.IsOccurring = true;
+				Metadata.Faults[2].Fault.IsOccurring = true;
 
-			result = M();
-			(result == 1 || result == 2 || result == 3).ShouldBe(true);
+				result = M();
+				(result == 1 || result == 2 || result == 3).ShouldBe(true);
 
-			//
-			nondeterministicBehavior.ResetPriorityOverrides();
-			nondeterministicBehavior.PriorityOverrides[0] = 17;
-			nondeterministicBehavior.PriorityOverrides[1] = 17;
+				//
+				nondeterministicBehavior.ResetPriorityOverrides();
+				nondeterministicBehavior.PriorityOverrides[0] = 17;
+				nondeterministicBehavior.PriorityOverrides[1] = 17;
 
-			result = M();
-			(result == 1 || result == 2).ShouldBe(true);
+				result = M();
+				(result == 1 || result == 2).ShouldBe(true);
 
-			//
-			nondeterministicBehavior.ResetPriorityOverrides();
-			nondeterministicBehavior.PriorityOverrides[0] = 17;
-			nondeterministicBehavior.PriorityOverrides[2] = 17;
-			Debugger.Break();
-			result = M();
-			(result == 1 || result == 3).ShouldBe(true);
+				//
+				nondeterministicBehavior.ResetPriorityOverrides();
+				nondeterministicBehavior.PriorityOverrides[0] = 17;
+				nondeterministicBehavior.PriorityOverrides[2] = 17;
+				Debugger.Break();
+				result = M();
+				(result == 1 || result == 3).ShouldBe(true);
 
-			//
-			nondeterministicBehavior.ResetPriorityOverrides();
-			nondeterministicBehavior.PriorityOverrides[2] = 17;
-			nondeterministicBehavior.PriorityOverrides[1] = 17;
+				//
+				nondeterministicBehavior.ResetPriorityOverrides();
+				nondeterministicBehavior.PriorityOverrides[2] = 17;
+				nondeterministicBehavior.PriorityOverrides[1] = 17;
 
-			result = M();
-			(result == 3 || result == 2).ShouldBe(true);
+				result = M();
+				(result == 3 || result == 2).ShouldBe(true);
 
-			// Two faults, deterministic
-			nondeterministicBehavior.ResetPriorityOverrides();
-			Metadata.Faults[0].Fault.IsOccurring = true;
-			Metadata.Faults[1].Fault.IsOccurring = true;
-			Metadata.Faults[2].Fault.IsOccurring = false;
+				// Two faults, deterministic
+				nondeterministicBehavior.ResetPriorityOverrides();
+				Metadata.Faults[0].Fault.IsOccurring = true;
+				Metadata.Faults[1].Fault.IsOccurring = true;
+				Metadata.Faults[2].Fault.IsOccurring = false;
 
-			nondeterministicBehavior.PriorityOverrides[0] = 17;
-			M().ShouldBe(1);
+				nondeterministicBehavior.PriorityOverrides[0] = 17;
+				M().ShouldBe(1);
 
-			nondeterministicBehavior.PriorityOverrides[1] = 33;
-			M().ShouldBe(2);
+				nondeterministicBehavior.PriorityOverrides[1] = 33;
+				M().ShouldBe(2);
 
-			//
-			nondeterministicBehavior.ResetPriorityOverrides();
-			Metadata.Faults[0].Fault.IsOccurring = true;
-			Metadata.Faults[1].Fault.IsOccurring = false;
-			Metadata.Faults[2].Fault.IsOccurring = true;
+				//
+				nondeterministicBehavior.ResetPriorityOverrides();
+				Metadata.Faults[0].Fault.IsOccurring = true;
+				Metadata.Faults[1].Fault.IsOccurring = false;
+				Metadata.Faults[2].Fault.IsOccurring = true;
 
-			nondeterministicBehavior.PriorityOverrides[0] = 17;
-			M().ShouldBe(1);
+				nondeterministicBehavior.PriorityOverrides[0] = 17;
+				M().ShouldBe(1);
 
-			nondeterministicBehavior.PriorityOverrides[2] = 33;
-			M().ShouldBe(3);
+				nondeterministicBehavior.PriorityOverrides[2] = 33;
+				M().ShouldBe(3);
 
-			//
-			nondeterministicBehavior.ResetPriorityOverrides();
-			Metadata.Faults[0].Fault.IsOccurring = false;
-			Metadata.Faults[1].Fault.IsOccurring = true;
-			Metadata.Faults[2].Fault.IsOccurring = true;
+				//
+				nondeterministicBehavior.ResetPriorityOverrides();
+				Metadata.Faults[0].Fault.IsOccurring = false;
+				Metadata.Faults[1].Fault.IsOccurring = true;
+				Metadata.Faults[2].Fault.IsOccurring = true;
 
-			nondeterministicBehavior.PriorityOverrides[1] = 17;
-			M().ShouldBe(2);
+				nondeterministicBehavior.PriorityOverrides[1] = 17;
+				M().ShouldBe(2);
 
-			nondeterministicBehavior.PriorityOverrides[2] = 33;
-			M().ShouldBe(3);
+				nondeterministicBehavior.PriorityOverrides[2] = 33;
+				M().ShouldBe(3);
 
-			// Three faults, deterministic
-			nondeterministicBehavior.ResetPriorityOverrides();
-			Metadata.Faults[0].Fault.IsOccurring = true;
-			Metadata.Faults[1].Fault.IsOccurring = true;
-			Metadata.Faults[2].Fault.IsOccurring = true;
+				// Three faults, deterministic
+				nondeterministicBehavior.ResetPriorityOverrides();
+				Metadata.Faults[0].Fault.IsOccurring = true;
+				Metadata.Faults[1].Fault.IsOccurring = true;
+				Metadata.Faults[2].Fault.IsOccurring = true;
 
-			nondeterministicBehavior.PriorityOverrides[2] = 17;
-			M().ShouldBe(3);
+				nondeterministicBehavior.PriorityOverrides[2] = 17;
+				M().ShouldBe(3);
 
-			nondeterministicBehavior.PriorityOverrides[1] = 77;
-			M().ShouldBe(2);
+				nondeterministicBehavior.PriorityOverrides[1] = 77;
+				M().ShouldBe(2);
 
-			nondeterministicBehavior.PriorityOverrides[0] = 111;
-			M().ShouldBe(1);
+				nondeterministicBehavior.PriorityOverrides[0] = 111;
+				M().ShouldBe(1);
+			}
 		}
 
 		[Persistent]

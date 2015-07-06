@@ -47,6 +47,7 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.States[0].IncomingTransitions.ShouldBeEmpty();
 			Metadata.StateMachine.States[0].SuccessorStates.ShouldBe(new[] { Metadata.StateMachine.States[1] });
 			Metadata.StateMachine.States[0].PredecessorStates.ShouldBeEmpty();
+			Metadata.StateMachine.States[0].EnumValue.ShouldBe(S.A);
 
 			Metadata.StateMachine.States[1].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.States[1].Identifier.ShouldBe(1);
@@ -55,6 +56,7 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.States[1].IncomingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[0] });
 			Metadata.StateMachine.States[1].SuccessorStates.ShouldBeEmpty();
 			Metadata.StateMachine.States[1].PredecessorStates.ShouldBe(new[] { Metadata.StateMachine.States[0] });
+			Metadata.StateMachine.States[1].EnumValue.ShouldBe(S.B);
 
 			Metadata.StateMachine.Transitions.Count.ShouldBe(1);
 			Metadata.StateMachine.Transitions[0].StateMachine.ShouldBe(Metadata.StateMachine);
