@@ -141,7 +141,7 @@ namespace Tests.Utilities
 
 			var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
 			if (errors.Length != 0)
-				throw new CSharpException(errors, "Failed to create compilation.");
+				throw new CSharpException(errors, "Failed to create compilation.\n\n{0}", SyntaxTreesToString(compilation));
 
 			return compilation;
 		}
@@ -159,7 +159,7 @@ namespace Tests.Utilities
 				.ToArray();
 
 			if (errors.Length != 0)
-				throw new CSharpException(errors, "Failed to create compilation.");
+				throw new CSharpException(errors, "Failed to create compilation.\n\n{0}", SyntaxTreesToString(compilation));
 		}
 
 		/// <summary>

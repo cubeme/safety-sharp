@@ -87,38 +87,44 @@ namespace PressureTank
 			_pump = pump;
 			_sensor = sensor;
 			_timer = timer;
+
+			AddTransition(
+				from: State.Filling,
+				to: State.StoppedByTimer,
+				guard: _timer.HasElapsed,
+				action: _pump.Disable);
+
+			AddTransition(
+				from: State.Filling,
+				to: State.StoppedBySensor,
+				guard: _sensor.IsFull,
+				action: () =>
+				{
+					_pump.Disable();
+					_timer.Stop();
+				});
+
+			AddTransition(
+				from: State.StoppedByTimer,
+				to: State.Filling,
+				guard: _sensor.IsEmpty);
+
+			AddTransition(
+				from: State.StoppedBySensor,
+				to: State.Filling,
+				guard: _sensor.IsEmpty);
+
+			AddTransition(
+				from: State.Inactive,
+				to: State.Filling,
+				guard: _sensor.IsEmpty);
+
+			AddInitialState(State.Inactive);
 		}
 
 		/// <summary>
 		///   Gets the state of the controller.
 		/// </summary>
 		public State GetState() => _state;
-
-		/// <summary>
-		///   Updates the controller's internal state.
-		/// </summary>
-		public override void Update()
-		{
-			if (_state == State.Filling)
-			{
-				if (_timer.HasElapsed())
-				{
-					_pump.Disable();
-					_state = State.StoppedByTimer;
-				}
-				else if (_sensor.IsFull())
-				{
-					_pump.Disable();
-					_timer.Stop();
-					_state = State.StoppedBySensor;
-				}
-			}
-			else if (_sensor.IsEmpty())
-			{
-				_timer.Start();
-				_pump.Enable();
-				_state = State.Filling;
-			}
-		}
 	}
 }

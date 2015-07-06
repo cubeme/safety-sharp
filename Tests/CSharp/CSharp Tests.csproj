@@ -294,10 +294,12 @@
     <Compile Include="Formulas\LinearTemporalLogic\finally.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\next.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\state expression.cs" />
+    <Compile Include="Metadata\Components\StateMachines\multiple source and target states.cs" />
+    <Compile Include="Metadata\Components\StateMachines\multiple target states.cs" />
+    <Compile Include="Metadata\Components\StateMachines\multiple source states.cs" />
     <Compile Include="Metadata\Components\StateMachines\multiple transitions, multiple states.cs" />
     <Compile Include="Metadata\Components\StateMachines\multiple state enums.cs" />
     <Compile Include="Metadata\Components\StateMachines\multiple initial states.cs" />
-    <Compile Include="Metadata\Components\StateMachines\non-enum states.cs" />
     <Compile Include="Metadata\Components\StateMachines\single initial state.cs" />
     <Compile Include="Metadata\Components\StateMachines\no initial state.cs" />
     <Compile Include="Metadata\Components\StateMachines\single transition, multiple states.cs" />

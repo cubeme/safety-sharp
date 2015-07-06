@@ -24,27 +24,31 @@ namespace Tests.Metadata.Components.StateMachines
 {
 	using System;
 	using SafetySharp.CompilerServices;
+	using SafetySharp.Modeling;
 	using Shouldly;
 	using Utilities;
 
 	internal class C5 : TestComponent
 	{
+		private readonly C _c = new C();
+
 		public C5()
 		{
 			AddTransition(S.A, S.A, guard: () => true);
 			AddTransition(S.A, S.A, action: () => { });
 			AddTransition(S.A, S.A, () => true, () => { });
-			AddTransition(S.A, S.A, Guard, Action);
+			AddTransition(S.A, S.A, _c.Guard, () => NonVoidReturning());
+			AddTransition(S.A, S.A, _c.Guard, Action);
 			AddInitialState(S.A);
-		}
-
-		private bool Guard()
-		{
-			return false;
 		}
 
 		private void Action()
 		{
+		}
+
+		private int NonVoidReturning()
+		{
+			return 1;
 		}
 
 		[SuppressTransformation]
@@ -57,7 +61,8 @@ namespace Tests.Metadata.Components.StateMachines
 				Metadata.StateMachine.Transitions[0],
 				Metadata.StateMachine.Transitions[1],
 				Metadata.StateMachine.Transitions[2],
-				Metadata.StateMachine.Transitions[3]
+				Metadata.StateMachine.Transitions[3],
+				Metadata.StateMachine.Transitions[4]
 			};
 
 			Metadata.StateMachine.States[0].StateMachine.ShouldBe(Metadata.StateMachine);
@@ -65,8 +70,10 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.States[0].Name.ShouldBe("A");
 			Metadata.StateMachine.States[0].OutgoingTransitions.ShouldBe(transitions);
 			Metadata.StateMachine.States[0].IncomingTransitions.ShouldBe(transitions);
+			Metadata.StateMachine.States[0].SuccessorStates.ShouldBe(new[] { Metadata.StateMachine.States[0] });
+			Metadata.StateMachine.States[0].PredecessorStates.ShouldBe(new[] { Metadata.StateMachine.States[0] });
 
-			Metadata.StateMachine.Transitions.Count.ShouldBe(4);
+			Metadata.StateMachine.Transitions.Count.ShouldBe(5);
 
 			Metadata.StateMachine.Transitions[0].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[0].SourceState.ShouldBe(Metadata.StateMachine.States[0]);
@@ -97,6 +104,22 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.Transitions[3].Action.ShouldNotBe(null);
 			Metadata.StateMachine.Transitions[3].Guard.Transition.ShouldBe(Metadata.StateMachine.Transitions[3]);
 			Metadata.StateMachine.Transitions[3].Action.Transition.ShouldBe(Metadata.StateMachine.Transitions[3]);
+
+			Metadata.StateMachine.Transitions[4].StateMachine.ShouldBe(Metadata.StateMachine);
+			Metadata.StateMachine.Transitions[4].SourceState.ShouldBe(Metadata.StateMachine.States[0]);
+			Metadata.StateMachine.Transitions[4].TargetState.ShouldBe(Metadata.StateMachine.States[0]);
+			Metadata.StateMachine.Transitions[4].Guard.ShouldNotBe(null);
+			Metadata.StateMachine.Transitions[4].Action.ShouldNotBe(null);
+			Metadata.StateMachine.Transitions[4].Guard.Transition.ShouldBe(Metadata.StateMachine.Transitions[4]);
+			Metadata.StateMachine.Transitions[4].Action.Transition.ShouldBe(Metadata.StateMachine.Transitions[4]);
+		}
+
+		private class C : Component
+		{
+			public bool Guard()
+			{
+				return false;
+			}
 		}
 
 		private enum S

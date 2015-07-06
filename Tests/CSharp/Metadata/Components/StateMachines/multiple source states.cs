@@ -27,14 +27,16 @@ namespace Tests.Metadata.Components.StateMachines
 	using Shouldly;
 	using Utilities;
 
-	internal class C8 : TestComponent
+	internal class C15 : TestComponent
 	{
-		public C8()
+		public C15()
 		{
-			AddTransition(S.A, S.B);
-			AddTransition(S.B, S.C);
-			AddTransition(S.C, S.A);
+			AddTransition(S.A | S.B | S.C, S.A, guard: () => true);
 			AddInitialState(S.A);
+		}
+
+		private void Action()
+		{
 		}
 
 		[SuppressTransformation]
@@ -46,44 +48,46 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.States[0].Identifier.ShouldBe(0);
 			Metadata.StateMachine.States[0].Name.ShouldBe("A");
 			Metadata.StateMachine.States[0].OutgoingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[0] });
-			Metadata.StateMachine.States[0].IncomingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[2] });
-			Metadata.StateMachine.States[0].SuccessorStates.ShouldBe(new[] { Metadata.StateMachine.States[1] });
-			Metadata.StateMachine.States[0].PredecessorStates.ShouldBe(new[] { Metadata.StateMachine.States[2] });
+			Metadata.StateMachine.States[0].IncomingTransitions.ShouldBe(
+				new[] { Metadata.StateMachine.Transitions[0], Metadata.StateMachine.Transitions[1], Metadata.StateMachine.Transitions[2] });
+			Metadata.StateMachine.States[0].SuccessorStates.ShouldBe(new[] { Metadata.StateMachine.States[0] });
+			Metadata.StateMachine.States[0].PredecessorStates.ShouldBe(
+				new[] { Metadata.StateMachine.States[0], Metadata.StateMachine.States[1], Metadata.StateMachine.States[2] });
 
 			Metadata.StateMachine.States[1].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.States[1].Identifier.ShouldBe(1);
 			Metadata.StateMachine.States[1].Name.ShouldBe("B");
 			Metadata.StateMachine.States[1].OutgoingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[1] });
-			Metadata.StateMachine.States[1].IncomingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[0] });
-			Metadata.StateMachine.States[1].SuccessorStates.ShouldBe(new[] { Metadata.StateMachine.States[2] });
-			Metadata.StateMachine.States[1].PredecessorStates.ShouldBe(new[] { Metadata.StateMachine.States[0] });
+			Metadata.StateMachine.States[1].IncomingTransitions.ShouldBeEmpty();
+			Metadata.StateMachine.States[1].SuccessorStates.ShouldBe(new[] { Metadata.StateMachine.States[0] });
+			Metadata.StateMachine.States[1].PredecessorStates.ShouldBeEmpty();
 
 			Metadata.StateMachine.States[2].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.States[2].Identifier.ShouldBe(2);
 			Metadata.StateMachine.States[2].Name.ShouldBe("C");
 			Metadata.StateMachine.States[2].OutgoingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[2] });
-			Metadata.StateMachine.States[2].IncomingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[1] });
+			Metadata.StateMachine.States[2].IncomingTransitions.ShouldBeEmpty();
 			Metadata.StateMachine.States[2].SuccessorStates.ShouldBe(new[] { Metadata.StateMachine.States[0] });
-			Metadata.StateMachine.States[2].PredecessorStates.ShouldBe(new[] { Metadata.StateMachine.States[1] });
+			Metadata.StateMachine.States[2].PredecessorStates.ShouldBeEmpty();
 
 			Metadata.StateMachine.Transitions.Count.ShouldBe(3);
 
 			Metadata.StateMachine.Transitions[0].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[0].SourceState.ShouldBe(Metadata.StateMachine.States[0]);
-			Metadata.StateMachine.Transitions[0].TargetState.ShouldBe(Metadata.StateMachine.States[1]);
-			Metadata.StateMachine.Transitions[0].Guard.ShouldBe(null);
+			Metadata.StateMachine.Transitions[0].TargetState.ShouldBe(Metadata.StateMachine.States[0]);
+			Metadata.StateMachine.Transitions[0].Guard.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[1].Guard.MethodInfo);
 			Metadata.StateMachine.Transitions[0].Action.ShouldBe(null);
 
 			Metadata.StateMachine.Transitions[1].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[1].SourceState.ShouldBe(Metadata.StateMachine.States[1]);
-			Metadata.StateMachine.Transitions[1].TargetState.ShouldBe(Metadata.StateMachine.States[2]);
-			Metadata.StateMachine.Transitions[1].Guard.ShouldBe(null);
+			Metadata.StateMachine.Transitions[1].TargetState.ShouldBe(Metadata.StateMachine.States[0]);
+			Metadata.StateMachine.Transitions[1].Guard.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[2].Guard.MethodInfo);
 			Metadata.StateMachine.Transitions[1].Action.ShouldBe(null);
 
 			Metadata.StateMachine.Transitions[2].StateMachine.ShouldBe(Metadata.StateMachine);
 			Metadata.StateMachine.Transitions[2].SourceState.ShouldBe(Metadata.StateMachine.States[2]);
 			Metadata.StateMachine.Transitions[2].TargetState.ShouldBe(Metadata.StateMachine.States[0]);
-			Metadata.StateMachine.Transitions[2].Guard.ShouldBe(null);
+			Metadata.StateMachine.Transitions[2].Guard.MethodInfo.ShouldBe(Metadata.StateMachine.Transitions[0].Guard.MethodInfo);
 			Metadata.StateMachine.Transitions[2].Action.ShouldBe(null);
 		}
 

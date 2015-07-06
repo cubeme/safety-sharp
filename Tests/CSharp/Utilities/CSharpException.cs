@@ -49,6 +49,7 @@ namespace Tests.Utilities
 		/// <param name="diagnostics">The diagnostics that should be appended to the exception message.</param>
 		/// <param name="message">The format message of the exception.</param>
 		/// <param name="args">The format arguments.</param>
+		[StringFormatMethod("message")]
 		public CSharpException(Diagnostic[] diagnostics, string message, params object[] args)
 			: base("{0}\n\n{1}", String.Format(message, args), ToString(diagnostics))
 		{

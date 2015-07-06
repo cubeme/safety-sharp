@@ -29,11 +29,11 @@ namespace SafetySharp.Compiler.Normalization
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
 	using Runtime;
-	using Utilities;
 
 	/// <summary>
 	///     Normalizes the initialization of state machines, calling the appropriate builder methods and generating the guard and
@@ -72,12 +72,7 @@ namespace SafetySharp.Compiler.Normalization
 			var builder = Syntax.InvocationExpression(getBuilderMethod, Syntax.ThisExpression());
 
 			if (methodSymbol.Name == "AddTransition")
-			{
-				// .WithTransition(from, to, guard, action)
-				var withTransition = Syntax.MemberAccessExpression(builder, "WithTransition");
-				var transitionArguments = GetTransitionArguments(invocationExpression);
-				return Syntax.ExpressionStatement(Syntax.InvocationExpression(withTransition, transitionArguments)).EnsureLineCount(statement);
-			}
+				return SyntaxFactory.Block(NormalizeTransitions(builder, invocationExpression)).NormalizeWhitespace().EnsureLineCount(statement);
 
 			// .WithInitialStates(states)
 			var withInitialStates = Syntax.MemberAccessExpression(builder, "WithInitialStates");
@@ -86,79 +81,102 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Gets the arguments for the <see cref="ComponentMetadata.Builder.WithTransition" /> method.
+		///     Normalizes the call to the <see cref="Component.AddTransition{TSource,TTarget}" /> method.
 		/// </summary>
-		private IEnumerable<ArgumentSyntax> GetTransitionArguments(InvocationExpressionSyntax invocationExpression)
+		private IEnumerable<StatementSyntax> NormalizeTransitions(SyntaxNode builder, InvocationExpressionSyntax invocationExpression)
 		{
-			var arguments = from argument in invocationExpression.ArgumentList.Arguments
-							let parameter = argument.GetParameterSymbol(SemanticModel)
-							orderby parameter.Ordinal
-							select new { argument.Expression, Parameter = parameter };
+			var arguments = invocationExpression.ArgumentList.Arguments;
+			var sourceStates = arguments[0].Descendants<MemberAccessExpressionSyntax>();
+			var targetStates = arguments[1].Descendants<MemberAccessExpressionSyntax>();
 
-			var index = 0;
-			foreach (var argument in arguments)
+			var guard = Syntax.NullLiteralExpression();
+			var action = Syntax.NullLiteralExpression();
+
+			if (arguments.Count > 2)
 			{
-				var expression = argument.Expression;
-
-				for (; index < argument.Parameter.Ordinal; ++index)
-					yield return (ArgumentSyntax)Syntax.Argument(RefKind.None, Syntax.NullLiteralExpression());
-
-				if (argument.Parameter.Ordinal == 2 || argument.Parameter.Ordinal == 3)
-				{
-					var returnType = argument.Parameter.Ordinal == 2 ? "bool" : "void";
-					var returnTypeExpression = SyntaxFactory.ParseTypeName(returnType);
-					var methodName = GetMethodName(expression, returnTypeExpression);
-					var reflectionHelperType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(ReflectionHelpers)));
-					var getMethod = Syntax.MemberAccessExpression(reflectionHelperType, "GetMethod");
-
-					var declaringType = Syntax.TypeOfExpression(SemanticModel.GetEnclosingSymbol(invocationExpression.SpanStart).ContainingType);
-					var argumentTypes = Syntax.ArrayCreationExpression<Type>(SemanticModel, Enumerable.Empty<ExpressionSyntax>());
-
-					expression = (ExpressionSyntax)Syntax.InvocationExpression(getMethod, declaringType, 
-						Syntax.LiteralExpression(methodName), argumentTypes, SyntaxFactory.TypeOfExpression(returnTypeExpression));
-				}
-
-				++index;
-				yield return (ArgumentSyntax)Syntax.Argument(RefKind.None, expression).NormalizeWhitespace();
+				if (arguments[2].GetParameterSymbol(SemanticModel).Ordinal == 2)
+					guard = GetReflectedMethod(arguments[2].Expression, isGuard: true);
+				else
+					action = GetReflectedMethod(arguments[2].Expression, isGuard: false);
 			}
 
-			for (; index < 4; ++index)
-				yield return (ArgumentSyntax)Syntax.Argument(RefKind.None, Syntax.NullLiteralExpression());
+			if (arguments.Count > 3)
+			{
+				if (arguments[3].GetParameterSymbol(SemanticModel).Ordinal == 2)
+					guard = GetReflectedMethod(arguments[3].Expression, isGuard: true);
+				else
+					action = GetReflectedMethod(arguments[3].Expression, isGuard: false);
+			}
+
+			foreach (var sourceState in sourceStates)
+			{
+				foreach (var targetState in targetStates)
+				{
+					// .WithTransition(from, to, guard, action)
+					var withTransition = Syntax.MemberAccessExpression(builder, "WithTransition");
+					var transitionArguments = new[]
+					{
+						Syntax.Argument(RefKind.None, sourceState),
+						Syntax.Argument(RefKind.None, targetState),
+						Syntax.Argument(RefKind.None, guard),
+						Syntax.Argument(RefKind.None, action)
+					};
+
+					yield return (StatementSyntax)Syntax.ExpressionStatement(Syntax.InvocationExpression(withTransition, transitionArguments));
+				}
+			}
 		}
 
 		/// <summary>
-		///     Gets the name of the method that should be used for the guard or action. Either generates a method for a lambda or uses
-		///     the name of the non-anonymous method.
+		///     Gets the expression for the reflected method that should be used for the guard or action.
+		///     Either generates a method for the specified lambda or or method group.
+		/// </summary>
+		private ExpressionSyntax GetReflectedMethod(ExpressionSyntax expression, bool isGuard)
+		{
+			var returnTypeExpression = SyntaxFactory.ParseTypeName(isGuard ? "bool" : "void");
+			var methodName = GetMethodName(expression, returnTypeExpression);
+			var reflectionHelperType = Syntax.TypeExpression(SemanticModel.GetTypeSymbol(typeof(ReflectionHelpers)));
+			var getMethod = Syntax.MemberAccessExpression(reflectionHelperType, "GetMethod");
+
+			var declaringType = Syntax.TypeOfExpression(SemanticModel.GetEnclosingSymbol(expression.SpanStart).ContainingType);
+			var argumentTypes = Syntax.ArrayCreationExpression<Type>(SemanticModel, Enumerable.Empty<ExpressionSyntax>());
+
+			return (ExpressionSyntax)Syntax.InvocationExpression(getMethod, declaringType,
+				Syntax.LiteralExpression(methodName), argumentTypes, SyntaxFactory.TypeOfExpression(returnTypeExpression));
+		}
+
+		/// <summary>
+		///     Gets the name of the generated method that should be used for the guard or action.
 		/// </summary>
 		private string GetMethodName(ExpressionSyntax expression, SyntaxNode returnType)
 		{
 			var lambda = expression as ParenthesizedLambdaExpressionSyntax;
-			if (lambda != null)
-				return GenerateMethod(lambda, returnType);
-
-			var identifier = expression as IdentifierNameSyntax;
-			if (identifier != null)
-				return identifier.Identifier.ValueText;
-
-			Assert.NotReached("Unexpected guard or action expression: '{0}'.", expression.Kind());
-			return null;
+			return lambda == null
+				? GenerateMethod(Syntax.InvocationExpression(expression), returnType, expression.SpanStart)
+				: GenerateMethod(lambda.Body, returnType, expression.SpanStart);
 		}
 
 		/// <summary>
-		///     Generates a method for the <paramref name="lambda" />.
+		///     Generates a method for the <paramref name="methodBody" />.
 		/// </summary>
-		private string GenerateMethod(ParenthesizedLambdaExpressionSyntax lambda, SyntaxNode returnType)
+		private string GenerateMethod(SyntaxNode methodBody, SyntaxNode returnType, int position)
 		{
 			var methodName = ("StateMachineMethod" + _stateMachineMethodCount++).ToSynthesized();
-			var body = lambda.Body is ExpressionSyntax ? Syntax.ReturnStatement(lambda.Body) : lambda.Body;
 
-			var method = Syntax.MethodDeclaration(
+			var method = (MethodDeclarationSyntax)Syntax.MethodDeclaration(
 				name: methodName,
 				returnType: returnType,
-				statements: new[] { body },
 				accessibility: Accessibility.Private);
 
-			AddMembers(SemanticModel.GetEnclosingSymbol(lambda.SpanStart).ContainingType, (MemberDeclarationSyntax)method);
+			if (methodBody is StatementSyntax)
+				method = method.WithBody((BlockSyntax)methodBody);
+			else
+			{
+				method = method.WithBody(null).WithExpressionBody(SyntaxFactory.ArrowExpressionClause((ExpressionSyntax)methodBody));
+				method = method.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+			}
+
+			AddMembers(SemanticModel.GetEnclosingSymbol(position).ContainingType, method);
 			return methodName;
 		}
 	}

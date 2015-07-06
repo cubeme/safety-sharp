@@ -44,6 +44,8 @@ namespace Tests.Metadata.Components.StateMachines
 			Metadata.StateMachine.States[0].Name.ShouldBe("A");
 			Metadata.StateMachine.States[0].OutgoingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[0] });
 			Metadata.StateMachine.States[0].IncomingTransitions.ShouldBe(new[] { Metadata.StateMachine.Transitions[0] });
+			Metadata.StateMachine.States[0].SuccessorStates.ShouldBe(new[] { Metadata.StateMachine.States[0] });
+			Metadata.StateMachine.States[0].PredecessorStates.ShouldBe(new[] { Metadata.StateMachine.States[0] });
 
 			Metadata.StateMachine.Transitions.Count.ShouldBe(1);
 			Metadata.StateMachine.Transitions[0].StateMachine.ShouldBe(Metadata.StateMachine);

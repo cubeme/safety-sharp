@@ -49,6 +49,16 @@ namespace SafetySharp.Runtime
 		private readonly Lazy<IEnumerable<TransitionMetadata>> _outgoingTransitions;
 
 		/// <summary>
+		///     The predecessor states of this state.
+		/// </summary>
+		private readonly Lazy<IEnumerable<StateMetadata>> _predecessorStates;
+
+		/// <summary>
+		///     The successor states of this state.
+		/// </summary>
+		private readonly Lazy<IEnumerable<StateMetadata>> _successorStates;
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="component">The component the state belongs to.</param>
@@ -69,6 +79,12 @@ namespace SafetySharp.Runtime
 
 			_outgoingTransitions = new Lazy<IEnumerable<TransitionMetadata>>(
 				() => StateMachine.Transitions.Where(transition => transition.SourceState == this).ToArray());
+
+			_successorStates = new Lazy<IEnumerable<StateMetadata>>(
+				() => OutgoingTransitions.Select(transition => transition.TargetState).Distinct().ToArray());
+
+			_predecessorStates = new Lazy<IEnumerable<StateMetadata>>(
+				() => IncomingTransitions.Select(transition => transition.SourceState).Distinct().ToArray());
 		}
 
 		/// <summary>
@@ -103,6 +119,22 @@ namespace SafetySharp.Runtime
 		public IEnumerable<TransitionMetadata> IncomingTransitions
 		{
 			get { return _incomingTransitions.Value; }
+		}
+
+		/// <summary>
+		///     Gets the successor states of the state that have incoming transitions from this state.
+		/// </summary>
+		public IEnumerable<StateMetadata> SuccessorStates
+		{
+			get { return _successorStates.Value; }
+		}
+
+		/// <summary>
+		///     Gets the predecessors states of the state that have outgoing transitions to this state.
+		/// </summary>
+		public IEnumerable<StateMetadata> PredecessorStates
+		{
+			get { return _predecessorStates.Value; }
 		}
 	}
 }

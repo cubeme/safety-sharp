@@ -41,6 +41,11 @@ namespace SafetySharp.Modeling
 		private Action _updateMethod = null;
 
 		/// <summary>
+		/// The currently active state of the component or <c>null</c> if there is none.
+		/// </summary>
+		private StateMetadata _currentState;
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		protected Component()
@@ -76,6 +81,7 @@ namespace SafetySharp.Modeling
 		{
 			get { throw new InvalidOperationException("This property cannot be used outside of a port binding expression."); }
 		}
+
 
 		/// <summary>
 		///     Updates the internal state of the component.
