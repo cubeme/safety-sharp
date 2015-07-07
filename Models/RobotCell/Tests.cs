@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -19,18 +19,29 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-namespace ProductionCell
+namespace RobotCell
 {
-	using SafetySharp.Modeling;
+	using System;
+	using FluentAssertions;
+	using NUnit.Framework;
+	using SafetySharp.Simulation;
 
-	public class CartEngine : Component
+	[TestFixture]
+	public class Tests
 	{
-		public void MoveTo(Position position)
+		[Test]
+		public void ShouldConfigureItself()
 		{
-			ChangePosition(position);
-		}
+			var model = new RobotCellModel();
+			var simulator = new Simulator(model);
 
-		public extern void ChangePosition(Position position);
+			simulator.Simulate(TimeSpan.FromSeconds(1));
+
+			foreach (var robot in model.Robots)
+				robot.RequiresReconfiguration().Should().BeFalse();
+
+			foreach (var cart in model.Carts)
+				cart.RequiresReconfiguration().Should().BeFalse();
+		}
 	}
 }

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace ProductionCell
+namespace RobotCell
 {
 	using SafetySharp.Modeling;
 
@@ -28,7 +28,15 @@ namespace ProductionCell
 	{
 		private bool _isDamaged;
 		private RobotTask _nextTask = RobotTask.Drill;
+		private Position _position = Position.StorageIn;
+
+		public void MoveTo(Position position)
+		{
+			_position = position;
+		}
+
 		public bool IsDamaged() => _isDamaged;
+		public Position GetPosition() => _position;
 
 		public void ApplyTool(RobotTask task)
 		{

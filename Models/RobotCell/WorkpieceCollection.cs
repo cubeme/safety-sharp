@@ -20,32 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace ProductionCell
+namespace RobotCell
 {
 	using SafetySharp.Modeling;
 
-	public class Environment : Component
+	public class WorkpieceCollection : Component
 	{
-		private readonly Cart _cart1 = new Cart();
-		private readonly Cart _cart2 = new Cart();
-		private readonly Cart _cart3 = new Cart();
-		private readonly Cart _cart4 = new Cart();
-		private readonly Workpiece _workpiece1 = new Workpiece();
-		private readonly Workpiece _workpiece2 = new Workpiece();
-		private readonly Workpiece _workpiece3 = new Workpiece();
+		private readonly Workpiece _workpiece1;
+		private readonly Workpiece _workpiece2;
+		private readonly Workpiece _workpiece3;
+
+		public WorkpieceCollection(Workpiece workpiece1, Workpiece workpiece2, Workpiece workpiece3)
+		{
+			_workpiece1 = workpiece1;
+			_workpiece2 = workpiece2;
+			_workpiece3 = workpiece3;
+		}
 
 		public Position GetWorkpiecePosition(int workpiece)
 		{
 			switch (workpiece)
 			{
 				case 0:
-					return _cart1.GetPosition();
+					return _workpiece1.GetPosition();
 				case 1:
-					return _cart2.GetPosition();
+					return _workpiece2.GetPosition();
 				case 2:
-					return _cart3.GetPosition();
-				case 3:
-					return _cart4.GetPosition();
+					return _workpiece3.GetPosition();
 				default:
 					return Position.Unknown;
 			}
@@ -53,7 +54,16 @@ namespace ProductionCell
 
 		private int GetWorkpieceAt(Position position)
 		{
-			return 0;
+			if (_workpiece1.GetPosition() == position)
+				return 0;
+
+			if (_workpiece2.GetPosition() == position)
+				return 1;
+
+			if (_workpiece3.GetPosition() == position)
+				return 2;
+
+			return -1;
 		}
 
 		public bool ApplyTool(Position position, RobotTask task)

@@ -33,7 +33,6 @@ namespace SafetySharp.Compiler.Normalization
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using Runtime;
 
 	/// <summary>
 	///     Normalizes the initialization of state machines, calling the appropriate builder methods and generating the guard and

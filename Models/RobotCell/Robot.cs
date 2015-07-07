@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace ProductionCell
+namespace RobotCell
 {
 	using SafetySharp.Modeling;
 
@@ -31,13 +31,15 @@ namespace ProductionCell
 		private readonly WorkpieceSensor _sensor;
 		private readonly Tool _tightenTool;
 		private RobotTask _task = RobotTask.None;
+		private Position _position;
 
-		public Robot(WorkpieceSensor sensor, Tool drillTool, Tool insertTool, Tool tightenTool)
+		public Robot(WorkpieceSensor sensor, Tool drillTool, Tool insertTool, Tool tightenTool, Position position)
 		{
 			_sensor = sensor;
 			_drillTool = drillTool;
 			_insertTool = insertTool;
 			_tightenTool = tightenTool;
+			_position = position;
 
 			InitialState(State.AwaitingReconfiguration);
 
@@ -63,6 +65,8 @@ namespace ProductionCell
 				guard: () => _task == RobotTask.None || IsCurrentToolBroken());
 		}
 
+		public Position GetPosition() => _position;
+
 		public void Reconfigure(RobotTask task)
 		{
 			_task = task;
@@ -71,6 +75,11 @@ namespace ProductionCell
 		public bool RequiresReconfiguration()
 		{
 			return InState(State.AwaitingReconfiguration);
+		}
+
+		public bool WorkpieceProcessed()
+		{
+			return InState(State.WorkpieceProcessed);
 		}
 
 		private bool IsCurrentToolBroken()

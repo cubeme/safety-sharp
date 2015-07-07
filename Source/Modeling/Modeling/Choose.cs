@@ -25,12 +25,12 @@ namespace SafetySharp.Modeling
 	using System;
 
 	/// <summary>
-	///     Provides methods for nondeterministic choices.
+	///   Provides methods for nondeterministic choices.
 	/// </summary>
 	public static class Choose
 	{
 		/// <summary>
-		///     Returns one of the literal values of the enumeration type <typeparamref name="T" /> nondeterministically.
+		///   Returns one of the literal values of the enumeration type <typeparamref name="T" /> nondeterministically.
 		/// </summary>
 		/// <typeparam name="T">The type of the enumeration.</typeparam>
 		public static T Literal<T>()
@@ -40,7 +40,7 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Returns a Boolean value nondeterministically.
+		///   Returns a Boolean value nondeterministically.
 		/// </summary>
 		public static bool Boolean()
 		{
@@ -48,7 +48,17 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Returns a value found in <paramref name="values" /> nondeterministically.
+		///   Returns a value found in <paramref name="values" /> nondeterministically.
+		/// </summary>
+		/// <param name="values">The values to choose from.</param>
+		public static T Value<T>(params T[] values)
+			where T : struct, IConvertible
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///   Returns a value found in <paramref name="values" /> nondeterministically.
 		/// </summary>
 		/// <param name="values">The values to choose from.</param>
 		public static int Value(params int[] values)
@@ -57,7 +67,7 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Returns a value found in <paramref name="values" /> nondeterministically.
+		///   Returns a value found in <paramref name="values" /> nondeterministically.
 		/// </summary>
 		/// <param name="values">The values to choose from.</param>
 		public static int Value(params double[] values)
@@ -66,8 +76,8 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Returns a value within the range of <paramref name="inclusiveLowerBound" /> and <paramref name="inclusiveUpperBound" />
-		///     nondeterministically.
+		///   Returns a value within the range of <paramref name="inclusiveLowerBound" /> and <paramref name="inclusiveUpperBound" />
+		///   nondeterministically.
 		/// </summary>
 		/// <param name="inclusiveLowerBound">The inclusive lower bound of the range to choose from.</param>
 		/// <param name="inclusiveUpperBound">The inclusive upper bound of the range to choose from.</param>
@@ -77,8 +87,8 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Returns a value within the range of <paramref name="inclusiveLowerBound" /> and <paramref name="inclusiveUpperBound" />
-		///     nondeterministically.
+		///   Returns a value within the range of <paramref name="inclusiveLowerBound" /> and <paramref name="inclusiveUpperBound" />
+		///   nondeterministically.
 		/// </summary>
 		/// <param name="inclusiveLowerBound">The inclusive lower bound of the range to choose from.</param>
 		/// <param name="inclusiveUpperBound">The inclusive upper bound of the range to choose from.</param>

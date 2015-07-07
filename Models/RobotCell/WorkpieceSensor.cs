@@ -20,9 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace ProductionCell
+namespace RobotCell
 {
 	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 
 	public class WorkpieceSensor : Component
 	{
@@ -40,5 +41,17 @@ namespace ProductionCell
 			GetWorkpiecePosition(3) == _position;
 
 		public extern Position GetWorkpiecePosition(int workpiece);
+
+		[Transient]
+		public class SupressDetection : Fault
+		{
+			public bool WorkpieceDetected() => false;
+		}
+
+		[Transient]
+		public class IncorrectDetection : Fault
+		{
+			public bool WorkpieceDetected() => true;
+		}
 	}
 }

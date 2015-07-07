@@ -20,19 +20,71 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace ProductionCell
+namespace RobotCell
 {
 	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 
 	public class Cart : Component
 	{
-		private Position _position;
+		private Position _destination;
+		private Position _pointOfOrigin;
 
-		public void MoveTo(Position position)
+		public Cart()
 		{
-			_position = position;
+			InitialState(State.AwaitingReconfiguration);
+
+			Transition(
+				from: State.AwaitingReconfiguration,
+				to: State.AwaitWorkpiece,
+				guard: () => _destination != Position.Unknown && _pointOfOrigin != Position.Unknown,
+				action: () => MoveTo(_pointOfOrigin));
+
+			Transition(
+				from: State.AwaitWorkpiece,
+				to: State.AwaitCompletion,
+				guard: () => true,
+				action: () => MoveTo(_destination));
+
+			Transition(
+				from: State.AwaitCompletion,
+				to: State.AwaitWorkpiece,
+				guard: () => WorkpieceProcessed(_destination),
+				action: () => MoveTo(_pointOfOrigin));
+
+			Transition(
+				from: State.AwaitCompletion | State.AwaitWorkpiece,
+				to: State.AwaitingReconfiguration,
+				guard: () => _destination == Position.Unknown || _pointOfOrigin == Position.Unknown);
 		}
 
-		public Position GetPosition() => _position;
+		public void Reconfigure(Position pointOfOrigin, Position destination)
+		{
+			_pointOfOrigin = pointOfOrigin;
+			_destination = destination;
+		}
+
+		public bool RequiresReconfiguration()
+		{
+			return InState(State.AwaitingReconfiguration);
+		}
+
+		public extern void MoveTo(Position position);
+		public extern bool WorkpieceProcessed(Position position);
+
+		[Persistent]
+		public class MovementFailure : Fault
+		{
+			public void MoveTo(Position position)
+			{
+			}
+		}
+
+		private enum State
+		{
+			AwaitingReconfiguration,
+			AwaitWorkpiece,
+			AwaitCompletion
+		}
 	}
 }

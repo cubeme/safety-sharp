@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace ProductionCell
+namespace RobotCell
 {
 	using SafetySharp.Modeling;
 	using SafetySharp.Modeling.Faults;
@@ -28,25 +28,27 @@ namespace ProductionCell
 	public class Tool : Component
 	{
 		private readonly Position _position;
+		private readonly RobotTask _task;
 		private bool _isWorking = true;
 
-		public Tool(Position position)
+		public Tool(Position position, RobotTask task)
 		{
 			_position = position;
+			_task = task;
 		}
 
 		public void UseTool()
 		{
-			_isWorking &= ModifyWorkpiece(_position);
+			_isWorking &= ModifyWorkpiece(_position, _task);
 		}
 
 		public bool IsBroken() => !_isWorking;
-		public extern bool ModifyWorkpiece(Position position);
+		public extern bool ModifyWorkpiece(Position position, RobotTask task);
 
 		[Persistent]
 		public class Broken : Fault
 		{
-			public bool ModifyWorkpiece(Position position)
+			public bool ModifyWorkpiece(Position position, RobotTask task)
 			{
 				return false;
 			}
