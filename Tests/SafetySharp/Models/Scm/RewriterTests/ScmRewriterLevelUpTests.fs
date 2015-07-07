@@ -811,14 +811,19 @@ type SingleLevelUpTests () =
         printf "%+A" newModel
         newChildNode.ProvPorts.Length =? 0
         newParentNode.ProvPorts.Length =? 1
+        let allLocationsOfElementInParent (elem:LocElement) : unit =
+            match elem with
+                | LocElement.Field (l,_) ->
+                    l =? pathOfParent
+                | _ -> ()                    
+
         let rec allLocationsInParent (locExpr:LocExpr) : unit =
             match locExpr with
                 | LocExpr.Literal _ -> ()
-                | LocExpr.ReadField (l,_) -> l =? pathOfParent
+                | LocExpr.Read (e) -> allLocationsOfElementInParent e
                 | LocExpr.ReadFault (l,_) -> l =? pathOfParent
-                | LocExpr.ReadOldField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOld (e) -> allLocationsOfElementInParent e
                 | LocExpr.ReadOldFault (l,_) -> l =? pathOfParent
-                | LocExpr.ReadVar _ -> ()
                 | LocExpr.UExpr (e,o) -> allLocationsInParent e
                 | LocExpr.BExpr (l,_,r) -> allLocationsInParent l; allLocationsInParent r
 
@@ -877,14 +882,18 @@ type SingleLevelUpTests () =
         printf "%+A" newModel
         newChildNode.ProvPorts.Length =? 0
         newParentNode.ProvPorts.Length =? 2
+        let allLocationsOfElementInParent (elem:LocElement) : unit =
+            match elem with
+                | LocElement.Field (l,_) ->
+                    l =? pathOfParent
+                | _ -> ()                  
         let rec allLocationsInParent (locExpr:LocExpr) : unit =
             match locExpr with
                 | LocExpr.Literal _ -> ()
-                | LocExpr.ReadField (l,_) -> l =? pathOfParent
+                | LocExpr.Read (e) -> allLocationsOfElementInParent e
                 | LocExpr.ReadFault (l,_) -> l =? pathOfParent
-                | LocExpr.ReadOldField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOld (e) -> allLocationsOfElementInParent e
                 | LocExpr.ReadOldFault (l,_) -> l =? pathOfParent
-                | LocExpr.ReadVar _ -> ()
                 | LocExpr.UExpr (e,o) -> allLocationsInParent e
                 | LocExpr.BExpr (l,_,r) -> allLocationsInParent l; allLocationsInParent r
 

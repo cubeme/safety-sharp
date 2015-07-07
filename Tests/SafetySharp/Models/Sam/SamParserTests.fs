@@ -33,12 +33,8 @@ open AstTestHelpers
 [<TestFixture>]
 type ExampleFiles() =
 
-    let parseWithParser parser str =
-        match run parser str with
-        | Success(result, _, _)   -> result
-        | Failure(errorMsg, _, _) -> failwith errorMsg
 
-    let parseSam str = parseWithParser (SafetySharp.Models.SamParser.samFile .>> eof) str
+    let parseSam = SafetySharp.Models.SamParser.parseSamFile_Result
 
     [<Test>]
     member this.``Example simpleArithmetical1 parses successfully`` () =
