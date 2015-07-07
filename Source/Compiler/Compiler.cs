@@ -123,12 +123,18 @@ namespace SafetySharp.Compiler
 				File.WriteAllBytes(project.OutputFilePath, assembly);
 				File.WriteAllBytes(Path.ChangeExtension(project.OutputFilePath, ".pdb"), assembly);
 
-				OutputCode(Compilation, "Compiled Code");
+				OutputCode("Compiled Code");
 				return true;
 			}
 			catch (CompilationException)
 			{
+				OutputCode("Failed");
 				return false;
+			}
+			catch (Exception)
+			{
+				OutputCode("Failed");
+				throw;
 			}
 		}
 
@@ -142,20 +148,19 @@ namespace SafetySharp.Compiler
 		{
 			Requires.NotNull(project, () => project);
 
-			var compilation = project.GetCompilationAsync().Result;
+			Compilation = project.GetCompilationAsync().Result;
 
-			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
-			var options = compilation.Options.WithSpecificDiagnosticOptions(diagnosticOptions);
+			var diagnosticOptions = Compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
+			var options = Compilation.Options.WithSpecificDiagnosticOptions(diagnosticOptions);
 			var syntaxGenerator = SyntaxGenerator.GetGenerator(project.Solution.Workspace, LanguageNames.CSharp);
 
-			if (!Diagnose(compilation, true))
+			if (!Diagnose())
 				throw new CompilationException();
 
-			compilation = compilation.WithOptions(options);
-			compilation = NormalizeSimulationCode(compilation, syntaxGenerator);
-			Compilation = compilation;
+			Compilation = Compilation.WithOptions(options);
+			ApplyNormalizers(syntaxGenerator);
 
-			EmitInMemory(compilation, out peBytes, out pdbBytes);
+			EmitInMemory(out peBytes, out pdbBytes);
 		}
 
 		/// <summary>
@@ -236,80 +241,70 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
-		///     Writes the C# code contained in the <paramref name="compilation" /> to the directory denoted by
+		///     Writes the C# code contained in the <see cref="Compilation" /> to the directory denoted by
 		///     <paramref name="path" />.
 		/// </summary>
-		/// <param name="compilation">The compilation containing the code that should be output.</param>
 		/// <param name="path">The target path the code should be output to.</param>
 		[Conditional("DEBUG")]
-		private static void OutputCode([NotNull] Compilation compilation, [NotNull] string path)
+		private void OutputCode([NotNull] string path)
 		{
 			path = Path.Combine(Path.GetDirectoryName(typeof(Compiler).Assembly.Location), "obj", path);
 			Directory.CreateDirectory(path);
 
 			var index = 0;
-			foreach (var syntaxTree in compilation.SyntaxTrees)
+			foreach (var syntaxTree in Compilation.SyntaxTrees)
 			{
 				var fileName = Path.GetFileNameWithoutExtension(syntaxTree.FilePath ?? String.Empty);
 				var filePath = Path.Combine(path, String.Format("{0}{1}.cs", fileName, index));
 
-				File.WriteAllText(filePath, syntaxTree.GetText().ToString());
+				File.WriteAllText(filePath, syntaxTree.GetRoot().NormalizeWhitespace().ToFullString());
 				++index;
 			}
 		}
 
 		/// <summary>
-		///     Runs the S# diagnostic analyzers on the compilation, reporting all generated diagnostics. The function returns
+		///     Runs the S# diagnostic analyzers on the <see cref="Compilation" />, reporting all generated diagnostics. The function
+		///     returns
 		///     <c>false</c> when at least one error diagnostic has been reported.
 		/// </summary>
-		/// <param name="compilation">The compilation containing the code that should be diagnosed.</param>
-		/// <param name="runSSharpDiagnostics">Indicates whether S#-specific diagnostics should be run.</param>
-		private bool Diagnose([NotNull] Compilation compilation, bool runSSharpDiagnostics)
+		private bool Diagnose()
 		{
-			if (!Report(compilation.GetDiagnostics(), true))
+			if (!Report(Compilation.GetDiagnostics(), true))
 				return false;
 
-			if (!runSSharpDiagnostics)
-				return true;
-
-			return Report(compilation.WithAnalyzers(Analyzers).GetAnalyzerDiagnosticsAsync().Result, false);
+			return Report(Compilation.WithAnalyzers(Analyzers).GetAnalyzerDiagnosticsAsync().Result, false);
 		}
 
 		/// <summary>
-		///     Applies the required normalizations to the simulation code.
+		///     Applies the normalizers to the <see cref="Compilation" />.
 		/// </summary>
-		/// <param name="compilation">The compilation that should be normalized.</param>
 		/// <param name="syntaxGenerator">The syntax generator that the normalizers should use to generate syntax nodes.</param>
-		[NotNull]
-		private static Compilation NormalizeSimulationCode([NotNull] Compilation compilation, [NotNull] SyntaxGenerator syntaxGenerator)
+		private void ApplyNormalizers([NotNull] SyntaxGenerator syntaxGenerator)
 		{
-			compilation = Normalizer.ApplyNormalizer<DebugInfoNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<PartialNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<StateMachineNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<MethodBodyNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<FormulaNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<LiftedExpressionNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<InitialValuesNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<RootComponentsNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<BindingNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<MethodNormalizer>(compilation, syntaxGenerator);
-			compilation = Normalizer.ApplyNormalizer<MetadataNormalizer>(compilation, syntaxGenerator);
-
-			return compilation;
+			Compilation = Normalizer.ApplyNormalizer<DebugInfoNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<PartialNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<StateMachineNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<MethodBodyNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<FormulaNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<LiftedExpressionNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<InitialValuesNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<RootComponentsNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<BindingNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<MethodNormalizer>(Compilation, syntaxGenerator);
+			Compilation = Normalizer.ApplyNormalizer<MetadataNormalizer>(Compilation, syntaxGenerator);
 		}
 
 		/// <summary>
-		///     Emitts the code for the <paramref name="compilation" /> in-memory.
+		///     Emits the code for the <see cref="Compilation" /> in-memory.
 		/// </summary>
-		/// <param name="compilation">The compilation containing the code that should be emitted.</param>
 		/// <param name="peBytes">Returns the compiled assembly.</param>
 		/// <param name="pdbBytes">The returns the compiled program database.</param>
-		private void EmitInMemory([NotNull] Compilation compilation, out byte[] peBytes, out byte[] pdbBytes)
+		private void EmitInMemory(out byte[] peBytes, out byte[] pdbBytes)
 		{
 			using (var peStream = new MemoryStream())
 			using (var pdbStream = new MemoryStream())
 			{
-				var emitResult = compilation.Emit(peStream, pdbStream);
+				var emitResult = Compilation.Emit(peStream, pdbStream);
 				if (!emitResult.Success)
 				{
 					Report(emitResult.Diagnostics, true);

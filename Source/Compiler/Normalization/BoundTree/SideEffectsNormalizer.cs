@@ -34,7 +34,6 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using Runtime;
 	using Utilities;
 
 	/// <summary>
@@ -133,11 +132,19 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 					return new Result(identifier);
 
 				var symbol = identifier.GetReferencedSymbol(_semanticModel);
-				if (symbol is IMethodSymbol)
-					return Result.Default.WithExpression(identifier);
-
-				var variable = GenerateVariable(identifier);
-				return Result.Default.WithExpression(variable).WithExpressionStatement(_syntax.AssignmentStatement(variable.Identifier, identifier));
+				switch (symbol.Kind)
+				{
+					case SymbolKind.Method:
+						return Result.Default.WithExpression(identifier);
+					case SymbolKind.Parameter:
+					case SymbolKind.Field:
+					case SymbolKind.Local:
+						var variable = GenerateVariable(identifier);
+						return Result.Default.WithExpression(variable).WithExpressionStatement(_syntax.AssignmentStatement(variable.Identifier, identifier));
+					default:
+						Assert.NotReached("Unexpected symbol kind: '{0}' for identifier '{1}'.", symbol.Kind, identifier);
+						return default(Result);
+				}
 			}
 
 			/// <summary>
@@ -299,12 +306,19 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 			/// </summary>
 			public override Result VisitMemberAccessExpression(MemberAccessExpressionSyntax expression)
 			{
-				var fieldSymbol = expression.GetReferencedSymbol(_semanticModel) as IFieldSymbol;
-				if (fieldSymbol != null && fieldSymbol.ContainingType.TypeKind == TypeKind.Enum)
-					return new Result(expression);
-
-				var result = Visit(expression.Expression);
-				return result.WithExpression((ExpressionSyntax)_syntax.MemberAccessExpression(result.Expression, expression.Name));
+				var symbol = expression.GetReferencedSymbol(_semanticModel);
+				switch (symbol.Kind)
+				{
+					case SymbolKind.Field:
+						if (symbol.ContainingType.TypeKind == TypeKind.Enum)
+							return new Result(expression);
+						goto default;
+					case SymbolKind.Namespace:
+						return Result.Default.WithExpression(expression);
+					default:
+						var result = Visit(expression.Expression);
+						return result.WithExpression((ExpressionSyntax)_syntax.MemberAccessExpression(result.Expression, expression.Name));
+				}
 			}
 
 			/// <summary>

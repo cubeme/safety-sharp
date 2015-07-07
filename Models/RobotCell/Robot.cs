@@ -28,10 +28,10 @@ namespace RobotCell
 	{
 		private readonly Tool _drillTool;
 		private readonly Tool _insertTool;
+		private readonly Position _position;
 		private readonly WorkpieceSensor _sensor;
 		private readonly Tool _tightenTool;
 		private RobotTask _task = RobotTask.None;
-		private Position _position;
 
 		public Robot(WorkpieceSensor sensor, Tool drillTool, Tool insertTool, Tool tightenTool, Position position)
 		{
