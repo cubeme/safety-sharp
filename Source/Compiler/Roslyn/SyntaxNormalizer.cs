@@ -23,7 +23,11 @@
 namespace SafetySharp.Compiler.Roslyn
 {
 	using System;
+	using System.Linq;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Syntax;
 
 	/// <summary>
@@ -31,6 +35,11 @@ namespace SafetySharp.Compiler.Roslyn
 	/// </summary>
 	public abstract class SyntaxNormalizer : Normalizer
 	{
+		/// <summary>
+		///     The root node of the syntax tree that is currently being normalized.
+		/// </summary>
+		private SyntaxNode _rootNode;
+
 		/// <summary>
 		///     Gets the semantic model that should be used for semantic analysis during normalization.
 		/// </summary>
@@ -58,13 +67,30 @@ namespace SafetySharp.Compiler.Roslyn
 		{
 			SemanticModel = Compilation.GetSemanticModel(syntaxTree);
 
-			var root = syntaxTree.GetRoot();
-			var normalizedRoot = Visit(root);
+			_rootNode = syntaxTree.GetRoot();
+			var normalizedRoot = Visit(_rootNode);
 
-			if (root == normalizedRoot)
+			if (_rootNode == normalizedRoot)
 				return syntaxTree;
 
 			return syntaxTree.WithRoot(normalizedRoot);
+		}
+
+		/// <summary>
+		///     Adds a compilation unit containing a part of the partial <paramref name="type" /> containing the
+		///     <paramref name="members" />.
+		/// </summary>
+		/// <param name="type">The type the part should be declared for.</param>
+		/// <param name="members">The members that should be added to the type.</param>
+		protected void AddMembers([NotNull] INamedTypeSymbol type, [NotNull] params MemberDeclarationSyntax[] members)
+		{
+			var usings = _rootNode.Descendants<UsingDirectiveSyntax>().Select(usingDirective =>
+			{
+				var importedSymbol = ModelExtensions.GetSymbolInfo(SemanticModel, usingDirective.Name).Symbol;
+				return usingDirective.WithName(SyntaxFactory.ParseName(importedSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
+			});
+
+			AddMembers(type, usings.ToArray(), members);
 		}
 	}
 }

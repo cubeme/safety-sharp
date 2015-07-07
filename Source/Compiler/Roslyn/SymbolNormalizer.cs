@@ -24,7 +24,9 @@ namespace SafetySharp.Compiler.Roslyn
 {
 	using System;
 	using System.Linq;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 	/// <summary>
 	///     A base class for symbol-based C# normalizers that normalize certain C# language features.
@@ -47,5 +49,16 @@ namespace SafetySharp.Compiler.Roslyn
 		/// </summary>
 		/// <param name="typeSymbol">The type symbol that should be normalized.</param>
 		protected abstract void NormalizeTypeSymbol(INamedTypeSymbol typeSymbol);
+
+		/// <summary>
+		///     Adds a compilation unit containing a part of the partial <paramref name="type" /> containing the
+		///     <paramref name="members" />.
+		/// </summary>
+		/// <param name="type">The type the part should be declared for.</param>
+		/// <param name="members">The members that should be added to the type.</param>
+		protected void AddMembers([NotNull] INamedTypeSymbol type, [NotNull] params MemberDeclarationSyntax[] members)
+		{
+			AddMembers(type, new UsingDirectiveSyntax[0], members);
+		}
 	}
 }

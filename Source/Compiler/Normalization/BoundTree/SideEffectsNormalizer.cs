@@ -135,6 +135,7 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 				var symbol = identifier.GetReferencedSymbol(_semanticModel);
 				switch (symbol.Kind)
 				{
+					case SymbolKind.NamedType:
 					case SymbolKind.Method:
 						return Result.Default.WithExpression(identifier);
 					case SymbolKind.Parameter:

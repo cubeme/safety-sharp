@@ -106,9 +106,11 @@ namespace SafetySharp.Compiler.Roslyn
 		///     <paramref name="member" /> and adds the generated code to the <see cref="Compilation" />.
 		/// </summary>
 		/// <param name="type">The type the code should be generated for.</param>
+		/// <param name="usings">The <c>using</c> directives that should be added to the compilation unit.</param>
 		/// <param name="member">The member that should be added to the generated type.</param>
 		/// <param name="fileName">The name of the generated file.</param>
-		private void AddNamespacedAndNested([NotNull] INamedTypeSymbol type, MemberDeclarationSyntax member, string fileName = null)
+		private void AddNamespacedAndNested([NotNull] INamedTypeSymbol type, [NotNull] UsingDirectiveSyntax[] usings,
+											MemberDeclarationSyntax member, string fileName = null)
 		{
 			fileName = fileName ?? type.ToDisplayString().Replace("<", "{").Replace(">", "}");
 
@@ -120,7 +122,7 @@ namespace SafetySharp.Compiler.Roslyn
 					modifiers: DeclarationModifiers.Partial,
 					members: new[] { member });
 
-				AddNamespacedAndNested(type.ContainingType, generatedClass, fileName);
+				AddNamespacedAndNested(type.ContainingType, usings, generatedClass, fileName);
 			}
 			else
 			{
@@ -128,7 +130,8 @@ namespace SafetySharp.Compiler.Roslyn
 					? Syntax.NamespaceDeclaration(type.ContainingNamespace.ToDisplayString(), member)
 					: member;
 
-				AddCompilationUnit((CompilationUnitSyntax)Syntax.CompilationUnit(code), fileName);
+				var compilationUnit = (CompilationUnitSyntax)Syntax.CompilationUnit(code);
+				AddCompilationUnit(compilationUnit.AddUsings(usings), fileName);
 			}
 		}
 
@@ -137,8 +140,10 @@ namespace SafetySharp.Compiler.Roslyn
 		///     <paramref name="members" />.
 		/// </summary>
 		/// <param name="type">The type the part should be declared for.</param>
+		/// <param name="usings">The <c>using</c> directives that should be added to the compilation unit.</param>
 		/// <param name="members">The members that should be added to the type.</param>
-		protected void AddMembers([NotNull] INamedTypeSymbol type, [NotNull] params MemberDeclarationSyntax[] members)
+		protected void AddMembers([NotNull] INamedTypeSymbol type, [NotNull] UsingDirectiveSyntax[] usings,
+								  [NotNull] params MemberDeclarationSyntax[] members)
 		{
 			Requires.NotNull(type, () => type);
 			Requires.NotNull(members, () => members);
@@ -149,7 +154,7 @@ namespace SafetySharp.Compiler.Roslyn
 				modifiers: DeclarationModifiers.Partial,
 				members: members);
 
-			AddNamespacedAndNested(type, generatedClass);
+			AddNamespacedAndNested(type, usings, generatedClass);
 		}
 
 		/// <summary>
@@ -169,7 +174,7 @@ namespace SafetySharp.Compiler.Roslyn
 				modifiers: DeclarationModifiers.Partial);
 
 			generatedClass = generatedClass.AddAttributeLists(attributes);
-			AddNamespacedAndNested(type, generatedClass);
+			AddNamespacedAndNested(type, new UsingDirectiveSyntax[0], generatedClass);
 		}
 	}
 }

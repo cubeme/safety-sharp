@@ -69,12 +69,12 @@ namespace RobotCell
 				to: State.ValidConfiguration,
 				action: () =>
 				{
-					_robot1.Reconfigure(SafetySharp.Modeling.Choose.Value(RobotTask.Drill, RobotTask.Insert, RobotTask.Tighten));
-					_robot2.Reconfigure(SafetySharp.Modeling.Choose.Value(RobotTask.Drill, RobotTask.Insert, RobotTask.Tighten));
-					_robot3.Reconfigure(SafetySharp.Modeling.Choose.Value(RobotTask.Drill, RobotTask.Insert, RobotTask.Tighten));
+					_robot1.Reconfigure(Choose.Value(RobotTask.Drill, RobotTask.Insert, RobotTask.Tighten));
+					_robot2.Reconfigure(Choose.Value(RobotTask.Drill, RobotTask.Insert, RobotTask.Tighten));
+					_robot3.Reconfigure(Choose.Value(RobotTask.Drill, RobotTask.Insert, RobotTask.Tighten));
 
-					_cart1.Reconfigure(SafetySharp.Modeling.Choose.Value(Position.Robot + 0, Position.Robot + 1), SafetySharp.Modeling.Choose.Value(Position.Robot + 1, Position.Robot + 2));
-					_cart2.Reconfigure(SafetySharp.Modeling.Choose.Value(Position.Robot + 0, Position.Robot + 1), SafetySharp.Modeling.Choose.Value(Position.Robot + 1, Position.Robot + 2));
+					_cart1.Reconfigure(Choose.Value(Position.Robot + 0, Position.Robot + 1), Choose.Value(Position.Robot + 1, Position.Robot + 2));
+					_cart2.Reconfigure(Choose.Value(Position.Robot + 0, Position.Robot + 1), Choose.Value(Position.Robot + 1, Position.Robot + 2));
 				});
 		}
 
