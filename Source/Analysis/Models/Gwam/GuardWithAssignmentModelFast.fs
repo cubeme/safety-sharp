@@ -46,7 +46,7 @@ module internal VcGuardWithAssignmentModelFast =
     type AtomicStm =
         | Assert of Expr
         | Assume of Expr
-        | Write of Var * Expr
+        | Write of Element * Expr
     
     type AtomicStmBlock =
         AtomicStmBlock of Statements:(AtomicStm list)
@@ -105,24 +105,24 @@ module internal VcGuardWithAssignmentModelFast =
             Expr.Literal(Val.BoolVal(true))
         let initialValuation =
             // add for each globalVar a self assignment
-            let globalInit = globalVars |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Read(var.Var))) Map.empty<Var,Expr>
+            let globalInit = globalVars |> List.fold (fun (acc:Map<Element,Expr>) var -> acc.Add(Element.GlobalVar var.Var,Expr.Read(Element.GlobalVar var.Var))) Map.empty<Element,Expr>
             // every local variable should have its default value
-            let globalAndLocalInit = localVars |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
+            let globalAndLocalInit = localVars |> List.fold (fun (acc:Map<Element,Expr>) var -> acc.Add(Element.LocalVar var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
             globalAndLocalInit
 
-        let foldStm (currentGuard:Expr,currentValuation:Map<Var,Expr>) (stm:AtomicStm) : Expr*Map<Var,Expr> =
+        let foldStm (currentGuard:Expr,currentValuation:Map<Element,Expr>) (stm:AtomicStm) : Expr*Map<Element,Expr> =
             match stm with
                 | AtomicStm.Assert (expr) ->
                     failwith "I am not sure yet, what to do with it. Have to read about strongest postcondition"
                     // I think, we could add the assertion, but it would generate a new proof obligation.
                 | AtomicStm.Assume (expr) ->
-                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation 
+                    let newExpr = expr.rewriteExpr_elementsToExpr currentValuation 
                     let newGuard =
                         Expr.BExpr(currentGuard,BOp.And,newExpr)
                     (newGuard,currentValuation)
                 | AtomicStm.Write (var, expr) ->
                     // replace vars in expr by their current valuation (such that no localVar occurs in any valuation)
-                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation
+                    let newExpr = expr.rewriteExpr_elementsToExpr currentValuation
                     let newValuation = currentValuation.Add(var,newExpr)
                     (currentGuard,newValuation)
         
@@ -130,7 +130,7 @@ module internal VcGuardWithAssignmentModelFast =
         let finalValuation = {FinalVariableAssignments.Assignments=finalValuation}
         Assignments.Deterministic(finalGuard,finalValuation)
         
-    let redirectFinalVarsAndRemoveNonFinalAssignments (nextGlobal : Map<Var,Var>) (assignments:Assignments) =
+    let redirectFinalVarsAndRemoveNonFinalAssignments (nextGlobal : Map<Element,Element>) (assignments:Assignments) =
         //finalVars:
         //   In SSA-Form each GlobalVar has several representatives with different versions of this variable
         //   after each assignment. The representative with the last version of each GlobalVar is in the set FinalVars        

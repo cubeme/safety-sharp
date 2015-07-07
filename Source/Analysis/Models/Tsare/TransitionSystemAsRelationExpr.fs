@@ -138,7 +138,7 @@ module internal TransitionSystemAsRelationExpr =
             freshName        
         let createVirtualVarForVar (var:Tsam.GlobalVarDecl) =
             let virtualVar = Var.Var(createNewName var.Var)
-            (var.Var,virtualVar)        
+            (Element.GlobalVar var.Var,Element.GlobalVar virtualVar)
         let virtualVarEntries =
             gwam.Globals |> List.map createVirtualVarForVar
         virtualVarEntries
@@ -207,7 +207,7 @@ module internal TransitionSystemAsRelationExpr =
             freshName
         let createVirtualVarForVar (var:Tsam.GlobalVarDecl) =
             let virtualVar = Var.Var(createNewName var.Var)
-            (var.Var,virtualVar)        
+            (Element.GlobalVar var.Var,Element.LocalVar virtualVar)        
         let virtualVarEntries =
             pgm.Globals |> List.map createVirtualVarForVar
         virtualVarEntries |> Map.ofList
@@ -228,21 +228,26 @@ module internal TransitionSystemAsRelationExpr =
             // Otherwise we add a new virtual variable.
             let virtualVarPool = createVirtualVarEntryPool pgm            
             let ivarsComplete = pgm.Locals |> Set.ofList            
-            let processGlobalVar (varToVirtualNextVarEntries:(Var*Var) list,ivars:Set<VarDecl>) (gl:Tsam.GlobalVarDecl) =
-                if pgm.NextGlobal.Item gl.Var =  gl.Var then
+            let processGlobalVar (varToVirtualNextVarEntries:(Element*Element) list,ivars:Set<VarDecl>) (gl:Tsam.GlobalVarDecl) =
+                let globalVar = (Element.GlobalVar gl.Var)
+                if pgm.NextGlobal.Item globalVar = globalVar then
                     // We need to create a new virtual var. we use one from the pool. Ivars needs no change
                     let newVirtualEntry =
-                        virtualVarPool.Item gl.Var
-                    let newEntry = (gl.Var,newVirtualEntry)
+                        virtualVarPool.Item (Element.GlobalVar gl.Var)
+                    let newEntry = (Element.GlobalVar gl.Var,newVirtualEntry)
                     (newEntry::varToVirtualNextVarEntries,ivars)
                 else
                     // pgm.next[x:Var] is a local var. We "change" this local var into the next value of the var x.
                     // Ivar needs a change: We remove the newEntry.
                     let newVirtualEntry =
-                        pgm.NextGlobal.Item gl.Var
-                    let newIvars = 
-                        ivars.Remove ({VarDecl.Type=gl.Type;VarDecl.Var=newVirtualEntry;})
-                    let newEntry = (gl.Var,newVirtualEntry)
+                        pgm.NextGlobal.Item globalVar
+                    let newIvars =
+                        match newVirtualEntry with
+                            | Element.LocalVar (newVirtualEntry) ->
+                                ivars.Remove ({VarDecl.Type=gl.Type;VarDecl.Var=newVirtualEntry;})
+                            | _ ->
+                                failwith "Not expected. This case should already been processed in the if-branch above"
+                    let newEntry = (globalVar,newVirtualEntry)
                     (newEntry::varToVirtualNextVarEntries,newIvars)
             pgm.Globals |> List.fold processGlobalVar ([],ivarsComplete)
 
@@ -260,7 +265,7 @@ module internal TransitionSystemAsRelationExpr =
             // to add a connection between now and the next state, we add next(x) = pgm.next[x] for each global variable,
             // which was not changed. (When a variable was changed at least once, there is an entry in the passive program.)
             let globalNextExprList =
-                let createEntry (globalVarWhichDoesNotChange,_) =
+                let createEntry (globalVarWhichDoesNotChange:Element,_) =
                     Expr.BExpr(Expr.Read(globalVarWhichDoesNotChange),BOp.Equals,Expr.Read(varToVirtualNextVar.Item globalVarWhichDoesNotChange))
                 pgm.NextGlobal |> Map.toList
                                |> List.filter (fun (prev,next) -> prev=next)
@@ -304,7 +309,7 @@ module internal TransitionSystemAsRelationExpr =
             // to add a connection between now and the next state, we add next(x) = pgm.next[x] for each global variable
             let globalNextExprList =
                 let createEntry (globalVar,nextGlobal) =
-                    Expr.BExpr(Expr.Read(nextGlobal),BOp.Equals,Expr.Read(varToVirtualNextVar.Item globalVar))
+                    Expr.BExpr(Expr.Read(nextGlobal),BOp.Equals,Expr.Read(varToVirtualNextVar.Item (globalVar) ))
                 pgm.NextGlobal |> Map.toList
                                |> List.map createEntry
             // add proof obligations, which come from Stm.Asserts
@@ -343,8 +348,8 @@ module internal TransitionSystemAsRelationExpr =
                 // Their goal is to transform "Code Expressions" (Code with statements) into genuine Expressions.
                 let createFormulaForGlobalVarDecl (globalVarDecl:Tsam.GlobalVarDecl) : Tsam.Expr =
                     let var = globalVarDecl.Var
-                    let varWithLastValue = pgm.NextGlobal.Item var
-                    let varPost = varToVirtualNextVar.Item var
+                    let varWithLastValue = pgm.NextGlobal.Item (Element.GlobalVar var)
+                    let varPost = varToVirtualNextVar.Item (Element.GlobalVar var)
                     let operator = Tsam.BOp.Equals
                     Tsam.Expr.BExpr(Tsam.Expr.Read(varPost),operator,Tsam.Expr.Read(varWithLastValue))
                 pgm.Globals |> List.map createFormulaForGlobalVarDecl
@@ -377,9 +382,9 @@ module internal TransitionSystemAsRelationExpr =
         // We assume Tree-Form (There is no statement _after_ a Indeterministic/Stochastic Choice in a block)
         let initialValuation =
             // add for each globalVar a self assignment
-            let globalInit = pgm.Globals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Read(var.Var))) Map.empty<Var,Expr>
+            let globalInit = pgm.Globals |> List.fold (fun (acc:Map<Element,Expr>) var -> acc.Add(Element.GlobalVar var.Var,Expr.Read(Element.GlobalVar var.Var))) Map.empty<Element,Expr>
             // every local variable should have its default value
-            let globalAndLocalInit = pgm.Locals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
+            let globalAndLocalInit = pgm.Locals |> List.fold (fun (acc:Map<Element,Expr>) var -> acc.Add(Element.LocalVar var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
             globalAndLocalInit
 
         let interestingVariablesToRemapToVirtualNextVar =
@@ -387,16 +392,16 @@ module internal TransitionSystemAsRelationExpr =
                            |> List.map ( fun (globalVar,nextVar) -> (nextVar,varToVirtualNextVar.Item globalVar) )
                            |> Map.ofList
                            
-        let rec buildFormulaAndPropagateValuation (currentValuation:Map<Var,Expr>) (stm:Tsam.Stm) : Expr*Map<Var,Expr>*bool = //returns (SubExpression:Expr*NewValuation:Map<Var,Expr>*ContainedChoice:bool)
+        let rec buildFormulaAndPropagateValuation (currentValuation:Map<Element,Expr>) (stm:Tsam.Stm) : Expr*Map<Element,Expr>*bool = //returns (SubExpression:Expr*NewValuation:Map<Var,Expr>*ContainedChoice:bool)
             match stm with
                 | Tsam.Stm.Assert (_,expr) ->
-                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation 
+                    let newExpr = expr.rewriteExpr_elementsToExpr currentValuation 
                     failwith "No support for proof obligations here, yet"
                 | Tsam.Stm.Assume (_,expr) ->
-                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation
+                    let newExpr = expr.rewriteExpr_elementsToExpr currentValuation
                     (newExpr,currentValuation,false)
                 | Tsam.Stm.Block (_,statements) ->
-                    let rec processBlockStm (collectedExpr:Tsam.Expr,stmnts:Tsam.Stm list,currentValuation:Map<Var,Expr>,containedChoice:bool) : (Expr*Map<Var,Expr>*bool) =
+                    let rec processBlockStm (collectedExpr:Tsam.Expr,stmnts:Tsam.Stm list,currentValuation:Map<Element,Expr>,containedChoice:bool) : (Expr*Map<Element,Expr>*bool) =
                         if stmnts.IsEmpty then                            
                             (collectedExpr,currentValuation,containedChoice)
                         else
@@ -412,18 +417,18 @@ module internal TransitionSystemAsRelationExpr =
                     let subExpressionOfChoice (choiceGuard:Expr option,choiceStm) =
                         let subExpression,_,_ = buildFormulaAndPropagateValuation currentValuation choiceStm
                         if choiceGuard.IsSome then
-                            let currentGuard = choiceGuard.Value.rewriteExpr_varsToExpr currentValuation
+                            let currentGuard = choiceGuard.Value.rewriteExpr_elementsToExpr currentValuation
                             Tsam.Expr.BExpr(currentGuard,Tsam.BOp.And,subExpression)                            
                         else
                             subExpression
                     let subExpressions = choices |> List.map subExpressionOfChoice
                     let newFormula = subExpressions |> Expr.createOredExpr // "or", because we go from left to right like strongest postcondition
-                    (newFormula,Map.empty<Var,Expr>,true)
+                    (newFormula,Map.empty<Element,Expr>,true)
                 | Tsam.Stm.Stochastic _ ->
                     failwith "Stochastic case distinction is not supported by boolean only strongest postcondition"
                     // TODO: Maybe in future it is possible to declare a transition relation with probabilities in Prism
                 | Tsam.Stm.Write (sid, var, expr) ->
-                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation
+                    let newExpr = expr.rewriteExpr_elementsToExpr currentValuation
                     let newValuation = currentValuation.Add(var,newExpr)
                     let newAssignmentInFormula =
                         if (interestingVariablesToRemapToVirtualNextVar.ContainsKey var) then

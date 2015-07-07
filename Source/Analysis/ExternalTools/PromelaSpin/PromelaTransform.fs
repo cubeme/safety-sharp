@@ -243,8 +243,13 @@ module internal SamToPromela =
         let elementToType = TsamHelpers.createElementToType (pgm.Globals,pgm.Locals)
 
         let forwardTrace =
+            let elementToTraceable (element:Tsam.Element) : Tsam.Traceable =
+                match element with
+                    | Tsam.Element.GlobalVar (_var) -> Tsam.Traceable.Traceable(_var)
+                    | _ -> failwith "Not able to trace yet"
             forwardTrace |> Map.toList
-                         |> List.map (fun (samVar,promelaVar) -> (Sam.Traceable(samVar),PrTraceable.Traceable(promelaVar.getName)) )
+                         |> List.filter (fun (elem,id) -> match elem with | Tsam.Element.GlobalVar _ -> true | _ -> false)
+                         |> List.map (fun (samVar,promelaVar) -> (elementToTraceable samVar,PrTraceable.Traceable(promelaVar.getName)) )
                          |> Map.ofList
 
         // declare both locals and globals

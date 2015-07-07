@@ -127,7 +127,7 @@ module internal Tsam =
         Locals : LocalVarDecl list;
         ElementToType : Map<Element,Type>; // Actually VarToType is only derived from Globals and Locals. But it is so useful in many cases that we introduced an own field. Maybe make it "Lazy"
         //NextGlobal maps to each global variable var_i the variable var_j, which contains the value of var_i, after Body was executed. var_i can be var_j (substitution)
-        NextGlobal : Map<Var,Var>;
+        NextGlobal : Map<Element,Element>;
         CodeForm : CodeForm;
         Attributes : Attributes;
         Body : Stm;

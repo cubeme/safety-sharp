@@ -33,93 +33,98 @@ module internal TsamChangeIdentifier =
 
     type ChangeIdentifierState = {
         TakenNames : Set<string>;
-        OldToNew : Map<Var,Var>;
+        OldToNew : Map<Element,Element>;
         NameGenerator : NameGenerator;
     }
         with
             static member initial (forbiddenNames:Set<string>) (nameGenerator:NameGenerator) =
                 {
                     ChangeIdentifierState.TakenNames = forbiddenNames;
-                    OldToNew = Map.empty<Var,Var>;
+                    OldToNew = Map.empty<Element,Element>;
                     NameGenerator = nameGenerator;
                 }
             member this.generateNewName (based_on:string) : string =
                 this.NameGenerator this.TakenNames based_on
-
-            member this.generateNewVar (oldVar:Var) : (Var*ChangeIdentifierState) =
+                
+            member this.generateNewElement (oldVar:Element) : (Element*ChangeIdentifierState) =
                 let newVarName = this.generateNewName oldVar.getName
-                let newVar = Var(newVarName)
+                let newVar =
+                    match oldVar with
+                        | Element.GlobalVar _ -> Element.GlobalVar (Var(newVarName))
+                        | Element.LocalVar _ -> Element.LocalVar (Var(newVarName))    
                 let newState=
                     { this with
                         ChangeIdentifierState.TakenNames = this.TakenNames.Add newVarName;
                         ChangeIdentifierState.OldToNew = this.OldToNew.Add (oldVar,newVar)
                     }
                 (newVar,newState)
-
-    let transformElement (state:ChangeIdentifierState) (element:Element) : Element =
-        match element with
-            | Element.GlobalVar (var) -> Element.GlobalVar(state.OldToNew.Item var)
-            | Element.LocalVar (var) -> Element.LocalVar(state.OldToNew.Item var)
-        
-    let rec transformExpr (state:ChangeIdentifierState) (expr:Expr) : Expr =
+                
+    let rec transformExpr (oldToNew : Map<Element,Element>) (expr:Expr) : Expr =
         match expr with
             | Literal (_)->
                 expr
             | UExpr (operand,operator) ->
-                Expr.UExpr(transformExpr state operand,operator)
+                Expr.UExpr(transformExpr oldToNew operand,operator)
             | BExpr (leftExpression,operator,rightExpression ) ->
-                Expr.BExpr(transformExpr state leftExpression,operator,transformExpr state rightExpression)
-            | Read (element) ->
-                Expr.Read(transformElement state element)
-            | ReadOld (element) ->
-                Expr.ReadOld(transformElement state element)
+                Expr.BExpr(transformExpr oldToNew leftExpression,operator,transformExpr oldToNew rightExpression)
+            | Read (variable) ->
+                Expr.Read(oldToNew.Item variable)
+            | ReadOld (variable) ->
+                Expr.ReadOld(oldToNew.Item variable)
             | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
-                Expr.IfThenElseExpr(transformExpr state guardExpr,transformExpr state thenExpr,transformExpr state elseExpr)
-
-    let rec transformStm (state:ChangeIdentifierState) (stm:Stm) : Stm =
+                Expr.IfThenElseExpr(transformExpr oldToNew guardExpr,transformExpr oldToNew thenExpr,transformExpr oldToNew elseExpr)
+                
+    let rec transformStm (oldToNew : Map<Element,Element>) (stm:Stm) : Stm =
         match stm with
             | Stm.Assert (sid,expr) ->
-                Stm.Assert(sid,transformExpr state expr)
+                Stm.Assert(sid,transformExpr oldToNew expr)
             | Stm.Assume (sid,expr) ->
-                Stm.Assume(sid,transformExpr state expr)
+                Stm.Assume(sid,transformExpr oldToNew expr)
             | Stm.Block (sid,statements) ->
-                Stm.Block(sid,statements |> List.map (transformStm state) )
+                Stm.Block(sid,statements |> List.map (transformStm oldToNew) )
             | Stm.Choice (sid,clauses) ->
                 Stm.Choice(sid,clauses |> List.map (fun (guard,stm) ->
-                                                        let newGuard = if guard.IsSome then Some(transformExpr state guard.Value) else None;
-                                                        (newGuard,transformStm state stm))
+                                                        let newGuard = if guard.IsSome then Some(transformExpr oldToNew guard.Value) else None;
+                                                        (newGuard,transformStm oldToNew stm))
                                                    )
             | Stm.Stochastic (sid,clauses) ->
-                Stm.Stochastic(sid,clauses |> List.map (fun (prob,stm) -> (transformExpr state prob,transformStm state stm)))
+                Stm.Stochastic(sid,clauses |> List.map (fun (prob,stm) -> (transformExpr oldToNew prob,transformStm oldToNew stm)))
             | Write (sid,element:Element, expression:Expr) ->
-                Stm.Write(sid,transformElement state element,transformExpr state expression)
+                Stm.Write(sid,oldToNew.Item element,transformExpr oldToNew expression)
     
-    let changeNamesPgm (state:ChangeIdentifierState) (samPgm:Pgm) : (Pgm*Map<Var,Var>) = // returns new program * forward tracing map
-        let currentVars = seq {
-            yield! samPgm.Globals |> List.map (fun var -> var.Var)
-            yield! samPgm.Locals |> List.map (fun var -> var.Var)
+    let changeNamesPgm (state:ChangeIdentifierState) (samPgm:Pgm) : (Pgm*Map<Element,Element>) = // returns new program * forward tracing map
+        let currentElements = seq {
+            yield! samPgm.Globals |> List.map (fun var -> Element.GlobalVar var.Var)
+            yield! samPgm.Locals |> List.map (fun var -> Element.LocalVar var.Var)
         }
         let stateWithAllNames =
             { state with
-                ChangeIdentifierState.TakenNames = Set.union state.TakenNames (currentVars |> Seq.map (fun var->var.getName) |> Set.ofSeq);
+                ChangeIdentifierState.TakenNames = Set.union state.TakenNames (currentElements |> Seq.map (fun var->var.getName) |> Set.ofSeq);
             }
         let newState =
-            let generateAndAddToList (state:ChangeIdentifierState) (varToTransform:Var): (ChangeIdentifierState) =
-                let (_,newState) = state.generateNewVar varToTransform
+            let generateAndAddToList (state:ChangeIdentifierState) (varToTransform:Element): (ChangeIdentifierState) =
+                let (_,newState) = state.generateNewElement varToTransform
                 newState
-            Seq.fold generateAndAddToList (stateWithAllNames) currentVars
+            Seq.fold generateAndAddToList (stateWithAllNames) currentElements
+        
         
         let newGlobals =
             let transformGlobal (globalVar:GlobalVarDecl) =
                 { globalVar with
-                    GlobalVarDecl.Var = newState.OldToNew.Item globalVar.Var
+                    GlobalVarDecl.Var =
+                        match newState.OldToNew.Item (Element.GlobalVar globalVar.Var) with
+                            | Element.GlobalVar var -> var
+                            | _ -> failwith "OldToNew should map a globalVar to a globalVar"
                 }
             samPgm.Globals |> List.map transformGlobal
 
         let newLocals =
             let transformLocal (localVar:LocalVarDecl) =
                 { localVar with
-                    LocalVarDecl.Var = newState.OldToNew.Item localVar.Var
+                    LocalVarDecl.Var =
+                        match newState.OldToNew.Item (Element.LocalVar localVar.Var) with
+                            | Element.LocalVar var -> var
+                            | _ -> failwith "OldToNew should map a localVar to a localVar"
                 }
             samPgm.Locals |> List.map transformLocal
 
@@ -133,7 +138,7 @@ module internal TsamChangeIdentifier =
                 Pgm.Globals = newGlobals;
                 Pgm.Locals = newLocals;
                 Pgm.ElementToType = TsamHelpers.createElementToType (newGlobals,newLocals);
-                Pgm.Body = transformStm newState samPgm.Body;
+                Pgm.Body = transformStm newState.OldToNew samPgm.Body;
                 Pgm.NextGlobal = newNextGlobal;
             }
         (samPgm,newState.OldToNew)
@@ -154,7 +159,9 @@ module internal TsamChangeIdentifier =
             let beforeTransform = mutablePgm.ForwardTracer oldValue
             match beforeTransform with
                 | Traceable(_var) ->
-                    Traceable.Traceable(forwardTrace.Item _var)
+                    match forwardTrace.Item (Element.GlobalVar _var) with
+                        | Element.GlobalVar (_var) -> Traceable.Traceable(_var)
+                        | _ -> failwith "Not expected"
                 | TraceableRemoved(reason) ->
                     Traceable.TraceableRemoved(reason)
 

@@ -71,6 +71,11 @@ module internal Sam =
     type internal Element =
         | GlobalVar of Var
         | LocalVar of Var
+        with
+            override this.ToString () : string =
+                match this with
+                    | GlobalVar (Var(var)) -> var
+                    | LocalVar (Var(var)) -> var
 
     /// Represents side-effect free expressions within a SAM model.
     type internal Expr =

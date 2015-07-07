@@ -68,7 +68,7 @@ module internal SamToTsam =
                 
     let translatePgm (pgm : SafetySharp.Models.Sam.Pgm ) : Tsam.Pgm =
         let nextGlobals =
-            pgm.Globals |> List.map (fun varDecl -> (varDecl.Var,varDecl.Var) ) //map to the same variable
+            pgm.Globals |> List.map (fun varDecl -> (Sam.Element.GlobalVar varDecl.Var,Sam.Element.GlobalVar varDecl.Var) ) //map to the same variable
                         |> Map.ofList
 
         let uniqueStatementIdGenerator =

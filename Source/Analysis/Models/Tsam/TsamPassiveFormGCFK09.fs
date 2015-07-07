@@ -503,21 +503,13 @@ module internal TsamPassiveFormGCFK09 =
         let newBodyWithoutMissingAssignments = addMissingAssignmentsBeforeMerges statementInfos pgm.UniqueStatementIdGenerator versionedElementToFreshElement elementToTypeOld newBodyWithReplacedExprs
         // statementInfos is now outdated
         
-        let mappingToNextGlobal : Map<Var,Var> =
+        let mappingToNextGlobal : Map<Element,Element> =
             //NextGlobal maps to each global variable var_i the variable var_j, which contains the value of var_i, after Body was executed. var_i can be var_j (substitution)
             let maxLastWriteOfRoot = statementInfos.MaxLastWrite.Item pgm.Body.GetStatementId
             let globalVarSet = pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
-            let nextVarOfElement (element:Element,nextVarVersion:int) : Var * Var =
-                let oldVar =
-                    match element with
-                        | Element.GlobalVar (_var) -> _var
-                        | _ -> failwith "this function should only be applied on global vars"
-                let newVar =
-                    let newElement = versionedElementToFreshElement.Item(element,nextVarVersion)                    
-                    match element with
-                        | Element.GlobalVar (_var)
-                        | Element.LocalVar (_var) -> _var
-                (oldVar,newVar)
+            let nextVarOfElement (element:Element,nextVarVersion:int) : Element*Element =
+                let newVar = versionedElementToFreshElement.Item(element,nextVarVersion)                    
+                (element,newVar)
 
             maxLastWriteOfRoot |> Map.toSeq
                                |> Seq.filter (fun (element,_) -> match element with | Element.GlobalVar _ -> true | _ -> false ) //only use global vars and not local vars

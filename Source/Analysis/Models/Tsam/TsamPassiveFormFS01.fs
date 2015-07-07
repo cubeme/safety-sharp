@@ -62,7 +62,7 @@ module internal TsamPassiveFormFS01 =
         {
             IsBottom : bool;
             CurrentSubstitution : Map<Element,Expr>;
-            NextGlobal : Map<Var,Var>;
+            NextGlobal : Map<Element,Element>;
             LocalTakenNames : Set<string>;
             ElementToType : Map<Element,Type>;
              // Note: the elements, where ref points to, stays the same, when copied. No need to merge here!
@@ -89,7 +89,7 @@ module internal TsamPassiveFormFS01 =
                             let localAndGlobalSubstitutions = localVars |> List.fold (fun (acc:Map<Element,Expr>) (var,_type) -> acc.Add(Element.LocalVar var,Expr.Literal(_type.getDefaultValue))) globalSubstitutions
                             localAndGlobalSubstitutions
                         Substitutions.NextGlobal  =
-                            globalVars |> List.map (fun (var,_type) -> (var,var))
+                            globalVars |> List.map (fun (var,_type) -> (Element.GlobalVar var,Element.GlobalVar var))
                                        |> Map.ofList;                            
                         Substitutions.LocalTakenNames = takenNamesAsString
                         Substitutions.ElementToType  = elements |> Map.ofList
@@ -109,7 +109,7 @@ module internal TsamPassiveFormFS01 =
                     {
                         Substitutions.IsBottom = true;
                         Substitutions.CurrentSubstitution = Map.empty<Element,Expr>;
-                        Substitutions.NextGlobal = Map.empty<Var,Var>;
+                        Substitutions.NextGlobal = Map.empty<Element,Element>;
                         Substitutions.LocalTakenNames = Set.empty<string>;
                         Substitutions.ElementToType = Map.empty<Element,Type>;
                         Substitutions.GlobalTakenNamesWithTypes = ref (Map.empty<Var,Type>)
@@ -152,8 +152,8 @@ module internal TsamPassiveFormFS01 =
                                         Substitutions.NextGlobal =
                                             // only update for global vars
                                             match based_on with
-                                                | Element.GlobalVar (based_on) ->
-                                                    this.NextGlobal.Add(based_on,_var) 
+                                                | Element.GlobalVar (_) ->
+                                                    this.NextGlobal.Add(based_on,Element.LocalVar _var) 
                                                 | _ -> 
                                                     this.NextGlobal
                                     }
@@ -176,8 +176,8 @@ module internal TsamPassiveFormFS01 =
                                         Substitutions.NextGlobal =
                                             // only update for global vars
                                             match based_on with
-                                                | Element.GlobalVar (based_on) ->
-                                                    this.NextGlobal.Add(based_on,newVarWithFreshName) 
+                                                | Element.GlobalVar (_) ->
+                                                    this.NextGlobal.Add(based_on,Element.LocalVar newVarWithFreshName) 
                                                 | _ -> 
                                                     this.NextGlobal
                                                 

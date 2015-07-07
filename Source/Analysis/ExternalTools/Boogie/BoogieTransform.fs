@@ -241,7 +241,12 @@ module internal TsamToBoogie =
                     newContext
                 | Tsam.Stm.Stochastic _ ->
                     failwith "Boogie does not support stochastic statements"
-                        
+        
+        let transformElement (element:Tsam.Element) : BoogieSimplifiedAst.Var =
+            match element with
+                | Tsam.Element.GlobalVar _var
+                | Tsam.Element.LocalVar _var -> _var
+
         let rec transformExpr (expr:Tsam.Expr) : BoogieSimplifiedAst.Expr =
             match expr with
                 | Tsam.Expr.Literal (_val) ->
@@ -250,8 +255,8 @@ module internal TsamToBoogie =
                     BoogieSimplifiedAst.Expr.UExpr (transformExpr _operand,op)
                 | Tsam.Expr.BExpr (leftExpression,bop,rightExpression) ->
                     BoogieSimplifiedAst.Expr.BExpr (transformExpr leftExpression,bop,transformExpr rightExpression)
-                | Tsam.Expr.Read (variable) ->
-                    BoogieSimplifiedAst.Expr.Read (variable)
+                | Tsam.Expr.Read (element) ->
+                    BoogieSimplifiedAst.Expr.Read (transformElement element)
                 | Tsam.Expr.ReadOld  (variable) ->
                     failwith "NotSupportedYet"
                 | Tsam.Expr.IfThenElseExpr  (guardExpr, thenExpr, elseExpr) ->
@@ -264,8 +269,8 @@ module internal TsamToBoogie =
                         BoogieSimplifiedAst.Stm.Assert(transformExpr expr)
                     | Tsam.Stm.Assume (sid,expr) ->
                         BoogieSimplifiedAst.Stm.Assume(transformExpr expr)
-                    | Tsam.Stm.Write (sid,var,expr) ->
-                        BoogieSimplifiedAst.Stm.Write(var,transformExpr expr)
+                    | Tsam.Stm.Write (sid,element,expr) ->
+                        BoogieSimplifiedAst.Stm.Write(transformElement element,transformExpr expr)
                     | _ ->
                         failwith "Stm.Choice or Stm.Block should not be here in this stage"
             {

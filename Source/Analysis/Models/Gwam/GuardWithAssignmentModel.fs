@@ -46,6 +46,7 @@ module internal VcGuardWithAssignmentModel =
     
     type VarDecl = Tsam.GlobalVarDecl
     type Var = Tsam.Var
+    type Element = Tsam.Element
     type Val = Tsam.Val
     type BOp= Tsam.BOp
     type Expr = Tsam.Expr
@@ -838,7 +839,7 @@ module internal VcGuardWithAssignmentModel =
     // can easily be abstracted away.
 
     type FinalVariableAssignments = {
-        Assignments : Map<Var,Expr>;
+        Assignments : Map<Element,Expr>;
     }
     type StochasticAssignment = {
         Probability : Expr;
@@ -855,6 +856,7 @@ module internal VcGuardWithAssignmentModel =
         Assignments : Assignments list;
     }
 
+    open TsamHelpers
     
     let guardWithAssignmentModelToString (gwam:GuardWithAssignmentModel) : string =
         let exportExpr (expr:Expr) =
@@ -866,10 +868,10 @@ module internal VcGuardWithAssignmentModel =
         let globals = gwam.Globals |> List.map exportVarDecl |> String.concat ""
         let assigns =
             let finalAssignments (assignments:FinalVariableAssignments) : string =
-                let varAssignToString (var,expr) =
-                    let varName = match var with | Var.Var(name) -> name
+                let elemAssignToString (elem:Element,expr) =
+                    let varName = elem.ToString()
                     sprintf "      %s := %s;\n" (varName) (exportExpr expr)
-                assignments.Assignments |> Map.toList |> List.map varAssignToString |> String.concat ""
+                assignments.Assignments |> Map.toList |> List.map elemAssignToString |> String.concat ""
             let deterministicAssign (guard:Expr,assignment:FinalVariableAssignments) : string =                
                 sprintf "Case %s:\n%s" (exportExpr guard) (finalAssignments assignment)
             let stochasticAssign (guard:Expr,assignment:StochasticAssignment list) : string =
@@ -893,15 +895,15 @@ module internal VcGuardWithAssignmentModel =
                         
         let initialValuation =
             // add for each globalVar a self assignment
-            let globalInit = pgm.Globals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Read(var.Var))) Map.empty<Var,Expr>
+            let globalInit = pgm.Globals |> List.fold (fun (acc:Map<Element,Expr>) var -> acc.Add(Element.GlobalVar var.Var,Expr.Read(Element.GlobalVar var.Var))) Map.empty<Element,Expr>
             // every local variable should have its default value
-            let globalAndLocalInit = pgm.Locals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
+            let globalAndLocalInit = pgm.Locals |> List.fold (fun (acc:Map<Element,Expr>) var -> acc.Add(Element.LocalVar var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
             globalAndLocalInit
             
-        let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList  
-        let nextGlobalToCurrent = pgm.NextGlobal |> Map.toList |> List.map (fun (oldVar,newVar) -> (newVar,oldVar) ) |> Map.ofList
+        let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> Element.GlobalVar final) |> Set.ofList  
+        let nextGlobalToCurrent = pgm.NextGlobal |> Map.toList |> List.map (fun (oldVar,newVar) -> (Element.GlobalVar newVar,Element.GlobalVar oldVar) ) |> Map.ofList
 
-        let redirectFinalVars (variableValuation:Map<Var,Expr>) : Map<Var,Expr> =
+        let redirectFinalVars (variableValuation:Map<Element,Expr>) : Map<Element,Expr> =
             variableValuation
                 |> Map.filter (fun key value -> finalVars.Contains key)
                 |> Map.toList
@@ -915,8 +917,8 @@ module internal VcGuardWithAssignmentModel =
 
             match stm with
                 | Stm.Block(_,statements) ->
-                    let rec traverseBlock (currentValuation:Map<Var,Expr>)
-                                          (toTraverse:Stm list) : (Map<Var,Expr>) = //returns the assumes and rest of the block (Block with a Stochastic or with a bunch of assignments)
+                    let rec traverseBlock (currentValuation:Map<Element,Expr>)
+                                          (toTraverse:Stm list) : (Map<Element,Expr>) = //returns the assumes and rest of the block (Block with a Stochastic or with a bunch of assignments)
                         if toTraverse.IsEmpty then
                             currentValuation
                         else

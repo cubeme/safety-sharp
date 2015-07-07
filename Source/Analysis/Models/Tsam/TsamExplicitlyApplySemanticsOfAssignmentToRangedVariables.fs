@@ -127,7 +127,7 @@ module internal TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables =
                 let rangedVarExpression = forceExprToBeInRangeOfVar (pgm.ElementToType) globalVarElement (Expr.Read(globalVarElement))
                 Stm.Write(pgm.UniqueStatementIdGenerator (),globalVarElement,rangedVarExpression)
             
-            do pgm.Globals |> List.iter (fun globalVar -> assert ( (pgm.NextGlobal.Item (globalVar.Var)) = (globalVar.Var))  ) // TODO: currently stupid check here is necessary to avoid false use
+            do pgm.Globals |> List.iter (fun globalVar -> assert ( (pgm.NextGlobal.Item (Element.GlobalVar globalVar.Var)) = (Element.GlobalVar globalVar.Var))  ) // TODO: currently stupid check here is necessary to avoid false use
             
             pgm.Globals |> List.map createRangedAssignment
         
