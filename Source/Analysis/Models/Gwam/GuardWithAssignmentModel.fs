@@ -900,8 +900,8 @@ module internal VcGuardWithAssignmentModel =
             let globalAndLocalInit = pgm.Locals |> List.fold (fun (acc:Map<Element,Expr>) var -> acc.Add(Element.LocalVar var.Var,Expr.Literal(var.Type.getDefaultValue))) globalInit
             globalAndLocalInit
             
-        let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> Element.GlobalVar final) |> Set.ofList  
-        let nextGlobalToCurrent = pgm.NextGlobal |> Map.toList |> List.map (fun (oldVar,newVar) -> (Element.GlobalVar newVar,Element.GlobalVar oldVar) ) |> Map.ofList
+        let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList  
+        let nextGlobalToCurrent = pgm.NextGlobal |> Map.toList |> List.map (fun (oldVar,newVar) -> (newVar,oldVar) ) |> Map.ofList
 
         let redirectFinalVars (variableValuation:Map<Element,Expr>) : Map<Element,Expr> =
             variableValuation

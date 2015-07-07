@@ -35,8 +35,8 @@ module internal SpgToDot =
     //    let result = TsamToString.exportStm stm SamToStringHelpers.AstToStringState.initial
     //    result.ToString().Replace("\r\n","").Replace("\n","")
 
-    let exportVar (_var:Var) : string =
-        let result = TsamToString.exportVar _var SamToStringHelpers.AstToStringState.initial
+    let exportElement (element:Element) : string =
+        let result = TsamToString.exportElement element SamToStringHelpers.AstToStringState.initial
         result.ToString().Replace("\r\n","").Replace("\n","")
     
 
@@ -54,11 +54,11 @@ module internal SpgToDot =
             let label =
                 match (transition.Guard,transition.Action) with
                     | Some(guard),Some(assignTo,assignThis) ->
-                        sprintf "%s // %s:=%s" (exportExpr guard) (exportVar assignTo) (exportExpr assignThis)
+                        sprintf "%s // %s:=%s" (exportExpr guard) (exportElement assignTo) (exportExpr assignThis)
                     | Some(guard),None ->
                         sprintf "%s" (exportExpr guard)
                     | None,Some(assignTo,assignThis) ->
-                        sprintf "// %s:=%s" (exportVar assignTo) (exportExpr assignThis)
+                        sprintf "// %s:=%s" (exportElement assignTo) (exportExpr assignThis)
                     | None,None ->
                         ""
             let exportTransition = 
@@ -76,7 +76,7 @@ module internal SpgToDot =
                     let probabilityLabel = (exportExpr option.Probability)
                     match option.Action with
                         | Some( (assignTo,assignThis) ) ->
-                            sprintf "%s // %s:=%s" (probabilityLabel) (exportVar assignTo) (exportExpr assignThis)
+                            sprintf "%s // %s:=%s" (probabilityLabel) (exportElement assignTo) (exportExpr assignThis)
                         | None ->
                             probabilityLabel
                 {

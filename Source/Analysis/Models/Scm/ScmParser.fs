@@ -293,7 +293,7 @@ module internal ScmParser =
         parseIdentifierInst IdentifierType.Field |>> Field.Field
     
     let elementIdInst: Parser<_,UserState> =
-        (attempt fieldIdDecl |>> Element.Field) <|>
+        (attempt fieldIdInst |>> Element.Field) <|>
         (varIdInst |>> Element.Var)
 
     let reqPortId: Parser<_,UserState> =

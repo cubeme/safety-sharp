@@ -30,7 +30,7 @@ open SafetySharp.Models.SamHelpers
 open SafetySharp.Analysis.Modelchecking
 
 module internal GenericToPrism =
-    type PrismVariables = Map<Tsam.Var,Prism.Identifier>
+    type PrismVariables = Map<Tsam.Element,Prism.Identifier>
     
     // probForSure := probability = 1.0
     let probForSure = Prism.Expression.Constant(Prism.Double(1.0))
@@ -38,13 +38,13 @@ module internal GenericToPrism =
     
 
     let createPrismIdentifiers (vars:Tsam.Var list) : PrismVariables =
-        let initialMap = Map.empty<Tsam.Var,Prism.Identifier>
+        let initialMap = Map.empty<Tsam.Element,Prism.Identifier>
         let nameGenerator = SafetySharp.FreshNameGenerator.namegenerator_c_like
         let takenNames = ("systemModule"::Prism.Identifier.reserved) |> Set.ofList
-        let addVar (currentEntries:Map<Tsam.Var,Prism.Identifier>,takenNames:Set<string>) (varToAdd:Tsam.Var) : (Map<Tsam.Var,Prism.Identifier>*Set<string>) =
+        let addVar (currentEntries:Map<Tsam.Element,Prism.Identifier>,takenNames:Set<string>) (varToAdd:Tsam.Var) : (Map<Tsam.Element,Prism.Identifier>*Set<string>) =
             let newNameAsString = nameGenerator takenNames (varToAdd.getName)
             let newTakenNames = takenNames.Add newNameAsString
-            let newVarMap=currentEntries.Add (varToAdd,{Prism.Identifier.Name=newNameAsString})
+            let newVarMap=currentEntries.Add (Element.GlobalVar varToAdd,{Prism.Identifier.Name=newNameAsString})
             newVarMap,newTakenNames
         let varMap,takenNames = vars |> List.fold addVar (initialMap,takenNames)
         varMap
@@ -97,7 +97,7 @@ module internal GenericToPrism =
     let generateInitCondition (varDecls:Tsam.GlobalVarDecl list) : Tsam.Expr =
         let generateInit (varDecl:Tsam.GlobalVarDecl) : Tsam.Expr =
             let generatePossibleValues (initialValue : Tsam.Val) : Tsam.Expr =
-                let assignVar = varDecl.Var
+                let assignVar = Element.GlobalVar (varDecl.Var)
                 let assignExpr = Tsam.Expr.Literal(initialValue)
                 let operator = Tsam.BOp.Equals
                 Tsam.Expr.BExpr(Tsam.Expr.Read(assignVar),operator,assignExpr)
@@ -154,7 +154,7 @@ module internal GwamToPrism =
             let transformGlobalVar (globalVarDecl:Tsam.GlobalVarDecl) : (Prism.VariableDeclaration*(Traceable*Prism.Traceable)) =
                 let variableDeclaration =
                     {
-                        VariableDeclaration.Name = prismIdentifiers.Item (globalVarDecl.Var);
+                        VariableDeclaration.Name = prismIdentifiers.Item (Element.GlobalVar globalVarDecl.Var);
                         VariableDeclaration.Type = transformTsamTypeToPrismType (globalVarDecl.Type);
                         VariableDeclaration.InitialValue =
                             if allInitsDeterministic then
@@ -167,8 +167,8 @@ module internal GwamToPrism =
                          |> List.unzip
                          
         let transformAssignments (assignments:Assignments) : Prism.Command =        
-            let transformAssignment (var:Tsam.Var,expr:Tsam.Expr) : (Prism.Identifier * Prism.Expression) =
-                let varToWrite = prismIdentifiers.Item var
+            let transformAssignment (element:Tsam.Element,expr:Tsam.Expr) : (Prism.Identifier * Prism.Expression) =
+                let varToWrite = prismIdentifiers.Item element
                 let expr = translateExpression prismIdentifiers expr
                 (varToWrite,expr)
 
@@ -283,7 +283,7 @@ module internal StochasticProgramGraphToPrism =
             let transformVarDecl (varDecl:VarDecl) : (Prism.VariableDeclaration*(Traceable*Prism.Traceable)) =
                 let variableDeclaration =
                     {
-                        VariableDeclaration.Name = prismIdentifiers.Item (varDecl.Var);
+                        VariableDeclaration.Name = prismIdentifiers.Item (Element.GlobalVar varDecl.Var);
                         VariableDeclaration.Type = transformTsamTypeToPrismType (varDecl.Type);
                         VariableDeclaration.InitialValue =
                             if allInitsDeterministic then
@@ -299,8 +299,8 @@ module internal StochasticProgramGraphToPrism =
             (globalVariablesWithStateVariable,forwardTrace)
 
         
-        let transformAction (var:Tsam.Var,expr:Tsam.Expr) : (Prism.Identifier * Prism.Expression) =
-            let varToWrite = prismIdentifiers.Item var
+        let transformAction (element:Tsam.Element,expr:Tsam.Expr) : (Prism.Identifier * Prism.Expression) =
+            let varToWrite = prismIdentifiers.Item element
             let expr = translateExpression prismIdentifiers expr
             (varToWrite,expr)
 
