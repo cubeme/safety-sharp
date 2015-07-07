@@ -56,6 +56,10 @@ module internal TsamChangeIdentifier =
                     }
                 (newVar,newState)
 
+    let transformElement (state:ChangeIdentifierState) (element:Element) : Element =
+        match element with
+            | Element.GlobalVar (var) -> Element.GlobalVar(state.OldToNew.Item var)
+            | Element.LocalVar (var) -> Element.LocalVar(state.OldToNew.Item var)
         
     let rec transformExpr (state:ChangeIdentifierState) (expr:Expr) : Expr =
         match expr with
@@ -65,10 +69,10 @@ module internal TsamChangeIdentifier =
                 Expr.UExpr(transformExpr state operand,operator)
             | BExpr (leftExpression,operator,rightExpression ) ->
                 Expr.BExpr(transformExpr state leftExpression,operator,transformExpr state rightExpression)
-            | Read (variable) ->
-                Expr.Read(state.OldToNew.Item variable)
-            | ReadOld (variable) ->
-                Expr.ReadOld(state.OldToNew.Item variable)
+            | Read (element) ->
+                Expr.Read(transformElement state element)
+            | ReadOld (element) ->
+                Expr.ReadOld(transformElement state element)
             | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
                 Expr.IfThenElseExpr(transformExpr state guardExpr,transformExpr state thenExpr,transformExpr state elseExpr)
 
@@ -87,8 +91,8 @@ module internal TsamChangeIdentifier =
                                                    )
             | Stm.Stochastic (sid,clauses) ->
                 Stm.Stochastic(sid,clauses |> List.map (fun (prob,stm) -> (transformExpr state prob,transformStm state stm)))
-            | Write (sid,variable:Var, expression:Expr) ->
-                Stm.Write(sid,state.OldToNew.Item variable,transformExpr state expression)
+            | Write (sid,element:Element, expression:Expr) ->
+                Stm.Write(sid,transformElement state element,transformExpr state expression)
     
     let changeNamesPgm (state:ChangeIdentifierState) (samPgm:Pgm) : (Pgm*Map<Var,Var>) = // returns new program * forward tracing map
         let currentVars = seq {
@@ -119,11 +123,7 @@ module internal TsamChangeIdentifier =
                 }
             samPgm.Locals |> List.map transformLocal
 
-        let newVarToType =
-            let varToTypeWithGlobals = newGlobals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Tsam.Var,Tsam.Type>)
-            let varToTypeWithGlobalsAndLocals = newLocals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
-            varToTypeWithGlobalsAndLocals
-
+  
         let newNextGlobal =
             samPgm.NextGlobal |> Map.toList
                               |> List.map (fun (fromOldVar,toOldVar) -> (newState.OldToNew.Item fromOldVar,newState.OldToNew.Item toOldVar) )
@@ -132,7 +132,7 @@ module internal TsamChangeIdentifier =
             { samPgm with
                 Pgm.Globals = newGlobals;
                 Pgm.Locals = newLocals;
-                Pgm.VarToType = newVarToType;
+                Pgm.ElementToType = TsamHelpers.createElementToType (newGlobals,newLocals);
                 Pgm.Body = transformStm newState samPgm.Body;
                 Pgm.NextGlobal = newNextGlobal;
             }

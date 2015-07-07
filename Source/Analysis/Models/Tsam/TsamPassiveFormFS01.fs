@@ -61,59 +61,60 @@ module internal TsamPassiveFormFS01 =
     type Substitutions =
         {
             IsBottom : bool;
-            CurrentSubstitution : Map<Var,Expr>;
+            CurrentSubstitution : Map<Element,Expr>;
             NextGlobal : Map<Var,Var>;
             LocalTakenNames : Set<string>;
-            VarToType : Map<Var,Type>;
+            ElementToType : Map<Element,Type>;
              // Note: the elements, where ref points to, stays the same, when copied. No need to merge here!
             GlobalTakenNamesWithTypes : Map<Var,Type> ref;
             GlobalTakenNames : Set<string> ref;
-            VarToCounter : Map<Var,int> ref;
+            ElementToCounter : Map<Element,int> ref;
             TryToRecycle : bool; // if true, we try to recycle currently unused variables
         }
             with
                 static member initial (globalVars:(Var*Type) list) (localVars:(Var*Type) list) =
-                    let localAndGlobalVars = localVars @ globalVars
+                    let elements =
+                        let globalElements = globalVars |> List.map (fun (_var,_type) -> (Element.GlobalVar _var,_type) )
+                        let localElements = localVars |> List.map (fun (_var,_type) -> (Element.LocalVar _var,_type) )
+                        globalElements @ localElements
+                        
+
                     let takenNamesAsString =
-                        localAndGlobalVars |> List.map (fun (var,_type) -> var.getName)
-                                           |> Set.ofList
+                        elements |> List.map (fun (element,_type) -> element.getName) |> Set.ofList
 
                     {
                         Substitutions.IsBottom = false;
                         Substitutions.CurrentSubstitution =
-                            let globalSubstitutions = globalVars |> List.fold (fun (acc:Map<Var,Expr>) (var,_type) -> acc.Add(var,Expr.Read(var))) Map.empty<Var,Expr>
-                            let localAndGlobalSubstitutions = localVars |> List.fold (fun (acc:Map<Var,Expr>) (var,_type) -> acc.Add(var,Expr.Literal(_type.getDefaultValue))) globalSubstitutions
+                            let globalSubstitutions = globalVars |> List.fold (fun (acc:Map<Element,Expr>) (var,_type) -> acc.Add(Element.GlobalVar var,Expr.Read(Element.GlobalVar var))) Map.empty<Element,Expr>
+                            let localAndGlobalSubstitutions = localVars |> List.fold (fun (acc:Map<Element,Expr>) (var,_type) -> acc.Add(Element.LocalVar var,Expr.Literal(_type.getDefaultValue))) globalSubstitutions
                             localAndGlobalSubstitutions
                         Substitutions.NextGlobal  =
                             globalVars |> List.map (fun (var,_type) -> (var,var))
                                        |> Map.ofList;                            
                         Substitutions.LocalTakenNames = takenNamesAsString
-                        Substitutions.VarToType  =
-                            localAndGlobalVars |> Map.ofList
+                        Substitutions.ElementToType  = elements |> Map.ofList
                         Substitutions.GlobalTakenNamesWithTypes =
-                            ref (localAndGlobalVars |> Map.ofList)
+                            ref (globalVars @ localVars |> Map.ofList)
                         Substitutions.GlobalTakenNames = ref (takenNamesAsString)
-                        Substitutions.VarToCounter =
-                            let newMapLocals =
-                                localVars |> List.map (fun (var,_) -> (var,0))
-                                          |> Map.ofList;            
-                            let newMapGlobals =
-                                globalVars |> List.map (fun (var,_) -> (var,1))
-                                           |> Map.ofList;            
-                            let newMap = unionManyVarMaps [newMapLocals;newMapGlobals]
+                        Substitutions.ElementToCounter =
+                            let elementToCounter (element:Element,_type:Type) =
+                                match element with
+                                    | Element.GlobalVar _ -> (element,1)
+                                    | Element.LocalVar _ -> (element,0)
+                            let newMap = elements |> List.map elementToCounter |> Map.ofList
                             ref (newMap);
                         Substitutions.TryToRecycle = false;
                     }
                 static member bottom =
                     {
                         Substitutions.IsBottom = true;
-                        Substitutions.CurrentSubstitution = Map.empty<Var,Expr>;
+                        Substitutions.CurrentSubstitution = Map.empty<Element,Expr>;
                         Substitutions.NextGlobal = Map.empty<Var,Var>;
                         Substitutions.LocalTakenNames = Set.empty<string>;
-                        Substitutions.VarToType = Map.empty<Var,Type>;
+                        Substitutions.ElementToType = Map.empty<Element,Type>;
                         Substitutions.GlobalTakenNamesWithTypes = ref (Map.empty<Var,Type>)
                         Substitutions.GlobalTakenNames = ref (Set.empty<string>)
-                        Substitutions.VarToCounter = ref (Map.empty<Var,int>);
+                        Substitutions.ElementToCounter = ref (Map.empty<Element,int>);
                         Substitutions.TryToRecycle = true;
                     }
                     
@@ -131,50 +132,57 @@ module internal TsamPassiveFormFS01 =
                         unused |> Set.toList
                                |> List.tryPick (fun name -> if isOfCorrectType name then Some(Var.Var(name)) else None)
                         
-                member this.getFreshVar (based_on:Var) : (Substitutions*Var) =
-                    if this.VarToCounter.Value.Item based_on = 0 then
+                member this.getFreshVar (based_on:Element) : (Substitutions*Element) =
+                    if this.ElementToCounter.Value.Item based_on = 0 then
                         //variable has never been used, so use the current name and increase counter to one
                         let newSubstitutions =
                             { this with
                                 Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,Expr.Read(based_on))
                             }
-                        do this.VarToCounter := this.VarToCounter.Value.Add (based_on, 1)
+                        do this.ElementToCounter := this.ElementToCounter.Value.Add (based_on, 1)
                         (newSubstitutions,based_on)
                     else
-                        let _type:Type = this.VarToType.Item based_on
+                        let _type:Type = this.ElementToType.Item based_on
                         match this.tryToRecycleVar (_type) with
                             | Some (_var) ->
+                                let recycledElement = Element.LocalVar _var
                                 let newSubstitutions =
                                     { this with
-                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,Expr.Read(_var))
+                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,Expr.Read(recycledElement))
                                         Substitutions.NextGlobal =
-                                            if this.NextGlobal.ContainsKey based_on then
-                                                this.NextGlobal.Add(based_on,_var) // only update for global vars
-                                            else
-                                                this.NextGlobal
+                                            // only update for global vars
+                                            match based_on with
+                                                | Element.GlobalVar (based_on) ->
+                                                    this.NextGlobal.Add(based_on,_var) 
+                                                | _ -> 
+                                                    this.NextGlobal
                                     }
-                                (newSubstitutions,_var)
+                                (newSubstitutions,recycledElement)
                             | None ->
-                                let currentCounter = this.VarToCounter.Value.Item based_on
-                                do this.VarToCounter := this.VarToCounter.Value.Add (based_on,currentCounter + 1)
+                                let currentCounter = this.ElementToCounter.Value.Item based_on
+                                do this.ElementToCounter := this.ElementToCounter.Value.Add (based_on,currentCounter + 1)
                                 let nameCandidate = sprintf "%s_passive%i" based_on.getName currentCounter
                                 let freshName = SafetySharp.FreshNameGenerator.namegenerator_c_like this.GlobalTakenNames.Value (nameCandidate)
                                 let newVarWithFreshName = Var.Var(freshName)
-                                let _type = this.VarToType.Item based_on
+                                let newElement = Element.LocalVar(newVarWithFreshName)
+                                let _type = this.ElementToType.Item based_on
                                 do this.GlobalTakenNames:=this.GlobalTakenNames.Value.Add (freshName)
                                 do this.GlobalTakenNamesWithTypes:=this.GlobalTakenNamesWithTypes.Value.Add (newVarWithFreshName,_type)
                                 let newSubstitutions =
                                     { this with
                                         Substitutions.LocalTakenNames = this.LocalTakenNames.Add (freshName);
-                                        Substitutions.VarToType = this.VarToType.Add (newVarWithFreshName,_type);
-                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,Expr.Read(newVarWithFreshName));
+                                        Substitutions.ElementToType = this.ElementToType.Add (newElement,_type);
+                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,Expr.Read(newElement));
                                         Substitutions.NextGlobal =
-                                            if this.NextGlobal.ContainsKey based_on then
-                                                this.NextGlobal.Add(based_on,newVarWithFreshName) // only update for global vars
-                                            else
-                                                this.NextGlobal
+                                            // only update for global vars
+                                            match based_on with
+                                                | Element.GlobalVar (based_on) ->
+                                                    this.NextGlobal.Add(based_on,newVarWithFreshName) 
+                                                | _ -> 
+                                                    this.NextGlobal
+                                                
                                     }
-                                (newSubstitutions,newVarWithFreshName)
+                                (newSubstitutions,newElement)
                             
 
                 static member merge (uniqueStatementIdGenerator:unit->StatementId) (subs:Substitutions list) : (Substitutions * (Stm list list)) =
@@ -206,7 +214,7 @@ module internal TsamPassiveFormFS01 =
                             // If they do not have all the same mapping, there is at least one sub, which
                             // has a different mapping than firstSub. That means comparing to firstSub is enough.
                             // There is no need to compare each pair of subs.
-                            let compareEveryVarWithFirstSub (sub:Map<Var,Expr>) : Set<Var> =
+                            let compareEveryVarWithFirstSub (sub:Map<Element,Expr>) : Set<Element> =
                                 //returns Vars not equal
                                 sub |> Map.toList
                                     |> List.filter (fun (from,_to) -> (firstSub.Item from) <> _to )
@@ -214,34 +222,34 @@ module internal TsamPassiveFormFS01 =
                                     |> Set.ofList
 
                             livingBranches |> List.map ( fun (_,sub) -> sub.CurrentSubstitution)
-                                           |> List.fold (fun toMerge sub -> Set.union toMerge (compareEveryVarWithFirstSub sub) ) Set.empty<Var>
+                                           |> List.fold (fun toMerge sub -> Set.union toMerge (compareEveryVarWithFirstSub sub) ) Set.empty<Element>
                                            |> Set.toList //easier to process
                             
                         let mergedSubs =
                             // merge subs, such that it contains every locally created name (every name used in any branch should not be
                             // able to be recycled in the future)
-                            let unifiedSubstitutions = livingBranches |> List.map (fun (_,subs) -> subs.CurrentSubstitution) |> unionManyVarMaps
+                            let unifiedSubstitutions = livingBranches |> List.map (fun (_,subs) -> subs.CurrentSubstitution) |> unionManyElementMaps
                             let unifiedLocalTakenNames = livingBranches |> List.map (fun (_,subs) -> subs.LocalTakenNames) |> Set.unionMany
-                            let unifiedVarToType = livingBranches |> List.map (fun (_,subs) -> subs.VarToType) |> unionManyVarMaps
+                            let unifiedElementToType = livingBranches |> List.map (fun (_,subs) -> subs.ElementToType) |> unionManyElementMaps
                             { firstSub with
                                 Substitutions.CurrentSubstitution = unifiedSubstitutions;
                                 Substitutions.LocalTakenNames = unifiedLocalTakenNames;
-                                Substitutions.VarToType = unifiedVarToType;
+                                Substitutions.ElementToType = unifiedElementToType;
                             }
                         let (newSub) = // this calculates implicitly map "\Theta" of figure 4 in the paper
-                            let createNewVariable (subst:Substitutions) (variable:Var) =
-                                 let (newSub,var) = subst.getFreshVar variable
+                            let createNewVariable (subst:Substitutions) (element:Element) =
+                                 let (newSub,var) = subst.getFreshVar element
                                  newSub
                             variablesToMerge |> List.fold createNewVariable mergedSubs
 
                         let appendStatementsForLiving =
                             let appendsForSub (sub:Substitutions) : Stm list =                                          
-                                let assumptionForVar (_var:Var) =
-                                    let currentVar = sub.CurrentSubstitution.Item _var
-                                    let nextVar = newSub.CurrentSubstitution.Item _var
+                                let assumptionForElement (element:Element) =
+                                    let currentVar = sub.CurrentSubstitution.Item element
+                                    let nextVar = newSub.CurrentSubstitution.Item element
                                     let newStatementId = uniqueStatementIdGenerator()
                                     Stm.Assume(newStatementId,Expr.BExpr(currentVar,BOp.Equals,nextVar)) 
-                                variablesToMerge |> List.map assumptionForVar
+                                variablesToMerge |> List.map assumptionForElement
                             livingBranches |> List.map (fun (number:int,sub) -> (number,appendsForSub sub))
                         let appendStatementsForDead : ((int*Stm list) list) =
                             deadBranches |> List.map (fun (number:int,_) -> number,[])
@@ -364,21 +372,21 @@ module internal TsamPassiveFormFS01 =
         let sigma = Substitutions.initial globalVars localVars
         let (newSigma,newBody) = passify (pgm.UniqueStatementIdGenerator) (sigma,pgm.Body)
         let newPgm =
-            let createLocalVarDecl (_var,_type) = LocalVarDecl.createLocalVarDecl _var _type
+            let createLocalVarDecl (_element,_type) =
+                match _element with
+                    | Element.LocalVar (_var) -> LocalVarDecl.createLocalVarDecl _var _type
+                    | _ -> failwith "this function should be called, after global variables have been filtered out"
             let oldGlobalsAsSet = pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
             let newLocals =
-                newSigma.VarToType |> Map.toList
-                                   |> List.filter (fun (_var,_) -> not(oldGlobalsAsSet.Contains _var) ) // use only those variables, which are not in global
-                                   |> List.map createLocalVarDecl                            
-            let newVarToType =
-                let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Tsam.Var,Tsam.Type>)
-                let varToTypeWithGlobalsAndLocals = newLocals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
-                varToTypeWithGlobalsAndLocals
+                newSigma.ElementToType |> Map.toList                                       
+                                       |> List.filter (fun (_element,_) -> match _element with | Element.LocalVar(_) -> true | _ -> false ) // use only those variables, which are not in global
+                                       |> List.map createLocalVarDecl                            
+
             { pgm with
                 Pgm.Body = newBody;
                 Pgm.Globals = pgm.Globals; // globals stay globals
                 Pgm.Locals = newLocals;
-                Pgm.VarToType = newVarToType;
+                Pgm.ElementToType = TsamHelpers.createElementToType (pgm.Globals,newLocals);
                 Pgm.NextGlobal = newSigma.NextGlobal;
                 Pgm.CodeForm = CodeForm.Passive;
             }            

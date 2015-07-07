@@ -55,7 +55,23 @@ module internal TsamHelpers =
                 unionManyVarMaps newUnited mapsToUnite.Tail
         unionManyVarMaps Map.empty<Var,'b> mapsToUnite
 
+    let unionManyElementMaps<'b when 'b : comparison> (mapsToUnite:Map<Element,'b> list) =
+        let rec unionManyElementMaps (united:Map<Element,'b>) (mapsToUnite:Map<Element,'b> list) =
+            if mapsToUnite.IsEmpty then
+                united
+            else
+                let newUnited =
+                    mapsToUnite.Head |> Map.toList
+                                     |> List.fold (fun (united:Map<Element,'b>) (key:Element,value:'b) -> united.Add(key,value)) united
+                unionManyElementMaps newUnited mapsToUnite.Tail
+        unionManyElementMaps Map.empty<Element,'b> mapsToUnite
+
     
+    let createElementToType (globals:GlobalVarDecl list,locals:LocalVarDecl list) : Map<Tsam.Element,Tsam.Type> =
+        let elementToTypeWithGlobals = globals |> List.fold (fun (acc:Map<Tsam.Element,Tsam.Type>) elem -> acc.Add(Tsam.Element.GlobalVar elem.Var,elem.Type)) (Map.empty<Tsam.Element,Tsam.Type>)
+        let elementToTypeWithGlobalsAndLocals = locals |> List.fold (fun (acc:Map<Tsam.Element,Tsam.Type>) elem -> acc.Add(Tsam.Element.LocalVar elem.Var,elem.Type)) (elementToTypeWithGlobals)
+        elementToTypeWithGlobalsAndLocals
+
     // Extension methods
     type Sam.Expr with    
         member expr.rewriteExpr_elementsToExpr (currentValuation:Map<Element,Expr>) : Expr =

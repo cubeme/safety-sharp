@@ -58,19 +58,19 @@ module internal TsamPassiveFormGCFK09 =
     
     type StatementInfos =
         {
-            ReadVersions : Map<StatementId,Set<Var*int>> 
-            WriteVersions : Map<StatementId,Set<Var*int>>
-            FirstRead : Map<StatementId,Map<Var,int>>
-            MaxLastWrite : Map<StatementId,Map<Var,int>>
+            ReadVersions : Map<StatementId,Set<Element*int>> 
+            WriteVersions : Map<StatementId,Set<Element*int>>
+            FirstRead : Map<StatementId,Map<Element,int>>
+            MaxLastWrite : Map<StatementId,Map<Element,int>>
             Children : Map<StatementId,Set<StatementId>>
         }
             with
                 static member initial =
                     {
-                        StatementInfos.ReadVersions = Map.empty<StatementId,Set<Var*int>>;
-                        StatementInfos.WriteVersions = Map.empty<StatementId,Set<Var*int>>;
-                        StatementInfos.FirstRead = Map.empty<StatementId,Map<Var,int>>
-                        StatementInfos.MaxLastWrite = Map.empty<StatementId,Map<Var,int>>
+                        StatementInfos.ReadVersions = Map.empty<StatementId,Set<Element*int>>;
+                        StatementInfos.WriteVersions = Map.empty<StatementId,Set<Element*int>>;
+                        StatementInfos.FirstRead = Map.empty<StatementId,Map<Element,int>>
+                        StatementInfos.MaxLastWrite = Map.empty<StatementId,Map<Element,int>>
                         StatementInfos.Children = Map.empty<StatementId,Set<StatementId>>;
                     }
                     
@@ -78,7 +78,7 @@ module internal TsamPassiveFormGCFK09 =
     type CalculationCache =
         {
             StatementInfos : StatementInfos ref;
-            MaxWriteOfPredecessor : Map<Var,int> // Var to MaxWriteOfPredecessorOfVar
+            MaxWriteOfPredecessor : Map<Element,int> // Element to MaxWriteOfPredecessorOfElement
             //NodesToRefresh : Set<int>
         }
             with
@@ -87,19 +87,21 @@ module internal TsamPassiveFormGCFK09 =
                     let localVars:Set<Var> = pgm.Locals |> List.map (fun l -> l.Var) |> Set.ofList
                     let maxWriteOfPredecessor =
                         // global fields have already been written to (in earlier steps or been initialized). Set the counter there to 1
-                        let globalVarVersions = globalVars |> Set.fold (fun (acc:Map<Var,int>) (elem:Var) -> acc.Add(elem,1)) Map.empty<Var,int>;
+                        let globalVarVersions = globalVars |> Set.fold (fun (acc:Map<Element,int>) (elem:Var) -> acc.Add(Element.GlobalVar elem,1)) Map.empty<Element,int>;
                         // Set counter of local variables to 0. Value 0 means default value of type.
-                        let globalAndLocalVarVersions = localVars |> Set.fold (fun (acc:Map<Var,int>) (elem:Var) -> acc.Add(elem,0)) globalVarVersions;
+                        let globalAndLocalVarVersions = localVars |> Set.fold (fun (acc:Map<Element,int>) (elem:Var) -> acc.Add(Element.LocalVar elem,0)) globalVarVersions;
                         globalAndLocalVarVersions
+                        
+
                     {
                         CalculationCache.StatementInfos = ref StatementInfos.initial
                         CalculationCache.MaxWriteOfPredecessor = maxWriteOfPredecessor;
                     }
                 
-                member this.addEntryForStatement (sid:StatementId) (readVersion:Set<Var*int>)
-                                                                   (writeVersion:Set<Var*int>)
-                                                                   (firstRead:Map<Var,int>)
-                                                                   (maxLastWrite:Map<Var,int>)
+                member this.addEntryForStatement (sid:StatementId) (readVersion:Set<Element*int>)
+                                                                   (writeVersion:Set<Element*int>)
+                                                                   (firstRead:Map<Element,int>)
+                                                                   (maxLastWrite:Map<Element,int>)
                                                                    (children:Set<StatementId>) : unit =
                     let statementInfos = this.StatementInfos.Value
                     this.StatementInfos :=
@@ -111,14 +113,14 @@ module internal TsamPassiveFormGCFK09 =
                             StatementInfos.Children = statementInfos.Children.Add(sid,children)
                         }
     
-    let rec readsOfExpression (currentVersions:Map<Var,int>) (acc:Set<Var*int>) (expr:Expr) : Set<Var*int> =
+    let rec readsOfExpression (currentVersions:Map<Element,int>) (acc:Set<Element*int>) (expr:Expr) : Set<Element*int> =
         match expr with
             | Expr.Literal _ ->
                 acc
-            | Expr.Read (_var) ->                
-                acc.Add( (_var,currentVersions.Item _var) )
-            | Expr.ReadOld (_var) ->
-                acc.Add( (_var,1) ) //initial version of a global field is 1
+            | Expr.Read (element) ->                
+                acc.Add( (element,currentVersions.Item element) )
+            | Expr.ReadOld (element) ->
+                acc.Add( (element,1) ) //initial version of a global field is 1
             | Expr.UExpr (expr,uop) ->
                 readsOfExpression currentVersions acc expr
             | Expr.BExpr (left, bop, right) ->
@@ -137,27 +139,27 @@ module internal TsamPassiveFormGCFK09 =
         // afterwards sigma.StatementInfos contains all necessary information
         match stm with
             | Stm.Assert (sid,expr) ->
-                let read = readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Var*int> expr
-                let write = Set.empty<Var*int>
+                let read = readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Element*int> expr
+                let write = Set.empty<Element*int>
                 let firstRead = sigma.MaxWriteOfPredecessor
                 let maxLastWrite = sigma.MaxWriteOfPredecessor
                 let children = (Set.empty<StatementId>)
                 do sigma.addEntryForStatement sid read write firstRead maxLastWrite children
                 sigma
             | Stm.Assume (sid,expr) ->
-                let read = readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Var*int> expr
-                let write = Set.empty<Var*int>
+                let read = readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Element*int> expr
+                let write = Set.empty<Element*int>
                 let firstRead = sigma.MaxWriteOfPredecessor
                 let maxLastWrite = sigma.MaxWriteOfPredecessor
                 let children = (Set.empty<StatementId>)
                 do sigma.addEntryForStatement sid read write firstRead maxLastWrite children
                 sigma
             | Stm.Write (sid,variable,expression) ->
-                let read = readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Var*int> expression
+                let read = readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Element*int> expression
                 let writeVersion =
                     let oldVersion = sigma.MaxWriteOfPredecessor.Item variable
                     oldVersion + 1
-                let write = Set.empty<Var*int>.Add( (variable,writeVersion) )
+                let write = Set.empty<Element*int>.Add( (variable,writeVersion) )
                 let firstRead = sigma.MaxWriteOfPredecessor
                 let maxLastWrite =
                     sigma.MaxWriteOfPredecessor.Add(variable,writeVersion)                    
@@ -178,11 +180,11 @@ module internal TsamPassiveFormGCFK09 =
                 let read =
                     children |> Set.toSeq
                              |> Seq.map (fun child -> statementInfos.ReadVersions.Item child)
-                             |> Seq.fold Set.union Set.empty<Var*int>
+                             |> Seq.fold Set.union Set.empty<Element*int>
                 let write =
                     children |> Set.toSeq
                              |> Seq.map (fun child -> statementInfos.WriteVersions.Item child)
-                             |> Seq.fold Set.union Set.empty<Var*int>
+                             |> Seq.fold Set.union Set.empty<Element*int>
                 let firstRead = sigma.MaxWriteOfPredecessor
                 let maxLastWrite = newSigmaAfterStatements.MaxWriteOfPredecessor
                 do sigma.addEntryForStatement sid read write firstRead maxLastWrite children
@@ -196,9 +198,9 @@ module internal TsamPassiveFormGCFK09 =
                 let readsOfGuards =
                     choices |> List.map (fun (choiceGuard,_) ->
                                             if choiceGuard.IsSome then 
-                                                readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Var*int> choiceGuard.Value
+                                                readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Element*int> choiceGuard.Value
                                             else
-                                                Set.empty<Var*int>
+                                                Set.empty<Element*int>
                                         )
                             |> Set.unionMany
 
@@ -211,21 +213,21 @@ module internal TsamPassiveFormGCFK09 =
                 let read =
                     children |> Set.toSeq
                              |> Seq.map (fun child -> statementInfos.ReadVersions.Item child)
-                             |> Seq.fold Set.union Set.empty<Var*int>
+                             |> Seq.fold Set.union Set.empty<Element*int>
                              |> Set.union readsOfGuards
                 let write =
                     children |> Set.toSeq
                              |> Seq.map (fun child -> statementInfos.WriteVersions.Item child)
-                             |> Seq.fold Set.union Set.empty<Var*int>
+                             |> Seq.fold Set.union Set.empty<Element*int>
                 let firstRead = sigma.MaxWriteOfPredecessor                
                 let maxLastWrite =
-                    let addToMapIfValueHigher (entries:Map<Var,int>) (_var:Var,version:int) : Map<Var,int> =
+                    let addToMapIfValueHigher (entries:Map<Element,int>) (_var:Element,version:int) : Map<Element,int> =
                         if (entries.ContainsKey _var) && (entries.Item _var >= version) then
                             entries
                         else
                             entries.Add(_var,version)
                     newSigmas |> List.collect (fun (sigma:CalculationCache) -> sigma.MaxWriteOfPredecessor |> Map.toList)
-                              |> List.fold addToMapIfValueHigher Map.empty<Var,int>
+                              |> List.fold addToMapIfValueHigher Map.empty<Element,int>
 
                 do sigma.addEntryForStatement sid read write firstRead maxLastWrite children
 
@@ -239,7 +241,7 @@ module internal TsamPassiveFormGCFK09 =
                 // Be careful: This node also reads stuff in its expression. But currently these expressions should only contain
                 // combinations of Literals. But to be future proof, we also add reads of the probabilistic Expressions.
                 let readsOfProbabilistic =
-                    stochasticChoices |> List.map (fun (stochasticChoiceExpr,_) -> readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Var*int> stochasticChoiceExpr)
+                    stochasticChoices |> List.map (fun (stochasticChoiceExpr,_) -> readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Element*int> stochasticChoiceExpr)
                                       |> Set.unionMany
 
                 let newSigmas =
@@ -252,21 +254,21 @@ module internal TsamPassiveFormGCFK09 =
                     // be careful: This node also reads stuff in its expression
                     children |> Set.toSeq
                              |> Seq.map (fun child -> statementInfos.ReadVersions.Item child)
-                             |> Seq.fold Set.union Set.empty<Var*int>
+                             |> Seq.fold Set.union Set.empty<Element*int>
                              |> Set.union readsOfProbabilistic
                 let write =
                     children |> Set.toSeq
                              |> Seq.map (fun child -> statementInfos.WriteVersions.Item child)
-                             |> Seq.fold Set.union Set.empty<Var*int>
+                             |> Seq.fold Set.union Set.empty<Element*int>
                 let firstRead = sigma.MaxWriteOfPredecessor                
                 let maxLastWrite =
-                    let addToMapIfValueHigher (entries:Map<Var,int>) (_var:Var,version:int) : Map<Var,int> =
+                    let addToMapIfValueHigher (entries:Map<Element,int>) (_var:Element,version:int) : Map<Element,int> =
                         if (entries.ContainsKey _var) && (entries.Item _var >= version) then
                             entries
                         else
                             entries.Add(_var,version)
                     newSigmas |> List.collect (fun (sigma:CalculationCache) -> sigma.MaxWriteOfPredecessor |> Map.toList)
-                              |> List.fold addToMapIfValueHigher Map.empty<Var,int>
+                              |> List.fold addToMapIfValueHigher Map.empty<Element,int>
 
                 do sigma.addEntryForStatement sid read write firstRead maxLastWrite children
 
@@ -284,14 +286,14 @@ module internal TsamPassiveFormGCFK09 =
         resultingCache.StatementInfos.Value
     
     
-    let createVariablePerVariableVersion (statementInfos:StatementInfos) (pgm:Pgm) : Map<Var*int,Var> =
+    let createLocalVarElementPerElementVersion (statementInfos:StatementInfos) (pgm:Pgm) : Map<Element*int,Element> =
         // get written versions of the root node
         let writeVersionsOfRoot = statementInfos.WriteVersions.Item pgm.Body.GetStatementId
         let readVersionsOfRoot = statementInfos.ReadVersions.Item pgm.Body.GetStatementId
         let initialVersions =
             // Otherwise, if the initial version of a variable is never read, it does not appear in the set varVersionTuple.
             // But it might be necessary for the missing statements. (See smokeTest6.sam)
-            pgm.Globals |> List.map (fun gl -> (gl.Var,1) ) |> Set.ofList
+            pgm.Globals |> List.map (fun gl -> (Element.GlobalVar gl.Var,1) ) |> Set.ofList
         let varVersionTuples =
             (Set.unionMany [writeVersionsOfRoot;readVersionsOfRoot;initialVersions]) |> Set.toList
         
@@ -306,20 +308,26 @@ module internal TsamPassiveFormGCFK09 =
             takenNames:=takenNames.Value.Add(freshName)
             freshName
         
-        let createFreshVarsForNewVariableVersions (var:Var,version:int) =
+        let createNewElement (based_on:Element) (version:int) : Element =
+            let newName =
+                match based_on with
+                    | Element.GlobalVar (var)
+                    | Element.LocalVar (var) -> createNewName var version
+            Element.LocalVar (Var.Var(newName))
+        
+        let createFreshVarsForNewElementVersions (element:Element,version:int) =
             if version = 1 || version = 0 then
                 // keep, no need for first version (or the default value) to create a new variable. Version 0 is never used. We could also filter it out.
-                ((var,version),var)
+                ((element,version),element)
             else
-                let freshVar = Var.Var(createNewName var version)
-                ((var,version),freshVar)
+                let freshElement = createNewElement element version
+                ((element,version),freshElement)
         
-        let newMap =
-            varVersionTuples |> List.map createFreshVarsForNewVariableVersions |> Map.ofList
+        let newMap = varVersionTuples |> List.map createFreshVarsForNewElementVersions |> Map.ofList
         newMap
     
         
-    let rec replaceVarInExpr (readVersions:Map<Var,int>) (versionedVarToFreshVar:Map<Var*int,Var>) (varToType:Map<Var,Type>) (expr:Expr) : Expr =
+    let rec replaceVarInExpr (readVersions:Map<Element,int>) (versionedElementToFreshElement:Map<Element*int,Element>) (elementToType:Map<Element,Type>) (expr:Expr) : Expr =
         match expr with
             | Expr.Literal (_) ->
                 expr
@@ -327,49 +335,49 @@ module internal TsamPassiveFormGCFK09 =
                 let readVersionOfVar = readVersions.Item _var                
                 if readVersionOfVar = 0 then
                     // version 0 means default value
-                    Expr.Literal( (varToType.Item _var).getDefaultValue )
+                    Expr.Literal( (elementToType.Item _var).getDefaultValue )
                 else
                     // if version >= 1 we use the new fresh name created by createFreshVarsForNewVariableVersions
                     let _newVar =
-                        versionedVarToFreshVar.Item (_var,readVersionOfVar)
+                        versionedElementToFreshElement.Item (_var,readVersionOfVar)
                     Expr.Read (_newVar)
             | Expr.ReadOld (_var) ->
                 expr //old variables keep their value. TODO: Write Smoketest. Assumption: Only works for fields
             | Expr.UExpr (expr,uop) ->
-                Expr.UExpr (replaceVarInExpr readVersions versionedVarToFreshVar varToType expr,uop)
+                Expr.UExpr (replaceVarInExpr readVersions versionedElementToFreshElement elementToType expr,uop)
             | Expr.BExpr (left, bop, right) ->
-                Expr.BExpr (replaceVarInExpr readVersions versionedVarToFreshVar varToType left, bop, replaceVarInExpr readVersions versionedVarToFreshVar varToType right)                
+                Expr.BExpr (replaceVarInExpr readVersions versionedElementToFreshElement elementToType left, bop, replaceVarInExpr readVersions versionedElementToFreshElement elementToType right)                
             | Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
-                Expr.IfThenElseExpr (replaceVarInExpr readVersions versionedVarToFreshVar varToType guardExpr, replaceVarInExpr readVersions versionedVarToFreshVar varToType thenExpr, replaceVarInExpr readVersions versionedVarToFreshVar varToType elseExpr)                
+                Expr.IfThenElseExpr (replaceVarInExpr readVersions versionedElementToFreshElement elementToType guardExpr, replaceVarInExpr readVersions versionedElementToFreshElement elementToType thenExpr, replaceVarInExpr readVersions versionedElementToFreshElement elementToType elseExpr)                
 
-    let rec replaceVarInStm (statementInfos:StatementInfos) (versionedVarToFreshVar:Map<Var*int,Var>) (varToType:Map<Var,Type>) (stm:Stm) : Stm =
+    let rec replaceVarInStm (statementInfos:StatementInfos) (versionedElementToFreshElement:Map<Element*int,Element>) (elementToType:Map<Element,Type>) (stm:Stm) : Stm =
         match stm with
             | Stm.Assert (sid,expr) ->
                 let readVersions = statementInfos.FirstRead.Item sid
-                Stm.Assert(sid,replaceVarInExpr readVersions versionedVarToFreshVar varToType expr)
+                Stm.Assert(sid,replaceVarInExpr readVersions versionedElementToFreshElement elementToType expr)
             | Stm.Assume (sid,expr) ->
                 let readVersions = statementInfos.FirstRead.Item sid
-                Stm.Assume (sid,replaceVarInExpr readVersions versionedVarToFreshVar varToType expr)
+                Stm.Assume (sid,replaceVarInExpr readVersions versionedElementToFreshElement elementToType expr)
             | Stm.Block (sid,statements) ->
-                let newStmnts = statements |> List.map (replaceVarInStm statementInfos versionedVarToFreshVar varToType)
+                let newStmnts = statements |> List.map (replaceVarInStm statementInfos versionedElementToFreshElement elementToType)
                 Stm.Block (sid,newStmnts)
             | Stm.Choice (sid,choices) ->
                 let readVersions = statementInfos.FirstRead.Item sid
                 let rewriteChoice (choiceExpr:Expr option,choiceStm) =
                     let newStochasticExpr =
                         if choiceExpr.IsSome then
-                            Some(replaceVarInExpr readVersions versionedVarToFreshVar varToType choiceExpr.Value)
+                            Some(replaceVarInExpr readVersions versionedElementToFreshElement elementToType choiceExpr.Value)
                         else
                             None
-                    let newStochasticStm = replaceVarInStm statementInfos versionedVarToFreshVar varToType choiceStm
+                    let newStochasticStm = replaceVarInStm statementInfos versionedElementToFreshElement elementToType choiceStm
                     (newStochasticExpr,newStochasticStm)
                 let newChoices = choices |> List.map rewriteChoice
                 Stm.Choice (sid,newChoices)
             | Stm.Stochastic (sid,stochasticChoices) ->
                 let readVersions = statementInfos.FirstRead.Item sid
                 let rewriteChoice (stochasticExpr,stochasticStm) =
-                    let newStochasticExpr = replaceVarInExpr readVersions versionedVarToFreshVar varToType stochasticExpr
-                    let newStochasticStm = replaceVarInStm statementInfos versionedVarToFreshVar varToType stochasticStm
+                    let newStochasticExpr = replaceVarInExpr readVersions versionedElementToFreshElement elementToType stochasticExpr
+                    let newStochasticStm = replaceVarInStm statementInfos versionedElementToFreshElement elementToType stochasticStm
                     (newStochasticExpr,newStochasticStm)
                 let newChoices = stochasticChoices |> List.map rewriteChoice
                 Stm.Stochastic (sid,newChoices)
@@ -378,21 +386,21 @@ module internal TsamPassiveFormGCFK09 =
                 let readVersions = statementInfos.FirstRead.Item sid
                 let _newVar =
                     let writeVersionOfVar = writeVersions.Item _var
-                    versionedVarToFreshVar.Item (_var,writeVersionOfVar)
-                Stm.Write (sid,_newVar,replaceVarInExpr readVersions versionedVarToFreshVar varToType expr)
+                    versionedElementToFreshElement.Item (_var,writeVersionOfVar)
+                Stm.Write (sid,_newVar,replaceVarInExpr readVersions versionedElementToFreshElement elementToType expr)
         
-    let rec addMissingAssignmentsBeforeMerges (statementInfos:StatementInfos) (uniqueStatementIdGenerator : unit -> StatementId) (versionedVarToFreshVar:Map<Var*int,Var>) (varToType:Map<Var,Type>) (stm:Stm) : Stm =
+    let rec addMissingAssignmentsBeforeMerges (statementInfos:StatementInfos) (uniqueStatementIdGenerator : unit -> StatementId) (versionedElementToFreshElement:Map<Element*int,Element>) (elementToType:Map<Element,Type>) (stm:Stm) : Stm =
         match stm with
             | Stm.Assert (sid,expr) ->
                 stm
             | Stm.Assume (sid,expr) ->
                 stm
             | Stm.Block (sid,statements) ->
-                let newStmnts = statements |> List.map (addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar varToType)
+                let newStmnts = statements |> List.map (addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedElementToFreshElement elementToType)
                 Stm.Block (sid,newStmnts)
             | Stm.Choice (sid,choices) ->
                 let recursiveAddMissing (choiceGuard,choiceStm) =
-                    let newChoiceStm = addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar varToType choiceStm
+                    let newChoiceStm = addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedElementToFreshElement elementToType choiceStm
                     (choiceGuard,newChoiceStm)
                 let newChoices = choices |> List.map recursiveAddMissing
                 let readOfNextNode = statementInfos.MaxLastWrite.Item sid
@@ -400,16 +408,16 @@ module internal TsamPassiveFormGCFK09 =
                 let addMissingAssignmentsToBranch (branch:Stm) : Stm =
                     let maxLastWriteOfBranch = statementInfos.MaxLastWrite.Item branch.GetStatementId
                     let missingStatementsOfBranch =
-                        let createAssignment (_var:Var,nextReadVersion:int,lastWriteVersionOfBranch:int) =
+                        let createAssignment (element:Element,nextReadVersion:int,lastWriteVersionOfBranch:int) =
                             let freshStatementId = uniqueStatementIdGenerator ()
-                            let assignTo = versionedVarToFreshVar.Item (_var,nextReadVersion)
+                            let assignTo = versionedElementToFreshElement.Item (element,nextReadVersion)
                             let assignExpr =
                                 if lastWriteVersionOfBranch = 0 then
                                     // version 0 means default value
-                                    Expr.Literal( (varToType.Item _var).getDefaultValue )
+                                    Expr.Literal( (elementToType.Item element).getDefaultValue )
                                 else
                                     // if version >= 1 we use the new fresh name created by createFreshVarsForNewVariableVersions
-                                    Expr.Read(versionedVarToFreshVar.Item (_var,lastWriteVersionOfBranch))
+                                    Expr.Read(versionedElementToFreshElement.Item (element,lastWriteVersionOfBranch))
                             Stm.Write(freshStatementId,assignTo,assignExpr)                            
                         readOfNextNode |> Map.toList
                                        |> List.map (fun (_var,nextReadVersion ) -> (_var,nextReadVersion, maxLastWriteOfBranch.Item _var ) )
@@ -423,7 +431,7 @@ module internal TsamPassiveFormGCFK09 =
             | Stm.Stochastic (sid,stochasticChoices) ->
                 // adapted just code of Stm.Choice
                 let recursiveAddMissing (stochasticExpr,stochasticStm) =
-                    let newStochasticStm = addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar varToType stochasticStm
+                    let newStochasticStm = addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedElementToFreshElement elementToType stochasticStm
                     (stochasticExpr,newStochasticStm)
                 let newChoices = stochasticChoices |> List.map recursiveAddMissing                
                 let readOfNextNode = statementInfos.MaxLastWrite.Item sid
@@ -431,16 +439,16 @@ module internal TsamPassiveFormGCFK09 =
                 let addMissingAssignmentsToBranch (branch:Stm) : Stm =
                     let maxLastWriteOfBranch = statementInfos.MaxLastWrite.Item branch.GetStatementId
                     let missingStatementsOfBranch =
-                        let createAssignment (_var:Var,nextReadVersion:int,lastWriteVersionOfBranch:int) =
+                        let createAssignment (element:Element,nextReadVersion:int,lastWriteVersionOfBranch:int) =
                             let freshStatementId = uniqueStatementIdGenerator ()
-                            let assignTo = versionedVarToFreshVar.Item (_var,nextReadVersion)
+                            let assignTo = versionedElementToFreshElement.Item (element,nextReadVersion)
                             let assignExpr =
                                 if lastWriteVersionOfBranch = 0 then
                                     // version 0 means default value
-                                    Expr.Literal( (varToType.Item _var).getDefaultValue )
+                                    Expr.Literal( (elementToType.Item element).getDefaultValue )
                                 else
                                     // if version >= 1 we use the new fresh name created by createFreshVarsForNewVariableVersions
-                                    Expr.Read(versionedVarToFreshVar.Item (_var,lastWriteVersionOfBranch))
+                                    Expr.Read(versionedElementToFreshElement.Item (element,lastWriteVersionOfBranch))
                             Stm.Write(freshStatementId,assignTo,assignExpr)                            
                         readOfNextNode |> Map.toList
                                        |> List.map (fun (_var,nextReadVersion ) -> (_var,nextReadVersion, maxLastWriteOfBranch.Item _var ) )
@@ -486,50 +494,55 @@ module internal TsamPassiveFormGCFK09 =
         
         let statementInfos = calculateStatementInfos pgm
         
-        let varToType =
-            let globalVarToType = pgm.Globals |> List.fold (fun (acc:Map<Var,Type>) (elem:GlobalVarDecl) -> acc.Add(elem.Var,elem.Type)) Map.empty<Var,Type>;
-            let globalAndLocalVarToType = pgm.Locals |> List.fold (fun (acc:Map<Var,Type>) (elem:LocalVarDecl) -> acc.Add(elem.Var,elem.Type)) globalVarToType;
-            globalAndLocalVarToType            
+        let elementToTypeOld = TsamHelpers.createElementToType (pgm.Globals,pgm.Locals)
 
-        let versionedVarToFreshVar = createVariablePerVariableVersion statementInfos pgm
+        let versionedElementToFreshElement = createLocalVarElementPerElementVersion statementInfos pgm
         // replace versionedVar by fresh Var in each statement and expression
-        let newBodyWithReplacedExprs = replaceVarInStm statementInfos versionedVarToFreshVar varToType pgm.Body
+        let newBodyWithReplacedExprs = replaceVarInStm statementInfos versionedElementToFreshElement elementToTypeOld pgm.Body
         // Add Assignments. To add assignments, we need to introduce new statements. For that, we need new statement ids
-        let newBodyWithoutMissingAssignments = addMissingAssignmentsBeforeMerges statementInfos pgm.UniqueStatementIdGenerator versionedVarToFreshVar varToType newBodyWithReplacedExprs
+        let newBodyWithoutMissingAssignments = addMissingAssignmentsBeforeMerges statementInfos pgm.UniqueStatementIdGenerator versionedElementToFreshElement elementToTypeOld newBodyWithReplacedExprs
         // statementInfos is now outdated
         
-        let mappingToNextGlobal =
+        let mappingToNextGlobal : Map<Var,Var> =
             //NextGlobal maps to each global variable var_i the variable var_j, which contains the value of var_i, after Body was executed. var_i can be var_j (substitution)
             let maxLastWriteOfRoot = statementInfos.MaxLastWrite.Item pgm.Body.GetStatementId
             let globalVarSet = pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
-            maxLastWriteOfRoot |> Map.filter (fun var nextVarVersion -> globalVarSet.Contains var) //only use global vars and not local vars
-                               |> Map.map (fun var nextVarVersion -> versionedVarToFreshVar.Item(var,nextVarVersion))
+            let nextVarOfElement (element:Element,nextVarVersion:int) : Var * Var =
+                let oldVar =
+                    match element with
+                        | Element.GlobalVar (_var) -> _var
+                        | _ -> failwith "this function should only be applied on global vars"
+                let newVar =
+                    let newElement = versionedElementToFreshElement.Item(element,nextVarVersion)                    
+                    match element with
+                        | Element.GlobalVar (_var)
+                        | Element.LocalVar (_var) -> _var
+                (oldVar,newVar)
+
+            maxLastWriteOfRoot |> Map.toSeq
+                               |> Seq.filter (fun (element,_) -> match element with | Element.GlobalVar _ -> true | _ -> false ) //only use global vars and not local vars
+                               |> Seq.map nextVarOfElement
+                               |> Map.ofSeq
         // statementInfos is now useless
                 
-        let varToType =
-            let localVarToType = pgm.Locals |> List.map (fun l -> l.Var,l.Type)
-            let globalVarToType = pgm.Globals |> List.map (fun g -> g.Var,g.Type)
-            (localVarToType @ globalVarToType) |> Map.ofList
-
 
         let newPgm =
-            let createLocalVarDecl (_var,_type) = LocalVarDecl.createLocalVarDecl _var _type
+            let createLocalVarDecl (element:Element,_type) =
+                match element with
+                    | Element.LocalVar(_var) -> LocalVarDecl.createLocalVarDecl _var _type
+                    | _ -> failwith "this function should be called, after global variables have been filtered out"                
             let oldGlobalsAsSet = pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
             let newLocals =
                 let newVersions =
-                    versionedVarToFreshVar |> Map.toList
-                                           |> List.filter (fun ((_var1,version),_var2) -> _var1 <> _var2)
-                                           |> List.map (fun ((_var1,version),_var2) -> createLocalVarDecl (_var2,varToType.Item _var1) ) 
+                    versionedElementToFreshElement |> Map.toList
+                                                   |> List.filter (fun ((_var1,version),_var2) -> match _var2 with | Element.LocalVar _ -> true | _ -> false)
+                                                   |> List.map (fun ((_var1,version),_var2) -> createLocalVarDecl (_var2,elementToTypeOld.Item _var1) ) 
                 (newVersions @ pgm.Locals)
-            let newVarToType =
-                let varToTypeWithGlobals = pgm.Globals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (Map.empty<Tsam.Var,Tsam.Type>)
-                let varToTypeWithGlobalsAndLocals = newLocals |> List.fold (fun (acc:Map<Tsam.Var,Tsam.Type>) elem -> acc.Add(elem.Var,elem.Type)) (varToTypeWithGlobals)
-                varToTypeWithGlobalsAndLocals
             { pgm with
                 Pgm.Body = newBodyWithoutMissingAssignments;
                 Pgm.Globals = pgm.Globals; // globals stay globals
                 Pgm.Locals = newLocals;
-                Pgm.VarToType = newVarToType;
+                Pgm.ElementToType = TsamHelpers.createElementToType (pgm.Globals,newLocals);
                 Pgm.CodeForm = CodeForm.SingleAssignments;
                 Pgm.NextGlobal = mappingToNextGlobal;
             }            
