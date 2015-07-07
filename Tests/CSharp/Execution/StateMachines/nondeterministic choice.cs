@@ -41,27 +41,27 @@ namespace Tests.Execution.StateMachines
 		[SuppressTransformation]
 		protected override void Check()
 		{
-			GetCurrentState<S>().ShouldBe(S.A);
-			InState(S.A).ShouldBe(true);
-			InState(S.B).ShouldBe(false);
+			CurrentState.As<S>().ShouldBe(S.A);
+			(CurrentState == S.A).ShouldBe(true);
+			(CurrentState == S.B).ShouldBe(false);
 
 			for (var i = 0; i < 100; ++i)
 			{
 				var f = _f;
 				ExecuteUpdate();
 
-				(GetCurrentState<S>() == S.A || GetCurrentState<S>() == S.B).ShouldBe(true);
+				(CurrentState.As<S>() == S.A || CurrentState.As<S>() == S.B).ShouldBe(true);
 
-				if (GetCurrentState<S>() == S.A)
+				if (CurrentState.As<S>() == S.A)
 				{
-					InState(S.A).ShouldBe(true);
-					InState(S.B).ShouldBe(false);
+					(CurrentState == S.A).ShouldBe(true);
+					(CurrentState == S.B).ShouldBe(false);
 					_f.ShouldBe(f - 1);
 				}
 				else
 				{
-					InState(S.A).ShouldBe(false);
-					InState(S.B).ShouldBe(true);
+					(CurrentState == S.A).ShouldBe(false);
+					(CurrentState == S.B).ShouldBe(true);
 					_f.ShouldBe(17);
 				}
 			}

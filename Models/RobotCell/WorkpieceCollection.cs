@@ -52,6 +52,19 @@ namespace RobotCell
 			}
 		}
 
+		public void MoveWorkpiece(Position position)
+		{
+			// TODO!
+			if (_workpiece1.GetPosition() == position)
+				_workpiece1.MoveTo(position);
+
+			if (_workpiece2.GetPosition() == position)
+				_workpiece1.MoveTo(position);
+
+			if (_workpiece3.GetPosition() == position)
+				_workpiece1.MoveTo(position);
+		}
+
 		private int GetWorkpieceAt(Position position)
 		{
 			if (_workpiece1.GetPosition() == position)

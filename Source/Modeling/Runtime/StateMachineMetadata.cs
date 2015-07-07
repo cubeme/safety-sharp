@@ -72,7 +72,7 @@ namespace SafetySharp.Runtime
 			Transitions = transitionArray;
 			StateField = stateField;
 
-			_component.State = InitialStates[_random.Next(0, InitialStates.Count)];
+			_component.StateMetadata = InitialStates[_random.Next(0, InitialStates.Count)];
 		}
 
 		/// <summary>

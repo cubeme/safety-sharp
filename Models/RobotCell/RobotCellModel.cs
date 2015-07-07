@@ -50,6 +50,9 @@ namespace RobotCell
 
 			foreach (var tool in DrillTools.Concat(InsertTools).Concat(TightenTools))
 				Bind(workpieces, tool);
+
+			foreach (var cart in Carts)
+				Bind(workpieces, cart);
 		}
 
 		public Cart[] Carts { get; }
@@ -60,6 +63,11 @@ namespace RobotCell
 		public Tool[] TightenTools { get; }
 		public Robot[] Robots { get; }
 		public ObserverController ObserverController { get; }
+
+		void Bind(WorkpieceCollection workpieces, Cart cart)
+		{
+			Bind(cart.RequiredPorts.MoveTo = workpieces.ProvidedPorts.MoveWorkpiece);
+		}
 
 		private void Bind(WorkpieceCollection workpieces, WorkpieceSensor sensor)
 		{

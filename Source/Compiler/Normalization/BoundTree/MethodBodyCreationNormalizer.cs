@@ -29,6 +29,7 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Editing;
+	using Modeling;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
 	using Runtime;
@@ -58,6 +59,11 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 		private class Rewriter : CSharpSyntaxVisitor<SyntaxNode>
 		{
 			/// <summary>
+			///     The symbol representing the <see cref="Choose" /> type.
+			/// </summary>
+			private readonly ITypeSymbol _chooseType;
+
+			/// <summary>
 			///     The semantic model that is used for semantic analysis of the method body.
 			/// </summary>
 			private readonly SemanticModel _semanticModel;
@@ -68,6 +74,26 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 			private readonly SyntaxGenerator _syntax;
 
 			/// <summary>
+			///     The method symbol representing the <see cref="Choose.Boolean" /> method.
+			/// </summary>
+			private IMethodSymbol _chooseBoolean;
+
+			/// <summary>
+			///     The method symbol representing the <see cref="Choose.FromRange{T}" /> method.
+			/// </summary>
+			private IMethodSymbol _chooseFromRange;
+
+			/// <summary>
+			///     The method symbol representing the <see cref="Choose.Literal{T}" /> method.
+			/// </summary>
+			private IMethodSymbol _chooseLiteral;
+
+			/// <summary>
+			///     The method symbol representing the <see cref="Choose.Value{T}" /> method.
+			/// </summary>
+			private IMethodSymbol _chooseValue;
+
+			/// <summary>
 			///     Initializes a new instance.
 			/// </summary>
 			/// <param name="semanticModel">The semantic model that should be used for semantic analysis of the method body.</param>
@@ -76,6 +102,12 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 			{
 				_semanticModel = semanticModel;
 				_syntax = syntax;
+
+				_chooseType = semanticModel.GetTypeSymbol(typeof(Choose));
+				_chooseFromRange = _chooseType.GetMembers("FromRange").OfType<IMethodSymbol>().Single();
+				_chooseBoolean = _chooseType.GetMembers("Boolean").OfType<IMethodSymbol>().Single();
+				_chooseLiteral = _chooseType.GetMembers("Literal").OfType<IMethodSymbol>().Single();
+				_chooseValue = _chooseType.GetMembers("Value").OfType<IMethodSymbol>().Single();
 			}
 
 			/// <summary>
@@ -178,6 +210,13 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 					case SymbolKind.Field:
 						var fieldMetadata = ((IFieldSymbol)symbol).GetFieldMetadataExpression(_syntax.ThisExpression(), _syntax);
 						return Create<FieldExpression>(fieldMetadata);
+					case SymbolKind.Property:
+						if (symbol.Name != "CurrentState" || !symbol.ContainingType.Equals(_semanticModel.GetComponentClassSymbol()))
+							goto default;
+
+						var stateFieldSymbol = _semanticModel.GetComponentClassSymbol().GetMembers("_state").OfType<IFieldSymbol>().Single();
+						var stateFieldMetadata = stateFieldSymbol.GetFieldMetadataExpression(_syntax.ThisExpression(), _syntax);
+						return Create<FieldExpression>(stateFieldMetadata);
 					default:
 						Assert.NotReached("Unexpected symbol kind '{0}'.", symbol.Kind);
 						return null;
@@ -347,10 +386,63 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 			/// </summary>
 			public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax statement)
 			{
-				if (statement.Expression.Kind() == SyntaxKind.SimpleAssignmentExpression)
+				// We have to special case the code for assignments here
+				var assignment = statement.Expression as AssignmentExpressionSyntax;
+				if (assignment == null)
+					return Create<ExpressionStatement>(Visit(statement.Expression));
+
+				// If the right-hand side is not an invocation, it's a deterministic assignment
+				if (!assignment.Right.Descendants<InvocationExpressionSyntax>().Any())
 					return Visit(statement.Expression);
 
-				return Create<ExpressionStatement>(Visit(statement.Expression));
+				// Check for a nondeterministic assignment
+				var methodSymbol = assignment.Right.GetReferencedSymbol(_semanticModel) as IMethodSymbol;
+				if (methodSymbol == null || !methodSymbol.ContainingType.Equals(_chooseType))
+					return Visit(statement.Expression);
+
+				return NormalizeNondeterministicAssignment(methodSymbol, assignment);
+			}
+
+			/// <summary>
+			///     Normalizes the nondeterministic <paramref name="assignment" />.
+			/// </summary>
+			private SyntaxNode NormalizeNondeterministicAssignment(IMethodSymbol methodSymbol, AssignmentExpressionSyntax assignment)
+			{
+				SyntaxNode[] values;
+				switch (methodSymbol.Name)
+				{
+					case "FromRange":
+						// TODO: Not yet implemented
+						goto default;
+					case "Boolean":
+						values = new[] { _syntax.TrueLiteralExpression(), _syntax.FalseLiteralExpression() };
+						break;
+					case "Literal":
+					case "Value":
+						values = assignment.Right.Descendants<ArgumentSyntax>().Select(argument => Visit(argument.Expression)).ToArray();
+						break;
+					default:
+						Assert.NotReached("Unexpected choice method '{0}'.", methodSymbol.Name);
+						return null;
+				}
+
+				return CreateChoiceStatement(assignment.Left, values);
+			}
+
+			/// <summary>
+			///     Creates the statement that nondeterministically assigns one of the <paramref name="values" /> to the
+			///     <paramref name="assignmentTarget" />.
+			/// </summary>
+			private SyntaxNode CreateChoiceStatement(ExpressionSyntax assignmentTarget, SyntaxNode[] values)
+			{
+				var guard = Create<BooleanLiteralExpression>(_syntax.TrueLiteralExpression());
+				var target = Visit(assignmentTarget);
+				var assignments = values.Select(value => (ExpressionSyntax)Create<AssignmentStatement>(target, value));
+
+				var statements = _syntax.ArrayCreationExpression<Statement>(_semanticModel, assignments);
+				var guards = _syntax.ArrayCreationExpression<Expression>(_semanticModel, Enumerable.Repeat((ExpressionSyntax)guard, values.Length));
+
+				return Create<ChoiceStatement>(guards, statements, _syntax.TrueLiteralExpression());
 			}
 
 			/// <summary>

@@ -31,6 +31,7 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Editing;
+	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
@@ -139,6 +140,7 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 					case SymbolKind.Parameter:
 					case SymbolKind.Field:
 					case SymbolKind.Local:
+					case SymbolKind.Property:
 						var variable = GenerateVariable(identifier);
 						return Result.Default.WithExpression(variable).WithExpressionStatement(_syntax.AssignmentStatement(variable.Identifier, identifier));
 					default:
@@ -270,7 +272,8 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 					case SyntaxKind.GreaterThanOrEqualExpression:
 						var symbol = _semanticModel.GetSymbolInfo(binaryExpression).Symbol as IMethodSymbol;
 						Assert.NotNull(symbol, "Expected a valid method symbol.");
-						Requires.That(symbol.IsBuiltInOperator(), "Overloaded operators are not supported.");
+						Requires.That(symbol.IsBuiltInOperator() || symbol.ContainingType.Equals(_semanticModel.GetTypeSymbol<State>()),
+							"Overloaded operators are not supported.");
 
 						return result
 							.WithStatements(rightResult)

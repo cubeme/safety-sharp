@@ -29,6 +29,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "..\Source\Modeling\Modeling.csproj", "{9B6C1FB4-3F1B-43AC-A0E0-EAED4088BF37}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobotCell", "RobotCell\RobotCell.csproj", "{C5B017F2-599F-48DA-B133-5C20535788A9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{18DFC311-4633-4B22-AB2F-FF42901C6438} = {18DFC311-4633-4B22-AB2F-FF42901C6438}
+		{8823091C-387F-4F4D-ABCD-8F71D1528CBB} = {8823091C-387F-4F4D-ABCD-8F71D1528CBB}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LandingGear", "LandingGear\LandingGear.csproj", "{2C357026-5FCB-480E-8EF1-000E494A9964}"
 EndProject

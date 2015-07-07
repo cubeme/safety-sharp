@@ -66,7 +66,7 @@ namespace RobotCell
 
 		public bool RequiresReconfiguration()
 		{
-			return InState(State.AwaitingReconfiguration);
+			return CurrentState == State.AwaitingReconfiguration;
 		}
 
 		public extern void MoveTo(Position position);

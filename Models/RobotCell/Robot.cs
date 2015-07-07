@@ -74,12 +74,12 @@ namespace RobotCell
 
 		public bool RequiresReconfiguration()
 		{
-			return InState(State.AwaitingReconfiguration);
+			return CurrentState == State.AwaitingReconfiguration;
 		}
 
 		public bool WorkpieceProcessed()
 		{
-			return InState(State.WorkpieceProcessed);
+			return CurrentState == State.WorkpieceProcessed;
 		}
 
 		private bool IsCurrentToolBroken()

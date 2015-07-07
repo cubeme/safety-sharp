@@ -24,6 +24,7 @@ namespace RobotCell
 	using System;
 	using FluentAssertions;
 	using NUnit.Framework;
+	using SafetySharp.Analysis;
 	using SafetySharp.Simulation;
 
 	[TestFixture]
@@ -42,6 +43,15 @@ namespace RobotCell
 
 			foreach (var cart in model.Carts)
 				cart.RequiresReconfiguration().Should().BeFalse();
+		}
+
+		[Test]
+		public void ModelCheck()
+		{
+			var model = new RobotCellModel();
+			var spin = new Spin(model);
+
+			// TODO
 		}
 	}
 }

@@ -139,8 +139,10 @@ namespace SafetySharp.CompilerServices
 			Requires.NotNull(field, () => field);
 
 			var fieldMetadata = component.Metadata.Fields.SingleOrDefault(f => f.FieldInfo == field);
-			Requires.That(fieldMetadata != null, () => field, "The component does not declare the given field.");
+			if (fieldMetadata == null && component.Metadata.StateMachine != null && component.Metadata.StateMachine.StateField.FieldInfo == field)
+				fieldMetadata = component.Metadata.StateMachine.StateField;
 
+			Requires.That(fieldMetadata != null, () => field, "The component does not declare the given field.");
 			return fieldMetadata;
 		}
 

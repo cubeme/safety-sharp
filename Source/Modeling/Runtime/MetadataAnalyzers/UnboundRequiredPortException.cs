@@ -26,23 +26,29 @@ namespace SafetySharp.Runtime.MetadataAnalyzers
 	using Utilities;
 
 	/// <summary>
-	///     Raised when a model contains an unbound required port.
+	///   Raised when a model contains an unbound required port.
 	/// </summary>
 	public class UnboundRequiredPortException : Exception
 	{
 		/// <summary>
-		///     Initializes a new instance.
+		///   The exception message.
+		/// </summary>
+		private const string FormatMessage =
+			"Detected an unbound required port: '{0}'; the 'RequiredPort' property contains the metadata of the port for further analysis.";
+
+		/// <summary>
+		///   Initializes a new instance.
 		/// </summary>
 		/// <param name="requiredPort">The metadata of the unbound required port.</param>
 		internal UnboundRequiredPortException(RequiredPortMetadata requiredPort)
-			: base("Detected an unbound required port; the 'RequiredPort' property contains the metadata of the port for further analysis.")
+			: base(String.Format(FormatMessage, requiredPort))
 		{
 			Requires.NotNull(requiredPort, () => requiredPort);
 			RequiredPort = requiredPort;
 		}
 
 		/// <summary>
-		///     Gets the metadata of the unbound required port.
+		///   Gets the metadata of the unbound required port.
 		/// </summary>
 		public RequiredPortMetadata RequiredPort { get; private set; }
 	}

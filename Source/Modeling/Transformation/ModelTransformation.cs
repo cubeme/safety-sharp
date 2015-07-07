@@ -173,7 +173,7 @@ namespace SafetySharp.Transformation
 			if (type == typeof(bool))
 				return Ssm.Type.BoolType;
 
-			if (type == typeof(int) || type.IsEnum)
+			if (type == typeof(int) || type.IsEnum || type == typeof(State))
 				return Ssm.Type.IntType;
 
 			if (type == typeof(double))

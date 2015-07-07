@@ -66,9 +66,9 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets or sets the currently active state of the component or <c>null</c> if there is none.
+		///     Gets or sets the metadata of the currently active state of the component or <c>null</c> if there is none.
 		/// </summary>
-		internal StateMetadata State
+		internal StateMetadata StateMetadata
 		{
 			get { return _state == -1 ? null : Metadata.StateMachine.States[_state]; }
 			set
@@ -76,6 +76,14 @@ namespace SafetySharp.Modeling
 				Requires.NotNull(value, () => value);
 				_state = value.Identifier;
 			}
+		}
+
+		/// <summary>
+		///     Gets the component's current state.
+		/// </summary>
+		public State CurrentState
+		{
+			get { return new State(StateMetadata == null ? null : StateMetadata.EnumValue); }
 		}
 
 		/// <summary>
@@ -116,28 +124,6 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets a value indicating whether this component is currently in <paramref name="state" />.
-		/// </summary>
-		/// <typeparam name="TState">The type of the state that should be checked.</typeparam>
-		/// <param name="state">The state that should be checked.</param>
-		public bool InState<TState>(TState state)
-			where TState : struct, IConvertible
-		{
-			return _state != -1 && State.EnumValue.Equals(state);
-		}
-
-		/// <summary>
-		///     Gets the current state of the component.
-		/// </summary>
-		/// <typeparam name="TState">The type of the state.</typeparam>
-		public TState GetCurrentState<TState>()
-			where TState : struct, IConvertible
-		{
-			Requires.That(State != null, "Component has no state.");
-			return (TState)State.EnumValue;
-		}
-
-		/// <summary>
 		///     Initializes the metadata of the class.
 		/// </summary>
 		[UsedImplicitly]
@@ -152,8 +138,8 @@ namespace SafetySharp.Modeling
 		[UsedImplicitly]
 		private void UpdateBehavior()
 		{
-			if (State != null)
-				State = State.Update();
+			if (StateMetadata != null)
+				StateMetadata = StateMetadata.Update();
 		}
 
 		/// <summary>
