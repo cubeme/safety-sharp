@@ -5,6 +5,7 @@ locals {
 	m : int;
 	l : int;
 	j : int;
+	k : int;
 }
 
 choice {
