@@ -102,7 +102,7 @@ module internal VcGuardWithAssignmentModel =
                                 let pushCandidate=peepholeLeft.Value
                                 let newAssertStm =
                                     let newAssertExpr =
-                                        rightExpr.rewriteExpr_varToExpr (_var,leftExpr)
+                                        rightExpr.rewriteExpr_elementToExpr (_var,leftExpr)
                                     Stm.Assert(rightSid,newAssertExpr)
                                 let newBlock =
                                     (revAlreadyLookedAt |> List.rev)
@@ -113,7 +113,7 @@ module internal VcGuardWithAssignmentModel =
                                 // push over Assumption. Adapt rightExpr
                                 let pushCandidate=peepholeLeft.Value
                                 let newAssumeStm =
-                                    let newAssumeStmExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
+                                    let newAssumeStmExpr = rightExpr.rewriteExpr_elementToExpr  (_var,leftExpr)
                                     Stm.Assume(rightSid,newAssumeStmExpr)
                                 let newBlock =
                                     (revAlreadyLookedAt |> List.rev)
@@ -127,7 +127,7 @@ module internal VcGuardWithAssignmentModel =
                                     let newChoiceExpr =
                                         match choiceExpr with
                                             | Some(choiceExpr) ->
-                                                Some (choiceExpr.rewriteExpr_varToExpr (_var,leftExpr))
+                                                Some (choiceExpr.rewriteExpr_elementToExpr (_var,leftExpr))
                                             | None -> None
                                     let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
                                     (newChoiceExpr,newChoiceStm)
@@ -139,7 +139,7 @@ module internal VcGuardWithAssignmentModel =
                                 // push into Stochastic (prepend to each of the rightStochasticChoices at the beginning). Adapt choiceExprs.
                                 let pushCandidate=peepholeLeft.Value
                                 let createNewChoice (choiceGuard:Expr,choiceStm:Stm) =
-                                    let newChoiceGuard = choiceGuard.rewriteExpr_varToExpr (_var,leftExpr)
+                                    let newChoiceGuard = choiceGuard.rewriteExpr_elementToExpr (_var,leftExpr)
                                     let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
                                     (newChoiceGuard,newChoiceStm)
                                 let newChoiceStm = Stm.Stochastic(rightSid,rightStochasticChoices |> List.map createNewChoice)
@@ -923,7 +923,7 @@ module internal VcGuardWithAssignmentModel =
                             let peepholeStm = toTraverse.Head
                             match peepholeStm with
                                 | Stm.Write (_,var,expr) ->
-                                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation
+                                    let newExpr = expr.rewriteExpr_elementsToExpr currentValuation
                                     let newValuation = currentValuation.Add(var,newExpr)
                                     traverseBlock (newValuation) (toTraverse.Tail)
                                 | _ ->
@@ -933,7 +933,7 @@ module internal VcGuardWithAssignmentModel =
                         FinalVariableAssignments.Assignments = (assignments |> redirectFinalVars)
                     }
                 | Stm.Write(_,var,expr) ->
-                    let newExpr = expr.rewriteExpr_varsToExpr initialValuation
+                    let newExpr = expr.rewriteExpr_elementsToExpr initialValuation
                     let newValuation = initialValuation.Add(var,newExpr)
                     {
                         FinalVariableAssignments.Assignments = (newValuation |> redirectFinalVars )

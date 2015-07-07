@@ -63,16 +63,13 @@ module internal InjectSamIntoScm =
             | Sam.GreaterEqual -> Scm.GreaterEqual
             | _                -> failwith "NotSupportedYet"
          
-    let rec transformSamExprToScmExpr (globalVarsToFields:Map<Sam.Var,Scm.Field>,localVarsToLocal:Map<Sam.Var,Scm.Var>) (expr:Sam.Expr) : Scm.Expr =
-        let transform = transformSamExprToScmExpr (globalVarsToFields,localVarsToLocal)
+    let rec transformSamExprToScmExpr (samElementToScmElement:Map<Sam.Element,Scm.Element>) (expr:Sam.Expr) : Scm.Expr =
+        let transform = transformSamExprToScmExpr (samElementToScmElement)
         match expr with
             | Sam.Expr.Literal (_val) ->
                 Scm.Expr.Literal (transformSamValToScmVal _val)
-            | Sam.Expr.Read (_var) ->
-                if (globalVarsToFields.ContainsKey _var) then
-                    Scm.Expr.ReadField( globalVarsToFields.Item _var)
-                else
-                    Scm.Expr.ReadVar(localVarsToLocal.Item _var)
+            | Sam.Expr.Read (element) ->
+                Scm.Expr.Read( samElementToScmElement.Item element)
             | Sam.Expr.ReadOld (_var) ->
                 failwith "NotSupportedYet"
             | Sam.Expr.UExpr (expr,uop) ->
@@ -82,9 +79,9 @@ module internal InjectSamIntoScm =
             | Sam.Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
                 failwith "NotSupportedYet"
 
-    let rec transformSamStmToScmStm (globalVarsToFields:Map<Sam.Var,Scm.Field>,localVarsToLocal:Map<Sam.Var,Scm.Var>) (stm:Sam.Stm) : Scm.Stm =
-        let transformStm = transformSamStmToScmStm (globalVarsToFields,localVarsToLocal)
-        let transformExpr = transformSamExprToScmExpr (globalVarsToFields,localVarsToLocal)
+    let rec transformSamStmToScmStm (samElementToScmElement:Map<Sam.Element,Scm.Element>) (stm:Sam.Stm) : Scm.Stm =
+        let transformStm = transformSamStmToScmStm (samElementToScmElement)
+        let transformExpr = transformSamExprToScmExpr (samElementToScmElement)
         match stm with
             | Sam.Stm.Block (stmts) ->
                 Scm.Stm.Block(stmts |> List.map transformStm)
@@ -96,10 +93,7 @@ module internal InjectSamIntoScm =
                 Scm.Stm.Stochastic(stochasticChoices |> List.map transformChoice)        
             | Sam.Stm.Write (_var,expr) ->
                 let expr = transformExpr expr
-                if (globalVarsToFields.ContainsKey _var) then
-                    Scm.Stm.AssignField( globalVarsToFields.Item _var,expr)
-                else
-                    Scm.Stm.AssignVar( localVarsToLocal.Item _var,expr)
+                Scm.Stm.AssignElement( samElementToScmElement.Item _var,expr)
             
     let transformSamGlobalVarToScmField (globalVarsToFields:Map<Sam.Var,Scm.Field>) (globalVar:Sam.GlobalVarDecl) : Scm.FieldDecl =
         {
@@ -116,10 +110,14 @@ module internal InjectSamIntoScm =
     let transformSamPgmToScmCompDecl (name:Scm.Comp) (pgm:Sam.Pgm) : (Scm.CompDecl) =
         let globalVarsToFields = pgm.Globals |> List.map (fun gl -> match gl.Var with | Sam.Var(varName)-> (gl.Var,Scm.Field(varName) )) |> Map.ofList
         let localVarsToLocal = pgm.Locals |> List.map (fun l -> match l.Var with | Sam.Var(varName)-> (l.Var,Scm.Var(varName) )) |> Map.ofList
+        let samElementToScmElement =
+            let fromGlobal = globalVarsToFields |> Map.toSeq |> Seq.map (fun (_var,_field) -> (Sam.Element.GlobalVar _var,Scm.Element.Field _field) )
+            let fromLocal = localVarsToLocal |> Map.toSeq |> Seq.map (fun (_var,localVar) -> (Sam.Element.LocalVar _var,Scm.Element.Var localVar) )
+            Seq.concat [fromGlobal;fromLocal] |> Map.ofSeq
         let stepBehavior =
             {
                 Scm.BehaviorDecl.Locals = pgm.Locals |> List.map (transformSamLocalVarToScmLocalVar localVarsToLocal);
-                Scm.BehaviorDecl.Body = transformSamStmToScmStm (globalVarsToFields,localVarsToLocal) pgm.Body
+                Scm.BehaviorDecl.Body = transformSamStmToScmStm (samElementToScmElement) pgm.Body
             }
         let step =
             {

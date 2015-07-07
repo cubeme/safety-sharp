@@ -29,7 +29,7 @@ module internal VcWeakestPrecondition =
        
     // Predicate Transformers
 
-    let rec wp_rewriteExpr_varsToExpr (variable:Var,toExpr:Expr) (expr:Expr): Expr =
+    let rec wp_rewriteExpr_varsToExpr (variable:Element,toExpr:Expr) (expr:Expr): Expr =
         match expr with
             | Expr.Literal (_val) -> Expr.Literal(_val)
             | Expr.Read (_var) -> if _var = variable then toExpr else expr

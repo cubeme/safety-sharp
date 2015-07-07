@@ -27,6 +27,7 @@ module internal Spg =
     open SafetySharp
     
     type Var = Tsam.Var
+    type Element = Tsam.Element
     type Expr = Tsam.Expr
     type VarDecl = Tsam.GlobalVarDecl
     
@@ -37,7 +38,7 @@ module internal Spg =
         StateId : StateId;
     }
 
-    type Action = Var*Expr
+    type Action = Element*Expr
     
     type StochasticOption = {
         Number:int;

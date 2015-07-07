@@ -36,21 +36,32 @@ open SafetySharp.Analysis.VerificationCondition
 module internal GenericToSmv =
 
     type internal NuXmvVariables = {
-        VarToSmvIdentifier: Map<Tsam.Var,Smv.Identifier>;
-        VarToNuXmvComplexIdentifier: Map<Tsam.Var,Smv.ComplexIdentifier>;
+        ElementToSmvIdentifier: Map<Tsam.Element,Smv.Identifier>;
+        ElementToNuXmvComplexIdentifier: Map<Tsam.Element,Smv.ComplexIdentifier>;
+        ElementToSmvBasicExpression: Map<Tsam.Element,Smv.BasicExpression>;
     }
         with    
-            member this.generateSmvIdentifier (var:Tsam.Var) : (NuXmvVariables) =
-                let nuXmvIdentifier = {Smv.Name=var.getName}
+            member this.generateSmvIdentifier (element:Tsam.Element) : (NuXmvVariables) =
+                let nuXmvIdentifier = {Smv.Name=element.getName}
                 let nuXmvComplexIdentifier = Smv.ComplexIdentifier.NameComplexIdentifier(nuXmvIdentifier)
+                let nuXmvExpression = Smv.BasicExpression.ComplexIdentifierExpression(nuXmvComplexIdentifier)
                 let newState=
                     { this with
-                        NuXmvVariables.VarToSmvIdentifier = this.VarToSmvIdentifier.Add (var,nuXmvIdentifier)
-                        NuXmvVariables.VarToNuXmvComplexIdentifier = this.VarToNuXmvComplexIdentifier.Add (var,nuXmvComplexIdentifier)
+                        NuXmvVariables.ElementToSmvIdentifier = this.ElementToSmvIdentifier.Add (element,nuXmvIdentifier)
+                        NuXmvVariables.ElementToNuXmvComplexIdentifier = this.ElementToNuXmvComplexIdentifier.Add (element,nuXmvComplexIdentifier)
+                        NuXmvVariables.ElementToSmvBasicExpression = this.ElementToSmvBasicExpression.Add (element, nuXmvExpression)
+                    }
+                newState
+
+            member this.addVirtualNextExpression (virtualNext:Tsam.Element) (nextOf:Tsam.Element) : (NuXmvVariables) =
+                let nuXmvExpression = Smv.BasicExpression.BasicNextExpression(this.ElementToSmvBasicExpression.Item nextOf)
+                let newState=
+                    { this with
+                        NuXmvVariables.ElementToSmvBasicExpression = this.ElementToSmvBasicExpression.Add (virtualNext, nuXmvExpression)
                     }
                 newState
                 
-    let rec translateExpression (virtualNextVarToVar:Map<Tsam.Var,Tsam.Var>,nuXmvVariables:NuXmvVariables) (expr:Tsam.Expr) : Smv.BasicExpression =
+    let rec translateExpression (nuXmvVariables:NuXmvVariables) (expr:Tsam.Expr) : Smv.BasicExpression =
         match expr with
             | Tsam.Expr.Literal (_val) ->
                 match _val with
@@ -58,24 +69,15 @@ module internal GenericToSmv =
                     | Tsam.Val.NumbVal(_val) -> Smv.BasicExpression.ConstExpression(Smv.IntegerConstant(_val))
                     | Tsam.Val.RealVal _ -> failwith "No support in SMV for real values, yet."
                     | Tsam.Val.ProbVal _ -> failwith "No support in SMV for probabilities, yet."
-            | Tsam.Expr.Read (_var) ->
-                match virtualNextVarToVar.TryFind _var with
-                    | None ->
-                        Smv.BasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
-                    | Some(originalValue) ->
-                        // here we have a virtual value. We want a next(originalValue) instead
-                        Smv.BasicExpression.BasicNextExpression(Smv.BasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item originalValue))
-            | Tsam.Expr.ReadOld (_var) ->            
-                match virtualNextVarToVar.TryFind _var with
-                    | None ->
-                        Smv.BasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
-                    | Some(originalValue) ->
-                        failwith "This should never occur. The source program never includes virtual var. The only parts, which use a virtual var, should use it in combination with Read()!"
+            | Tsam.Expr.Read (element) ->
+                nuXmvVariables.ElementToSmvBasicExpression.Item element
+            | Tsam.Expr.ReadOld (element) ->
+                nuXmvVariables.ElementToSmvBasicExpression.Item element
             | Tsam.Expr.UExpr (expr,uop) ->
                 let operator =
                     match uop with
                         | Tsam.UOp.Not -> Smv.UnaryOperator.LogicalNot
-                Smv.BasicExpression.UnaryExpression(operator,translateExpression (virtualNextVarToVar,nuXmvVariables) expr)
+                Smv.BasicExpression.UnaryExpression(operator,translateExpression (nuXmvVariables) expr)
             | Tsam.Expr.BExpr (left, bop, right) ->
                 let operator =
                     match bop with
@@ -93,15 +95,13 @@ module internal GenericToSmv =
                         | Tsam.BOp.LessEqual -> Smv.BinaryOperator.LessEqual
                         | Tsam.BOp.Greater -> Smv.BinaryOperator.GreaterThan
                         | Tsam.BOp.GreaterEqual -> Smv.BinaryOperator.GreaterEqual
-                Smv.BasicExpression.BinaryExpression(translateExpression (virtualNextVarToVar,nuXmvVariables) left,operator,translateExpression (virtualNextVarToVar,nuXmvVariables) right)
+                Smv.BasicExpression.BinaryExpression(translateExpression (nuXmvVariables) left,operator,translateExpression (nuXmvVariables) right)
             | Tsam.Expr.IfThenElseExpr (guardExpr, thenExpr, elseExpr) ->
-                let guardExpr = translateExpression (virtualNextVarToVar,nuXmvVariables) guardExpr
-                let thenExpr = translateExpression (virtualNextVarToVar,nuXmvVariables) thenExpr
-                let elseExpr = translateExpression (virtualNextVarToVar,nuXmvVariables) elseExpr
+                let guardExpr = translateExpression (nuXmvVariables) guardExpr
+                let thenExpr = translateExpression (nuXmvVariables) thenExpr
+                let elseExpr = translateExpression (nuXmvVariables) elseExpr
                 Smv.BasicExpression.TenaryIfThenElseExpression(guardExpr,thenExpr,elseExpr)
                 
-    let noVirtualNextVarToVar = Map.empty<Tsam.Var,Tsam.Var>
-
     open SafetySharp.ITracing
     
     type SmvTracer<'traceableOfOrigin> = {
@@ -130,17 +130,18 @@ module internal VcTransitionRelationToNuXmv =
             // * create a nuXmv identifier for each input and global var
             let nuXmvKeywords: Set<string> = Set.empty<string>
             let variablesToAdd =
-                let _globalVars = transitionSystem.Globals |> List.map (fun varDecl -> varDecl.Var)
-                let _inputVars = transitionSystem.Ivars |> List.map (fun varDecl -> varDecl.Var)
+                let _globalVars = transitionSystem.Globals |> List.map (fun varDecl -> Element.GlobalVar varDecl.Var)
+                let _inputVars = transitionSystem.Ivars |> List.map (fun varDecl -> Element.LocalVar varDecl.Var)
                 _globalVars@_inputVars
             let takenVariableNames = variablesToAdd |> List.map (fun varDecl -> varDecl.getName) |> Set.ofList
             let initialState =
                 {
-                    NuXmvVariables.VarToSmvIdentifier = Map.empty<Tsam.Var,Smv.Identifier>;
-                    NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<Tsam.Var,Smv.ComplexIdentifier>;
+                    NuXmvVariables.ElementToSmvIdentifier = Map.empty<Tsam.Element,Smv.Identifier>;
+                    NuXmvVariables.ElementToNuXmvComplexIdentifier = Map.empty<Tsam.Element,Smv.ComplexIdentifier>;
+                    NuXmvVariables.ElementToSmvBasicExpression = Map.empty<Tsam.Element,Smv.BasicExpression>;
                 }
                     
-            let generateAndAddToList (state:NuXmvVariables) (variableToAdd:Tsam.Var): (NuXmvVariables) =
+            let generateAndAddToList (state:NuXmvVariables) (variableToAdd:Tsam.Element): (NuXmvVariables) =
                 let (newState) = state.generateSmvIdentifier variableToAdd
                 newState
             Seq.fold generateAndAddToList (initialState) variablesToAdd
@@ -158,7 +159,7 @@ module internal VcTransitionRelationToNuXmv =
                                 Smv.TypeSpecifier.SimpleTypeSpecifier(Smv.IntegerRangeTypeSpecifier(_from,_to))
                             | Sam.Type.RealType -> Smv.TypeSpecifier.SimpleTypeSpecifier(Smv.RealTypeSpecifier)
                             | Sam.Type.RangedRealType _ -> failwith "No support in NuXmv for ranged real values, yet."
-            let _variable = nuXmvVariables.VarToSmvIdentifier.Item varDecl.Var
+            let _variable = nuXmvVariables.ElementToSmvIdentifier.Item (Element.GlobalVar varDecl.Var)
             {
                 Smv.TypedIdentifier.Identifier = _variable ;
                 Smv.TypedIdentifier.TypeSpecifier = _type ;
@@ -179,7 +180,7 @@ module internal VcTransitionRelationToNuXmv =
                                 Smv.IntegerRangeTypeSpecifier(_from,_to)
                             | Sam.Type.RealType -> Smv.RealTypeSpecifier
                             | Sam.Type.RangedRealType _ -> failwith "No support in NuXmv for ranged real values, yet."
-            let _variable = nuXmvVariables.VarToSmvIdentifier.Item varDecl.Var
+            let _variable = nuXmvVariables.ElementToSmvIdentifier.Item (Element.LocalVar varDecl.Var)
             {
                 Smv.SimpleTypedIdentifier.Identifier = _variable ;
                 Smv.SimpleTypedIdentifier.TypeSpecifier = _type ;
@@ -191,17 +192,22 @@ module internal VcTransitionRelationToNuXmv =
 
     let generateGlobalVarInitialisations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : Smv.ModuleElement =
         transitionSystem.Init
-            |> translateExpression (transitionSystem.VirtualNextVarToVar,nuXmvVariables)
+            |> translateExpression (nuXmvVariables)
             |> Smv.ModuleElement.InitConstraint
 
     let generateTransRelation (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : Smv.ModuleElement =
-        Smv.ModuleElement.TransConstraint(translateExpression (transitionSystem.VirtualNextVarToVar,nuXmvVariables) transitionSystem.Trans)
+        Smv.ModuleElement.TransConstraint(translateExpression (nuXmvVariables) transitionSystem.Trans)
 
     
     let transformConfiguration (transitionSystem:TransitionSystem) : Smv.SmvProgram * Map<Tsam.Traceable,Smv.Traceable> =
         // create the nuXmvVariables: Keeps the association between the post value variable and the current value variable
         // (the post variable value is purely "virtual". It will be replaced by "next(currentValue)" )
-        let nuXmvVariables = NuXmvVariables.initial transitionSystem SafetySharp.FreshNameGenerator.namegenerator_c_like
+        let nuXmvVariables =
+            let globalsAndLocals = NuXmvVariables.initial transitionSystem SafetySharp.FreshNameGenerator.namegenerator_c_like
+            let globalsAndLocalsAndNext =
+                transitionSystem.VirtualNextVarToVar |> Map.toSeq
+                                                     |> Seq.fold (fun (acc:NuXmvVariables) (nextVar,ofVar) -> acc.addVirtualNextExpression nextVar ofVar) globalsAndLocals
+            globalsAndLocalsAndNext
                                 
         // declare globals variables
         let globalVarModuleElement = generateGlobalVarDeclarations transitionSystem nuXmvVariables
@@ -227,9 +233,14 @@ module internal VcTransitionRelationToNuXmv =
                 Smv.SmvProgram.Specifications = [];
             }
         let tracing =
-            nuXmvVariables.VarToSmvIdentifier
+            let elementToTraceable (element:Element) : Tsam.Traceable =
+                match element with
+                    | Element.GlobalVar (_var) -> Tsam.Traceable.Traceable(_var)
+                    | _ -> failwith "Not able to trace yet"
+            nuXmvVariables.ElementToSmvIdentifier
                 |> Map.toList
-                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),Smv.Traceable( Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) )))
+                |> List.filter (fun (elem,id) -> match elem with | Element.GlobalVar _ -> true | _ -> false)
+                |> List.map (fun (_var,_nuxmv) -> (elementToTraceable _var,Smv.Traceable( Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) )))
                 |> Map.ofList
         (transformedConfiguration,tracing)
 
@@ -269,15 +280,15 @@ module internal StochasticProgramGraphToNuXmv =
         static member initial (spg:StochasticProgramGraph) (nameGenerator:NameGenerator) =
             // * create a nuXmv identifier for each var
             let nuXmvKeywords: Set<string> = Set.empty<string>
-            let variablesToAdd = spg.Variables |> List.map (fun varDecl -> varDecl.Var)
+            let variablesToAdd = spg.Variables |> List.map (fun varDecl -> Element.GlobalVar varDecl.Var)
             let takenVariableNames = variablesToAdd |> List.map (fun varDecl -> varDecl.getName) |> Set.ofList
             let initialState =
                 {
-                    NuXmvVariables.VarToSmvIdentifier = Map.empty<Tsam.Var,Smv.Identifier>;
-                    NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<Tsam.Var,Smv.ComplexIdentifier>;
+                    NuXmvVariables.ElementToSmvIdentifier = Map.empty<Tsam.Element,Smv.Identifier>;
+                    NuXmvVariables.ElementToNuXmvComplexIdentifier = Map.empty<Tsam.Element,Smv.ComplexIdentifier>;
+                    NuXmvVariables.ElementToSmvBasicExpression = Map.empty<Tsam.Element,Smv.BasicExpression>;
                 }
-                    
-            let generateAndAddToList (state:NuXmvVariables) (variableToAdd:Tsam.Var): (NuXmvVariables) =
+            let generateAndAddToList (state:NuXmvVariables) (variableToAdd:Tsam.Element): (NuXmvVariables) =
                 let (newState) = state.generateSmvIdentifier variableToAdd
                 newState
             Seq.fold generateAndAddToList (initialState) variablesToAdd
@@ -295,7 +306,7 @@ module internal StochasticProgramGraphToNuXmv =
                                 Smv.SimpleTypeSpecifier(Smv.IntegerRangeTypeSpecifier(_from,_to))
                             | Sam.Type.RealType -> Smv.SimpleTypeSpecifier(Smv.RealTypeSpecifier)
                             | Sam.Type.RangedRealType _ -> failwith "No support in NuXmv for ranged real values, yet."
-            let _variable = nuXmvVariables.VarToSmvIdentifier.Item varDecl.Var
+            let _variable = nuXmvVariables.ElementToSmvIdentifier.Item (Element.GlobalVar varDecl.Var)
             {
                 Smv.TypedIdentifier.Identifier = _variable ;
                 Smv.TypedIdentifier.TypeSpecifier = _type ;
@@ -310,13 +321,13 @@ module internal StochasticProgramGraphToNuXmv =
                 let assignVar = varDecl.Var
                 let assignExpr = Spg.Expr.Literal(initialValue)
                 let operator = Tsam.BOp.Equals
-                Expr.BExpr(Expr.Read(assignVar),operator,assignExpr)
+                Expr.BExpr(Expr.Read(Element.GlobalVar assignVar),operator,assignExpr)
             varDecl.Init |> List.map generatePossibleValues
                          |> TsamHelpers.createOredExpr
         spg.Variables
             |> List.map generateInitExpr
             |> TsamHelpers.createAndedExpr
-            |> translateExpression (noVirtualNextVarToVar,nuXmvVariables)
+            |> translateExpression (nuXmvVariables)
             |> Smv.ModuleElement.InitConstraint
 
     let generateStateVariable (spg:StochasticProgramGraph) : (Smv.BasicExpression*Map<Spg.State,Smv.BasicExpression>*Smv.ModuleElement*Smv.ModuleElement) = //StateVariable * StateToExpression-Map * Decl-ModuleElement * Init-ModuleElement
@@ -352,8 +363,8 @@ module internal StochasticProgramGraphToNuXmv =
                               (transition:Spg.DeterministicTransition)
                         : Smv.BasicExpression =
         let transformAction (_var,_expr) : Smv.BasicExpression =
-            let _nextVar = Smv.BasicExpression.BasicNextExpression(Smv.BasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var))
-            let transformedExpr = translateExpression (noVirtualNextVarToVar,nuXmvVariables) _expr
+            let _nextVar = Smv.BasicExpression.BasicNextExpression(Smv.BasicExpression.ComplexIdentifierExpression(nuXmvVariables.ElementToNuXmvComplexIdentifier.Item _var))
+            let transformedExpr = translateExpression (nuXmvVariables) _expr
             Smv.BasicExpression.BinaryExpression(_nextVar,Smv.BinaryOperator.Equality,transformedExpr)
         let transformedGuard =
             let stateGuard =
@@ -363,7 +374,7 @@ module internal StochasticProgramGraphToNuXmv =
                 | None ->
                     stateGuard
                 | Some (guard) ->
-                    let guardExpr = translateExpression (noVirtualNextVarToVar,nuXmvVariables) guard
+                    let guardExpr = translateExpression (nuXmvVariables) guard
                     Smv.BasicExpression.BinaryExpression(stateGuard,Smv.BinaryOperator.LogicalAnd,guardExpr)
         let updateOfVariables =
             let stateAssignment =
@@ -420,9 +431,14 @@ module internal StochasticProgramGraphToNuXmv =
                 Smv.SmvProgram.Specifications = [];
             }
         let tracing =
-            nuXmvVariables.VarToSmvIdentifier
+            let elementToTraceable (element:Element) : Tsam.Traceable =
+                match element with
+                    | Element.GlobalVar (_var) -> Tsam.Traceable.Traceable(_var)
+                    | _ -> failwith "Not able to trace yet"
+            nuXmvVariables.ElementToSmvIdentifier
                 |> Map.toList
-                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),Smv.Traceable( Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) )))
+                |> List.filter (fun (elem,id) -> match elem with | Element.GlobalVar _ -> true | _ -> false)
+                |> List.map (fun (_var,_nuxmv) -> (elementToTraceable _var,Smv.Traceable( Smv.NameComplexIdentifier({Smv.Name= _nuxmv.Name}) )))
                 |> Map.ofList
         (transformedConfiguration,tracing)
 

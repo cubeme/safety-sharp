@@ -104,7 +104,7 @@ module internal TsamTracer =
         let! state = getState ()
         assert (state.Pgm.CodeForm = Tsam.CodeForm.Default)
 
-        let rec varsWrittenTo (acc:Set<Tsam.Var>) (stm:Tsam.Stm) =
+        let rec varsWrittenTo (acc:Set<Tsam.Element>) (stm:Tsam.Stm) =
             match stm with
                 | Tsam.Stm.Assert _ ->
                     acc
@@ -122,11 +122,11 @@ module internal TsamTracer =
                 | Tsam.Stm.Write (sid,_var,expr) ->
                     acc.Add _var
 
-        let globalVarSet = state.Pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
-        let varsToAddStatementsFor = Set.difference globalVarSet (varsWrittenTo (Set.empty<Tsam.Var>) (state.Pgm.Body) ) |> Set.toList
+        let globalVarSet = state.Pgm.Globals |> List.map (fun gl -> Tsam.Element.GlobalVar gl.Var) |> Set.ofList
+        let varsToAddStatementsFor = Set.difference globalVarSet (varsWrittenTo (Set.empty<Tsam.Element>) (state.Pgm.Body) ) |> Set.toList
         let statementsToPrepend =
-            let createAssignment (_var:Tsam.Var) =
-                Tsam.Stm.Write(state.Pgm.UniqueStatementIdGenerator (),_var,Tsam.Expr.Read(_var))
+            let createAssignment (element:Tsam.Element) =
+                Tsam.Stm.Write(state.Pgm.UniqueStatementIdGenerator (),element,Tsam.Expr.Read(element))
             varsToAddStatementsFor |> List.map createAssignment
 
         let newBody = state.Pgm.Body.prependStatements state.Pgm.UniqueStatementIdGenerator statementsToPrepend
