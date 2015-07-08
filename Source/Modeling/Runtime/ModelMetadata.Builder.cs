@@ -122,7 +122,7 @@ namespace SafetySharp.Runtime
 				///     Initializes a new instance.
 				/// </summary>
 				public RootComponent()
-					: base("R")
+					: base("Root")
 				{
 				}
 			}

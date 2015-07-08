@@ -76,17 +76,23 @@ namespace SafetySharp.Analysis
 
 			var transformedFormula = LtlFormulaTransformation.Transform(hazard);
 			var propositionalFormula = ScmVerificationElements.ToPropositionalFormula(transformedFormula);
-
 			var minimalCriticalSets = _analysis.DccaWithPromela(propositionalFormula);
+
+			Console.WriteLine();
+			Console.WriteLine();
+			Console.WriteLine("======================");
+			Console.WriteLine("Minimal Critical Sets:");
+			Console.WriteLine("======================");
+
 			foreach (var minimalCriticalSet in minimalCriticalSets)
 			{
 				Console.Write("{ ");
 
-				foreach (var fault in minimalCriticalSet)
+				Console.Write(String.Join(", ", minimalCriticalSet.Select(fault =>
 				{
-					var component = String.Join(", ", fault.Item1.Reverse());
-					Console.WriteLine("{0}.{1}", component, fault.Item2);
-				}
+					var component = String.Join(".", fault.Item1.Reverse().Skip(1));
+					return String.Format("{0}.{1}", component, fault.Item2);
+				})));
 
 				Console.WriteLine(" }");
 			}

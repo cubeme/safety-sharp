@@ -24,7 +24,6 @@ namespace SafetySharp.Modeling
 {
 	using System;
 	using System.Diagnostics;
-	using System.Linq;
 	using CompilerServices;
 	using JetBrains.Annotations;
 	using Runtime;
@@ -151,68 +150,11 @@ namespace SafetySharp.Modeling
 			if (Metadata.StateMachine == null)
 				return new MethodBodyMetadata(new VariableMetadata[0], new VariableMetadata[0], new BlockStatement());
 
-			// If guards are shared, only execute them once
-			var transitions = Metadata.StateMachine.Transitions;
-			var guards = transitions
-				.Select(transition => transition.Guard)
-				.Where(guard => guard != null)
-				.Distinct()
-				.Select((guard, index) =>
-				{
-					var variable = new VariableMetadata("guard" + index, typeof(bool));
-					return new
-					{
-						Guard = guard,
-						Variable = variable,
-						Assignment = new AssignmentStatement(new VariableExpression(variable), new MethodInvocationExpression(guard))
-					};
-				})
-				.ToArray();
+			VariableMetadata[] localVariables;
+			BlockStatement body;
 
-			var guardVariableLookup = guards.ToDictionary(guard => guard.Guard, guard => guard.Variable);
-
-			// Similarily, optimize the case where multiple transitions have the same target state, the same guard, and the same action
-			var transitionGroups = transitions.GroupBy(transition => new { transition.TargetState, transition.Guard, transition.Action });
-			var guardConditions = transitionGroups.Select(group =>
-			{
-				var groupedTransitions = group.ToArray();
-				var inState = new BinaryExpression(BinaryOperator.Equals,
-					new FieldExpression(Metadata.StateMachine.StateField),
-					new IntegerLiteralExpression(groupedTransitions[0].SourceState.Identifier));
-
-				inState = groupedTransitions.Skip(1).Aggregate(inState, (expression, transition) =>
-					new BinaryExpression(BinaryOperator.Or, expression,
-						new BinaryExpression(BinaryOperator.Equals,
-							new FieldExpression(Metadata.StateMachine.StateField),
-							new IntegerLiteralExpression(transition.SourceState.Identifier))));
-
-				return group.Key.Guard == null
-					? inState
-					: new BinaryExpression(BinaryOperator.And, inState, new VariableExpression(guardVariableLookup[group.Key.Guard]));
-			}).ToArray();
-
-			// Generate the statements for the transitions that execute the optional action and update the target state
-			var statements = transitionGroups.Select(group =>
-			{
-				var stateUpdate = new AssignmentStatement(
-					new FieldExpression(Metadata.StateMachine.StateField),
-					new IntegerLiteralExpression(group.Key.TargetState.Identifier));
-
-				if (group.Key.Action == null)
-					return (Statement)stateUpdate;
-
-				var action = new ExpressionStatement(new MethodInvocationExpression(group.Key.Action));
-				return new BlockStatement(action, stateUpdate);
-			}).ToArray();
-
-			// Now put everything together
-			var guardAssignments = guards.Select(guard => guard.Assignment);
-			var guardLocals = guards.Select(guard => guard.Variable);
-
-			var choiceStatement = new ChoiceStatement(guardConditions, statements, isDeterministic: false);
-			var body = new BlockStatement(guardAssignments.Cast<Statement>().Concat(new[] { choiceStatement }).ToArray());
-
-			return new MethodBodyMetadata(new VariableMetadata[0], guardLocals, body);
+			Statement.CreateStateMachineCode(Metadata.StateMachine, out body, out localVariables);
+			return new MethodBodyMetadata(new VariableMetadata[0], localVariables, body);
 		}
 
 		/// <summary>

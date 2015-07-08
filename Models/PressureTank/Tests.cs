@@ -90,7 +90,7 @@ namespace PressureTank
 		{
 			_spin.Check(
 				F(G(IsOccurring<Sensor.SuppressIsFull>(_model.Sensor) & IsOccurring<Timer.SuppressTimeout>(_model.Timer)))
-					.Implies(F(_model.Tank.IsRuptured())));
+					.Implies(!F(_model.Tank.IsRuptured())));
 		}
 
 		[Test]
