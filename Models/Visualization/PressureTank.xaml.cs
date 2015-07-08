@@ -189,18 +189,18 @@ namespace Visualization
 				_sensorAlertStoryboard.Begin();
 
 			// Controller
-			switch (_model.Controller.GetCurrentState<Controller.State>())
+			switch (_model.Controller.State.As<Controller.States>())
 			{
-				case global::PressureTank.Controller.State.Inactive:
+				case global::PressureTank.Controller.States.Inactive:
 					ControllerScreen.Text = "Inactive";
 					break;
-				case global::PressureTank.Controller.State.Filling:
+				case global::PressureTank.Controller.States.Filling:
 					ControllerScreen.Text = "Filling";
 					break;
-				case global::PressureTank.Controller.State.StoppedBySensor:
+				case global::PressureTank.Controller.States.StoppedBySensor:
 					ControllerScreen.Text = "Stopped: Sensor";
 					break;
-				case global::PressureTank.Controller.State.StoppedByTimer:
+				case global::PressureTank.Controller.States.StoppedByTimer:
 					ControllerScreen.Text = "Stopped: Timer";
 					break;
 			}
