@@ -22,22 +22,22 @@
 
 namespace SafetySharp.Models
 
-module internal Scm =
+module Scm =
 
-    type internal Var = Var of string
-    type internal Field = Field of string
-    type internal ReqPort = ReqPort of string
-    type internal ProvPort = ProvPort of string
-    type internal Fault = Fault of string
-    type internal Comp = Comp of string
+    type Var = Var of string
+    type Field = Field of string
+    type ReqPort = ReqPort of string
+    type ProvPort = ProvPort of string
+    type Fault = Fault of string
+    type Comp = Comp of string
     
     type CompPath = Comp list // index1::index2::root::[]
 
-    type internal UOp =
+    type UOp =
         | Minus
         | Not
 
-    type internal BOp =
+    type BOp =
         | Add
         | Subtract
         | Multiply
@@ -52,7 +52,7 @@ module internal Scm =
         | Greater
         | GreaterEqual
 
-    type internal Val = 
+    type Val = 
         | BoolVal of bool
         | IntVal of int
         | RealVal of double
@@ -60,7 +60,7 @@ module internal Scm =
 
         
     [<RequireQualifiedAccessAttribute>]
-    type internal Element =
+    type Element =
         | Field of Field
         | Var of Var
         //| Indexed of Container:Element * Index:Expr
@@ -77,7 +77,7 @@ module internal Scm =
         //            let expr1 = Expr.Literal(Val.IntVal(1))
         //            ComplexElementAccess.SubContainer(ComplexElementAccess.SubContainer( ComplexElementAccess.Field(field),expr0),expr1)
         
-    and internal Expr =
+    and Expr =
         | Literal of Val
         | Read of Element //Arrays of Fields, Arrays of Arrays of Vars...
         | UExpr of Expr * UOp
@@ -85,17 +85,17 @@ module internal Scm =
         //| Forall of Elements:(Element list) * NewVarsInSubExpr:(Var list) * SubExpr:Expr
         //| Exists of Elements:(Element list) * NewVarsInSubExpr:(Var list) * SubExpr:Expr
         
-    type internal FaultExpr =
+    type FaultExpr =
         | Fault of Fault
         | NotFault of FaultExpr
         | AndFault of FaultExpr * FaultExpr
         | OrFault of FaultExpr * FaultExpr
         
-    type internal Param =
+    type Param =
         | ExprParam of Expr
         | InOutElementParam of Element
         
-    type internal Stm =
+    type Stm =
         | AssignElement of Element * Expr
         | AssignFault of Fault * Expr
         | Block of Stm list
@@ -106,12 +106,12 @@ module internal Scm =
         | StepFault of Fault
         //| Foreach of Elements:(Element list) * NewVarsInSubExpr:(Var list) * SubStm:Stm
         
-    type internal OverflowBehavior =
+    type OverflowBehavior =
         | Clamp = 0
         | WrapAround = 1
         | Error = 2
 
-    type internal Type =
+    type Type =
         | BoolType
         | IntType // When used as type of a field it shows that the value is unrestricted. Model checker must support this. But may also be used in local variables/parameters, which get inlined, and thus may also be replaced by a RangedIntType during the inlining.
         | RealType // Same restrictions as for IntType
@@ -123,12 +123,12 @@ module internal Scm =
         // | ArrayOfUnspecifiedSizeType of ElementType:Type // May be used in parameters only.  Are replaced by a ArrayType with a defined size during the inlining. Thus they are not usable for field or local vars.
         
     [<RequireQualifiedAccessAttribute>]
-    type internal LocElement = // Extension of Element with Location. For detailed examples of the idea see description of ComplexElementAccess
+    type LocElement = // Extension of Element with Location. For detailed examples of the idea see description of ComplexElementAccess
         | Field of CompPath * Field
         | LocalVar of Var // no path here, because only local! Also we do not assume a previous valuation!
         //| Indexed of Container:(CompPath*LocElement) * Index:LocExpr
 
-    and [<RequireQualifiedAccessAttribute>] internal LocExpr = // expression with location
+    and [<RequireQualifiedAccessAttribute>] LocExpr = // expression with location
         | Literal of Val
         | Read of LocElement //Arrays of Fields, Arrays of Arrays of Vars...
         | ReadFault of CompPath * Fault
@@ -138,45 +138,45 @@ module internal Scm =
         | BExpr of LocExpr * BOp * LocExpr
     
     [<RequireQualifiedAccessAttribute>]
-    type internal Contract = 
+    type Contract = 
         | None
         | AutoDeriveChanges of Requires : (LocExpr option) * Ensures : (LocExpr option) // if not declared explicitly, derive it implicitly. All variables written to by port and called ports. Writing it explicitly ensures, that ports being called, which are in _this_ component, make nothing wrong in this component. They may do everything when they live in their own component. Some kind of "Set.union port1.Changed port2.Changed "TODO: exact semantics. InferFrameAssumption
         | Full              of Requires : (LocExpr option) * Ensures : (LocExpr option) * ChangedFields : (Field list) * ChangedFaults : (Fault list) //with frame assumption. ExplicitFrameAssumption
         // | FullResilientTo of Requires : (LocExpr option) * Ensures : (LocExpr option) * ChangedFields : (Field list) * ChangedFaults : (Fault list) * ResilientToFaults : (Fault list)
         // | FullVulnerableTo of Requires : (LocExpr option) * Ensures : (LocExpr option) * ChangedFields : (Field list) * ChangedFaults : (Fault list) * VulnerableToFaults : (Fault list)
 
-    type internal VarDecl = {
+    type VarDecl = {
         Var : Var
         Type : Type
     }
 
-    type internal FieldDecl = {
+    type FieldDecl = {
         Field : Field
         Type : Type
         Init : Val list 
     }
 
-    type internal BehaviorDecl = {
+    type BehaviorDecl = {
         Locals : VarDecl list
         Body : Stm
     }
 
-    type internal ParamDir = 
+    type ParamDir = 
         | In
         | InOut
 
-    type internal ParamDecl = {
+    type ParamDecl = {
         Var : VarDecl
         Dir : ParamDir
     }
 
-    type internal ReqPortDecl = {
+    type ReqPortDecl = {
         ReqPort : ReqPort
         Params : ParamDecl list
         //Contract : Contract
     }
 
-    type internal ProvPortDecl = {
+    type ProvPortDecl = {
         FaultExpr : FaultExpr option
         ProvPort : ProvPort
         Params : ParamDecl list
@@ -184,39 +184,39 @@ module internal Scm =
         Contract : Contract
     }
 
-    type internal BndSrc = {
+    type BndSrc = {
         ProvPort : ProvPort
         Comp : CompPath
     }
 
-    type internal BndTarget = {
+    type BndTarget = {
         ReqPort : ReqPort
         Comp : CompPath
     }
 
-    type internal BndKind = 
+    type BndKind = 
         | Instantaneous
         | Delayed
 
-    type internal BndDecl = {
+    type BndDecl = {
         Target : BndTarget
         Source : BndSrc
         Kind : BndKind
     }
 
-    type internal FaultDecl = {
+    type FaultDecl = {
         Fault : Fault
         Step : BehaviorDecl //TODO: maybe rename to Behavior to be consistent
         //Contract : Contract
     }
 
-    type internal StepDecl = {
+    type StepDecl = {
         FaultExpr : FaultExpr option
         Behavior : BehaviorDecl
         Contract : Contract
     }        
 
-    type internal CompDecl = {
+    type CompDecl = {
         Comp : Comp
         Subs : CompDecl list
         Fields : FieldDecl list
@@ -240,5 +240,5 @@ module internal Scm =
                         | TraceableFault(compPath,Fault.Fault(fault)) -> sprintf "fault '%s%s'" (compPathStr compPath) (fault)
                         | TraceableRemoved(reason) -> sprintf "removed (reason:%s)" (reason)
 
-    type internal ScmModel =
+    type ScmModel =
         ScmModel of CompDecl

@@ -72,13 +72,13 @@ namespace PressureTank
 			public bool IsFull() => false;
 		}
 
-		/// <summary>
-		///   Represents a failure mode that prevents the sensor from triggering when the tank has become empty.
-		/// </summary>
-		[Transient]
-		public class SuppressIsEmpty : Fault
-		{
-			public bool IsEmpty() => false;
-		}
+//		/// <summary>
+//		///   Represents a failure mode that prevents the sensor from triggering when the tank has become empty.
+//		/// </summary>
+//		[Transient]
+//		public class SuppressIsEmpty : Fault
+//		{
+//			public bool IsEmpty() => false;
+//		}
 	}
 }

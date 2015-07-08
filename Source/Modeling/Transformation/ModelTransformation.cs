@@ -45,7 +45,7 @@ namespace SafetySharp.Transformation
 		public static Scm.ScmModel Transform(Model model)
 		{
 			Requires.NotNull(model, () => model);
-			return Scm.ScmModel.NewScmModel(SsmToScm.transform(SsmLowering.lower(Transform(model.Metadata.RootComponent))));
+			return Scm.ScmModel.NewScmModel(SsmToScm.Transform(SsmLowering.Lower(Transform(model.Metadata.RootComponent))));
 		}
 
 		/// <summary>

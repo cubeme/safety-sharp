@@ -23,7 +23,7 @@
 namespace SafetySharp.Models
 
 /// Lowers SSM models into a normalized form that can be transformed to a SCM model in a trivial way.
-module internal SsmLowering =
+module SsmLowering =
     open System.Collections.Generic
     open SafetySharp
     open Ssm
@@ -43,20 +43,20 @@ module internal SsmLowering =
         name
 
     /// Creates a unique synthesized port name based on the given synthesized port index and the given original name.
-    let makeSynPortName originalName synIndex =
+    let private makeSynPortName originalName synIndex =
         sprintf "%s@%d" originalName synIndex
 
     /// Gets the given component's subcomponent with the given name.
-    let getSub (c : Comp) subName =
+    let private getSub (c : Comp) subName =
         c.Subs |> Seq.filter (fun sub -> sub.Name.EndsWith(sprintf ".%s" subName)) |> Seq.exactlyOne
 
     /// Gets the given component's method with the given name.
-    let getMethod (c : Comp) methodName = 
+    let private getMethod (c : Comp) methodName = 
         c.Methods |> Seq.filter (fun m -> m.Name = methodName) |> Seq.exactlyOne
 
     /// Lowers the signatures of ports: Ports returning a value are transformed to void-returning ports 
     /// with an additional out parameter.
-    let rec lowerSignatures (c : Comp) =
+    let rec private lowerSignatures (c : Comp) =
         let lowerCallSites (m : Method) =
             let rewrite v m t p d r e = CallExpr (m, t, p @ [r], d @ [Out], VoidType, e @ [VarRefExpr v], false)
             let rec lower = function
@@ -92,7 +92,7 @@ module internal SsmLowering =
     /// Introduces bindings for local provided port invocations. That is, whenever a component invokes a provided port
     /// declared by itself or one of its subcomponents, a required port with matching signature is synthesized and an
     /// instantaneous binding between the provided port and the sythesized required port is added to the component.
-    let rec lowerLocalBindings (c : Comp) =
+    let rec private lowerLocalBindings (c : Comp) =
         let synPorts = List<_> ()
         let synBindings = List<_> ()
 
@@ -133,7 +133,7 @@ module internal SsmLowering =
             Bindings = c.Bindings @ (synBindings |> Seq.toList) }
 
     /// Introduces calls to the component's subcomponents' Update methods in accordance with the component's scheduling metadata.
-    let rec lowerScheduling (c : Comp) =
+    let rec private lowerScheduling (c : Comp) =
         let lower (m : Method) =
             match m.Kind with
             | Step when c.Subs <> [] ->
@@ -156,5 +156,5 @@ module internal SsmLowering =
             Subs = c.Subs |> List.map lowerScheduling }
 
     /// Applies all lowerings to the given components after SSM model validation.
-    let lower (root : Comp) : Comp =
+    let Lower (root : Comp) : Comp =
         root |> lowerSignatures |> lowerLocalBindings |> lowerScheduling

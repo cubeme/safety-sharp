@@ -23,6 +23,7 @@
 namespace SafetySharp.Analysis
 {
 	using System;
+	using System.Linq;
 	using AnalysisTechniques;
 	using Modeling;
 	using Models;
@@ -34,7 +35,8 @@ namespace SafetySharp.Analysis
 	/// </summary>
 	public class Spin
 	{
-		private readonly AnalysisFacade _analysis = new AnalysisFacade();
+		private readonly AnalysisContext _analysis;
+		private readonly Model _model;
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -44,12 +46,13 @@ namespace SafetySharp.Analysis
 		{
 			Requires.NotNull(model, () => model);
 
-			model.Seal();
+			_model = model;
+			_model.Seal();
 
-			var transformedModel = ModelTransformation.Transform(model);
-			Console.WriteLine(ScmToString.toString(transformedModel.Item));
+			var transformedModel = ModelTransformation.Transform(_model);
+			Console.WriteLine(ScmToString.ToString(transformedModel.Item));
 
-			_analysis.setMainModel(transformedModel);
+			_analysis = new AnalysisContext(transformedModel);
 		}
 
 		/// <summary>
@@ -59,7 +62,34 @@ namespace SafetySharp.Analysis
 		public bool Check(LtlFormula formula)
 		{
 			Requires.NotNull(formula, () => formula);
-			return _analysis.atAnalyseLtl_WithPromela(LtlFormulaTransformation.Transform(formula)).IsTrue;
+			return _analysis.AnalyzeWithPromela(LtlFormulaTransformation.Transform(formula));
+		}
+
+		/// <summary>
+		///     Computes the minimal critical sets for the <paramref name="hazard" />.
+		/// </summary>
+		/// <param name="hazard">The hazard the minimal critical sets should be computed for.</param>
+		public void ComputeMinimalCriticalSets(LtlFormula hazard)
+		{
+			Requires.NotNull(hazard, () => hazard);
+			Requires.That(!hazard.Formula.IsTemporal, "The hazard must be a non-temporal formula.");
+
+			var transformedFormula = LtlFormulaTransformation.Transform(hazard);
+			var propositionalFormula = ScmVerificationElements.ToPropositionalFormula(transformedFormula);
+
+			var minimalCriticalSets = _analysis.DccaWithPromela(propositionalFormula);
+			foreach (var minimalCriticalSet in minimalCriticalSets)
+			{
+				Console.Write("{ ");
+
+				foreach (var fault in minimalCriticalSet)
+				{
+					var component = String.Join(", ", fault.Item1.Reverse());
+					Console.WriteLine("{0}.{1}", component, fault.Item2);
+				}
+
+				Console.WriteLine(" }");
+			}
 		}
 	}
 }

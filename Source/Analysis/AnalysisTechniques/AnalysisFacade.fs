@@ -90,7 +90,7 @@ type private AnalysisFacadeState =
                     currentModelCache
 
 // Note: Not thread safe
-type AnalysisFacade () =
+type internal AnalysisFacade () =
     
     let mutable currentState : AnalysisFacadeState = AnalysisFacadeState.Uninitialized(workflowState_emptyInit ())
 
@@ -300,3 +300,18 @@ type AnalysisFacade () =
     member this.saveLogAsHtmlReport () :unit =
         //TODO. Or maybe implement IDisposable
         ()
+
+open SafetySharp
+type AnalysisContext (model) =
+
+    let facade = AnalysisFacade ()
+    do facade.setMainModel model
+    
+    member this.AnalyzeWithPromela formula =
+        match facade.atAnalyseLtl_WithPromela formula with
+        | Ternary.True -> true
+        | _ -> false
+
+    member this.DccaWithPromela hazard =
+        let mcss = facade.atAnalyseDccaLtl_WithPromela hazard
+        mcss |> Seq.map (fun mcs -> mcs |> Seq.map (fun (c, Scm.Fault f) -> (c |> Seq.map (fun (Scm.Comp c) -> c) |> Seq.toArray, f)) |> Seq.toArray) |> Seq.toArray

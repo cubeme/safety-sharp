@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Models
 
-module internal ScmVerificationElements =
+module ScmVerificationElements =
     open Scm
     
     [<RequireQualifiedAccessAttribute>]
@@ -34,13 +34,13 @@ module internal ScmVerificationElements =
         | BExpr of PropositionalExpr * BOp * PropositionalExpr
     
     [<RequireQualifiedAccessAttribute>]
-    type internal LuOp =
+    type LuOp =
         | Next
         | Globally
         | Eventually
         
     [<RequireQualifiedAccessAttribute>]
-    type internal LbOp =
+    type LbOp =
         | Until
 
     [<RequireQualifiedAccessAttribute>]
@@ -58,9 +58,18 @@ module internal ScmVerificationElements =
 
     let CreateReadFault path fault =
         LtlExpr.ReadFault (path |> Seq.map Comp |> Seq.toList, fault |> Fault.Fault)
+
+    let rec ToPropositionalFormula = function
+        | LtlExpr.Literal l -> PropositionalExpr.Literal l
+        | LtlExpr.ReadField (c, f) -> PropositionalExpr.ReadField (c, f)
+        | LtlExpr.ReadFault (c, f) -> PropositionalExpr.ReadFault (c, f)
+        | LtlExpr.UExpr (e, o) -> PropositionalExpr.UExpr (ToPropositionalFormula e, o)
+        | LtlExpr.BExpr (e1, o, e2) -> PropositionalExpr.BExpr (ToPropositionalFormula e1, o, ToPropositionalFormula e2)
+        | LtlExpr.LuExpr _
+        | LtlExpr.LbExpr _ -> failwith "Unsupported formula operator"
         
     [<RequireQualifiedAccessAttribute>]
-    type internal CuOp =
+    type CuOp =
         | ExistsNext
         | ExistsGlobally
         | ExistsEventually
@@ -69,7 +78,7 @@ module internal ScmVerificationElements =
         | AlwaysEventually
         
     [<RequireQualifiedAccessAttribute>]
-    type internal CbOp =
+    type CbOp =
         | ExistsUntil
         | AlwaysUntil
 
@@ -84,7 +93,7 @@ module internal ScmVerificationElements =
         | CbExpr of CtlExpr * CbOp * CtlExpr
         
     // ExtensionModels
-    type LtlExpr with 
+    type internal LtlExpr with 
         static member fromPropositionalExpr (propExpr:PropositionalExpr) =
             match propExpr with
                 | PropositionalExpr.Literal (_val:Val) ->

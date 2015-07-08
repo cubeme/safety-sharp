@@ -26,15 +26,15 @@ open SafetySharp
 /// Provides types and functions for working with S# models (SSM). Basically, the S# metamodel is a subset of
 /// the metadata and instructions supported by the .NET common language runtime (CLR); a S# model is a view
 /// of a .NET assembly.
-module internal Ssm =
+module Ssm =
 
     /// Represents the unary operators supported by S# models.
-    type internal UOp =
+    type UOp =
         | Minus
         | Not
 
     /// Represents the binary operators supported by S# models.
-    type internal BOp =
+    type BOp =
         | Add
         | Sub
         | Mul
@@ -50,13 +50,13 @@ module internal Ssm =
         | Ge
 
     /// Describes the value flow direction of a method parameter.
-    type internal ParamDir =
+    type ParamDir =
         | In
         | InOut
         | Out
 
     /// Represents the type of a variable.
-    type internal Type = 
+    type Type = 
         | VoidType
         | BoolType
         | IntType
@@ -64,14 +64,14 @@ module internal Ssm =
         | ClassType of string
 
     /// Represents a variable accessed by an expression.
-    type internal Var =
+    type Var =
         | Arg   of string * Type
         | Local of string * Type
         | Field of string * Type
         | This  of Type
 
     /// Represents an expression within the body of a S# method.
-    type internal Expr = 
+    type Expr = 
         | BoolExpr   of bool
         | IntExpr    of int
         | DoubleExpr of double
@@ -84,7 +84,7 @@ module internal Ssm =
         | CallExpr   of Name : string * DeclaringType : string * Params : Type list * ParamDir list * Return : Type * Args : Expr list * IsVirtual : bool
 
     /// Represents a statement within the body of a S# method.
-    type internal Stm =
+    type Stm =
         | NopStm
         | AsgnStm of Var * Expr
         | SeqStm  of Stm list
@@ -93,19 +93,19 @@ module internal Ssm =
         | ExprStm of Expr
 
     /// Represents a method parameter.
-    type internal Param = {
+    type Param = {
         Var       : Var
         Direction : ParamDir
     }
 
     /// Indicates whether a method represents a port or a function.
-    type internal MethodKind = 
+    type MethodKind = 
         | ReqPort 
         | ProvPort 
         | Step
 
     /// Represents a method of a S# component.
-    type internal Method = {
+    type Method = {
         Name   : string
         Params : Param list
         Body   : Stm
@@ -115,30 +115,30 @@ module internal Ssm =
     }
 
     /// Represents an initial value of a S# field.
-    type internal InitVal =
+    type InitVal =
         | BoolVal   of bool
         | IntVal    of int
         | DoubleVal of double
 
     /// Represents a field of a S# component with zero, one, or more initial values.
-    type internal Field = {
+    type Field = {
         Var  : Var
         Init : InitVal list
     }
 
     /// Represents a fault of a S# component
-    type internal Fault = {
+    type Fault = {
         Name : string
         Methods : Method list
     }
 
     /// Indicates the kind of a binding.
-    type internal BindingKind = 
+    type BindingKind = 
         | Instantaneous
         | Delayed
 
     /// Represents a port binding.
-    type internal Binding = {
+    type Binding = {
         SourceComp : string
         TargetComp : string
         SourcePort : string
@@ -147,7 +147,7 @@ module internal Ssm =
     }
 
     /// Represents a S# component.
-    type internal Comp = {
+    type Comp = {
         Name     : string
         Fields   : Field list
         Methods  : Method list

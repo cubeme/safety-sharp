@@ -22,12 +22,12 @@
 
 namespace SafetySharp.Models
 
-module internal ScmToString =
+module ScmToString =
     open SafetySharp
     open SafetySharp.Models.Scm
 
     /// Gets a string representation of the given SCM model.
-    let toString (c : CompDecl) =
+    let ToString (c : CompDecl) =
         let writer = StructuredWriter ()
                 
         let onOverrun _overflow = 
@@ -284,20 +284,23 @@ module internal ScmToString =
 
         compDecl c
         writer.ToString ()
+
+    let internal toString (c : CompDecl) =
+        ToString c
     
-    let compPathToString (compPath:CompPath) : string =
+    let internal compPathToString (compPath:CompPath) : string =
         compPath |> List.rev |> List.map (fun comp -> match comp with | Comp.Comp(comp) -> comp) |> String.concat "."
 
-    let faultPathToString (faultPathComp:CompPath,fault:Fault) : string =
+    let internal faultPathToString (faultPathComp:CompPath,fault:Fault) : string =
         sprintf "%s.%s" (compPathToString faultPathComp) (match fault with | Fault.Fault(fault) -> fault) 
         
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmTracer
     
-    let modelToStringWorkflow<'state,'traceableOfOrigin when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()
+    let internal modelToStringWorkflow<'state,'traceableOfOrigin when 'state :> IScmTracer<'traceableOfOrigin,'state>> ()
             : WorkflowFunction<'state,string,unit> = workflow {
         let! model = iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
-        let asString = toString rootComp
+        let asString = ToString rootComp
         do! updateState asString
     }

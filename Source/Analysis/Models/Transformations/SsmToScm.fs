@@ -23,7 +23,7 @@
 namespace SafetySharp.Models
 
 /// Transforms lowered SSM models to SCM models.
-module internal SsmToScm =
+module SsmToScm =
     open SafetySharp
     open SafetySharp.Models
 
@@ -212,9 +212,9 @@ module internal SsmToScm =
                  | Ssm.Delayed       -> Scm.Delayed }
 
     /// Transforms the given (lowered) SSM model to a SCM model.
-    let rec transform (c : Ssm.Comp) : Scm.CompDecl = {
+    let rec Transform (c : Ssm.Comp) : Scm.CompDecl = {
         Comp = Scm.Comp (c.Name.Substring (c.Name.LastIndexOf '.' + 1))
-        Subs = c.Subs |> List.map transform
+        Subs = c.Subs |> List.map Transform
         Fields = c.Fields |> List.map transformField
         Faults = c.Faults |> List.map transformFault 
         // TODO: Support fault injections in required ports
