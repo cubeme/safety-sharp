@@ -74,7 +74,7 @@ namespace SafetySharp.Documentation.Scripts
 module TsamToReport =
     
     open SafetySharp.Models.Tsam
-    open SafetySharp.Models.TsamMutable
+    open SafetySharp.Models.TsamTracer
     open SafetySharp.Workflow
     open SafetySharp.EngineOptions
 
@@ -130,14 +130,14 @@ module TsamToReport =
             let output_I_D_wf () = workflow {
                 do! updateState tsamSourceModel
                 do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
-                do! SafetySharp.Models.TsamMutable.unnestBlocks ()
+                do! SafetySharp.Models.TsamTracer.unnestBlocks ()
                 let! result = printModelAsTextAndGraphWorkflow ("remove nested blocks")
                 return result
             }
             let output_I_E_wf () = workflow {
                 do! updateState tsamSourceModel
                 do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
-                do! SafetySharp.Models.TsamMutable.treeifyStm ()
+                do! SafetySharp.Models.TsamTracer.treeifyStm ()
                 let! result = printModelAsTextAndGraphWorkflow ("Treeified")
                 return result
             }
@@ -174,7 +174,7 @@ module TsamToReport =
                     let postConditionAsFormula =
                         let createFormulaForGlobalVarDecl (globalVar:SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.VarDecl) =
                             let primedVar = match globalVar.Var with | Var.Var (name) -> name + "'"
-                            Expr.BExpr(Expr.Read(Var.Var(primedVar)),BOp.Equals,Expr.Read(globalVar.Var))
+                            Expr.BExpr(Expr.Read(Element.LocalVar (Var.Var(primedVar))),BOp.Equals,Expr.Read(Element.GlobalVar globalVar.Var))
                         model.TransitionSystem.Globals
                             |> List.map createFormulaForGlobalVarDecl
                             |> SafetySharp.Models.TsamHelpers.createAndedExpr
@@ -198,7 +198,7 @@ module TsamToReport =
                     let postConditionAsFormula =
                         let createFormulaForGlobalVarDecl (globalVar:SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.VarDecl) =
                             let primedVar = match globalVar.Var with | Var.Var (name) -> name + "'"
-                            Expr.BExpr(Expr.Read(Var.Var(primedVar)),BOp.Equals,Expr.Read(globalVar.Var))
+                            Expr.BExpr(Expr.Read(Element.LocalVar (Var.Var(primedVar))),BOp.Equals,Expr.Read(Element.GlobalVar globalVar.Var))
                         model.TransitionSystem.Globals
                             |> List.map createFormulaForGlobalVarDecl
                             |> SafetySharp.Models.TsamHelpers.createAndedExpr
@@ -223,7 +223,7 @@ module TsamToReport =
                     let globalNextExpr =
                         let createEntry (globalVar:SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.VarDecl) =
                             let primedVar = match globalVar.Var with | Var.Var (name) -> name + "'"
-                            Expr.BExpr(Expr.Read(Var.Var(primedVar)),BOp.Equals,Expr.Read(model.TransitionSystem.VarToVirtualNextVar.Item globalVar.Var))
+                            Expr.BExpr(Expr.Read(Element.LocalVar (Var.Var(primedVar))),BOp.Equals,Expr.Read(model.TransitionSystem.VarToVirtualNextVar.Item (Element.GlobalVar globalVar.Var)))
                         model.TransitionSystem.Globals
                             |> List.map createEntry
                             |> SafetySharp.Models.TsamHelpers.createAndedExpr
@@ -256,7 +256,7 @@ module TsamToReport =
                 do! updateState tsamSourceModel
                 do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
-                do! SafetySharp.Models.TsamMutable.treeifyStm ()
+                do! SafetySharp.Models.TsamTracer.treeifyStm ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithPropagationWorkflow ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.modelToStringWorkflow ()
                 let! tsModelAsText = getState ()
@@ -356,7 +356,7 @@ module TsamToReport =
                 do! updateState tsamSourceModel
                 do! SafetySharp.Models.TsamExplicitlyApplySemanticsOfAssignmentToRangedVariables.applySemanticsWorkflow ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
-                do! SafetySharp.Models.TsamMutable.treeifyStm ()
+                do! SafetySharp.Models.TsamTracer.treeifyStm ()
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithPropagationWorkflow ()
                 do! SafetySharp.ExternalTools.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
                 do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
