@@ -471,21 +471,14 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 				var condition = (ExpressionSyntax)Visit(ifStatement.Condition);
 				var thenStatement = (ExpressionSyntax)Visit(ifStatement.Statement);
 
-				if (ifStatement.Else == null)
-				{
-					var guards = _syntax.ArrayCreationExpression<Expression>(_semanticModel, condition);
-					var statements = _syntax.ArrayCreationExpression<Statement>(_semanticModel, thenStatement);
-					return Create<ChoiceStatement>(guards, statements, _syntax.TrueLiteralExpression());
-				}
-				else
-				{
-					var elseCondition = (ExpressionSyntax)Create<UnaryExpression>(unaryOperator, condition);
-					var elseStatement = (ExpressionSyntax)Visit(ifStatement.Else.Statement);
+				var elseCondition = (ExpressionSyntax)Create<UnaryExpression>(unaryOperator, condition);
+				var elseStatement = ifStatement.Else == null
+					? (ExpressionSyntax)Create<BlockStatement>()
+					: (ExpressionSyntax)Visit(ifStatement.Else.Statement);
 
-					var guards = _syntax.ArrayCreationExpression<Expression>(_semanticModel, condition, elseCondition);
-					var statements = _syntax.ArrayCreationExpression<Statement>(_semanticModel, thenStatement, elseStatement);
-					return Create<ChoiceStatement>(guards, statements, _syntax.TrueLiteralExpression());
-				}
+				var guards = _syntax.ArrayCreationExpression<Expression>(_semanticModel, condition, elseCondition);
+				var statements = _syntax.ArrayCreationExpression<Statement>(_semanticModel, thenStatement, elseStatement);
+				return Create<ChoiceStatement>(guards, statements, _syntax.TrueLiteralExpression());
 			}
 
 			/// <summary>
