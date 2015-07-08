@@ -23,6 +23,9 @@
 namespace SafetySharp.Analysis
 {
 	using System;
+	using Modeling;
+	using Modeling.Faults;
+	using Runtime;
 	using Runtime.Formulas;
 	using Utilities;
 
@@ -33,13 +36,26 @@ namespace SafetySharp.Analysis
 	public static class Ctl
 	{
 		/// <summary>
+		///     Returns a <see cref="CtlFormula" /> that checks whether the fault of type <typeparamref name="TFault" /> is occurring
+		///     for the <paramref name="component" />.
+		/// </summary>
+		/// <typeparam name="TFault">The type of the fault that should be occurring.</typeparam>
+		/// <param name="component">The component the fault occurrence should be checked for.</param>
+		public static CtlFormula IsOccurring<TFault>(IComponent component)
+			where TFault : Fault
+		{
+			Requires.NotNull(component, () => component);
+			return new CtlFormula(new FaultOccurrenceFormula(component.GetMetadata().GetFault<TFault>()));
+		}
+
+		/// <summary>
 		///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" /> for all paths.
 		/// </summary>
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
 		public static CtlFormula AX(CtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Next, PathQuantifier.All);
+			return new CtlFormula(new UnaryFormula(operand.Formula, UnaryFormulaOperator.Next, PathQuantifier.All));
 		}
 
 		/// <summary>
@@ -49,7 +65,7 @@ namespace SafetySharp.Analysis
 		public static CtlFormula EX(CtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Next, PathQuantifier.Exists);
+			return new CtlFormula(new UnaryFormula(operand.Formula, UnaryFormulaOperator.Next, PathQuantifier.Exists));
 		}
 
 		/// <summary>
@@ -59,7 +75,7 @@ namespace SafetySharp.Analysis
 		public static CtlFormula AF(CtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Finally, PathQuantifier.All);
+			return new CtlFormula(new UnaryFormula(operand.Formula, UnaryFormulaOperator.Finally, PathQuantifier.All));
 		}
 
 		/// <summary>
@@ -69,7 +85,7 @@ namespace SafetySharp.Analysis
 		public static CtlFormula EF(CtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Finally, PathQuantifier.Exists);
+			return new CtlFormula(new UnaryFormula(operand.Formula, UnaryFormulaOperator.Finally, PathQuantifier.Exists));
 		}
 
 		/// <summary>
@@ -79,7 +95,7 @@ namespace SafetySharp.Analysis
 		public static CtlFormula AG(CtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Globally, PathQuantifier.All);
+			return new CtlFormula(new UnaryFormula(operand.Formula, UnaryFormulaOperator.Globally, PathQuantifier.All));
 		}
 
 		/// <summary>
@@ -89,7 +105,7 @@ namespace SafetySharp.Analysis
 		public static CtlFormula EG(CtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Globally, PathQuantifier.Exists);
+			return new CtlFormula(new UnaryFormula(operand.Formula, UnaryFormulaOperator.Globally, PathQuantifier.Exists));
 		}
 
 		/// <summary>
@@ -103,7 +119,7 @@ namespace SafetySharp.Analysis
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
 
-			return new BinaryFormula(leftOperand, BinaryFormulaOperator.Until, PathQuantifier.All, rightOperand);
+			return new CtlFormula(new BinaryFormula(leftOperand.Formula, BinaryFormulaOperator.Until, PathQuantifier.All, rightOperand.Formula));
 		}
 
 		/// <summary>
@@ -117,7 +133,7 @@ namespace SafetySharp.Analysis
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
 
-			return new BinaryFormula(leftOperand, BinaryFormulaOperator.Until, PathQuantifier.Exists, rightOperand);
+			return new CtlFormula(new BinaryFormula(leftOperand.Formula, BinaryFormulaOperator.Until, PathQuantifier.Exists, rightOperand.Formula));
 		}
 	}
 }

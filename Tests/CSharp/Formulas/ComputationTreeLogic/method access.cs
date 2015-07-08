@@ -68,7 +68,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			}
 
 			{
-				var actual = ((Formula)(CtlFormula)(0 == c.M(17) - 2)).InlineMethodInvocations();
+				var actual = ((CtlFormula)(0 == c.M(17) - 2)).Formula.InlineMethodInvocations();
 				var expected = new StateFormula(
 					new BinaryExpression(BinaryOperator.Equals,
 						new IntegerLiteralExpression(0),
@@ -81,7 +81,7 @@ namespace Tests.Formulas.ComputationTreeLogic
 			}
 
 			{
-				var actual = ((Formula)c.F).InlineMethodInvocations();
+				var actual = c.F.Formula.InlineMethodInvocations();
 				var expected = new StateFormula(
 					new BinaryExpression(BinaryOperator.Equals,
 						new UnaryExpression(UnaryOperator.Minus, new IntegerLiteralExpression(1)),

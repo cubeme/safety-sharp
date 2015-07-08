@@ -33,7 +33,7 @@ namespace PressureTank
 		/// <summary>
 		///   Describes the state of the controller.
 		/// </summary>
-		public enum State
+		public enum States
 		{
 			/// <summary>
 			///   Indicates that the controller is inactive.
@@ -84,14 +84,14 @@ namespace PressureTank
 			_timer = timer;
 
 			Transition(
-				from: State.Filling,
-				to: State.StoppedByTimer,
+				from: States.Filling,
+				to: States.StoppedByTimer,
 				guard: _timer.HasElapsed,
 				action: _pump.Disable);
 
 			Transition(
-				from: State.Filling,
-				to: State.StoppedBySensor,
+				from: States.Filling,
+				to: States.StoppedBySensor,
 				guard: _sensor.IsFull,
 				action: () =>
 				{
@@ -100,8 +100,8 @@ namespace PressureTank
 				});
 
 			Transition(
-				from: State.StoppedByTimer | State.StoppedBySensor | State.Inactive,
-				to: State.Filling,
+				from: States.StoppedByTimer | States.StoppedBySensor | States.Inactive,
+				to: States.Filling,
 				guard: _sensor.IsEmpty,
 				action: () =>
 				{
@@ -109,7 +109,7 @@ namespace PressureTank
 					_pump.Enable();
 				});
 
-			InitialState(State.Inactive);
+			InitialState(States.Inactive);
 		}
 	}
 }

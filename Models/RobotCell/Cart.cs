@@ -32,29 +32,29 @@ namespace RobotCell
 
 		public Cart()
 		{
-			InitialState(State.AwaitingReconfiguration);
+			InitialState(States.AwaitingReconfiguration);
 
 			Transition(
-				from: State.AwaitingReconfiguration,
-				to: State.AwaitWorkpiece,
+				from: States.AwaitingReconfiguration,
+				to: States.AwaitWorkpiece,
 				guard: () => _destination != Position.Unknown && _pointOfOrigin != Position.Unknown,
 				action: () => MoveTo(_pointOfOrigin));
 
 			Transition(
-				from: State.AwaitWorkpiece,
-				to: State.AwaitCompletion,
+				from: States.AwaitWorkpiece,
+				to: States.AwaitCompletion,
 				guard: () => true,
 				action: () => MoveTo(_destination));
 
 			Transition(
-				from: State.AwaitCompletion,
-				to: State.AwaitWorkpiece,
+				from: States.AwaitCompletion,
+				to: States.AwaitWorkpiece,
 				guard: () => WorkpieceProcessed(_destination),
 				action: () => MoveTo(_pointOfOrigin));
 
 			Transition(
-				from: State.AwaitCompletion | State.AwaitWorkpiece,
-				to: State.AwaitingReconfiguration,
+				from: States.AwaitCompletion | States.AwaitWorkpiece,
+				to: States.AwaitingReconfiguration,
 				guard: () => _destination == Position.Unknown || _pointOfOrigin == Position.Unknown);
 		}
 
@@ -66,7 +66,7 @@ namespace RobotCell
 
 		public bool RequiresReconfiguration()
 		{
-			return CurrentState == State.AwaitingReconfiguration;
+			return base.State == States.AwaitingReconfiguration;
 		}
 
 		public extern void MoveTo(Position position);
@@ -80,7 +80,7 @@ namespace RobotCell
 			}
 		}
 
-		private enum State
+		private enum States
 		{
 			AwaitingReconfiguration,
 			AwaitWorkpiece,

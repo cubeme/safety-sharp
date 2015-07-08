@@ -55,6 +55,9 @@ module internal ScmVerificationElements =
 
     let CreateReadField path field =
         LtlExpr.ReadField (path |> Seq.map Comp |> Seq.toList, field |> Field)
+
+    let CreateReadFault path fault =
+        LtlExpr.ReadFault (path |> Seq.map Comp |> Seq.toList, fault |> Fault.Fault)
         
     [<RequireQualifiedAccessAttribute>]
     type internal CuOp =

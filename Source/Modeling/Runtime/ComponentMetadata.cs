@@ -26,6 +26,7 @@ namespace SafetySharp.Runtime
 	using System.Collections.Generic;
 	using System.Linq;
 	using Modeling;
+	using Modeling.Faults;
 	using Utilities;
 
 	/// <summary>
@@ -147,6 +148,19 @@ namespace SafetySharp.Runtime
 			components.Add(root);
 			components.Reverse();
 			return components.Select(c => c.Name);
+		}
+
+		/// <summary>
+		///     Gets the fault of type <typeparamref name="T" /> declared by component.
+		/// </summary>
+		/// <typeparam name="T">The type of the fault that should be returned.</typeparam>
+		internal FaultMetadata GetFault<T>()
+			where T : Fault
+		{
+			var faults = Faults.Where(f => f.Fault is T).ToArray();
+			Requires.That(faults.Length == 1, "The component does not declare a fault of type '{0}'.", typeof(T).FullName);
+
+			return faults[0];
 		}
 	}
 }

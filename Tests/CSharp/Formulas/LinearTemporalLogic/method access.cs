@@ -83,7 +83,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 
 			{
 				var ic = c2;
-				var actual = ((Formula)(LtlFormula)(ic.M3())).InlineMethodInvocations();
+				var actual = ((LtlFormula)(ic.M3())).Formula.InlineMethodInvocations();
 				var expected = new StateFormula(new BooleanLiteralExpression(false));
 
 				Check(actual, expected);
@@ -100,7 +100,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 				Check(actual, expected);
 			}
 
-			Tests.Raises<InvalidOperationException>(() => ((Formula)(LtlFormula)(c2.M4(111) == 81)).InlineMethodInvocations());
+			Tests.Raises<InvalidOperationException>(() => ((LtlFormula)(c2.M4(111) == 81)).Formula.InlineMethodInvocations());
 		}
 
 		private interface I : IComponent

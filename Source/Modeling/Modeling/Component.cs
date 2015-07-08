@@ -81,7 +81,7 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Gets the component's current state.
 		/// </summary>
-		public State CurrentState
+		public State State
 		{
 			get { return new State(StateMetadata == null ? null : StateMetadata.EnumValue); }
 		}

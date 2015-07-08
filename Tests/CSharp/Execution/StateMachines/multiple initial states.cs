@@ -40,8 +40,8 @@ namespace Tests.Execution.StateMachines
 		[SuppressTransformation]
 		protected override void Check()
 		{
-			(CurrentState.As<S>() == S.B || CurrentState.As<S>() == S.C).ShouldBe(true);
-			((CurrentState == S.B) || (CurrentState == S.C)).ShouldBe(true);
+			(State.As<S>() == S.B || State.As<S>() == S.C).ShouldBe(true);
+			((State == S.B) || (State == S.C)).ShouldBe(true);
 		}
 
 		private enum S

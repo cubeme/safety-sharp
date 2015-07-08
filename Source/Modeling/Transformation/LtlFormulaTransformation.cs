@@ -51,14 +51,14 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
-		///     Transforms the <paramref name="formula" />.
+		///     Transforms the <paramref name="ltlFormula" />.
 		/// </summary>
-		/// <param name="formula">The formula that should be transformed.</param>
-		public static LtlExpression Transform(LtlFormula formula)
+		/// <param name="ltlFormula">The LTL formula that should be transformed.</param>
+		public static LtlExpression Transform(LtlFormula ltlFormula)
 		{
-			Requires.NotNull(formula, () => formula);
+			Requires.NotNull(ltlFormula, () => ltlFormula);
 
-			var inlinedFormula = ((Formula)formula).InlineMethodInvocations();
+			var inlinedFormula = ltlFormula.Formula.InlineMethodInvocations();
 			return _instance.Visit(inlinedFormula);
 		}
 
@@ -78,6 +78,16 @@ namespace SafetySharp.Transformation
 		protected internal override LtlExpression VisitStateFormula(StateFormula formula)
 		{
 			return Visit(formula.Expression);
+		}
+
+		/// <summary>
+		///     Visits an element of type <see cref="FaultOccurrenceFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="FaultOccurrenceFormula" /> instance that should be visited.</param>
+		protected internal override LtlExpression VisitFaultOccurrenceFormula(FaultOccurrenceFormula formula)
+		{
+			var component = formula.Fault.DeclaringComponent;
+			return ScmVerificationElements.CreateReadFault(component.GetPath().Reverse(), formula.Fault.Name);
 		}
 
 		/// <summary>

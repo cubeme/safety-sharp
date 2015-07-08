@@ -24,38 +24,39 @@ namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
 	using SafetySharp.Analysis;
+	using SafetySharp.Modeling;
+	using SafetySharp.Modeling.Faults;
 	using SafetySharp.Runtime.Formulas;
-	using SafetySharp.Runtime.BoundTree;
 
 	internal class T14 : FormulaTestObject
 	{
-		private readonly CtlFormula _f1 = true;
-		private readonly CtlFormula _f2 = (CtlFormula)(true);
-		private readonly CtlFormula _f3 = (CtlFormula)true;
-		private CtlFormula F1 { get; } = true;
-		private CtlFormula F2 { get; } = (CtlFormula)true;
-
 		protected override void Check()
 		{
-			var expected = new StateFormula(new BooleanLiteralExpression(true));
-			CtlFormula f1 = true;
-			var f2 = (CtlFormula)(true);
-			var f3 = (CtlFormula)true;
+			var c = new C();
+			var m = new Model();
+			m.AddRootComponents(c);
+			m.Seal();
 
-			Check(_f1, expected);
-			Check(_f2, expected);
-			Check(_f3, expected);
+			var actual = Ctl.IsOccurring<C.F1>(c) & Ctl.IsOccurring<C.F2>(c);
+			var expected = new BinaryFormula(
+				new FaultOccurrenceFormula(c.Metadata.Faults[0]),
+				BinaryFormulaOperator.And, PathQuantifier.None,
+				new FaultOccurrenceFormula(c.Metadata.Faults[1]));
 
-			Check(F1, expected);
-			Check(F2, expected);
-
-			CheckArgumentConversion(true, expected);
-			CheckArgumentConversion((CtlFormula)true, expected);
+			Check(actual, expected);
 		}
 
-		private void CheckArgumentConversion(CtlFormula actual, Formula expected)
+		private class C : Component
 		{
-			Check(actual, expected);
+			[Transient]
+			public class F1 : Fault
+			{
+			}
+
+			[Persistent]
+			public class F2 : Fault
+			{
+			}
 		}
 	}
 }

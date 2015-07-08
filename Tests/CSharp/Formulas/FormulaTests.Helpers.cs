@@ -27,6 +27,7 @@ namespace Tests.Formulas
 	using System.IO;
 	using System.Text;
 	using JetBrains.Annotations;
+	using SafetySharp.Analysis;
 	using SafetySharp.Runtime.Formulas;
 	using Shouldly;
 	using Utilities;
@@ -34,6 +35,16 @@ namespace Tests.Formulas
 
 	public abstract class FormulaTestObject : TestObject
 	{
+		protected void Check(CtlFormula actual, Formula expected)
+		{
+			Check(actual.Formula, expected);
+		}
+
+		protected void Check(LtlFormula actual, Formula expected)
+		{
+			Check(actual.Formula, expected);
+		}
+
 		protected void Check(Formula actual, Formula expected)
 		{
 			var builder = new StringBuilder();

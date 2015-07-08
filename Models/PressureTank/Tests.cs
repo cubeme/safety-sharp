@@ -56,6 +56,42 @@ namespace PressureTank
 		{
 			_spin.Check(F(_model.Tank.PressureLevel() > 0));
 		}
+
+		[Test]
+		public void TimerNeverOpensWhenSensorIsAlwaysWorking()
+		{
+			_spin.Check(G(!IsOccurring<Sensor.SuppressIsFull>(_model.Sensor)).Implies(!F(_model.Timer.HasElapsed())));
+		}
+
+		[Test]
+		public void TimerOpensWhenSensorIsNotWorking()
+		{
+			_spin.Check(F(G(IsOccurring<Sensor.SuppressIsFull>(_model.Sensor))).Implies(F(_model.Timer.HasElapsed())));
+		}
+
+		[Test]
+		public void TankDoesNotRuptureWhenNoFaultsOccur()
+		{
+			_spin.Check(
+				G(!IsOccurring<Sensor.SuppressIsFull>(_model.Sensor) & !IsOccurring<Timer.SuppressTimeout>(_model.Timer))
+					.Implies(!F(_model.Tank.IsRuptured())));
+		}
+
+		[Test]
+		public void TankDoesNotRuptureWhenSensorDoesNotReportTankFull()
+		{
+			_spin.Check(
+				G(IsOccurring<Sensor.SuppressIsFull>(_model.Sensor) & !IsOccurring<Timer.SuppressTimeout>(_model.Timer))
+					.Implies(!F(_model.Tank.IsRuptured())));
+		}
+
+		[Test]
+		public void TankRupturesWhenSensorDoesNotReportTankFullAndTimerDoesNotTimeout()
+		{
+			_spin.Check(
+				F(G(IsOccurring<Sensor.SuppressIsFull>(_model.Sensor) & IsOccurring<Timer.SuppressTimeout>(_model.Timer)))
+					.Implies(!F(_model.Tank.IsRuptured())));
+		}
 	}
 
 	[TestFixture]

@@ -39,23 +39,23 @@ namespace Tests.Execution.StateMachines
 		[SuppressTransformation]
 		protected override void Check()
 		{
-			CurrentState.As<S>().ShouldBe(S.A);
-			(CurrentState == S.A).ShouldBe(true);
-			(CurrentState == S.B).ShouldBe(false);
+			State.As<S>().ShouldBe(S.A);
+			(State == S.A).ShouldBe(true);
+			(State == S.B).ShouldBe(false);
 
 			_f = -3;
 			ExecuteUpdate();
 
-			CurrentState.As<S>().ShouldBe(S.A);
-			(CurrentState == S.A).ShouldBe(true);
-			(CurrentState == S.B).ShouldBe(false);
+			State.As<S>().ShouldBe(S.A);
+			(State == S.A).ShouldBe(true);
+			(State == S.B).ShouldBe(false);
 
 			_f = 4;
 			ExecuteUpdate();
 
-			CurrentState.As<S>().ShouldBe(S.B);
-			(CurrentState == S.A).ShouldBe(false);
-			(CurrentState == S.B).ShouldBe(true);
+			State.As<S>().ShouldBe(S.B);
+			(State == S.A).ShouldBe(false);
+			(State == S.B).ShouldBe(true);
 		}
 
 		private enum S

@@ -56,7 +56,7 @@ namespace Tests.Formulas.LinearTemporalLogic
 				new UnaryFormula(new UnaryFormula(expected, UnaryFormulaOperator.Next, PathQuantifier.None), UnaryFormulaOperator.Not, PathQuantifier.None));
 		}
 
-		private void CheckArgumentConversion(LtlFormula actual, LtlFormula expected)
+		private void CheckArgumentConversion(LtlFormula actual, Formula expected)
 		{
 			Check(actual, expected);
 		}

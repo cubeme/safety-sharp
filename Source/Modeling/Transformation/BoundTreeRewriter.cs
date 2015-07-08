@@ -188,6 +188,15 @@ namespace SafetySharp.Transformation
 		}
 
 		/// <summary>
+		///     Visits an element of type <see cref="FaultOccurrenceFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="FaultOccurrenceFormula" /> instance that should be visited.</param>
+		protected internal override BoundNode VisitFaultOccurrenceFormula(FaultOccurrenceFormula formula)
+		{
+			return formula;
+		}
+
+		/// <summary>
 		///     Visits an element of type <see cref="BinaryFormula" />.
 		/// </summary>
 		/// <param name="formula">The <see cref="BinaryFormula" /> instance that should be visited.</param>

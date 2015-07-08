@@ -42,9 +42,9 @@ namespace Tests.Execution.StateMachines
 		[SuppressTransformation]
 		protected override void Check()
 		{
-			CurrentState.As<S>().ShouldBe(S.A);
-			(CurrentState == S.A).ShouldBe(true);
-			(CurrentState == S.B).ShouldBe(false);
+			State.As<S>().ShouldBe(S.A);
+			(State == S.A).ShouldBe(true);
+			(State == S.B).ShouldBe(false);
 
 			var state = Metadata.StateMachine[S.A];
 
@@ -53,7 +53,7 @@ namespace Tests.Execution.StateMachines
 				state.PriorityOverrides[0] = 100;
 				ExecuteUpdate();
 
-				(CurrentState == S.B).ShouldBe(true);
+				(State == S.B).ShouldBe(true);
 				_f.ShouldBe(17);
 
 				ExecuteUpdate();
@@ -62,7 +62,7 @@ namespace Tests.Execution.StateMachines
 				state.PriorityOverrides[0] = -100;
 				ExecuteUpdate();
 
-				(CurrentState == S.C).ShouldBe(true);
+				(State == S.C).ShouldBe(true);
 				_f.ShouldBe(f - 1);
 
 				ExecuteUpdate();

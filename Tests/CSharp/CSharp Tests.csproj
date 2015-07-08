@@ -274,6 +274,7 @@
     <Compile Include="Formulas\ComputationTreeLogic\and.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\equivalence.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\expression operators.cs" />
+    <Compile Include="Formulas\ComputationTreeLogic\fault.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\field access.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\finally.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\globally.cs" />
@@ -292,6 +293,7 @@
     <Compile Include="Formulas\FormulaTests.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\equivalence.cs" />
     <None Include="Formulas\LinearTemporalLogic\implicit conversion.cs" />
+    <Compile Include="Formulas\LinearTemporalLogic\fault.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\not.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\or.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\and.cs" />

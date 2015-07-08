@@ -73,22 +73,6 @@ namespace SafetySharp.Simulation
 		}
 
 		/// <summary>
-		///     Gets the fault of type <typeparamref name="T" /> declared by <paramref name="component" />.
-		/// </summary>
-		/// <typeparam name="T">The type of the fault that should be returned.</typeparam>
-		/// <param name="component">The component instance the fault should be returned for..</param>
-		public static Fault GetFault<T>(this IComponent component)
-			where T : Fault
-		{
-			Requires.NotNull(component, () => component);
-
-			var fault = component.GetMetadata().Faults.Select(f => f.Fault).OfType<T>().FirstOrDefault();
-			Requires.That(fault != null, "The component does not declare a fault of type '{0}'.", typeof(T).FullName);
-
-			return fault;
-		}
-
-		/// <summary>
 		///     Gets a value indicating whether the fault of type <typeparamref name="T" /> is currently occurring for the
 		///     <paramref name="component" /> instance.
 		/// </summary>
@@ -98,7 +82,7 @@ namespace SafetySharp.Simulation
 			where T : Fault
 		{
 			Requires.NotNull(component, () => component);
-			return component.GetFault<T>().IsOccurring;
+			return component.GetMetadata().GetFault<T>().Fault.IsOccurring;
 		}
 
 		/// <summary>
@@ -111,7 +95,7 @@ namespace SafetySharp.Simulation
 			where T : Fault
 		{
 			Requires.NotNull(component, () => component);
-			component.GetFault<T>().IsOccurring = enabled;
+			component.GetMetadata().GetFault<T>().Fault.IsOccurring = enabled;
 		}
 
 		/// <summary>
@@ -123,7 +107,7 @@ namespace SafetySharp.Simulation
 			where T : Fault
 		{
 			Requires.NotNull(component, () => component);
-			component.GetFault<T>().IsOccurring = true;
+			component.GetMetadata().GetFault<T>().Fault.IsOccurring = true;
 		}
 
 		/// <summary>
@@ -135,7 +119,7 @@ namespace SafetySharp.Simulation
 			where T : Fault
 		{
 			Requires.NotNull(component, () => component);
-			component.GetFault<T>().IsOccurring = false;
+			component.GetMetadata().GetFault<T>().Fault.IsOccurring = false;
 		}
 	}
 }

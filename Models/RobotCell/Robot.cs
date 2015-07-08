@@ -41,27 +41,27 @@ namespace RobotCell
 			_tightenTool = tightenTool;
 			_position = position;
 
-			InitialState(State.AwaitingReconfiguration);
+			InitialState(States.AwaitingReconfiguration);
 
 			Transition(
-				from: State.AwaitingReconfiguration,
-				to: State.Ready,
+				from: States.AwaitingReconfiguration,
+				to: States.Ready,
 				guard: () => _task != RobotTask.None && !IsCurrentToolBroken());
 
 			Transition(
-				from: State.Ready,
-				to: State.WorkpieceProcessed,
+				from: States.Ready,
+				to: States.WorkpieceProcessed,
 				guard: () => _sensor.WorkpieceDetected() && !IsCurrentToolBroken(),
 				action: UseTool);
 
 			Transition(
-				from: State.WorkpieceProcessed,
-				to: State.Ready,
+				from: States.WorkpieceProcessed,
+				to: States.Ready,
 				guard: () => !_sensor.WorkpieceDetected() && !IsCurrentToolBroken());
 
 			Transition(
-				from: State.Ready | State.WorkpieceProcessed,
-				to: State.AwaitingReconfiguration,
+				from: States.Ready | States.WorkpieceProcessed,
+				to: States.AwaitingReconfiguration,
 				guard: () => _task == RobotTask.None || IsCurrentToolBroken());
 		}
 
@@ -74,12 +74,12 @@ namespace RobotCell
 
 		public bool RequiresReconfiguration()
 		{
-			return CurrentState == State.AwaitingReconfiguration;
+			return State == States.AwaitingReconfiguration;
 		}
 
 		public bool WorkpieceProcessed()
 		{
-			return CurrentState == State.WorkpieceProcessed;
+			return State == States.WorkpieceProcessed;
 		}
 
 		private bool IsCurrentToolBroken()
@@ -113,7 +113,7 @@ namespace RobotCell
 			}
 		}
 
-		private enum State
+		private enum States
 		{
 			AwaitingReconfiguration,
 			Ready,

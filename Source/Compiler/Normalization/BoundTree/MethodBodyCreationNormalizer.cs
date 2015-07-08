@@ -211,7 +211,7 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 						var fieldMetadata = ((IFieldSymbol)symbol).GetFieldMetadataExpression(_syntax.ThisExpression(), _syntax);
 						return Create<FieldExpression>(fieldMetadata);
 					case SymbolKind.Property:
-						if (symbol.Name != "CurrentState" || !symbol.ContainingType.Equals(_semanticModel.GetComponentClassSymbol()))
+						if (symbol.Name != "State" || !symbol.ContainingType.Equals(_semanticModel.GetComponentClassSymbol()))
 							goto default;
 
 						var stateFieldSymbol = _semanticModel.GetComponentClassSymbol().GetMembers("_state").OfType<IFieldSymbol>().Single();
@@ -254,6 +254,10 @@ namespace SafetySharp.Compiler.Normalization.BoundTree
 
 						var fieldMetadata = ((IFieldSymbol)memberSymbol).GetFieldMetadataExpression(memberAccess.Expression, _syntax);
 						return Create<FieldExpression>(fieldMetadata);
+					case SymbolKind.Property:
+						var stateFieldSymbol = _semanticModel.GetComponentClassSymbol().GetMembers("_state").OfType<IFieldSymbol>().Single();
+						var stateFieldMetadata = stateFieldSymbol.GetFieldMetadataExpression(_syntax.ThisExpression(), _syntax);
+						return Create<FieldExpression>(stateFieldMetadata);
 					default:
 						Assert.NotReached("Unsupported member access: {0}.", memberSymbol.Kind);
 						return null;

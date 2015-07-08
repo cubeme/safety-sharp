@@ -43,11 +43,11 @@ namespace RobotCell
 			Bind(_cart1.RequiredPorts.WorkpieceProcessed = ProvidedPorts.WorkpieceProcessed);
 			Bind(_cart2.RequiredPorts.WorkpieceProcessed = ProvidedPorts.WorkpieceProcessed);
 
-			InitialState(State.RequiresReconfiguration);
+			InitialState(States.RequiresReconfiguration);
 
 			Transition(
-				from: State.ValidConfiguration,
-				to: State.RequiresReconfiguration,
+				from: States.ValidConfiguration,
+				to: States.RequiresReconfiguration,
 				guard: () =>
 					_robot1.RequiresReconfiguration() ||
 					_robot2.RequiresReconfiguration() ||
@@ -65,8 +65,8 @@ namespace RobotCell
 				});
 
 			Transition(
-				from: State.RequiresReconfiguration,
-				to: State.ValidConfiguration,
+				from: States.RequiresReconfiguration,
+				to: States.ValidConfiguration,
 				action: () =>
 				{
 					_robot1.Reconfigure(Choose.Value(RobotTask.Drill, RobotTask.Insert, RobotTask.Tighten));
@@ -92,7 +92,7 @@ namespace RobotCell
 			return false;
 		}
 
-		private enum State
+		private enum States
 		{
 			RequiresReconfiguration,
 			ValidConfiguration

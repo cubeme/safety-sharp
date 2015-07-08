@@ -48,6 +48,7 @@
     <Compile Include="Runtime\ActionMetadata.cs" />
     <Compile Include="Runtime\Formulas\BinaryFormula.cs" />
     <Compile Include="Runtime\Formulas\BinaryFormulaOperator.cs" />
+    <Compile Include="Runtime\Formulas\FaultOccurrenceFormula.cs" />
     <Compile Include="Runtime\GuardMetadata.cs" />
     <Compile Include="Runtime\StateMachineMetadata.cs" />
     <Compile Include="Runtime\StateMetadata.cs" />

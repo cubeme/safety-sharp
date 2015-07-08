@@ -33,34 +33,19 @@ namespace SafetySharp.Analysis
 	public class LtlFormula
 	{
 		/// <summary>
-		///     The actual <see cref="Formula" /> wrapped by this instance.
-		/// </summary>
-		private Formula _formula;
-
-		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		private LtlFormula()
+		/// <param name="formula">The formula that should be wrapped by this instance.</param>
+		internal LtlFormula(Formula formula)
 		{
+			Requires.NotNull(formula, () => formula);
+			Formula = formula;
 		}
 
 		/// <summary>
-		///     Converts the <paramref name="formula" /> to an instance of <see cref="Formula" />.
+		///     Gets the <see cref="Formula" /> wrapped by this instance.
 		/// </summary>
-		/// <param name="formula">The formula that should be converted.</param>
-		public static implicit operator Formula(LtlFormula formula)
-		{
-			return formula._formula;
-		}
-
-		/// <summary>
-		///     Converts the <paramref name="formula" /> to an instance of <see cref="LtlFormula" />.
-		/// </summary>
-		/// <param name="formula">The formula that should be converted.</param>
-		public static implicit operator LtlFormula(Formula formula)
-		{
-			return new LtlFormula { _formula = formula };
-		}
+		internal Formula Formula { get; private set; }
 
 		/// <summary>
 		///     Converts the <paramref name="expression" /> to an instance of <see cref="LtlFormula" />.
@@ -80,7 +65,7 @@ namespace SafetySharp.Analysis
 		public LtlFormula Implies(LtlFormula formula)
 		{
 			Requires.NotNull(formula, () => formula);
-			return new BinaryFormula(_formula, BinaryFormulaOperator.Implication, PathQuantifier.None, formula);
+			return new LtlFormula(new BinaryFormula(Formula, BinaryFormulaOperator.Implication, PathQuantifier.None, formula.Formula));
 		}
 
 		/// <summary>
@@ -91,7 +76,7 @@ namespace SafetySharp.Analysis
 		public LtlFormula EquivalentTo(LtlFormula formula)
 		{
 			Requires.NotNull(formula, () => formula);
-			return new BinaryFormula(_formula, BinaryFormulaOperator.Equivalence, PathQuantifier.None, formula);
+			return new LtlFormula(new BinaryFormula(Formula, BinaryFormulaOperator.Equivalence, PathQuantifier.None, formula.Formula));
 		}
 
 		/// <summary>
@@ -100,7 +85,7 @@ namespace SafetySharp.Analysis
 		public static LtlFormula operator !(LtlFormula formula)
 		{
 			Requires.NotNull(formula, () => formula);
-			return new UnaryFormula(formula, UnaryFormulaOperator.Not, PathQuantifier.None);
+			return new LtlFormula(new UnaryFormula(formula.Formula, UnaryFormulaOperator.Not, PathQuantifier.None));
 		}
 
 		/// <summary>
@@ -112,7 +97,7 @@ namespace SafetySharp.Analysis
 			Requires.NotNull(left, () => left);
 			Requires.NotNull(right, () => right);
 
-			return new BinaryFormula(left, BinaryFormulaOperator.And, PathQuantifier.None, right);
+			return new LtlFormula(new BinaryFormula(left.Formula, BinaryFormulaOperator.And, PathQuantifier.None, right.Formula));
 		}
 
 		/// <summary>
@@ -124,7 +109,7 @@ namespace SafetySharp.Analysis
 			Requires.NotNull(left, () => left);
 			Requires.NotNull(right, () => right);
 
-			return new BinaryFormula(left, BinaryFormulaOperator.Or, PathQuantifier.None, right);
+			return new LtlFormula(new BinaryFormula(left.Formula, BinaryFormulaOperator.Or, PathQuantifier.None, right.Formula));
 		}
 	}
 }

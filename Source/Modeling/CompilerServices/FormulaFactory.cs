@@ -41,7 +41,7 @@ namespace SafetySharp.CompilerServices
 		public static CtlFormula CtlExpression(Expression<Func<bool>> expression)
 		{
 			Requires.NotNull(expression, () => expression);
-			return StateFormulaTransformation.Transform(expression);
+			return new CtlFormula(StateFormulaTransformation.Transform(expression));
 		}
 
 		/// <summary>
@@ -51,7 +51,7 @@ namespace SafetySharp.CompilerServices
 		public static LtlFormula LtlExpression(Expression<Func<bool>> expression)
 		{
 			Requires.NotNull(expression, () => expression);
-			return StateFormulaTransformation.Transform(expression);
+			return new LtlFormula(StateFormulaTransformation.Transform(expression));
 		}
 	}
 }

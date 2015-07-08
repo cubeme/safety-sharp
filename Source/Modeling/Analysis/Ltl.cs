@@ -23,6 +23,9 @@
 namespace SafetySharp.Analysis
 {
 	using System;
+	using Modeling;
+	using Modeling.Faults;
+	using Runtime;
 	using Runtime.Formulas;
 	using Utilities;
 
@@ -32,13 +35,26 @@ namespace SafetySharp.Analysis
 	public static class Ltl
 	{
 		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that checks whether the fault of type <typeparamref name="TFault" /> is occurring
+		///     for the <paramref name="component" />.
+		/// </summary>
+		/// <typeparam name="TFault">The type of the fault that should be occurring.</typeparam>
+		/// <param name="component">The component the fault occurrence should be checked for.</param>
+		public static LtlFormula IsOccurring<TFault>(IComponent component)
+			where TFault : Fault
+		{
+			Requires.NotNull(component, () => component);
+			return new LtlFormula(new FaultOccurrenceFormula(component.GetMetadata().GetFault<TFault>()));
+		}
+
+		/// <summary>
 		///     Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
 		public static LtlFormula X(LtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Next, PathQuantifier.None);
+			return new LtlFormula(new UnaryFormula(operand.Formula, UnaryFormulaOperator.Next, PathQuantifier.None));
 		}
 
 		/// <summary>
@@ -48,7 +64,7 @@ namespace SafetySharp.Analysis
 		public static LtlFormula F(LtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Finally, PathQuantifier.None);
+			return new LtlFormula(new UnaryFormula(operand.Formula, UnaryFormulaOperator.Finally, PathQuantifier.None));
 		}
 
 		/// <summary>
@@ -58,7 +74,7 @@ namespace SafetySharp.Analysis
 		public static LtlFormula G(LtlFormula operand)
 		{
 			Requires.NotNull(operand, () => operand);
-			return new UnaryFormula(operand, UnaryFormulaOperator.Globally, PathQuantifier.None);
+			return new LtlFormula(new UnaryFormula(operand.Formula, UnaryFormulaOperator.Globally, PathQuantifier.None));
 		}
 
 		/// <summary>
@@ -72,7 +88,7 @@ namespace SafetySharp.Analysis
 			Requires.NotNull(leftOperand, () => leftOperand);
 			Requires.NotNull(rightOperand, () => rightOperand);
 
-			return new BinaryFormula(leftOperand, BinaryFormulaOperator.Until, PathQuantifier.None, rightOperand);
+			return new LtlFormula(new BinaryFormula(leftOperand.Formula, BinaryFormulaOperator.Until, PathQuantifier.None, rightOperand.Formula));
 		}
 	}
 }

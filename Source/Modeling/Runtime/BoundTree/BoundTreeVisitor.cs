@@ -220,6 +220,15 @@ namespace SafetySharp.Runtime.BoundTree
 		}
 
 		/// <summary>
+		///     Visits an element of type <see cref="FaultOccurrenceFormula" />.
+		/// </summary>
+		/// <param name="formula">The <see cref="FaultOccurrenceFormula" /> instance that should be visited.</param>
+		protected internal virtual void VisitFaultOccurrenceFormula(FaultOccurrenceFormula formula)
+		{
+			DefaultVisit(formula);
+		}
+
+		/// <summary>
 		///     Visits an element of type <see cref="BinaryFormula" />.
 		/// </summary>
 		/// <param name="formula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
