@@ -88,6 +88,26 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		/// <param name="left">The left state to compare.</param>
 		/// <param name="right">The right state to compare.</param>
+		public static bool operator ==(State left, State right)
+		{
+			return left._value.Equals(right._value);
+		}
+
+		/// <summary>
+		///     Indicates whether <paramref name="left" /> and <paramref name="right" /> are not equal.
+		/// </summary>
+		/// <param name="left">The left state to compare.</param>
+		/// <param name="right">The right state to compare.</param>
+		public static bool operator !=(State left, State right)
+		{
+			return !left._value.Equals(right._value);
+		}
+
+		/// <summary>
+		///     Indicates whether <paramref name="left" /> and <paramref name="right" /> are equal.
+		/// </summary>
+		/// <param name="left">The left state to compare.</param>
+		/// <param name="right">The right state to compare.</param>
 		public static bool operator ==(State left, object right)
 		{
 			return left._value.Equals(right);

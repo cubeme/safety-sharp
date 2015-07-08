@@ -113,7 +113,7 @@ namespace RobotCell
 			}
 		}
 
-		private enum States
+		public enum States
 		{
 			AwaitingReconfiguration,
 			Ready,

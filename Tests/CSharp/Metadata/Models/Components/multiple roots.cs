@@ -99,4 +99,51 @@ namespace Tests.Metadata.Models.Components
 			m.Metadata.RootComponent.Subcomponents[3].Name.ShouldBe("c4");
 		}
 	}
+
+	internal class M8 : TestModel
+	{
+		private readonly C2 _c1 = new C2();
+		private readonly C3 _c2 = new C3("name");
+		private readonly C3 _c3 = new C3();
+
+		public M8()
+		{
+			var components = new IComponent[] { _c1, _c2, _c3 };
+			AddRootComponents(components);
+		}
+
+		protected override void Check()
+		{
+			Metadata.RootComponent.Subcomponents.ShouldBe(new[] { _c1.Metadata, _c2.Metadata, _c3.Metadata });
+			Metadata.Components.ShouldBe(new[] { Metadata.RootComponent, _c1.Metadata, _c2.Metadata, _c3.Metadata });
+
+			Metadata.RootComponent.Subcomponents[0].Name.ShouldBe("components[0]");
+			Metadata.RootComponent.Subcomponents[1].Name.ShouldBe("name");
+			Metadata.RootComponent.Subcomponents[2].Name.ShouldBe("components[2]");
+		}
+	}
+
+	internal class M10 : TestModel
+	{
+		private readonly C2 _c1 = new C2();
+		private readonly C3 _c2 = new C3();
+		private readonly C3 _c3 = new C3("name");
+		private readonly C2 _c4 = new C2();
+
+		public M10()
+		{
+			AddRootComponents(new IComponent[] { _c1, _c2, _c3, _c4 });
+		}
+
+		protected override void Check()
+		{
+			Metadata.RootComponent.Subcomponents.ShouldBe(new[] { _c1.Metadata, _c2.Metadata, _c3.Metadata, _c4.Metadata });
+			Metadata.Components.ShouldBe(new[] { Metadata.RootComponent, _c1.Metadata, _c2.Metadata, _c3.Metadata, _c4.Metadata });
+
+			Metadata.RootComponent.Subcomponents[0].Name.ShouldBe("C2");
+			Metadata.RootComponent.Subcomponents[1].Name.ShouldBe("C3");
+			Metadata.RootComponent.Subcomponents[2].Name.ShouldBe("name");
+			Metadata.RootComponent.Subcomponents[3].Name.ShouldBe("C21");
+		}
+	}
 }

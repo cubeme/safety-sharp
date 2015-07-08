@@ -20,44 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace RobotCell
+namespace Tests.Formulas.ComputationTreeLogic
 {
 	using System;
-	using FluentAssertions;
-	using NUnit.Framework;
 	using SafetySharp.Analysis;
-	using SafetySharp.Simulation;
+	using SafetySharp.Modeling;
+	using SafetySharp.Runtime.BoundTree;
+	using SafetySharp.Runtime.Formulas;
 
-	[TestFixture]
-	public class Tests
+	internal class T15 : FormulaTestObject
 	{
-		private readonly RobotCellModel _model;
-		private readonly Spin _spin;
-
-		public Tests()
+		protected override void Check()
 		{
-			_model = new RobotCellModel();
-			_spin = new Spin(_model);
+			var c = new C();
+			var m = new Model();
+			m.AddRootComponents(c);
+			m.Seal();
+
+			CtlFormula actual = c.State == C.States.A;
+			var expected = new StateFormula(
+				new BinaryExpression(BinaryOperator.Equals,
+					new FieldExpression(c.Metadata.StateMachine.StateField),
+					new EnumerationLiteralExpression(C.States.A)));
+
+			Check(actual, expected);
 		}
 
-		[Test]
-		public void ModelCheck()
+		private class C : Component
 		{
-			_spin.Check(Ltl.F(_model.Robots[0].State != Robot.States.AwaitingReconfiguration));
-		}
+			public enum States
+			{
+				A,
+				B
+			}
 
-		[Test]
-		public void ShouldConfigureItself()
-		{
-			var simulator = new Simulator(_model);
-
-			simulator.Simulate(TimeSpan.FromSeconds(1));
-
-			foreach (var robot in _model.Robots)
-				robot.RequiresReconfiguration().Should().BeFalse();
-
-			foreach (var cart in _model.Carts)
-				cart.RequiresReconfiguration().Should().BeFalse();
+			public C()
+			{
+				InitialState(States.A);
+				Transition(States.A, States.B);
+			}
 		}
 	}
 }

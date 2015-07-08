@@ -23,11 +23,14 @@
 namespace SafetySharp.Transformation
 {
 	using System;
+	using System.Collections;
 	using System.Linq;
 	using System.Linq.Expressions;
+	using System.Net.NetworkInformation;
 	using System.Reflection;
 	using CompilerServices;
 	using Modeling;
+	using Runtime;
 	using Runtime.BoundTree;
 	using Runtime.Formulas;
 	using Utilities;
@@ -111,7 +114,6 @@ namespace SafetySharp.Transformation
 		/// </summary>
 		protected override System.Linq.Expressions.Expression VisitUnary(UnaryExpression node)
 		{
-			node = (UnaryExpression)base.VisitUnary(node);
 			var operand = Transform(node.Operand);
 
 			switch (node.NodeType)
@@ -143,7 +145,13 @@ namespace SafetySharp.Transformation
 		/// </summary>
 		protected override System.Linq.Expressions.Expression VisitBinary(BinaryExpression node)
 		{
-			node = (BinaryExpression)base.VisitBinary(node);
+			// For whatever reason, array element accesses are binary expressions...
+			if (node.NodeType == ExpressionType.ArrayIndex)
+			{
+				ConvertConstant(GetValue(node));
+				return node;
+			}
+
 			var leftOperand = Transform(node.Left);
 			var rightOperand = Transform(node.Right);
 			var binaryOperator = BinaryOperator.Add;
@@ -226,6 +234,13 @@ namespace SafetySharp.Transformation
 				Assert.NotReached("Invalid member access: '{0}'.", expression);
 			}
 
+			if (expression.NodeType == ExpressionType.ArrayIndex)
+			{
+				var arrayExpression = (BinaryExpression)expression;
+				var obj = GetValue(arrayExpression.Left);
+				return ((IList)obj)[(int)GetValue(arrayExpression.Right)];
+			}
+
 			Assert.NotReached("Invalid expression type while trying to retrieve member value: '{0}'.", expression.NodeType);
 			return null;
 		}
@@ -255,6 +270,8 @@ namespace SafetySharp.Transformation
 
 				if (field != null)
 					Expression = new FieldExpression(ReflectionHelpers.GetFieldMetadata(component, field));
+				else if (property != null && property.DeclaringType == typeof(Component) && property.Name == "State")
+					Expression = new FieldExpression(component.GetMetadata().StateMachine.StateField);
 				else if (property != null)
 					Expression = new MethodInvocationExpression(ReflectionHelpers.GetMethodMetadata(component, property.GetMethod, true));
 				else

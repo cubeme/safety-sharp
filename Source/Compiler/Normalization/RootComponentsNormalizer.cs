@@ -81,7 +81,7 @@ namespace SafetySharp.Compiler.Normalization
 		///     Gets the component name assignment statements for the <paramref name="arguments" />.
 		/// </summary>
 		/// <param name="arguments">The arguments that should be analyzed to see if a component name can be generated.</param>
-		private IEnumerable<ExpressionStatementSyntax> GetNameStatements(IEnumerable<ArgumentSyntax> arguments)
+		private IEnumerable<StatementSyntax> GetNameStatements(SeparatedSyntaxList<ArgumentSyntax> arguments)
 		{
 			foreach (var argument in arguments)
 			{
@@ -98,9 +98,8 @@ namespace SafetySharp.Compiler.Normalization
 				if (propertySymbol != null && !propertySymbol.IsAutoProperty())
 					continue;
 
-				var getBuilder = GetBuilder(argument.Expression);
 				var name = "<>";
-				
+
 				if (fieldSymbol != null)
 					name = fieldSymbol.Name;
 
@@ -113,10 +112,37 @@ namespace SafetySharp.Compiler.Normalization
 				if (parameterSymbol != null)
 					name = parameterSymbol.Name;
 
-				// WithName(name, true)
-				var withName = Syntax.MemberAccessExpression(getBuilder, "WithName");
-				var invocation = Syntax.InvocationExpression(withName, Syntax.LiteralExpression(name), Syntax.TrueLiteralExpression());
-				yield return (ExpressionStatementSyntax)Syntax.ExpressionStatement(invocation);
+				if (SemanticModel.GetTypeInfo(arguments[0].Expression).Type.TypeKind == TypeKind.Array)
+				{
+					var componentVariableName = "c".ToSynthesized();
+					var indexVariableName = "i".ToSynthesized();
+
+					var indexVariable = Syntax.LocalDeclarationStatement(Compilation.GetTypeSymbol<int>(), indexVariableName, Syntax.LiteralExpression(0));
+					var componentType = Syntax.TypeExpression<IComponent>(SemanticModel);
+
+					// GetBuilder(c).WithName(String.Format("name[{0}]", i), true)
+					var getBuilder = GetBuilder(Syntax.IdentifierName(componentVariableName));
+					var withName = Syntax.MemberAccessExpression(getBuilder, "WithName");
+					var stringFormat = Syntax.MemberAccessExpression(Syntax.TypeExpression<String>(SemanticModel), "Format");
+					var nameExpression = Syntax.InvocationExpression(stringFormat,
+						Syntax.LiteralExpression(name + "[{0}]"), Syntax.IdentifierName(indexVariableName));
+					var invocation = Syntax.InvocationExpression(withName, nameExpression, Syntax.TrueLiteralExpression());
+					var incrementIndex = SyntaxFactory.PrefixUnaryExpression(SyntaxKind.PreIncrementExpression,
+						(ExpressionSyntax)Syntax.IdentifierName(indexVariableName));
+					var body = SyntaxFactory.Block((StatementSyntax)Syntax.ExpressionStatement(invocation),
+						(StatementSyntax)Syntax.ExpressionStatement(incrementIndex));
+
+					yield return (StatementSyntax)indexVariable;
+					yield return SyntaxFactory.ForEachStatement(componentType, componentVariableName, argument.Expression, body);
+				}
+				else
+				{
+					// GetBuilder(arg).WithName(name, true)
+					var getBuilder = GetBuilder(argument.Expression);
+					var withName = Syntax.MemberAccessExpression(getBuilder, "WithName");
+					var invocation = Syntax.InvocationExpression(withName, Syntax.LiteralExpression(name), Syntax.TrueLiteralExpression());
+					yield return (ExpressionStatementSyntax)Syntax.ExpressionStatement(invocation);
+				}
 			}
 		}
 

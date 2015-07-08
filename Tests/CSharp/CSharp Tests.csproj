@@ -272,6 +272,7 @@
     <Compile Include="Execution\StateMachines\multiple initial states.cs" />
     <Compile Include="Execution\StateMachines\single initial state.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\and.cs" />
+    <Compile Include="Formulas\ComputationTreeLogic\array.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\equivalence.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\expression operators.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\fault.cs" />
@@ -286,6 +287,7 @@
     <Compile Include="Formulas\ComputationTreeLogic\or.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\property access.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\state expression.cs" />
+    <Compile Include="Formulas\ComputationTreeLogic\state.cs" />
     <Compile Include="Formulas\ComputationTreeLogic\until.cs" />
     <Compile Include="Formulas\FormulaTests.Helpers.cs">
       <DependentUpon>FormulaTests.cs</DependentUpon>
@@ -293,6 +295,8 @@
     <Compile Include="Formulas\FormulaTests.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\equivalence.cs" />
     <None Include="Formulas\LinearTemporalLogic\implicit conversion.cs" />
+    <Compile Include="Formulas\LinearTemporalLogic\array.cs" />
+    <Compile Include="Formulas\LinearTemporalLogic\state.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\fault.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\not.cs" />
     <Compile Include="Formulas\LinearTemporalLogic\or.cs" />
